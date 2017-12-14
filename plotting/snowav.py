@@ -48,16 +48,14 @@ class snowav(object):
             
             # Determine units and appropriate conversion
             self.units          = cfg.get('Basin','units')
-            
-            # KAF and inches
+
             if self.units == 'KAF':
-                self.conversion_factor  = (self.pixel**2)*0.000000810713194*0.001
-                self.depth_factor       = 0.03937
-            
-            # M m^3 and meters
+                self.conversion_factor  = (self.pixel**2)*0.000000810713194*0.001       # storage in KAF
+                self.depth_factor       = 0.03937                                       # depth in inches
+
             if self.units == 'SI':
-                self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e6 
-                self.depth_factor       = 0.001            
+                self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e6 # storage in M m^3
+                self.depth_factor       = 0.001                                         # depth in m        
             
             ####################################################
             #           Outputs section                        #
@@ -160,8 +158,8 @@ class snowav(object):
             self.env_path       = cfg.get('Report','env_path')
             self.tex_file       = cfg.get('Report','tex_file')
             self.rep_path       = cfg.get('Report','rep_path')
-            # self.conf_path      = cfg.get('Report','conf_path')
             self.templ_path     = cfg.get('Report','templ_path')
+            # self.conf_path      = cfg.get('Report','conf_path')
             # self.rep_title      = cfg.get('Report','rep_title')  
             
             # These will later get appended with self.dateTo once it is calculated
@@ -172,7 +170,7 @@ class snowav(object):
                 self.report_name    = ('TuolumneRiverBasin_SnowpackSummary_.pdf') 
                 self.rep_title      = 'Tuolumne River Basin Snowpack Summary'
                 
-            # 
+            # These are strings for the report
             if self.units == 'KAF':
                 self.reportunits = 'KAF'
                 
@@ -212,9 +210,7 @@ class snowav(object):
                 self.edges      = np.arange(800,3600+self.step,self.step)
                 self.ixd        = np.digitize(self.dem,self.edges)             
                                  
-            # Finally, let's make a copy of the config file in the same place
-            # that the figs will be saved. This copy of the config file will
-            # get written with summary SWE/SWI info per sub basin
+            # Make a copy of the config file in the same place that the figs will be saved
             pathf           = os.path.split(config_file)
             extf            = os.path.splitext(pathf[1])
             path_shr        = os.path.split(self.psnowFile)
@@ -236,24 +232,24 @@ class snowav(object):
             print('finished reading config file')    
         
         except:
-            print('failed reading the config file')
+            print('error reading config file')
 
     def process(self):
         '''
         This function calculates everything we will need for the plots.
         
-        Also saves results to csv...?
+        Does not currently save to csv...
         
-        'accum' is used for accumulated values in the 'em' files. This will 
-            typically be swi, but could also be evaporation if the proper band 
-            is specified in the config file
-        'state' captures the current model state in the 'snow' files. This will 
-            typically be SWE, but could also be depth, etc.
-        'cold' is cold content only
-        'delta_state' is the difference between psnowFile and csnowFile
-        '_byelev' are dataframes of totals for the period, by subbasin and elevation
-        'melt' and 'nonmelt' are dataframes of totals for the period, defined
-            by cold content
+        accum:         is used for accumulated values in the 'em' files. This will 
+                        typically be swi, but could also be evaporation if the proper band 
+                        is specified in the config file
+        state:        captures the current model state in the 'snow' files. This will 
+                        typically be SWE, but could also be depth, etc.
+        cold:         is cold content only
+        delta_state:  is the difference between psnowFile and csnowFile
+        _byelev:      are dataframes of totals for the period, by subbasin and elevation
+        melt:         dataframe of totals for the period, defined by cold content
+        nonmelt:      dataframe of totals for the period, defined by cold content
         '''
   
         cclimit         = -5*1000*1000 #  based on an average of 60 W/m2 from my TL paper
@@ -268,9 +264,9 @@ class snowav(object):
         melt            = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         nonmelt         = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         
-        # Loop through the iSnobal output files
+        # Loop through output files
         # Currently we need to load in each em.XXXX file to 'accumulate',
-        # but only the first and last snow.XXXX file
+        # but only the first and last snow.XXXX file for changes
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,self.snow_files)):
             em_file     = ipw.IPW('%s%s'%(self.run_dir,em_name))
             band        = em_file.bands[self.emband].data
@@ -341,8 +337,7 @@ class snowav(object):
         self.nonmelt                = np.multiply(melt,self.conversion_factor)
         self.cold                   = np.multiply(self.cold,0.000001) # [MJ]
         
-        
-        # Write the config file
+        # Consider writing summaries to the config file...?
     
        
     def accumulated(self):
@@ -350,7 +345,7 @@ class snowav(object):
         This function plots self.accum (typically SWI)
         
         '''
-        # Make copy
+        # Make copy so that we can add nans for the plots, but not mess up the original
         accum           = copy.deepcopy(self.accum)
 
         qMin,qMax       = np.percentile(accum,[0,self.acc_clmax])
@@ -396,17 +391,16 @@ class snowav(object):
             h.axes.set_title('Snow Water Input Accumulated [m] \n %s to %s'%(self.dateFrom.date(),self.dateTo.date()))            
         
         # Sort by ascending melt amounts for the bar plots
-        ordered_runoff     = np.zeros(len(self.masks))
-        bname               = []
+        # This is ugly and could be improved...
+        ordered_runoff          = np.zeros(len(self.masks))
+        bname                   = []
         for iters,name in enumerate(self.accum_byelev.columns.tolist()):
             ordered_runoff[iters] = self.accum_byelev[name].sum()
             bname.append(name)
-        
-        # Order by area
-        # This is pretty ugly right now works in most cases...
-        x           = np.argsort(abs(ordered_runoff), axis=0)
-        ordered_runoff_area = ordered_runoff[x]
-        bname   = [bname[i] for i in x]
+            
+        x                       = np.argsort(abs(ordered_runoff), axis=0)
+        ordered_runoff_area     = ordered_runoff[x]
+        bname                   = [bname[i] for i in x]
         
         # Sort ascending if the total value is negative, otherwise sort descending
         if self.accum_byelev[self.total_lbl].sum() < 0:
@@ -449,7 +443,7 @@ class snowav(object):
         ax1.legend()
         
         plt.tight_layout()
-        print('saving figure to %sresults%s'%(self.figs_path,self.name_append))
+        print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
         
     def current_image(self):
@@ -532,7 +526,7 @@ class snowav(object):
             cbar.set_label(r'SWE [m]') 
         
         plt.tight_layout() 
-        print('saving figure to %sresults%s'%(self.figs_path,self.name_append))
+        print('saving figure to %sresults%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sresults%s.png'%(self.figs_path,self.name_append))  
         
     def image_change(self): 
@@ -540,11 +534,11 @@ class snowav(object):
         This plots self.delta_state
         
         '''        
+        # Make copy so that we can add nans for the plots, but not mess up the original
+        delta_state     = copy.deepcopy(self.delta_state)
         
-        delta_state = copy.deepcopy(self.delta_state)
-        
-        qMin,qMax   = np.percentile(delta_state,[self.ch_clmin,self.ch_clmax])
-        clims       = (qMin,qMax) 
+        qMin,qMax       = np.percentile(delta_state,[self.ch_clmin,self.ch_clmax])
+        clims           = (qMin,qMax) 
         
         # Override if absolute limits are provide in the config
         if hasattr(self,'ch_clminabs') and hasattr(self,'ch_clmaxabs'):
@@ -566,23 +560,22 @@ class snowav(object):
             colors      = np.vstack((colors1, colors2, colors2, colors2, colors2, colors2, colors2, colors2, colors2, colors2))
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
     
-        ixf             = delta_state == 0
-        delta_state[ixf]   = 999 # set snow-free  
-        pmask           = self.masks[self.total_lbl]['mask']
-        ixo             = pmask == 0
-        delta_state[ixo]   = np.nan
-        cmap            = copy.copy(mymap)
+        ixf                 = delta_state == 0
+        delta_state[ixf]    = 999 # set snow-free  
+        pmask               = self.masks[self.total_lbl]['mask']
+        ixo                 = pmask == 0
+        delta_state[ixo]    = np.nan
+        cmap                = copy.copy(mymap)
         cmap.set_bad('white',1.)   
         cmap.set_over('lightslategrey') 
         
         # Sort by ascending melt amounts for the bar plots
-        ordered_melt    = np.zeros(len(self.masks))
-        bname           = []
+        ordered_melt        = np.zeros(len(self.masks))
+        bname               = []
         for iters,name in enumerate(self.delta_state_byelev):
             ordered_melt[iters] = self.delta_state_byelev[name].sum()
             bname.append(name)
         
-        # Order by area, needs work...
         x               = np.argsort(abs(ordered_melt), axis=0)
         ordered_melt_area = ordered_melt[x]
         bname           = [bname[i] for i in x]
@@ -652,8 +645,7 @@ class snowav(object):
             ax1.set_ylabel(r'M $m^3$')
             ax1.set_xlabel('elevation [m]')
             ax1.axes.set_title(r'Change in SWE [M $m^3$]')
-     
-           
+               
         ax1.yaxis.set_label_position("right")
         ax1.tick_params(axis='x')
         ax1.tick_params(axis='y')
@@ -661,7 +653,7 @@ class snowav(object):
         ax1.legend(loc='best')   
         plt.tight_layout() 
         
-        print('saving figure to %sresults%s'%(self.figs_path,self.name_append))
+        print('saving figure to %sswe_change%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sswe_change%s.png'%(self.figs_path,self.name_append))     
              
         

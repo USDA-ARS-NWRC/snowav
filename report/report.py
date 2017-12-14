@@ -12,6 +12,7 @@ def report(object):
     -currently the string replacer only handles str and float
     -simple check for if figures even exist
     -make report environment paths relative
+    -consider printing out summary info for sanity check...
     
     '''
     
@@ -39,20 +40,24 @@ def report(object):
     sub2_swe_del    = object.delta_state_byelev[object.sub2_lbl].sum()
     sub3_swe_del    = object.delta_state_byelev[object.sub3_lbl].sum()
 
-    # Assign variables and put in dict
-    start_date  = object.dateFrom.date().strftime("%B %-d")
-    end_date    = object.dateTo.date().strftime("%B %-d")  
+    # Assign some more variables
+    start_date      = object.dateFrom.date().strftime("%B %-d")
+    end_date        = object.dateTo.date().strftime("%B %-d")  
     
-    report_title = object.rep_title
-    fore_date   = ' '
-    swe_in      = total_swe
-    swi_in      = total_swi       
+    report_title    = object.rep_title
+    fore_date       = ' '
+    swe_in          = total_swe
+    swi_in          = total_swi       
     
-    fig_path    = object.figs_path
-    swi_fig     = 'swi%s.png'%(object.name_append)
-    results_fig = 'results%s.png'%(object.name_append)
-    changes_fig = 'swe_change%s.png'%(object.name_append)
+    fig_path        = object.figs_path
+    swi_fig         = 'swi%s.png'%(object.name_append)
+    results_fig     = 'results%s.png'%(object.name_append)
+    changes_fig     = 'swe_change%s.png'%(object.name_append)
     # elev_fig    = 'swe_elev%s.png'%(object.name_append)
+    
+    # Check that figures actually exist
+    # for name in []
+    #     os.path.isfile() 
     
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
@@ -77,7 +82,7 @@ def report(object):
                     
                     }
     
-    # Convert to strings    
+    # Convert floats to strings    
     for name in variables:
         try:
             if isinstance(variables[name], float):
@@ -86,15 +91,6 @@ def report(object):
         except:
             print('Failed converting variables to strings for report...')
     
-    #########################################################
-    #         SUMMARY
-    #########################################################
-    
-    # Replace variables (like START_DATE) that exist in the summary paragraph
-    # object.env_path     = '/home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/'
-    # object.templ_path   = '/home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/'
-    # object.tex_file     = 'brb_report.tex'
-    
     # Load in summary.txt files, and replace variables with values
     fid         = open('%ssummary.txt'%(object.env_path),'r')
     summary     = fid.read()
@@ -102,7 +98,8 @@ def report(object):
     
     for name in variables:
         summary = summary.replace(name,variables[name])          
-                 
+    
+    # As of 2017/12/13 this section is empty...             
     fid         = open('%sresults_summary.txt'%(object.env_path),'r')
     results_summary     = fid.read()
     fid.close()
@@ -118,7 +115,8 @@ def report(object):
     env         = make_env(loader = FileSystemLoader(object.templ_path))
     tpl         = env.get_template(object.tex_file)        
     pdf         = build_pdf(tpl.render(variables))
-    # If you want to see what is being sent to the LaTex environment...
     # print(tpl.render(variables))
+    
+    print('Saving report to %s%s.pdf'%(object.rep_path,object.report_name))
     pdf.save_to('%s%s'%(object.rep_path,object.report_name)) 
 
