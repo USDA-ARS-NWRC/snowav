@@ -1,0 +1,203 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for
+\usepackage{geometry}            	% See geometry.pdf to learn the layout options. 
+\geometry{letterpaper, margin=1in}              	% ... or a4paper or a5paper or ... 
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use 	
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{titling}
+
+\setlength{\droptitle}{-8em}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy} % enable fancy page style
+\fancyfoot[R]{ % right
+%    \includegraphics[scale=0.9]{../ARSlogo.png}
+}
+
+\newenvironment{noindlist}
+ {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
+ {\end{list}}
+
+
+\title{ \VAR{REPORT_TITLE|e} \\
+Water Year 2017 \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}
+}
+
+\author{USDA Agricultural Research Service, Boise, Idaho\\
+NRCS National Water and Climate Center, Portland, Oregon\\
+\emph{in cooperation with} U.S. Bureau of Reclamation, Boise, Idaho}
+\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\vspace{-1.2cm}
+\section{Summary}
+\VAR{SUMMARY|e}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{l c c c c }
+\toprule
+\bf{Basin} 			& SWE [KAF]		& SWE AVAIL [KAF] & $\Delta$SWE [KAF] & SWI [KAF]	 \\
+\midrule
+Boise River Basin	& \VAR{TOTAL_SWE|e}& \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_SWE_DEL|e}& \VAR{TOTAL_SWI|e} \\
+Featherville	    		& \VAR{SUB1_SWE|e}& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_SWE_DEL|e}& \VAR{SUB1_SWI|e} \\
+Twin Springs	    		& \VAR{SUB2_SWE|e}& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_SWE_DEL|e}& \VAR{SUB2_SWI|e} \\
+Mores Creek	        & \VAR{SUB3_SWE|e}& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_SWE_DEL|e}& \VAR{SUB3_SWI|e} \\
+\bottomrule
+\end{tabular}
+% \caption{yupperdep}
+\label{tab:snotel}
+\end{table}
+
+\begin{itemize}
+\item[] SWE: total snow storage in the basin.
+\item[] SWE AVAIL: amount of isothermal snow, which will melt with any additional energy inputs.
+\item[] $\Delta$SWE: change in SWE during the reporting period.
+\item[] SWI: Snow Water Input, the combination of snowmelt and rain, during the reporting period.
+\end{itemize}
+
+\clearpage
+
+%%  \section{Current Model Results (through \VAR{END_DATE|e}, 2017)}
+\section{Results}
+\VAR{RESULTS_SUMMARY|e}
+
+% SWE change
+\begin{figure}[htbp]
+\begin{centering}
+	% \hspace*{-.7in}
+	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{CHANGES_FIG}}
+	\caption{Change in SWE during the reporting period.}
+	\label{fig:RESULTS}
+\end{centering}
+\end{figure}
+
+% SWI
+\begin{figure}[htbp]
+\begin{centering}
+	% \hspace*{-.7in}
+	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{SWI_FIG}}
+	\caption{Current Snow Water Inputs (SWI) for the reporting period.}
+	\label{fig:SWI}
+\end{centering}
+\end{figure}
+
+% SWE distribution
+\begin{figure}[htbp]
+\begin{centering}
+	% \hspace*{-.7in}
+	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{RESULTS_FIG}}
+	\caption{Current distribution of SWE and cold content.}
+	\label{fig:RESULTS}
+\end{centering}
+\end{figure}
+
+% SWE elevation
+\begin{figure}[htbp]
+\begin{centering}
+	% \hspace*{-.7in}
+	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
+	\caption{Current SWE per elevation band for each sub basin.}
+	\label{fig:RESULTS}
+\end{centering}
+\end{figure}
+
+
+
+
+%
+%% SWE Distribution
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.9\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Current modeled SWE as a function of elevation.}
+%	\label{fig:SWE_elev}
+%\end{center}
+%\end{figure}
+%
+%% Potential Melt
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.9\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Potential water available or not available for melt as a function of elevation. Yellow indicates the total water volume potential from elevations where the snowpack is ready to melt or already melting.  The solid and dashed lines are the cumulative sum of water volumes.}
+%	\label{fig:Melt}
+%\end{center}
+%\end{figure}
+%
+%
+%\clearpage
+%\section{Changes between model runs (May 4 to May 8)}
+%
+%\begin{noindlist}
+%	\item SWE has decreased at all elevations, with a net loss of 263 KAF of snow water storage (Figure \ref{fig:swe_d}).
+%	\item Modeled SWI indicates that approximately 367 KAF has entered the basin in the past 3 days, including 134 from the Twin Springs, 39 from Mores Creek, and 127 from Featherville (Figure \ref{fig:swi_d}). 
+%\end{noindlist}
+%
+%
+%% SWE Difference between runs MAP and bar
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.85\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Changes in SWE between Report dates.}
+%	\label{fig:swe_d}
+%\end{center}
+%\end{figure}
+%
+%% SWI  between runs 
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=1\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Accumulated Surface Water Input (SWI) between report dates.}
+%	\label{fig:swi_d}
+%\end{center}
+%\end{figure}
+%
+%\clearpage
+%\section{Short Term Forecast (May 8 to May 11)}
+%
+%\begin{noindlist}
+%	\item Temperatures are rising through the forecast period, with highs into the mid-60's at mid-elevations by May 11. High elevations will see freezing temperatures tonight, but will remain above freezing overnight on May 9 and 10.
+%	\item All elevations are forecast to lose SWE over the next 3 days (net loss of 132 KAF snow storage). (Figure \ref{fig:swe_f}).
+%	\item Forecast SWI indicates that approximately 178 KAF will enter the basin in the next 3 days (Figure \ref{fig:swi_f}). 
+%\end{noindlist}
+%
+%
+%% SWE Difference forecast
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=0.8\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Forecast change in SWE for the next 3 days.}
+%	\label{fig:swe_f}
+%\end{center}
+%\end{figure}
+%
+%% SWI  Difference forecast 
+%\begin{figure}[htbp]
+%\begin{center}
+%	\includegraphics[width=.95\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+%	\caption{Forecast Surface Water Input (SWI) for the next 3 days.}
+%	\label{fig:swi_f}
+%\end{center}
+%\end{figure}
+%
+%% Model Results - Validation
+%\begin{figure}[htbp]
+% \begin{center}
+% 	\includegraphics[angle=90,width=.65\textwidth]{/home/markrobertson/reports/report_auto/BRB2017test/results20170511.png}
+% 	\caption{Comparison between measured and modeled SWE at 12 SNOTEL sites. The solid black line is the measured SWE. The blue lines are the modeled SWE at model pixels surrounding the SNOTEL location.}
+% 	\label{fig:meas_mod}
+% \end{center}
+% \end{figure}
+
+\clearpage
+
+\noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. 
+This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement.
+USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided.
+
+Contact: Mark Robertson mark.robertson@ars.usda.gov, office phone (208) 422-0739. 
+
+\end{document}  
