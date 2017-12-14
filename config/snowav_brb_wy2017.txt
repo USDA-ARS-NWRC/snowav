@@ -2,25 +2,18 @@
 pixel = 100
 nrows = 1500
 ncols = 1500
-save_path = /mnt/volumes/wkspace/results/brb/wy17/tblauto_pre/
+save_path = /mnt/volumes/wkspace/results/brb/wy17/tblauto_ta/
 name_append = _testingagain
 basin = BRB
 units = SI
 wy = 2017
 
-; Would like to determine these automatically
-; [Time]
-; Right now these are just being used for plot titles
-; datefrom = 2016-10-1
-;dateto = 2017-8-1
-
-
 [Outputs]
 ; Specific psnowFile and csnowFile take precedence over run_dir
-run_dir = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_pre/runs/run20161001_20170801/output/
-psnowFile = /mnt/data/snowdrift/brb/devel/wy2017/wxbase/runs/run20161001_20170801/output/snow.3839
-csnowFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_pre/runs/run20161001_20170801/output/snow.3839
-cemFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_pre/runs/run20161001_20170801/output/em.3839
+run_dir = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/
+psnowFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/snow.3839
+csnowFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/snow.4175
+cemFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/em.4175
 snowband = 2
 emband = 8
 
@@ -48,7 +41,7 @@ clmin = 1
 clmax = 99
 
 [Plots]
-fig_length = 10 
+fig_length = 10
 fig_height = 5
 dpi = 200
 
@@ -65,24 +58,13 @@ sub1_lbl = Featherville
 sub2_lbl = Twin Springs
 sub3_lbl = Mores Creek
 
-;tlxasc = /home/markrobertson/mrworkspace/projects/Tuol2017/topo/tuolx_hetchy_mask_50m.asc
-;tlasc = /home/markrobertson/mrworkspace/projects/Tuol2017/topo/tuolx_mask_50m.asc
-;chasc = /home/markrobertson/mrworkspace/projects/Tuol2017/topo/tuolx_cherry_mask_50m.asc
-;elasc = /home/markrobertson/mrworkspace/projects/Tuol2017/topo/tuolx_eleanor_mask_50m.asc
-
 [Report]
-; Currently the report gets figs from save_path...
-env_path = /mnt/volumes/wkspace/reports/brb_report_template/section_text/
-templ_path = /mnt/volumes/wkspace/reports/brb_report_template/
+; Path to save report
+rep_path = /mnt/volumes/wkspace/reports/brb/test/
+env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
+templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
 tex_file = brb_report.tex
 
-; Path to save report
-rep_path = /mnt/volumes/wkspace/reports/wy17/brb/BRB_wy2017iSnobal_May08_May11.pdf
-
 ; Path to the config file
-conf_path = /home/markrobertson/mrworkspace/code/basin_plot_tools/brb_wy2017figs_config.txt
-
-rep_title = Boise River Basin Snowpack Summary
-
-
-
+; conf_path = /home/markrobertson/mrworkspace/code/basin_plot_tools/brb_wy2017figs_config.txt
+; rep_title = Boise River Basin Snowpack Summary

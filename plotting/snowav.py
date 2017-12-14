@@ -160,10 +160,25 @@ class snowav(object):
             self.env_path       = cfg.get('Report','env_path')
             self.tex_file       = cfg.get('Report','tex_file')
             self.rep_path       = cfg.get('Report','rep_path')
-            self.conf_path      = cfg.get('Report','conf_path')
+            # self.conf_path      = cfg.get('Report','conf_path')
             self.templ_path     = cfg.get('Report','templ_path')
-            self.rep_title      = cfg.get('Report','rep_title')   
+            # self.rep_title      = cfg.get('Report','rep_title')  
             
+            # These will later get appended with self.dateTo once it is calculated
+            if self.basin == 'BRB':
+                self.report_name    = ('BoiseRiverBasin_SnowpackSummary_.pdf')
+                self.rep_title      = 'Boise River Basin Snowpack Summary'
+            if self.basin == 'TUOL':
+                self.report_name    = ('TuolumneRiverBasin_SnowpackSummary_.pdf') 
+                self.rep_title      = 'Tuolumne River Basin Snowpack Summary'
+                
+            # 
+            if self.units == 'KAF':
+                self.reportunits = 'KAF'
+                
+            if self.units == 'SI':
+                self.reportunits = 'M m^3'
+                           
             ####################################################   
             # Now let's set up the masks and make a few calculations
             nrows               = self.nrows
@@ -282,20 +297,25 @@ class snowav(object):
         self.dateFrom       = wy.wyhr_to_datetime(self.wy,int(self.psnowFile.split('.')[-1]))
         self.dateTo         = wy.wyhr_to_datetime(self.wy,int(self.csnowFile.split('.')[-1]))
         
+        # Append date to report name
+        parts               = self.report_name.split('.')
+        self.report_name    = parts[0] + self.dateTo.date().strftime("%Y%m%d") + '.' + parts[1]
+        
         # Do some calculations
         delta_state     = state - pstate
         
         # Mask by subbasin and elevation band
         for mask_name in self.masks:
             accum_mask              = np.multiply(accum,self.masks[mask_name]['mask'])
+            state_mask              = np.multiply(state,self.masks[mask_name]['mask'])
             delta_state_byelev_mask = np.multiply(delta_state,self.masks[mask_name]['mask'])
-            state_byelev_mask       = np.multiply(state_byelev,self.masks[mask_name]['mask'])
+            state_byelev_mask       = np.multiply(state,self.masks[mask_name]['mask'])
             elevbin                 = np.multiply(self.ixd,self.masks[mask_name]['mask'])
             
             # Do it by elevation band
             for n in range(0,len(self.edges)):
                 ind         = elevbin == n
-                state_bin   = state[ind]
+                state_bin   = state_mask[ind]
                 
                 # Cold content
                 ccb         = cold[ind]
@@ -310,16 +330,17 @@ class snowav(object):
             self.masks[mask_name]['SWE'] = (melt[mask_name].sum() + nonmelt[mask_name].sum())*self.conversion_factor        
         
         # Convert to desired units
-        self.accum           = np.multiply(accum,self.depth_factor)
-        self.state           = np.multiply(state,self.depth_factor)
-        self.pstate          = np.multiply(pstate,self.conversion_factor)
-        self.delta_state     = np.multiply(delta_state,self.conversion_factor)
-        self.delta_state_byelev    = np.multiply(delta_state_byelev,self.conversion_factor)
-        self.accum_byelev    = np.multiply(accum_byelev,self.conversion_factor)
-        self.state_byelev    = np.multiply(state_byelev,self.conversion_factor)
-        self.melt            = np.multiply(melt,self.conversion_factor)
-        self.nonmelt         = np.multiply(melt,self.conversion_factor)
-        self.cold            = np.multiply(self.cold,0.000001) # [MJ]
+        self.accum                  = np.multiply(accum,self.depth_factor)
+        self.state                  = np.multiply(state,self.depth_factor)
+        self.pstate                 = np.multiply(pstate,self.conversion_factor)
+        self.delta_state            = np.multiply(delta_state,self.conversion_factor)
+        self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)
+        self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)
+        self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)
+        self.melt                   = np.multiply(melt,self.conversion_factor)
+        self.nonmelt                = np.multiply(melt,self.conversion_factor)
+        self.cold                   = np.multiply(self.cold,0.000001) # [MJ]
+        
         
         # Write the config file
     
@@ -498,9 +519,9 @@ class snowav(object):
         h1.axes.set_title('Cold Content [MJ/$m^3$] \n %s'%(self.dateTo.date()))
         divider = make_axes_locatable(ax1)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
-        cbar    = plt.colorbar(h1, cax = cax)
-        cbar.set_label('Cold Content [MJ/$m^3$]')
-        cbar.ax.tick_params() 
+        cbar1    = plt.colorbar(h1, cax = cax)
+        cbar1.set_label('Cold Content [MJ/$m^3$]')
+        cbar1.ax.tick_params() 
         
         # Labels that depend on units
         if self.units == 'KAF':

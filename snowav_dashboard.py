@@ -6,7 +6,6 @@ import SNOWAV
 config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_brb_wy2017.txt'
 snow            = SNOWAV.snowav(config_file)
     
-
 # Make all the calculations
 SNOWAV.snowav.process(snow)
 
