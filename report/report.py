@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 
-def report(object):
+def report(obj):
     '''
     Need to add flexibility/checking with what band was specified and actually using SWE/SWI
     -forecast date
@@ -17,43 +17,43 @@ def report(object):
     '''
     
     # SWI values
-    total_swi       = object.accum_byelev[object.total_lbl].sum()
-    sub1_swi        = object.accum_byelev[object.sub1_lbl].sum()
-    sub2_swi        = object.accum_byelev[object.sub2_lbl].sum()
-    sub3_swi        = object.accum_byelev[object.sub3_lbl].sum()
+    total_swi       = obj.accum_byelev[obj.total_lbl].sum()
+    sub1_swi        = obj.accum_byelev[obj.sub1_lbl].sum()
+    sub2_swi        = obj.accum_byelev[obj.sub2_lbl].sum()
+    sub3_swi        = obj.accum_byelev[obj.sub3_lbl].sum()
     
     # SWE values
-    total_swe       = object.state_byelev[object.total_lbl].sum()
-    sub1_swe        = object.state_byelev[object.sub1_lbl].sum()
-    sub2_swe        = object.state_byelev[object.sub2_lbl].sum()
-    sub3_swe        = object.state_byelev[object.sub3_lbl].sum()
+    total_swe       = obj.state_byelev[obj.total_lbl].sum()
+    sub1_swe        = obj.state_byelev[obj.sub1_lbl].sum()
+    sub2_swe        = obj.state_byelev[obj.sub2_lbl].sum()
+    sub3_swe        = obj.state_byelev[obj.sub3_lbl].sum()
     
     # SWE available for melt
-    totalav_swe     = object.melt[object.total_lbl].sum()
-    sub1av_swe      = object.melt[object.sub1_lbl].sum()
-    sub2av_swe      = object.melt[object.sub2_lbl].sum()
-    sub3av_swe      = object.melt[object.sub3_lbl].sum()
+    totalav_swe     = obj.melt[obj.total_lbl].sum()
+    sub1av_swe      = obj.melt[obj.sub1_lbl].sum()
+    sub2av_swe      = obj.melt[obj.sub2_lbl].sum()
+    sub3av_swe      = obj.melt[obj.sub3_lbl].sum()
     
     # Change in SWE
-    total_swe_del   = object.delta_state_byelev[object.total_lbl].sum()
-    sub1_swe_del    = object.delta_state_byelev[object.sub1_lbl].sum()
-    sub2_swe_del    = object.delta_state_byelev[object.sub2_lbl].sum()
-    sub3_swe_del    = object.delta_state_byelev[object.sub3_lbl].sum()
+    total_swe_del   = obj.delta_state_byelev[obj.total_lbl].sum()
+    sub1_swe_del    = obj.delta_state_byelev[obj.sub1_lbl].sum()
+    sub2_swe_del    = obj.delta_state_byelev[obj.sub2_lbl].sum()
+    sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
 
     # Assign some more variables
-    start_date      = object.dateFrom.date().strftime("%B %-d")
-    end_date        = object.dateTo.date().strftime("%B %-d")  
+    start_date      = obj.dateFrom.date().strftime("%B %-d")
+    end_date        = obj.dateTo.date().strftime("%B %-d")  
     
-    report_title    = object.rep_title
+    report_title    = obj.rep_title
     fore_date       = ' '
     swe_in          = total_swe
     swi_in          = total_swi       
     
-    fig_path        = object.figs_path
-    swi_fig         = 'swi%s.png'%(object.name_append)
-    results_fig     = 'results%s.png'%(object.name_append)
-    changes_fig     = 'swe_change%s.png'%(object.name_append)
-    # elev_fig    = 'swe_elev%s.png'%(object.name_append)
+    fig_path        = obj.figs_path
+    swi_fig         = 'swi%s.png'%(obj.name_append)
+    results_fig     = 'results%s.png'%(obj.name_append)
+    changes_fig     = 'swe_change%s.png'%(obj.name_append)
+    # elev_fig    = 'swe_elev%s.png'%(obj.name_append)
     
     # Check that figures actually exist
     # for name in []
@@ -62,8 +62,8 @@ def report(object):
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
                     'REPORT_TITLE':report_title,
-                    'WATERYEAR':str(object.wy),
-                    'UNITS':object.reportunits,
+                    'WATERYEAR':str(obj.wy),
+                    'UNITS':obj.reportunits,
                     'START_DATE':start_date,
                     'END_DATE':end_date,
                     'FORE_DATE':fore_date,
@@ -92,19 +92,24 @@ def report(object):
             print('Failed converting variables to strings for report...')
     
     # Load in summary.txt files, and replace variables with values
-    fid         = open('%ssummary.txt'%(object.env_path),'r')
-    summary     = fid.read()
-    fid.close() 
+    if obj.basin == 'BRB':
+        summary         = '%sbrb_summary.txt'%(obj.env_path)
+        results_summary = '%sbrb_results_summary.txt'%(obj.env_path)
+        
+    if obj.basin == 'TUOL':
+        summary         = '%stuol_summary.txt'%(obj.env_path)
+        results_summary = '%stuol_results_summary.txt'%(obj.env_path)
     
-    for name in variables:
-        summary = summary.replace(name,variables[name])          
-    
-    # As of 2017/12/13 this section is empty...             
-    fid         = open('%sresults_summary.txt'%(object.env_path),'r')
-    results_summary     = fid.read()
+    # Read in both section summaries and then replace variables
+    fid                 = open(summary,'r')
+    fid1                = open(results_summary,'r')
+    summary             = fid.read()
+    results_summary     = fid1.read()
     fid.close()
+    fid1.close()  
     
     for name in variables:
+        summary         = summary.replace(name,variables[name])          
         results_summary = results_summary.replace(name,variables[name])   
              
     # Add the section text variables to what we'll pass to the document
@@ -112,11 +117,11 @@ def report(object):
     variables['RESULTS_SUMMARY']    = results_summary 
            
     # Make the report
-    env         = make_env(loader = FileSystemLoader(object.templ_path))
-    tpl         = env.get_template(object.tex_file)        
+    env         = make_env(loader = FileSystemLoader(obj.templ_path))
+    tpl         = env.get_template(obj.tex_file)        
     pdf         = build_pdf(tpl.render(variables))
     # print(tpl.render(variables))
     
-    print('Saving report to %s%s.pdf'%(object.rep_path,object.report_name))
-    pdf.save_to('%s%s'%(object.rep_path,object.report_name)) 
+    print('Saving report to %s%s'%(obj.rep_path,obj.report_name))
+    pdf.save_to('%s%s'%(obj.rep_path,obj.report_name)) 
 

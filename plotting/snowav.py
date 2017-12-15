@@ -29,6 +29,9 @@ import tqdm
 class snowav(object):
 
     def __init__(self,config_file):
+        '''
+        -pixel size assign automatically for BRB, TUOL
+        '''
         
         try:
             print('Reading the config file...')
@@ -39,23 +42,17 @@ class snowav(object):
             #             Basin section                        #
             ####################################################
             self.basin          = cfg.get('Basin','basin')
-            self.pixel          = int(cfg.get('Basin','pixel'))
             self.save_path      = cfg.get('Basin','save_path')
             self.name_append    = cfg.get('Basin','name_append')
-            self.nrows          = int(cfg.get('Basin','nrows'))
-            self.ncols          = int(cfg.get('Basin','ncols'))
             self.wy             = int(cfg.get('Basin','wy'))
             
+            # Let's assign this automatically now...
+            # self.pixel          = int(cfg.get('Basin','pixel'))
+            # self.nrows          = int(cfg.get('Basin','nrows'))
+            # self.ncols          = int(cfg.get('Basin','ncols'))
+            
             # Determine units and appropriate conversion
-            self.units          = cfg.get('Basin','units')
-
-            if self.units == 'KAF':
-                self.conversion_factor  = (self.pixel**2)*0.000000810713194*0.001       # storage in KAF
-                self.depth_factor       = 0.03937                                       # depth in inches
-
-            if self.units == 'SI':
-                self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e6 # storage in M m^3
-                self.depth_factor       = 0.001                                         # depth in m        
+            self.units          = cfg.get('Basin','units') 
             
             ####################################################
             #           Outputs section                        #
@@ -79,13 +76,18 @@ class snowav(object):
                 epts            = self.csnowFile.split('.')
                 enhr            = int(epts[-1])
                 run_files_filt  = []
-                
-                for name in self.run_files:
-                    file_hr     = int(name.split('.')[-1])
+
+                # This could be made more robust
+                try:
+                    for name in self.run_files:
+                        if not 'error.out' in name:
+                            file_hr     = int(name.split('.')[-1])
   
-                    if file_hr >= int(sthr) and file_hr <= int(enhr):
-                        run_files_filt.append(name) 
-    
+                            if file_hr >= int(sthr) and file_hr <= int(enhr):
+                                run_files_filt.append(name) 
+                except:
+                    print('error parsing self.run_files...')
+                            
                 self.em_files   = [value for value in run_files_filt if 'em' in value]
                 self.snow_files = [value for value in run_files_filt if 'snow' in value]
     
@@ -95,7 +97,7 @@ class snowav(object):
                 self.psnowFile  = self.snow_files[0] 
                 self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
                 self.cemFile    = self.em_files[len(self.em_files)-1] 
-          
+
             ####################################################
             #           Accumulated                            #
             ####################################################   
@@ -154,7 +156,7 @@ class snowav(object):
     
             ####################################################
             #          Report                                  #
-            ####################################################         
+            ####################################################        
             self.env_path       = cfg.get('Report','env_path')
             self.tex_file       = cfg.get('Report','tex_file')
             self.rep_path       = cfg.get('Report','rep_path')
@@ -178,37 +180,48 @@ class snowav(object):
                 self.reportunits = 'M m^3'
                            
             ####################################################   
-            # Now let's set up the masks and make a few calculations
-            nrows               = self.nrows
-            ncols               = self.ncols 
-    
+            # Assign some basin-specific defaults and create mask dicts
             if self.basin == 'BRB':
-                self.masks  = { self.total_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl,'runoff':[],'SWE':[]},
-                                self.sub1_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin1),'label':self.sub1_lbl,'runoff':[],'SWE':[]},
-                                self.sub2_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin2),'label':self.sub2_lbl,'runoff':[],'SWE':[]},
-                                self.sub3_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin3),'label':self.sub3_lbl,'runoff':[],'SWE':[]} 
+                self.pixel  = 100
+                self.nrows  = 1500
+                self.ncols  = 1500   
+                
+                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl},
+                                self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1),'label':self.sub1_lbl},
+                                self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2),'label':self.sub2_lbl},
+                                self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3),'label':self.sub3_lbl} 
                                 } 
                 
             elif self.basin == 'TUOL':
-                self.masks  = { self.total_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl,'runoff':[],'SWE':[]},
-                                self.sub1_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin1,skip_header=6),'label':self.sub1_lbl,'runoff':[],'SWE':[]},
-                                self.sub2_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin2,skip_header=6),'label':self.sub2_lbl,'runoff':[],'SWE':[]},
-                                self.sub3_lbl: {'border': np.zeros((nrows,ncols)), 'mask': np.genfromtxt(self.subbasin3,skip_header=6),'label':self.sub3_lbl,'runoff':[],'SWE':[]} 
-                                }         
-    
-            # Get the DEM and set up the elevation bands
-            self.dem            = np.genfromtxt(self.demPath,skip_header=6)
+                self.pixel  = 50
+                self.nrows  = 1339
+                self.ncols  = 1374               
+                
+                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl},
+                                self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1,skip_header=6),'label':self.sub1_lbl},
+                                self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2,skip_header=6),'label':self.sub2_lbl},
+                                self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3,skip_header=6),'label':self.sub3_lbl} 
+                                }  
+              
+            # Get the DEM 
+            self.dem                    = np.genfromtxt(self.demPath,skip_header=6)
+            
+            # Do unit-specific things
             if self.units == 'KAF':
-                self.dem        = self.dem*3.28
-                self.step       = 250
-                self.edges      = np.arange(2750,13000+self.step,self.step)
-                self.ixd        = np.digitize(self.dem,self.edges)        
+                self.conversion_factor  = (self.pixel**2)*0.000000810713194*0.001       # storage in KAF
+                self.depth_factor       = 0.03937                                       # depth in inches
+                self.dem                = self.dem*3.28
+                self.step               = 250
+                self.edges              = np.arange(2750,13000+self.step,self.step)
+                self.ixd                = np.digitize(self.dem,self.edges)        
             
             if self.units == 'SI':
-                self.dem        = self.dem          
-                self.step       = 100
-                self.edges      = np.arange(800,3600+self.step,self.step)
-                self.ixd        = np.digitize(self.dem,self.edges)             
+                self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e6 # storage in M m^3
+                self.depth_factor       = 0.001                                         # depth in meters
+                self.dem                = self.dem          
+                self.step               = 100
+                self.edges              = np.arange(800,3600+self.step,self.step)
+                self.ixd                = np.digitize(self.dem,self.edges)             
                                  
             # Make a copy of the config file in the same place that the figs will be saved
             pathf           = os.path.split(config_file)
@@ -223,6 +236,7 @@ class snowav(object):
             if not os.path.exists(self.figs_path):
                 os.makedirs(self.figs_path)
     
+            # Only need to store this name if we decide to write more to the copied config file
             self.config_copy = self.figs_path + extf[0] + self.name_append + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5]) + extf[1]
             
             # If it doesn't already exist, make it
@@ -350,7 +364,7 @@ class snowav(object):
 
         qMin,qMax       = np.percentile(accum,[0,self.acc_clmax])
         clims           = (0,qMax)
-        colors1         = cmocean.cm.deep(np.linspace(0., 1, 255))
+        colors1         = cmocean.cm.dense(np.linspace(0., 1, 255))
         colors2         = plt.cm.Set2_r(np.linspace(0, 1, 1))
         colors          = np.vstack((colors2, colors1))
         mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
@@ -546,11 +560,11 @@ class snowav(object):
      
         # if qMin is 0, need to change things 
         if qMax > 0:
-            colorsbad   = plt.cm.Set2(np.linspace(0., 1, 2))
+            colorsbad   = plt.cm.Set2_r(np.linspace(0., 1, 1))
             # colors1     = plt.cm.autumn(np.linspace(0., 1, 126))
-            colors1     = cmocean.cm.matter_r(np.linspace(0., 1, 126))
-            # colors2     = plt.cm.winter_r(np.linspace(0, 1, 128))
-            colors2     = cmocean.cm.ice_r(np.linspace(0, 1, 128))
+            # colors2     = plt.cm.winter_r(np.linspace(0, 1, 128))            
+            colors1     = cmocean.cm.matter_r(np.linspace(0., 1, 127))
+            colors2     = plt.cm.Blues(np.linspace(0, 1, 128))
             colors      = np.vstack((colors1, colors2,colorsbad))
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
