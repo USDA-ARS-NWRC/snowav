@@ -30,7 +30,12 @@ class snowav(object):
 
     def __init__(self,config_file):
         '''
-        -pixel size assign automatically for BRB, TUOL
+        Notes: 
+        - pixel, nrows, ncols are assigned automatically for BRB, TUOL - other things could be still...
+        - consider adding defaults and overwrite options for all plot labels (KAF per elevation band, 
+            elevation [m], etc.), would eliminate a lot of if/else statements in plotting, and allow
+            for plotting in cm too...
+        
         '''
         
         try:
@@ -45,11 +50,6 @@ class snowav(object):
             self.save_path      = cfg.get('Basin','save_path')
             self.name_append    = cfg.get('Basin','name_append')
             self.wy             = int(cfg.get('Basin','wy'))
-            
-            # Let's assign this automatically now...
-            # self.pixel          = int(cfg.get('Basin','pixel'))
-            # self.nrows          = int(cfg.get('Basin','nrows'))
-            # self.ncols          = int(cfg.get('Basin','ncols'))
             
             # Determine units and appropriate conversion
             self.units          = cfg.get('Basin','units') 
@@ -161,8 +161,6 @@ class snowav(object):
             self.tex_file       = cfg.get('Report','tex_file')
             self.rep_path       = cfg.get('Report','rep_path')
             self.templ_path     = cfg.get('Report','templ_path')
-            # self.conf_path      = cfg.get('Report','conf_path')
-            # self.rep_title      = cfg.get('Report','rep_title')  
             
             # These will later get appended with self.dateTo once it is calculated
             if self.basin == 'BRB':
@@ -254,7 +252,7 @@ class snowav(object):
         
         Does not currently save to csv...
         
-        accum:         is used for accumulated values in the 'em' files. This will 
+        accum:        is used for accumulated values in the 'em' files. This will 
                         typically be swi, but could also be evaporation if the proper band 
                         is specified in the config file
         state:        captures the current model state in the 'snow' files. This will 
@@ -266,7 +264,7 @@ class snowav(object):
         nonmelt:      dataframe of totals for the period, defined by cold content
         '''
   
-        cclimit         = -5*1000*1000 #  based on an average of 60 W/m2 from my TL paper
+        cclimit         = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
         accum           = np.zeros((self.nrows,self.ncols))
         state           = np.zeros((self.nrows,self.ncols))
@@ -311,8 +309,8 @@ class snowav(object):
         parts               = self.report_name.split('.')
         self.report_name    = parts[0] + self.dateTo.date().strftime("%Y%m%d") + '.' + parts[1]
         
-        # Do some calculations
-        delta_state     = state - pstate
+        # Difference in state (SWE)
+        delta_state         = state - pstate
         
         # Mask by subbasin and elevation band
         for mask_name in self.masks:
@@ -348,7 +346,7 @@ class snowav(object):
         self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)
         self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)
         self.melt                   = np.multiply(melt,self.conversion_factor)
-        self.nonmelt                = np.multiply(melt,self.conversion_factor)
+        self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)
         self.cold                   = np.multiply(self.cold,0.000001) # [MJ]
         
         # Consider writing summaries to the config file...?
@@ -365,7 +363,7 @@ class snowav(object):
         qMin,qMax       = np.percentile(accum,[0,self.acc_clmax])
         clims           = (0,qMax)
         colors1         = cmocean.cm.dense(np.linspace(0., 1, 255))
-        colors2         = plt.cm.Set2_r(np.linspace(0, 1, 1))
+        colors2         = plt.cm.binary(np.linspace(0, 1, 1))
         colors          = np.vstack((colors2, colors1))
         mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
@@ -376,8 +374,8 @@ class snowav(object):
         pmask           = self.masks[self.total_lbl]['mask']
         ixo             = pmask == 0
         accum[ixo]      = np.nan
-        ixz             = accum == 0
-        accum[ixz]      = 999
+        # ixz             = accum == 0
+        # accum[ixz]      = 999
         mymap.set_bad('white',1.) 
         
         plt.close(0)
@@ -391,7 +389,6 @@ class snowav(object):
         # Do pretty stuff
         h.axes.get_xaxis().set_ticks([])
         h.axes.get_yaxis().set_ticks([])
-       
         divider = make_axes_locatable(ax)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
         cbar    = plt.colorbar(h, cax = cax)
@@ -399,10 +396,10 @@ class snowav(object):
         
         if self.units == 'KAF':
             cbar.set_label('SWI [in]')
-            h.axes.set_title('Snow Water Input Accumulated [in] \n %s to %s'%(self.dateFrom.date(),self.dateTo.date()))
+            h.axes.set_title('Snow Water Input Accumulated [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
         if self.units == 'SI':
             cbar.set_label('SWI [m]')
-            h.axes.set_title('Snow Water Input Accumulated [m] \n %s to %s'%(self.dateFrom.date(),self.dateTo.date()))            
+            h.axes.set_title('Snow Water Input Accumulated [m] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))            
         
         # Sort by ascending melt amounts for the bar plots
         # This is ugly and could be improved...
@@ -438,6 +435,9 @@ class snowav(object):
         edges_lbl = self.edges[1::4]
         ax1.set_xticklabels(str(i) for i in edges_lbl)
         ax1.set_xlim(0,len(self.edges))
+        for tick in ax1.get_xticklabels():
+            tick.set_rotation(30)        
+        
         if self.units == 'KAF':
             ax1.set_ylabel('KAF - per elevation band')
             ax1.set_xlabel('elevation [ft]')
@@ -455,8 +455,9 @@ class snowav(object):
         else:
             ax1.set_ylim((0,ylims[1]+ylims[1]*0.3))
         ax1.legend()
-        
+
         plt.tight_layout()
+        fig.subplots_adjust(top=0.88)
         print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
         
@@ -479,8 +480,7 @@ class snowav(object):
         ixo             = pmask == 0   
         
         # Colormap for self.state
-        colorsbad       = plt.cm.Set2_r(np.linspace(0., 1, 1))
-        # colors1         = plt.cm.viridis_r(np.linspace(0., 1, 255))
+        colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
         colors1         = cmocean.cm.haline_r(np.linspace(0., 1, 255))
         colors          = np.vstack((colors1,colorsbad))
         mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
@@ -488,7 +488,7 @@ class snowav(object):
         mymap.set_bad('white',1.)   
         
         # Colormap for cold content
-        colorsbad       = plt.cm.Set2_r(np.linspace(0., 1, 1))
+        colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
         colors1         = cmocean.cm.thermal(np.linspace(0., 1, 255))
         colors          = np.vstack((colorsbad, colors1))
         mymap1          = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
@@ -524,7 +524,7 @@ class snowav(object):
         # Do pretty stuff for the right plot
         h1.axes.get_xaxis().set_ticks([])
         h1.axes.get_yaxis().set_ticks([])
-        h1.axes.set_title('Cold Content [MJ/$m^3$] \n %s'%(self.dateTo.date()))
+        h1.axes.set_title('Cold Content [MJ/$m^3$] \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
         divider = make_axes_locatable(ax1)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
         cbar1    = plt.colorbar(h1, cax = cax)
@@ -533,10 +533,10 @@ class snowav(object):
         
         # Labels that depend on units
         if self.units == 'KAF':
-            h.axes.set_title('SWE [in] \n %s'%(self.dateTo.date()))
+            h.axes.set_title('SWE [in] \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
             cbar.set_label(r'SWE [in]')
         if self.units == 'SI':
-            h.axes.set_title('SWE [m] \n %s'%(self.dateTo.date()))
+            h.axes.set_title('SWE [m] \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
             cbar.set_label(r'SWE [m]') 
         
         plt.tight_layout() 
@@ -546,6 +546,8 @@ class snowav(object):
     def image_change(self): 
         '''
         This plots self.delta_state
+        
+        Should add in more functionality for plotting differences between various images/runs
         
         '''        
         # Make copy so that we can add nans for the plots, but not mess up the original
@@ -560,18 +562,16 @@ class snowav(object):
      
         # if qMin is 0, need to change things 
         if qMax > 0:
-            colorsbad   = plt.cm.Set2_r(np.linspace(0., 1, 1))
-            # colors1     = plt.cm.autumn(np.linspace(0., 1, 126))
-            # colors2     = plt.cm.winter_r(np.linspace(0, 1, 128))            
+            colorsbad   = plt.cm.Set2_r(np.linspace(0., 1, 1))           
             colors1     = cmocean.cm.matter_r(np.linspace(0., 1, 127))
             colors2     = plt.cm.Blues(np.linspace(0, 1, 128))
             colors      = np.vstack((colors1, colors2,colorsbad))
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
         else:
-            colors1     = plt.cm.autumn(np.linspace(0., 1, 246))
+            colors1     = cmocean.cm.matter_r(np.linspace(0., 1, 255))
             colors2     = plt.cm.Set2_r(np.linspace(0, 1, 1))
-            colors      = np.vstack((colors1, colors2, colors2, colors2, colors2, colors2, colors2, colors2, colors2, colors2))
+            colors      = np.vstack((colors1, colors2))
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
     
         ixf                 = delta_state == 0
@@ -620,10 +620,10 @@ class snowav(object):
         cbar.ax.tick_params() 
         
         if self.units == 'KAF':
-            h.axes.set_title('Change in SWE [in] \n %s to %s'%(self.dateFrom.date(),self.dateTo.date()))
+            h.axes.set_title('Change in SWE [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
             cbar.set_label(r'$\Delta$ SWE [in]')           
         if self.units == 'SI':
-            h.axes.set_title('Change in SWE [m] \n %s to %s'%(self.dateFrom.date(),self.dateTo.date()))
+            h.axes.set_title('Change in SWE [m] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
             cbar.set_label(r'$\Delta$ SWE [m]')   
           
         # Plot the bar in order
@@ -641,15 +641,17 @@ class snowav(object):
         edges_lbl = self.edges[1::4]
         ax1.set_xticklabels(str(i) for i in edges_lbl)
         ax1.set_xlim(0,len(self.edges))
+        for tick in ax1.get_xticklabels():
+            tick.set_rotation(30) 
              
         if hasattr(self,"ch_ylims"):
             ax1.set_ylim(self.ch_ylims)
         else:
             ylims = ax1.get_ylim()
             if ylims[0] < 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.2),ylims[1]+ylims[1]*0.2))
+                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
             if ylims[1] == 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.2),ylims[1]-ylims[0]*0.1))
+                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]-ylims[0]*0.1))
            
         if self.units == 'KAF':
             ax1.set_ylabel('KAF - per elevation band')
@@ -668,6 +670,99 @@ class snowav(object):
         plt.tight_layout() 
         
         print('saving figure to %sswe_change%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sswe_change%s.png'%(self.figs_path,self.name_append))     
+        plt.savefig('%sswe_change%s.png'%(self.figs_path,self.name_append))    
+        
+    def state_by_elev(self): 
+        '''
+        Plots SWE by elevation, delineated by melt/nonmelt
+        
+        '''
+            
+        lim     = np.max(self.melt[self.total_lbl]) + np.max(self.nonmelt[self.total_lbl])
+        ylim    = np.max(lim) + np.max(lim)*0.2 
+        colors  = ['xkcd:light mustard','xkcd:dark violet']
+        fs      = list(self.figsize)
+        fs[0]   = fs[0]*0.8
+        fs      = tuple(fs)
+
+        sns.set_style('darkgrid')
+        sns.set_context("notebook")
+       
+        plt.close(1)
+        fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi, nrows = 2, ncols = 2)
+        axs     = ax.ravel()
+        
+        # This is somewhat of a hack - we won't want alpha order, and my sort by size thing is weird sometimes...
+        # Probably ought to pull this from somewhere instead...
+        if self.basin == 'BRB':
+            mask_order = ['Boise River Basin','Featherville','Twin Springs','Mores Creek']    
+        if self.basin == 'TUOL':
+            mask_order = ['Extended Tuolumne','Tuolumne','Cherry','Eleanor']
+        
+        for iters,name in enumerate(mask_order):
+            sns.set_style('darkgrid')
+            axs[iters].bar(range(0,len(self.edges)),self.melt[name], color = colors[0], bottom = self.nonmelt[name])
+            axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], color = colors[1], label = 'nonmelt ')
+            edges_lbl = self.edges[1::4]
+            axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+            axs[iters].set_xlim((0,len(self.edges)))
+            
+            if iters > 1:
+                if self.units == 'KAF':
+                    axs[iters].set_xlabel('elevation [ft]')
+                if self.units == 'SI':
+                    axs[iters].set_xlabel('elevation [m]')                    
+                
+            axs[iters].tick_params('x',labelsize=8)    
+            axs[iters].yaxis.set_label_position("right")
+            axs[iters].tick_params(axis='x')
+            axs[iters].tick_params(axis='y')
+            axs[iters].yaxis.tick_right()
+            
+            # Get basin total storage in strings for label
+            kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+
+            if self.units == 'KAF':          
+                axs[iters].axes.set_title('%s - %s KAF'%(self.masks[name]['label'],kaf))
+                axs[iters].set_ylabel('KAF')
+            if self.units == 'SI':          
+                axs[iters].axes.set_title(r'%s - %s M $m^3$'%(self.masks[name]['label'],kaf))
+                axs[iters].set_ylabel(r'M $m^3$')                
+            
+            lbl = []
+            for n in (0,1):
+                if n == 0:
+                    kafa = str(np.int(sum(self.melt[name]))) 
+                    if self.units == 'KAF':   
+                        tmpa = ('melt = %s KAF')%(kafa)
+                    if self.units == 'SI':   
+                        tmpa = (r'melt = %s M $m^3$')%(kafa)  
+                                          
+                    lbl.append(tmpa)
+                kafna = str(np.int(sum(self.nonmelt[name]))) 
+
+                if self.units == 'KAF':
+                    tmpna = ('nonmelt = %s KAF')%(kafna)
+                if self.units == 'SI':
+                    tmpna = (r'nonmelt = %s M $m^3$')%(kafna)                    
+                lbl.append(tmpna)                     
+
+            axs[iters].legend(lbl,loc='upper left') 
+            axs[iters].set_ylim((0,ylim)) 
+            for tick in axs[iters].get_xticklabels():
+                tick.set_rotation(30) 
+        
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.88)
+        if self.units == 'KAF': 
+            fig.suptitle('SWE [KAF], %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
+        if self.units == 'SI': 
+            fig.suptitle(r'SWE [M $m^3$], %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
+        
+        
+        print('saving figure to %sswe_elev%s.png'%(self.figs_path,self.name_append))   
+        plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
+        
+        
              
         

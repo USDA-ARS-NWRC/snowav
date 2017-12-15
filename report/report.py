@@ -53,7 +53,7 @@ def report(obj):
     swi_fig         = 'swi%s.png'%(obj.name_append)
     results_fig     = 'results%s.png'%(obj.name_append)
     changes_fig     = 'swe_change%s.png'%(obj.name_append)
-    # elev_fig    = 'swe_elev%s.png'%(obj.name_append)
+    elev_fig        = 'swe_elev%s.png'%(obj.name_append)
     
     # Check that figures actually exist
     # for name in []
@@ -73,7 +73,7 @@ def report(obj):
                     'SWI_FIG':swi_fig,
                     'RESULTS_FIG':results_fig,
                     'CHANGES_FIG':changes_fig,
-                    #'ELEV_FIG':elev_fig,
+                    'ELEV_FIG':elev_fig,
                                     
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
                     'TOTAL_SWE':total_swe,'SUB1_SWE':sub1_swe,'SUB2_SWE':sub2_swe,'SUB3_SWE':sub3_swe,
@@ -120,7 +120,7 @@ def report(obj):
     env         = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl         = env.get_template(obj.tex_file)        
     pdf         = build_pdf(tpl.render(variables))
-    # print(tpl.render(variables))
+    # To see what the latex version >>> print(tpl.render(variables))
     
     print('Saving report to %s%s'%(obj.rep_path,obj.report_name))
     pdf.save_to('%s%s'%(obj.rep_path,obj.report_name)) 

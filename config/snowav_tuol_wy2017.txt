@@ -2,7 +2,7 @@
 save_path = /mnt/volumes/wkspace/results/tuol/wy17/mark_precip/
 name_append = _test
 basin = TUOL
-units = KAF
+units = SI
 wy = 2017
 
 [Outputs]
@@ -16,7 +16,7 @@ emband = 8
 
 [Accumulated]
 clmin = 0
-clmax = 100
+clmax = 98
 ;ymin = -10
 ;ymax = 10
 
