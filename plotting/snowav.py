@@ -264,50 +264,58 @@ class snowav(object):
         nonmelt:      dataframe of totals for the period, defined by cold content
         '''
   
-        cclimit         = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
+        cclimit             = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
-        accum           = np.zeros((self.nrows,self.ncols))
-        state           = np.zeros((self.nrows,self.ncols))
-        pstate          = np.zeros((self.nrows,self.ncols))
-        cold            = np.zeros((self.nrows,self.ncols))
-        accum_byelev    = pd.DataFrame(index = self.edges, columns = self.masks.keys()) 
-        state_byelev    = pd.DataFrame(index = self.edges, columns = self.masks.keys())
-        delta_state_byelev    = pd.DataFrame(index = self.edges, columns = self.masks.keys())
-        melt            = pd.DataFrame(index = self.edges, columns = self.masks.keys())
-        nonmelt         = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        accum               = np.zeros((self.nrows,self.ncols))
+        state               = np.zeros((self.nrows,self.ncols))
+        pstate              = np.zeros((self.nrows,self.ncols))
+        cold                = np.zeros((self.nrows,self.ncols))
+        accum_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys()) 
+        state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        delta_state_byelev  = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        melt                = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        nonmelt             = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        state_summary       = pd.DataFrame(columns = self.masks.keys())
+        accum_summary       = pd.DataFrame(columns = self.masks.keys())
+        
         
         # Loop through output files
         # Currently we need to load in each em.XXXX file to 'accumulate',
         # but only the first and last snow.XXXX file for changes
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,self.snow_files)):
+            
+            # Make date for pd index
+            date        = wy.wyhr_to_datetime(self.wy,int(snow_name.split('.')[-1]))
+            
             em_file     = ipw.IPW('%s%s'%(self.run_dir,em_name))
             band        = em_file.bands[self.emband].data
             accum       = accum + band
             
-            # When it is the first snow file, save that
-            if snow_name == self.psnowFile.split('/')[-1]:
-                # snow_file   = ipw.IPW('%s%s'%(self.run_dir,snow_name))
-                
-                # If we force this back to read in self.psnowFile, rather than
-                # '%s%s'%(self.run_dir,snow_name), then we can compare images from
-                # two different run folders if it was specified that way in the config
-                # file
-                snow_file   = ipw.IPW(self.psnowFile)
-                pstate      = snow_file.bands[self.snowband].data
+            # load and calculate sub-basin total
+            snow_file   = ipw.IPW('%s%s'%(self.run_dir,snow_name))
+            tmpstate    = snow_file.bands[self.snowband].data  
             
-            # When it hits the current snow file, load it in
+            # Store daily sub-basin totals
+            for mask_name in self.masks:
+                accum_summary.loc[date, mask_name]   = np.nansum(np.multiply(accum,self.masks[mask_name]['mask'])) 
+                state_summary.loc[date, mask_name]   = np.nansum(np.multiply(tmpstate,self.masks[mask_name]['mask'])) 
+            
+            # When it is the first snow file, copy
+            if snow_name == self.psnowFile.split('/')[-1]:
+                pstate          = copy.deepcopy(tmpstate)
+            
+            # When it hits the current snow file, copy
             if snow_name == self.csnowFile.split('/')[-1]:
-                snow_file   = ipw.IPW('%s%s'%(self.run_dir,snow_name))
-                state       = snow_file.bands[self.snowband].data
-                self.cold   = em_file.bands[9].data        
+                state           = copy.deepcopy(tmpstate)
+                self.cold       = em_file.bands[9].data        
 
         # Time range based on ipw file headers
-        self.dateFrom       = wy.wyhr_to_datetime(self.wy,int(self.psnowFile.split('.')[-1]))
-        self.dateTo         = wy.wyhr_to_datetime(self.wy,int(self.csnowFile.split('.')[-1]))
+        self.dateFrom           = wy.wyhr_to_datetime(self.wy,int(self.psnowFile.split('.')[-1]))
+        self.dateTo             = wy.wyhr_to_datetime(self.wy,int(self.csnowFile.split('.')[-1]))
         
         # Append date to report name
-        parts               = self.report_name.split('.')
-        self.report_name    = parts[0] + self.dateTo.date().strftime("%Y%m%d") + '.' + parts[1]
+        parts                   = self.report_name.split('.')
+        self.report_name        = parts[0] + self.dateTo.date().strftime("%Y%m%d") + '.' + parts[1]
         
         # Difference in state (SWE)
         delta_state         = state - pstate
@@ -338,16 +346,18 @@ class snowav(object):
             self.masks[mask_name]['SWE'] = (melt[mask_name].sum() + nonmelt[mask_name].sum())*self.conversion_factor        
         
         # Convert to desired units
-        self.accum                  = np.multiply(accum,self.depth_factor)
-        self.state                  = np.multiply(state,self.depth_factor)
-        self.pstate                 = np.multiply(pstate,self.conversion_factor)
-        self.delta_state            = np.multiply(delta_state,self.conversion_factor)
-        self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)
-        self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)
-        self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)
-        self.melt                   = np.multiply(melt,self.conversion_factor)
-        self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)
-        self.cold                   = np.multiply(self.cold,0.000001) # [MJ]
+        self.accum                  = np.multiply(accum,self.depth_factor)                  # sum over all time steps, spatial
+        self.state                  = np.multiply(state,self.depth_factor)                  # at last time step, spatial
+        self.pstate                 = np.multiply(pstate,self.conversion_factor)            # at first time step, spatial
+        self.delta_state            = np.multiply(delta_state,self.conversion_factor)       # at last time step, spatial
+        self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)# at last time step, by elevation
+        self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)      # at last time step, by elevation
+        self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)      # at last time step, by elevation
+        self.melt                   = np.multiply(melt,self.conversion_factor)              # at last time step, based on cold content
+        self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)           # at last time step, based on cold content
+        self.cold                   = np.multiply(self.cold,0.000001)                       # at last time step, spatial [MJ]
+        self.state_summary          = np.multiply(state_summary,self.conversion_factor)    # daily by sub-basin
+        self.accum_summary          = np.multiply(accum_summary,self.conversion_factor)    # daily by sub-basin
         
         # Consider writing summaries to the config file...?
     
@@ -763,6 +773,40 @@ class snowav(object):
         print('saving figure to %sswe_elev%s.png'%(self.figs_path,self.name_append))   
         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
         
+    def basin_total(self): 
+              
+        sns.set_style('darkgrid')
+        sns.set_context("notebook")
+
+        plt.close(4)
+        fig,(ax,ax1)    = plt.subplots(num=4, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
+        axb             = ax.twinx()
+        axb.grid()
+
+        for iters,name in enumerate(self.masks):
+            ax.plot(self.state_summary)
+            axb.plot(self.state_summary - self.state_summary.iloc[0],linestyle=':')
+            
+            ax1.plot(self.accum_summary)
+
+
+        ax.set_ylabel('storage [KAF]') 
+        axb.set_ylabel('change during period')  
+        ax1.set_ylabel('SWI during period [KAF]')
+        ax1.yaxis.set_label_position("right")
+        # ax1.tick_params(axis='x')
+        ax1.tick_params(axis='y')
+        ax1.yaxis.tick_right()
+        ax.legend()
+        ax1.legend() 
         
+        for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
+            tick.set_rotation(30) 
+            tick1.set_rotation(30) 
+             
+        plt.tight_layout()
+        
+        print('saving figure to %sbasin_total%s.png'%(self.figs_path,self.name_append))   
+        plt.savefig('%sbasin_total%s.png'%(self.figs_path,self.name_append))        
              
         

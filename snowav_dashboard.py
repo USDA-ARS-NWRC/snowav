@@ -15,6 +15,7 @@ SNOWAV.snowav.accumulated(snow)
 SNOWAV.snowav.current_image(snow)
 SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
+SNOWAV.snowav.basin_total(snow)
 
 # Report
 SNOWAV.report(snow)
