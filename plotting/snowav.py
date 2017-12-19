@@ -200,6 +200,17 @@ class snowav(object):
                                 self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2,skip_header=6),'label':self.sub2_lbl},
                                 self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3,skip_header=6),'label':self.sub3_lbl} 
                                 }  
+
+            elif self.basin == 'SJ':
+                self.pixel  = 50
+                self.nrows  = 1875
+                self.ncols  = 1657               
+                
+                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl},
+                                self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1,skip_header=6),'label':self.sub1_lbl},
+                                self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2,skip_header=6),'label':self.sub2_lbl},
+                                self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3,skip_header=6),'label':self.sub3_lbl} 
+                                }  
               
             # Get the DEM 
             self.dem                    = np.genfromtxt(self.demPath,skip_header=6)
@@ -334,7 +345,7 @@ class snowav(object):
                 state_bin   = state_mask[ind]
                 
                 # Cold content
-                ccb         = cold[ind]
+                ccb         = self.cold[ind]
                 cind        = ccb > cclimit
                 
                 accum_byelev.loc[self.edges[n],mask_name]       = np.nansum(accum_mask[ind])
@@ -349,15 +360,15 @@ class snowav(object):
         self.accum                  = np.multiply(accum,self.depth_factor)                  # sum over all time steps, spatial
         self.state                  = np.multiply(state,self.depth_factor)                  # at last time step, spatial
         self.pstate                 = np.multiply(pstate,self.conversion_factor)            # at first time step, spatial
-        self.delta_state            = np.multiply(delta_state,self.conversion_factor)       # at last time step, spatial
+        self.delta_state            = np.multiply(delta_state,self.depth_factor)            # at last time step, spatial
         self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)# at last time step, by elevation
         self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)      # at last time step, by elevation
         self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)      # at last time step, by elevation
         self.melt                   = np.multiply(melt,self.conversion_factor)              # at last time step, based on cold content
         self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)           # at last time step, based on cold content
         self.cold                   = np.multiply(self.cold,0.000001)                       # at last time step, spatial [MJ]
-        self.state_summary          = np.multiply(state_summary,self.conversion_factor)    # daily by sub-basin
-        self.accum_summary          = np.multiply(accum_summary,self.conversion_factor)    # daily by sub-basin
+        self.state_summary          = np.multiply(state_summary,self.conversion_factor)     # daily by sub-basin
+        self.accum_summary          = np.multiply(accum_summary,self.conversion_factor)     # daily by sub-basin
         
         # Consider writing summaries to the config file...?
     
@@ -662,6 +673,9 @@ class snowav(object):
                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
             if ylims[1] == 0:
                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]-ylims[0]*0.1))
+            if ylims[0] == 0:
+                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))               
+                
            
         if self.units == 'KAF':
             ax1.set_ylabel('KAF - per elevation band')
@@ -774,6 +788,7 @@ class snowav(object):
         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
         
     def basin_total(self): 
+        self.barcolors
               
         sns.set_style('darkgrid')
         sns.set_context("notebook")
@@ -783,11 +798,11 @@ class snowav(object):
         axb             = ax.twinx()
         axb.grid()
 
-        for iters,name in enumerate(self.masks):
-            ax.plot(self.state_summary)
-            axb.plot(self.state_summary - self.state_summary.iloc[0],linestyle=':')
+        self.state_summary.plot(ax=ax,colormap = self.barcolors)
+                           
+        axb.plot(self.state_summary - self.state_summary.iloc[0],linestyle=':')
             
-            ax1.plot(self.accum_summary)
+        ax1.plot(self.accum_summary)
 
 
         ax.set_ylabel('storage [KAF]') 
