@@ -6,6 +6,11 @@
 \usepackage{booktabs}
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage{titling}
+\usepackage[printwatermark]{xwatermark}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{lipsum}
 
 \setlength{\droptitle}{-8em}
 
@@ -28,6 +33,16 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 NRCS National Water and Climate Center, Portland, Oregon\\
 \emph{in cooperation with} U.S. Bureau of Reclamation, Boise, Idaho}
 \date{}							% Activate to display a given date or no date
+
+\newsavebox\mybox
+\savebox\mybox{\tikz[color=red,opacity=0.3]\node{DRAFT};}
+\newwatermark*[
+allpages,
+angle=45,
+scale=6,
+xpos=-20,
+ypos=15
+]{\usebox\mybox}
 
 \begin{document}
 \maketitle
