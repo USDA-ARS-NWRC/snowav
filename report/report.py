@@ -58,6 +58,7 @@ def report(obj):
     # Check that figures actually exist
     # for name in []
     #     os.path.isfile() 
+
     
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
@@ -99,6 +100,10 @@ def report(obj):
     if obj.basin == 'TUOL':
         summary         = '%stuol_summary.txt'%(obj.env_path)
         results_summary = '%stuol_results_summary.txt'%(obj.env_path)
+
+    if obj.basin == 'SJ':
+        summary         = '%ssj_summary.txt'%(obj.env_path)
+        results_summary = '%ssj_results_summary.txt'%(obj.env_path)
     
     # Read in both section summaries and then replace variables
     fid                 = open(summary,'r')
