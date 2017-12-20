@@ -1,0 +1,60 @@
+[Basin]
+save_path = /mnt/volumes/wkspace/results/sj/wy18/ops
+name_append = _test
+basin = SJ
+units = SI
+wy = 2018
+
+[Outputs]
+run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
+;psnowFile = /mnt/data/blizzard/
+;csnowFile = /mnt/data/blizzard/
+;cemFile = /mnt/data/blizzard/
+snowband = 2
+emband = 8
+
+[Accumulated]
+clmin = 0
+clmax = 98
+;ymin = -10
+;ymax = 10
+
+[ElevationPlot]
+ymin = -15
+ymax = 5
+
+[Changes]
+clmin = 1
+clmax = 99
+;clminabs = -22
+;clmaxabs = 1
+;ymin = -10
+;ymax = 10
+
+[Results]
+clmin = 1
+clmax = 98
+
+[Plots]
+fig_length = 10
+fig_height = 5
+dpi = 200
+
+[DEM]
+dempath = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_dem_50m.asc
+total = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
+;subbasin1 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
+;subbasin2 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
+;subbasin3 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
+
+total_lbl = San Joaquin
+sub1_lbl = X
+sub2_lbl = Y
+sub3_lbl = Z
+
+[Report]
+; Path to save report
+rep_path = /mnt/volumes/wkspace/reports/sj/wy18/ops
+env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
+templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
+tex_file = sj_report.tex
