@@ -54,6 +54,7 @@ def report(obj):
     results_fig     = 'results%s.png'%(obj.name_append)
     changes_fig     = 'swe_change%s.png'%(obj.name_append)
     elev_fig        = 'swe_elev%s.png'%(obj.name_append)
+    totals_fig      = 'basin_total%s.png'%(obj.name_append)
     
     # Check that figures actually exist
     # for name in []
@@ -75,6 +76,7 @@ def report(obj):
                     'RESULTS_FIG':results_fig,
                     'CHANGES_FIG':changes_fig,
                     'ELEV_FIG':elev_fig,
+                    'TOTALS_FIG':totals_fig,
                                     
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
                     'TOTAL_SWE':total_swe,'SUB1_SWE':sub1_swe,'SUB2_SWE':sub2_swe,'SUB3_SWE':sub3_swe,

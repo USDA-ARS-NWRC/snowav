@@ -189,7 +189,8 @@ class snowav(object):
                 self.total_lbl      = cfg.get('DEM','total_lbl')
                 self.sub1_lbl       = cfg.get('DEM','sub1_lbl')
                 self.sub2_lbl       = cfg.get('DEM','sub2_lbl')
-                self.sub3_lbl       = cfg.get('DEM','sub3_lbl')                    
+                self.sub3_lbl       = cfg.get('DEM','sub3_lbl')  
+                self.plotorder      = [self.total_lbl, self.sub1_lbl, self.sub2_lbl, self.sub3_lbl]                  
                 
                 self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl},
                                 self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1),'label':self.sub1_lbl},
@@ -207,7 +208,8 @@ class snowav(object):
                 self.total_lbl      = cfg.get('DEM','total_lbl')
                 self.sub1_lbl       = cfg.get('DEM','sub1_lbl')
                 self.sub2_lbl       = cfg.get('DEM','sub2_lbl')
-                self.sub3_lbl       = cfg.get('DEM','sub3_lbl')                               
+                self.sub3_lbl       = cfg.get('DEM','sub3_lbl') 
+                self.plotorder      = [self.total_lbl, self.sub1_lbl, self.sub2_lbl, self.sub3_lbl]                               
                 
                 self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl},
                                 self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1,skip_header=6),'label':self.sub1_lbl},
@@ -219,7 +221,8 @@ class snowav(object):
                 self.pixel  = 50
                 self.nrows  = 1657 
                 self.ncols  = 1875 
-                self.total_lbl      = cfg.get('DEM','total_lbl')                             
+                self.total_lbl      = cfg.get('DEM','total_lbl') 
+                self.plotorder      = [self.total_lbl]                             
                 
                 self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl}
  
@@ -834,31 +837,38 @@ class snowav(object):
         axb             = ax.twinx()
         axb.grid()
 
-        if self.basin == 'TUOL':
-            border = ['Extended Tuolumne','Tuolumne','Cherry','Eleanor']
-
-        for iters,name in enumerate(border):
+        for iters,name in enumerate(self.plotorder):
             # print(name)
             self.state_summary[name].plot(ax=ax, color = self.barcolors[iters])             
             axb.plot(self.state_summary[name] - self.state_summary[name].iloc[0], color = self.barcolors[iters], linestyle=':')
             ax1.plot(self.accum_summary[name], color = self.barcolors[iters])
 
-
-        ax.set_ylabel('storage [KAF]') 
-        axb.set_ylabel('change during period [KAF]')  
-        ax1.set_ylabel('SWI [KAF]')
         ax1.yaxis.set_label_position("right")
         ax1.set_xlim((self.dateFrom,self.dateTo))
         ax1.tick_params(axis='y')
         ax1.yaxis.tick_right()
         ax.legend()
-        # ax1.legend() 
         
         for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
             tick.set_rotation(30) 
             tick1.set_rotation(30) 
              
+        if self.units == 'KAF':
+            ax.set_ylabel('storage [KAF]') 
+            axb.set_ylabel('change during period [KAF]')  
+            ax1.set_ylabel('SWI [KAF]')
+            ax.axes.set_title('Total Daily Basin SWE [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
+            ax1.axes.set_title('Total Daily Basin SWI [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
+        
+        if self.units == 'SI':
+            ax.set_ylabel(r'storage [M $m^3$]') 
+            axb.set_ylabel(r'change during period [M $m^3$]')  
+            ax1.set_ylabel('SWI [KAF]')            
+            ax.axes.set_title('Total Daily Basin SWE [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
+            ax1.axes.set_title('Total Daily Basin SWI [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
+        
         plt.tight_layout()
+        
         
         print('saving figure to %sbasin_total%s.png'%(self.figs_path,self.name_append))   
         plt.savefig('%sbasin_total%s.png'%(self.figs_path,self.name_append))        
