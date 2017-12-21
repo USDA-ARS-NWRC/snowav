@@ -136,8 +136,6 @@ class snowav(object):
             ####################################################         
             self.demPath        = cfg.get('DEM','demPath')
             self.total          = cfg.get('DEM','total')        
-            
-            # moved subbasins into basin-specific section below
     
             ####################################################
             #          Plots                                   #
@@ -190,7 +188,7 @@ class snowav(object):
                 self.sub1_lbl       = cfg.get('DEM','sub1_lbl')
                 self.sub2_lbl       = cfg.get('DEM','sub2_lbl')
                 self.sub3_lbl       = cfg.get('DEM','sub3_lbl')  
-                self.plotorder      = [self.total_lbl, self.sub1_lbl, self.sub2_lbl, self.sub3_lbl]                  
+                self.plotorder      = [self.total_lbl, self.sub1_lbl, self.sub2_lbl, self.sub3_lbl]                 
                 
                 self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl},
                                 self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1),'label':self.sub1_lbl},
@@ -218,9 +216,9 @@ class snowav(object):
                                 }  
 
             elif self.basin == 'SJ':
-                self.pixel  = 50
-                self.nrows  = 1657 
-                self.ncols  = 1875 
+                self.pixel          = 50
+                self.nrows          = 1657 
+                self.ncols          = 1875 
                 self.total_lbl      = cfg.get('DEM','total_lbl') 
                 self.plotorder      = [self.total_lbl]                             
                 
@@ -268,7 +266,15 @@ class snowav(object):
             if not os.path.isfile(self.config_copy): 
                 copyfile(config_file,self.config_copy)
                 
-            print('finished reading config file')    
+            # A few more basin-specific things
+            if self.basin == 'BRB':
+                self.xlims          = (0,31) # this goes from 2750 to 10500ft
+            if self.basin == 'TUOL':
+                self.xlims          = (0,len(self.edges))                
+            if self.basin == 'SJ':
+                self.xlims          = (0,len(self.edges))
+            
+            print('done.')    
         
         except:
             print('error reading config file')
@@ -291,12 +297,13 @@ class snowav(object):
         nonmelt:      dataframe of totals for the period, defined by cold content
         '''
   
+        print('Processing iSnobal outputs...')
+        
         cclimit             = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
         accum               = np.zeros((self.nrows,self.ncols))
         state               = np.zeros((self.nrows,self.ncols))
         pstate              = np.zeros((self.nrows,self.ncols))
-        # cold                = np.zeros((self.nrows,self.ncols))
         accum_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys()) 
         state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         delta_state_byelev  = pd.DataFrame(index = self.edges, columns = self.masks.keys())
@@ -354,7 +361,6 @@ class snowav(object):
             delta_state_byelev_mask = np.multiply(delta_state,self.masks[mask_name]['mask'])
             state_byelev_mask       = np.multiply(state,self.masks[mask_name]['mask'])
             elevbin                 = np.multiply(self.ixd,self.masks[mask_name]['mask'])
-            # print(np.min(np.unique(elevbin)),np.max(np.unique(elevbin)))
             
             # Do it by elevation band
             for n in np.arange(0,len(self.edges)):
@@ -386,6 +392,8 @@ class snowav(object):
         self.cold                   = np.multiply(self.cold,0.000001)                       # at last time step, spatial [MJ]
         self.state_summary          = np.multiply(state_summary,self.conversion_factor)     # daily by sub-basin
         self.accum_summary          = np.multiply(accum_summary,self.conversion_factor)     # daily by sub-basin
+        
+        print('done.')
         
         # Consider writing summaries to the config file...?
     
@@ -439,36 +447,17 @@ class snowav(object):
             cbar.set_label('SWI [m]')
             h.axes.set_title('Snow Water Input Accumulated [m] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))            
         
-        # Sort by ascending melt amounts for the bar plots
-        # This is ugly and could be improved...
-        ordered_runoff          = np.zeros(len(self.masks))
-        bname                   = []
-        for iters,name in enumerate(self.accum_byelev.columns.tolist()):
-            ordered_runoff[iters] = self.accum_byelev[name].sum()
-            bname.append(name)
-            
-        x                       = np.argsort(abs(ordered_runoff), axis=0)
-        ordered_runoff_area     = ordered_runoff[x]
-        bname                   = [bname[i] for i in x]
-        
-        # Sort ascending if the total value is negative, otherwise sort descending
-        if self.accum_byelev[self.total_lbl].sum() < 0:
-            sort_melt = sorted(enumerate(ordered_runoff_area), key=itemgetter(1))
-        else:
-            sort_melt = sorted(enumerate(ordered_runoff_area), key=itemgetter(1),reverse = True)
-        
-        # Plot the bar in order
-        for iters,name in enumerate(sort_melt):
-            a = sort_melt[iters][0] # where a is the index from lowest to highest...
+        # Bar plots
+        for iters,name in enumerate(self.plotorder):
             if self.units == 'KAF':
-                b = ax1.bar(range(0,len(self.edges)),self.accum_byelev[bname[a]], label = '%s = %s KAF'%(bname[a],str(int(sort_melt[iters][1]))))
-                ax1.set_xlim((0,len(self.edges)))
+                b = ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], label = '%s = %s KAF'%(name,str(int(self.accum_byelev[name].sum()))))
+                ax1.set_xlim(self.xlims)
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])                
                 
             if self.units == 'SI':
-                b = ax1.bar(range(0,len(self.edges)),self.accum_byelev[bname[a]], label = r'%s = %s $M m^3$'%(bname[a],str(int(sort_melt[iters][1]))))
-                ax1.set_xlim((0,len(self.edges)))
+                b = ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], label = r'%s = %s $M m^3$'%(name,str(int(self.accum_byelev[name].sum()))))
+                ax1.set_xlim(self.xlims)
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])
         
@@ -479,7 +468,6 @@ class snowav(object):
             edges_lbl.append(str(int(self.edges[int(i)])))
         
         ax1.set_xticklabels(str(i) for i in edges_lbl)
-        # ax1.set_xlim(0,len(self.edges))
         for tick in ax1.get_xticklabels():
             tick.set_rotation(30)        
         
@@ -626,24 +614,7 @@ class snowav(object):
         delta_state[ixo]    = np.nan
         cmap                = copy.copy(mymap)
         cmap.set_bad('white',1.)   
-        cmap.set_over('lightslategrey') 
-        
-        # Sort by ascending melt amounts for the bar plots
-        ordered_melt        = np.zeros(len(self.masks))
-        bname               = []
-        for iters,name in enumerate(self.delta_state_byelev):
-            ordered_melt[iters] = self.delta_state_byelev[name].sum()
-            bname.append(name)
-        
-        x               = np.argsort(abs(ordered_melt), axis=0)
-        ordered_melt_area = ordered_melt[x]
-        bname           = [bname[i] for i in x]
-        
-        # Sort ascending if the total value is negative, otherwise sort descending
-        if sum(self.delta_state_byelev[self.total_lbl]) < 0:
-            sort_melt = sorted(enumerate(ordered_melt_area), key=itemgetter(1))
-        else:
-            sort_melt = sorted(enumerate(ordered_melt_area), key=itemgetter(1),reverse = True)
+        cmap.set_over('lightslategrey')         
         
         sns.set_style('darkgrid')
         sns.set_context("notebook")
@@ -672,18 +643,17 @@ class snowav(object):
             cbar.set_label(r'$\Delta$ SWE [m]')   
           
         # Plot the bar in order
-        for iters,name in enumerate(sort_melt):
-            a = sort_melt[iters][0] # where a is the index from lowest to highest...
+        for iters,name in enumerate(self.plotorder):
             if self.units == 'KAF':
-                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[bname[a]], label = '%s = %s KAF'%(bname[a],str(int(sort_melt[iters][1]))))
-                ax1.set_xlim((0,len(self.edges)))
+                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], label = '%s = %s KAF'%(name,str(int(self.delta_state_byelev[name].sum()))))
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])
             if self.units == 'SI':
-                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[bname[a]], label = r'%s = %s M $m^3$'%(bname[a],str(int(sort_melt[iters][1]))))    
+                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], label = r'%s = %s M $m^3$'%(name,str(int(self.delta_state_byelev[name]))))    
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])
         
+        ax1.set_xlim(self.xlims)
         plt.tight_layout()                            
         xts         = ax1.get_xticks()
         edges_lbl   = []
@@ -691,7 +661,6 @@ class snowav(object):
             edges_lbl.append(str(int(self.edges[int(i)])))
   
         ax1.set_xticklabels(str(i) for i in edges_lbl)
-        ax1.set_xlim(0,len(self.edges))
         for tick in ax1.get_xticklabels():
             tick.set_rotation(30) 
              
@@ -745,35 +714,25 @@ class snowav(object):
         plt.close(1)
         fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi, nrows = 2, ncols = 2)
         axs     = ax.ravel()
-        
-        # This is somewhat of a hack - we won't want alpha order, and my sort by size thing is weird sometimes...
-        # Probably ought to pull this from somewhere instead...
-        if self.basin == 'BRB':
-            mask_order = ['Boise River Basin','Featherville','Twin Springs','Mores Creek']    
-        if self.basin == 'TUOL':
-            mask_order = ['Extended Tuolumne','Tuolumne','Cherry','Eleanor']
-        
-        for iters,name in enumerate(mask_order):
-            sns.set_style('darkgrid')
+               
+        for iters,name in enumerate(self.plotorder):
             axs[iters].bar(range(0,len(self.edges)),self.melt[name], color = colors[0], bottom = self.nonmelt[name])
             axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], color = colors[1], label = 'nonmelt ')
             
-            axs[iters].set_xlim((0,len(self.edges)))                            
+            axs[iters].set_xlim(self.xlims)                          
             xts         = axs[iters].get_xticks()
             edges_lbl   = []
             for i in xts[0:len(xts)-1]:
                 edges_lbl.append(str(int(self.edges[int(i)])))
 
             axs[iters].set_xticklabels(str(i) for i in edges_lbl)
-            axs[iters].set_xlim((0,len(self.edges)))
             
             if iters > 1:
                 if self.units == 'KAF':
                     axs[iters].set_xlabel('elevation [ft]')
                 if self.units == 'SI':
                     axs[iters].set_xlabel('elevation [m]')                    
-                
-            axs[iters].tick_params('x',labelsize=8)    
+                  
             axs[iters].yaxis.set_label_position("right")
             axs[iters].tick_params(axis='x')
             axs[iters].tick_params(axis='y')
@@ -815,8 +774,8 @@ class snowav(object):
         fig.tight_layout()
         for n in range(0,len(axs)):
             axs[n].set_xticks(xts)
-         
-        fig.tight_layout()    
+            axs[n].set_xlim(self.xlims)
+  
         fig.subplots_adjust(top=0.88)
         if self.units == 'KAF': 
             fig.suptitle('SWE [KAF], %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
@@ -838,7 +797,6 @@ class snowav(object):
         axb.grid()
 
         for iters,name in enumerate(self.plotorder):
-            # print(name)
             self.state_summary[name].plot(ax=ax, color = self.barcolors[iters])             
             axb.plot(self.state_summary[name] - self.state_summary[name].iloc[0], color = self.barcolors[iters], linestyle=':')
             ax1.plot(self.accum_summary[name], color = self.barcolors[iters])
@@ -858,14 +816,14 @@ class snowav(object):
             axb.set_ylabel('change during period [KAF]')  
             ax1.set_ylabel('SWI [KAF]')
             ax.axes.set_title('Total Daily Basin SWE [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
-            ax1.axes.set_title('Total Daily Basin SWI [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
+            ax1.axes.set_title('Accumulated Basin SWI [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
         
         if self.units == 'SI':
             ax.set_ylabel(r'storage [M $m^3$]') 
             axb.set_ylabel(r'change during period [M $m^3$]')  
             ax1.set_ylabel('SWI [KAF]')            
             ax.axes.set_title('Total Daily Basin SWE [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
-            ax1.axes.set_title('Total Daily Basin SWI [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
+            ax1.axes.set_title('Accumulated Basin SWI [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
         
         plt.tight_layout()
         
