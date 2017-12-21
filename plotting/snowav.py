@@ -649,7 +649,7 @@ class snowav(object):
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])
             if self.units == 'SI':
-                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], label = r'%s = %s M $m^3$'%(name,str(int(self.delta_state_byelev[name]))))    
+                b = ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], label = r'%s = %s M $m^3$'%(name,str(int(self.delta_state_byelev[name].sum()))))    
                 for n in range(0,len(b)):
                     b[n].set_color(self.barcolors[iters])
         
@@ -786,7 +786,7 @@ class snowav(object):
         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
         
     def basin_total(self): 
-        self.barcolors
+        # self.barcolors
               
         sns.set_style('darkgrid')
         sns.set_context("notebook")

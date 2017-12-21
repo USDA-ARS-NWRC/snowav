@@ -34,15 +34,6 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 \emph{in cooperation with} U.S. Bureau of Reclamation, Boise, Idaho}
 \date{}							% Activate to display a given date or no date
 
-\newsavebox\mybox
-\savebox\mybox{\tikz[color=red,opacity=0.3]\node{DRAFT};}
-\newwatermark*[
-allpages,
-angle=45,
-scale=6,
-xpos=-20,
-ypos=15
-]{\usebox\mybox}
 
 \begin{document}
 \maketitle
@@ -109,18 +100,28 @@ San Joaquin River Basin	& \VAR{TOTAL_SWE|e}& \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_S
 \end{figure}
 
 % SWE elevation
-% \begin{figure}[htbp]
-% \begin{centering}
-%	% \hspace*{-.7in}
-%	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
-%	\caption{Current SWE per elevation band for each sub basin.}
-%	\label{fig:RESULTS}
-%\end{centering}
-%\end{figure}
-
+\begin{figure}[htbp]
+\begin{centering}	
+	% \hspace*{-.7in}
+	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
+	\caption{Current SWE per elevation band for each sub basin.}
+	\label{fig:RESULTS}
+\end{centering}
+\end{figure}
 
 
 \clearpage
+
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
+		\caption{Daily SWE and SWI basin totals.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
+
+\vspace{2cm}
 
 \noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. 
 This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement.

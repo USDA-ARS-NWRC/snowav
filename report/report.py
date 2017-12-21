@@ -16,29 +16,42 @@ def report(obj):
     
     '''
     
-    # SWI values
     total_swi       = obj.accum_byelev[obj.total_lbl].sum()
-    sub1_swi        = obj.accum_byelev[obj.sub1_lbl].sum()
-    sub2_swi        = obj.accum_byelev[obj.sub2_lbl].sum()
-    sub3_swi        = obj.accum_byelev[obj.sub3_lbl].sum()
-    
-    # SWE values
     total_swe       = obj.state_byelev[obj.total_lbl].sum()
-    sub1_swe        = obj.state_byelev[obj.sub1_lbl].sum()
-    sub2_swe        = obj.state_byelev[obj.sub2_lbl].sum()
-    sub3_swe        = obj.state_byelev[obj.sub3_lbl].sum()
-    
-    # SWE available for melt
     totalav_swe     = obj.melt[obj.total_lbl].sum()
-    sub1av_swe      = obj.melt[obj.sub1_lbl].sum()
-    sub2av_swe      = obj.melt[obj.sub2_lbl].sum()
-    sub3av_swe      = obj.melt[obj.sub3_lbl].sum()
-    
-    # Change in SWE
     total_swe_del   = obj.delta_state_byelev[obj.total_lbl].sum()
-    sub1_swe_del    = obj.delta_state_byelev[obj.sub1_lbl].sum()
-    sub2_swe_del    = obj.delta_state_byelev[obj.sub2_lbl].sum()
-    sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
+    
+    # Total hack for different number of subbasins, needs improvement...
+    if hasattr(obj, 'sub1_lbl') and hasattr(obj, 'sub2_lbl') and hasattr(obj, 'sub3_lbl'):
+        
+        # values
+        sub1_swi        = obj.accum_byelev[obj.sub1_lbl].sum()
+        sub2_swi        = obj.accum_byelev[obj.sub2_lbl].sum()
+        sub3_swi        = obj.accum_byelev[obj.sub3_lbl].sum()
+        sub1_swe        = obj.state_byelev[obj.sub1_lbl].sum()
+        sub2_swe        = obj.state_byelev[obj.sub2_lbl].sum()
+        sub3_swe        = obj.state_byelev[obj.sub3_lbl].sum()
+        sub1av_swe      = obj.melt[obj.sub1_lbl].sum()
+        sub2av_swe      = obj.melt[obj.sub2_lbl].sum()
+        sub3av_swe      = obj.melt[obj.sub3_lbl].sum()
+        sub1_swe_del    = obj.delta_state_byelev[obj.sub1_lbl].sum()
+        sub2_swe_del    = obj.delta_state_byelev[obj.sub2_lbl].sum()
+        sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
+    
+    else: 
+        sub1_swi        = 0.0
+        sub2_swi        = 0.0
+        sub3_swi        = 0.0
+        sub1_swe        = 0.0
+        sub2_swe        = 0.0
+        sub3_swe        = 0.0
+        sub1av_swe      = 0.0
+        sub2av_swe      = 0.0
+        sub3av_swe      = 0.0     
+        sub1_swe_del    = 0.0
+        sub2_swe_del    = 0.0
+        sub3_swe_del    = 0.0 
+    
 
     # Assign some more variables
     start_date      = obj.dateFrom.date().strftime("%B %-d")
@@ -115,9 +128,10 @@ def report(obj):
     fid.close()
     fid1.close()  
     
-    for name in variables:
-        summary         = summary.replace(name,variables[name])          
-        results_summary = results_summary.replace(name,variables[name])   
+    for iters,name in enumerate(variables):
+        summary         = summary.replace(name,variables[name])         
+        results_summary = results_summary.replace(name,variables[name]) 
+
              
     # Add the section text variables to what we'll pass to the document
     variables['SUMMARY']            = summary 
