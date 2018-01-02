@@ -39,17 +39,10 @@ def report(obj):
         sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
     
     else: 
-        sub1_swi        = 0.0
-        sub2_swi        = 0.0
+
         sub3_swi        = 0.0
-        sub1_swe        = 0.0
-        sub2_swe        = 0.0
         sub3_swe        = 0.0
-        sub1av_swe      = 0.0
-        sub2av_swe      = 0.0
         sub3av_swe      = 0.0     
-        sub1_swe_del    = 0.0
-        sub2_swe_del    = 0.0
         sub3_swe_del    = 0.0 
     
 

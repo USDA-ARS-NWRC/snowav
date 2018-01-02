@@ -219,31 +219,66 @@ class snowav(object):
                 self.pixel          = 50
                 self.nrows          = 1657 
                 self.ncols          = 1875 
+                self.subbasin1      = cfg.get('DEM','subbasin1')
+                self.subbasin2      = cfg.get('DEM','subbasin2')
+                self.subbasin3      = cfg.get('DEM','subbasin3')
                 self.total_lbl      = cfg.get('DEM','total_lbl') 
-                self.plotorder      = [self.total_lbl]                             
+                self.sub1_lbl       = cfg.get('DEM','sub1_lbl')
+                self.sub2_lbl       = cfg.get('DEM','sub2_lbl')
+                self.sub3_lbl       = cfg.get('DEM','sub3_lbl')
+                self.plotorder      = [self.total_lbl, self.sub3_lbl, self.sub1_lbl, self.sub2_lbl]                             
                 
-                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl}
- 
+                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total,skip_header=6),'label':self.total_lbl},
+                                self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1,skip_header=6),'label':self.sub1_lbl},
+                                self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2,skip_header=6),'label':self.sub2_lbl},
+                                self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3,skip_header=6),'label':self.sub3_lbl}
                                 }  
               
             # Get the DEM 
             self.dem                    = np.genfromtxt(self.demPath,skip_header=6)
+            
+            # Bins
+            if self.basin == 'BRB':
+                if self.units == 'SI':
+                    emin        = 2750      # [ft]
+                    emax        = 10500     # [ft]  
+                    self.step   = 250
+                if self.units == 'SI':
+                    emin        = 800       # [m]
+                    emax        = 3200      # [m]  
+                    self.step   = 100                                 
+            if self.basin == 'TUOL':
+                if self.units == 'SI':
+                    emin        = 3000      # [ft]
+                    emax        = 12000     # [ft]  
+                    self.step   = 250
+                if self.units == 'SI':
+                    emin        = 800       # [m]
+                    emax        = 3600      # [m]  
+                    self.step   = 100  
+            if self.basin == 'SJ':
+                if self.units == 'SI':
+                    emin        = 1000      # [ft]
+                    emax        = 12000     # [ft]  
+                    self.step   = 500
+                if self.units == 'SI':
+                    emin        = 100       # [m]
+                    emax        = 3600      # [m]  
+                    self.step   = 200 
             
             # Do unit-specific things
             if self.units == 'KAF':
                 self.conversion_factor  = (self.pixel**2)*0.000000810713194*0.001       # storage in KAF
                 self.depth_factor       = 0.03937                                       # depth in inches
                 self.dem                = self.dem*3.28
-                self.step               = 250
-                self.edges              = np.arange(2750,13000+self.step,self.step)
+                self.edges              = np.arange(emin,emax+self.step,self.step)
                 self.ixd                = np.digitize(self.dem,self.edges)        
             
             if self.units == 'SI':
                 self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e6 # storage in M m^3
                 self.depth_factor       = 0.001                                         # depth in meters
                 self.dem                = self.dem          
-                self.step               = 100
-                self.edges              = np.arange(800,3600+self.step,self.step)
+                self.edges              = np.arange(emin,emax+self.step,self.step)
                 self.ixd                = np.digitize(self.dem,self.edges)             
                                  
             # Make a copy of the config file in the same place that the figs will be saved
@@ -431,6 +466,12 @@ class snowav(object):
         # Basin boundaries
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+        
+        if self.basin == 'SJ':
+            fix1 = np.arange(1275,1377)
+            fix2 = np.arange(1555,1618)
+            ax.plot(fix1*0,fix1,'k')
+            ax.plot(fix2*0,fix2,'k')
                    
         # Do pretty stuff
         h.axes.get_xaxis().set_ticks([])
@@ -545,6 +586,14 @@ class snowav(object):
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
             ax1.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+            
+        if self.basin == 'SJ':
+            fix1 = np.arange(1275,1377)
+            fix2 = np.arange(1555,1618)
+            ax.plot(fix1*0,fix1,'k')
+            ax.plot(fix2*0,fix2,'k')
+            ax1.plot(fix1*0,fix1,'k')
+            ax1.plot(fix2*0,fix2,'k')
         
         # Do pretty stuff for the left plot
         h.axes.get_xaxis().set_ticks([])
@@ -626,6 +675,12 @@ class snowav(object):
         # Basin boundaries
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+ 
+        if self.basin == 'SJ':
+            fix1 = np.arange(1275,1377)
+            fix2 = np.arange(1555,1618)
+            ax.plot(fix1*0,fix1,'k')
+            ax.plot(fix2*0,fix2,'k')    
         
         # Do pretty stuff
         h.axes.get_xaxis().set_ticks([])

@@ -43,14 +43,14 @@ dpi = 200
 [DEM]
 dempath = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_dem_50m.asc
 total = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
-;subbasin1 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
-;subbasin2 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
-;subbasin3 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
+subbasin1 = /mnt/data/blizzard/sanjoaquin/common_data/topo/JoseCreek_mask.asc
+subbasin2 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SouthFork_mask.asc
+subbasin3 = /mnt/data/blizzard/sanjoaquin/common_data/topo/Main_mask.asc
 
 total_lbl = San Joaquin
-sub1_lbl = X
-sub2_lbl = Y
-sub3_lbl = Z
+sub1_lbl = Jose Creek
+sub2_lbl = South Fork
+sub3_lbl = Main
 
 [Report]
 ; Path to save report
