@@ -166,7 +166,7 @@ class snowav(object):
             if self.basin == 'TUOL':
                 self.barcolors = ['darkgreen','palegreen','darkgrey','mediumseagreen']
             if self.basin == 'SJ':
-                self.barcolors = ['darkgreen','palegreen','darkgrey','mediumseagreen']    
+                self.barcolors = ['red','orangered','darkgrey','lightcoral']    
     
             ####################################################
             #          Report                                  #
@@ -278,11 +278,11 @@ class snowav(object):
             if self.basin == 'SJ':
                 if self.units == 'KAF':
                     emin        = 1000      # [ft]
-                    emax        = 12000     # [ft]  
+                    emax        = 13000     # [ft]  
                     self.step   = 500
                 if self.units == 'SI':
-                    emin        = 100       # [m]
-                    emax        = 3600      # [m]  
+                    emin        = 300       # [m]
+                    emax        = 4000      # [m]  
                     self.step   = 200 
             
             # Do unit-specific things
@@ -505,10 +505,10 @@ class snowav(object):
         
         if self.units == 'KAF':
             cbar.set_label('SWI [in]')
-            h.axes.set_title('Snow Water Input Accumulated [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
+            h.axes.set_title('SWI Accumulated [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
         if self.units == 'SI':
             cbar.set_label('SWI [m]')
-            h.axes.set_title('Snow Water Input Accumulated [m] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))            
+            h.axes.set_title('SWI Accumulated [m] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))            
         
         # Bar plots
         for iters,name in enumerate(self.plotorder):

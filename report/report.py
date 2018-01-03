@@ -43,6 +43,13 @@ def report(obj):
         sub1_swe_del    = obj.delta_state_byelev[obj.sub1_lbl].sum()
         sub2_swe_del    = obj.delta_state_byelev[obj.sub2_lbl].sum()
         sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
+        
+        # Calculate mean basin depths
+        total_pm        = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.total_lbl]['mask'].sum()
+        sub1_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub1_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub1_lbl]['mask'].sum()
+        sub2_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub2_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub2_lbl]['mask'].sum()
+        sub3_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub3_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub3_lbl]['mask'].sum()
+        print(total_pm,sub1_pm)
     
     else: 
 
@@ -94,6 +101,7 @@ def report(obj):
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
                     'TOTAL_SWE':total_swe,'SUB1_SWE':sub1_swe,'SUB2_SWE':sub2_swe,'SUB3_SWE':sub3_swe,
                     'TOTAL_SWE_AV':totalav_swe,'SUB1_SWE_AV':sub1av_swe,'SUB2_SWE_AV':sub2av_swe,'SUB3_SWE_AV':sub3av_swe,
+                    'TOTAL_PM':total_pm,'SUB1_PM':sub1_pm,'SUB2_PM':sub2_pm,'SUB3_PM':sub3_pm,
                     'TOTAL_SWEDEL':total_swe_del,'SUB1_SWEDEL':sub1_swe_del,'SUB2_SWEDEL':sub2_swe_del,'SUB3_SWEDEL':sub3_swe_del
                     
                     }
