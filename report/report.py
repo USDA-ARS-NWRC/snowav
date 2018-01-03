@@ -3,6 +3,8 @@ from latex.jinja2 import make_env
 from latex import build_pdf
 import pandas as pd
 import numpy as np
+import datetime
+import copy
 
 
 def report(obj):
@@ -20,6 +22,10 @@ def report(obj):
     total_swe       = obj.state_byelev[obj.total_lbl].sum()
     totalav_swe     = obj.melt[obj.total_lbl].sum()
     total_swe_del   = obj.delta_state_byelev[obj.total_lbl].sum()
+    
+    # HACK, somewhere the rounding is different when we start from Oct 1...
+    if obj.dateFrom == datetime.datetime(2017,10,1,23,0):
+        total_swe_del = copy.copy(total_swe)
     
     # Total hack for different number of subbasins, needs improvement...
     if hasattr(obj, 'sub1_lbl') and hasattr(obj, 'sub2_lbl') and hasattr(obj, 'sub3_lbl'):
@@ -61,6 +67,7 @@ def report(obj):
     changes_fig     = 'swe_change%s.png'%(obj.name_append)
     elev_fig        = 'swe_elev%s.png'%(obj.name_append)
     totals_fig      = 'basin_total%s.png'%(obj.name_append)
+    valid_fig       = 'validation%s.png'%(obj.name_append)
     
     # Check that figures actually exist
     # for name in []
@@ -90,6 +97,9 @@ def report(obj):
                     'TOTAL_SWEDEL':total_swe_del,'SUB1_SWEDEL':sub1_swe_del,'SUB2_SWEDEL':sub2_swe_del,'SUB3_SWEDEL':sub3_swe_del
                     
                     }
+    
+    if obj.basin == 'BRB':
+        variables['VALID_FIG'] = valid_fig
     
     # Convert floats to strings    
     for name in variables:

@@ -25,6 +25,7 @@ import netCDF4 as nc
 import wyhr_to_datetime as wy
 import cmocean
 import tqdm
+import mysql.connector
 
 class snowav(object):
 
@@ -63,7 +64,7 @@ class snowav(object):
             # output directory
             self.snowband       = int(cfg.get('Outputs','snowband'))
             self.emband         = int(cfg.get('Outputs','emband'))          
-            self.run_dir        = cfg.get('Outputs','run_dir')
+            self.run_dir        = cfg.get('Outputs','run_dir')           
             self.run_files      = sorted(os.listdir(self.run_dir))
             
             if cfg.has_option('Outputs','csnowFile') and cfg.has_option('Outputs','psnowFile'):
@@ -94,9 +95,27 @@ class snowav(object):
             else:
                 self.snow_files = [value for value in self.run_files if 'snow' in value]
                 self.em_files   = [value for value in self.run_files if 'em' in value]
-                self.psnowFile  = self.snow_files[0] 
-                self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
-                self.cemFile    = self.em_files[len(self.em_files)-1] 
+            
+            # Going to change this to be the full path so that we can also go between two directories
+            self.snow_files     = [self.run_dir + s for s in self.snow_files] 
+            self.em_files       = [self.run_dir + s for s in self.em_files]  
+            # self.psnowFile      = self.run_dir + self.psnowFile
+            # self.csnowFile      = self.run_dir + self.csnowFile
+            # self.cemFile        = self.run_dir + self.cemFile
+            
+            # If a previous run dir is listed, add those paths
+            if cfg.has_option('Outputs','run_dir_p'):
+                run_dir_p       = cfg.get('Outputs','run_dir_p')
+                run_files_p     = [run_dir_p + s for s in sorted(os.listdir(run_dir_p))]
+                snow_files_p    = [value for value in run_files_p if 'snow' in value]
+                em_files_p      = [value for value in run_files_p if 'em' in value]
+                self.snow_files = snow_files_p + self.snow_files
+                self.em_files   = em_files_p + self.em_files
+            
+            self.psnowFile  = self.snow_files[0] 
+            self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
+            self.cemFile    = self.em_files[len(self.em_files)-1]
+
 
             ####################################################
             #           Accumulated                            #
@@ -239,7 +258,7 @@ class snowav(object):
             
             # Bins
             if self.basin == 'BRB':
-                if self.units == 'SI':
+                if self.units == 'KAF':
                     emin        = 2750      # [ft]
                     emax        = 10500     # [ft]  
                     self.step   = 250
@@ -248,7 +267,7 @@ class snowav(object):
                     emax        = 3200      # [m]  
                     self.step   = 100                                 
             if self.basin == 'TUOL':
-                if self.units == 'SI':
+                if self.units == 'KAF':
                     emin        = 3000      # [ft]
                     emax        = 12000     # [ft]  
                     self.step   = 250
@@ -257,7 +276,7 @@ class snowav(object):
                     emax        = 3600      # [m]  
                     self.step   = 100  
             if self.basin == 'SJ':
-                if self.units == 'SI':
+                if self.units == 'KAF':
                     emin        = 1000      # [ft]
                     emax        = 12000     # [ft]  
                     self.step   = 500
@@ -339,6 +358,7 @@ class snowav(object):
         accum               = np.zeros((self.nrows,self.ncols))
         state               = np.zeros((self.nrows,self.ncols))
         pstate              = np.zeros((self.nrows,self.ncols))
+        state_byday         = np.zeros((self.nrows,self.ncols,len(self.snow_files)))
         accum_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys()) 
         state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         delta_state_byelev  = pd.DataFrame(index = self.edges, columns = self.masks.keys())
@@ -356,13 +376,14 @@ class snowav(object):
             # Make date for pd index
             date        = wy.wyhr_to_datetime(self.wy,int(snow_name.split('.')[-1]))
             
-            em_file     = ipw.IPW('%s%s'%(self.run_dir,em_name))
+            em_file     = ipw.IPW(em_name)
             band        = em_file.bands[self.emband].data
             accum       = accum + band
             
             # load and calculate sub-basin total
-            snow_file   = ipw.IPW('%s%s'%(self.run_dir,snow_name))
+            snow_file   = ipw.IPW(snow_name)
             tmpstate    = snow_file.bands[self.snowband].data  
+            state_byday[:,:,iters] = tmpstate
             
             # Store daily sub-basin totals
             for mask_name in self.masks:
@@ -370,11 +391,11 @@ class snowav(object):
                 state_summary.loc[date, mask_name]   = np.nansum(np.multiply(tmpstate,self.masks[mask_name]['mask'])) 
             
             # When it is the first snow file, copy
-            if snow_name == self.psnowFile.split('/')[-1]:
+            if snow_name.split('/')[-1] == self.psnowFile.split('/')[-1]:
                 pstate          = copy.deepcopy(tmpstate)
             
             # When it hits the current snow file, copy
-            if snow_name == self.csnowFile.split('/')[-1]:
+            if snow_name.split('/')[-1] == self.csnowFile.split('/')[-1]:
                 state           = copy.deepcopy(tmpstate)
                 self.cold       = em_file.bands[9].data        
 
@@ -417,6 +438,7 @@ class snowav(object):
         # Convert to desired units
         self.accum                  = np.multiply(accum,self.depth_factor)                  # sum over all time steps, spatial
         self.state                  = np.multiply(state,self.depth_factor)                  # at last time step, spatial
+        self.state_byday            = np.multiply(state_byday,self.depth_factor)
         self.pstate                 = np.multiply(pstate,self.conversion_factor)            # at first time step, spatial
         self.delta_state            = np.multiply(delta_state,self.depth_factor)            # at last time step, spatial
         self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)# at last time step, by elevation
@@ -647,7 +669,7 @@ class snowav(object):
             colorsbad   = plt.cm.Set2_r(np.linspace(0., 1, 1))           
             colors1     = cmocean.cm.matter_r(np.linspace(0., 1, 127))
             colors2     = plt.cm.Blues(np.linspace(0, 1, 128))
-            colors      = np.vstack((colors1, colors2,colorsbad))
+            colors      = np.vstack((colorsbad,colors1, colors2))
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
         else:
@@ -657,7 +679,7 @@ class snowav(object):
             mymap       = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
     
         ixf                 = delta_state == 0
-        delta_state[ixf]    = 999 # set snow-free  
+        delta_state[ixf]    = -1 # set snow-free  
         pmask               = self.masks[self.total_lbl]['mask']
         ixo                 = pmask == 0
         delta_state[ixo]    = np.nan
@@ -880,10 +902,94 @@ class snowav(object):
             ax.axes.set_title('Total Daily Basin SWE [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
             ax1.axes.set_title('Accumulated Basin SWI [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
         
-        plt.tight_layout()
-        
+        plt.tight_layout()      
         
         print('saving figure to %sbasin_total%s.png'%(self.figs_path,self.name_append))   
         plt.savefig('%sbasin_total%s.png'%(self.figs_path,self.name_append))        
              
+    def stn_validate(self):
+        stns        = ['ATAI1','BASI1','CCDI1','DHDI1','JKPI1','TRMI1']
+        lbls        = ['Atlanta','Banner Summit','Cozy Cove','Dollarhide','Jackson Peak','Trinity Mountain']
+
+        client      = 'BRB_2017'
         
+        # get metadata from the data base from snotel sites
+        qry         = ('SELECT tbl_metadata.* FROM tbl_metadata INNER JOIN tbl_stations ON tbl_metadata.primary_id=tbl_stations.station_id'
+                       ' WHERE tbl_stations.client="'"%s"'" HAVING network_name = "'"SNOTEL"'";'%client)
+        cnx         = mysql.connector.connect(user='markrobertson', password='whatdystm?1',host='10.200.28.137',database='weather_db')
+        meta_sno    = pd.read_sql(qry, cnx)
+        meta_sno    = meta_sno.loc[meta_sno['source'] == 'NRCS']
+        meta_sno.index = meta_sno['secondary_id']
+      
+        swe_meas    = pd.DataFrame(index = pd.date_range(datetime(2017,10,1), self.dateTo, freq='D'),columns = stns)  
+        swe_mod     = pd.DataFrame(index = pd.date_range(datetime(2017,10,1), self.dateTo, freq='D'),columns = stns)  
+        tbl         = 'tbl_level1'
+        var         = 'snow_water_equiv'
+        st_time     = '2017-10-1 00:00:00'
+        end_time    = self.dateTo.date().strftime("%Y-%-m-%-d")
+
+        # Get Snotel station results
+        for iters,stn in enumerate(stns): 
+            cnx     = mysql.connector.connect(user='markrobertson', password='whatdystm?1',host='10.200.28.137', port='32768',database='weather_db')
+            var_qry = ('SELECT weather_db.%s.date_time, weather_db.%s.%s ' % (tbl,tbl,var) +
+                        'FROM weather_db.%s ' % tbl +
+                        "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
+                        "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
+        
+            data    = pd.read_sql(var_qry, cnx, index_col='date_time')
+            dind    = pd.date_range(st_time,end_time,freq='D')
+            swe_meas[stn]   = data.reindex(dind)
+        
+        # Now get pixel results
+        ncpath  = self.run_dir.split('output')
+        # ncpath = '/mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20180101/'
+        ncf     = nc.Dataset(ncpath[0] + 'snow.nc', 'r') # open netcdf file
+        nctvec  = ncf.variables['time'][:]
+        vswe    = ncf.variables['specific_mass'] # get variable
+        ncxvec  = ncf.variables['x'][:]   # get x vec
+        ncyvec  = ncf.variables['y'][:]   # get y vec  
+        
+        for stn in stns:
+            ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
+            xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
+            yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
+            swe     = pd.Series(vswe[:,yind,xind].flatten(),index=nctvec)  # pull out closest model pixel data
+            swe_mod.loc[0:len(swe.values),stn] = swe.values
+             
+        # Plot
+        maxswe = swe_meas.max()
+        
+        sns.set_style('darkgrid')
+        sns.set_context('notebook')
+        
+        plt.close(6)
+        fig, axs = plt.subplots(num = 6,figsize = (10,10),nrows = 3,ncols = 2)   
+        axs = axs.flatten() 
+        
+        for iters,stn in enumerate(stns):
+            axs[iters].plot(swe_meas[stn],'k')
+            axs[iters].plot(swe_mod[stn],'b')
+            
+            axs[iters].set_title(lbls[iters])
+            axs[iters].set_ylim((-0.1,max(maxswe) + max(maxswe)*0.05))
+            axs[iters].set_xlim((self.dateFrom,self.dateTo))
+            
+            if iters == 1 or iters == 3 or iters == 5:
+                axs[iters].yaxis.tick_right()
+            
+            if iters == 4 or iters == 5:
+                print(iters)
+                for tick in axs[iters].get_xticklabels():
+                    tick.set_rotation(30) 
+            else:
+                axs[iters].set_xticklabels('') 
+
+        axs[0].legend(['Snotel','model'],loc='upper left')
+        axs[0].set_ylabel('SWE [mm]')
+        
+        plt.suptitle('Validation at Snotel Sites')
+        plt.tight_layout()
+        plt.subplots_adjust(top=0.92)
+       
+        print('saving figure to %svalidation%s.png'%(self.figs_path,self.name_append))   
+        plt.savefig('%svalidation%s.png'%(self.figs_path,self.name_append))                  
