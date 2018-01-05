@@ -53,26 +53,50 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 \node[anchor=west,inner sep=0pt] at (-1.5,4cm) {\includegraphics[height=3.5cm]{/home/markrobertson/mrworkspace/code/SNOWAV/report/figs/logo.png}};
 \end{tikzpicture}
 
-\vspace{-1.2cm}
+\vspace{-2cm}
 \section{Summary}
 \VAR{SUMMARY|e}
 
+% \hskip-4.0cm
 \begin{table}[h!]
-\centering
-\begin{tabular}{l c c c c c }
-\toprule
+	\caption*{\textbf{SWE Storage}}
+	\centering
+	\begin{tabular}{l c c c c c }
+	\toprule
 
-\multirow{2}{*} {\bf{Basin} }			& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [mm] & [\VAR{UNITS|e}] & [\VAR{UNITS|e}]	\\
+	\multirow{2}{*} {\bf{Basin} }			& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE  \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [mm] & [\VAR{UNITS|e}]	\\
 
-\midrule
-Boise River Basin	& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} & \VAR{TOTAL_SWEDEL|e}& \VAR{TOTAL_SWI|e} \\
-Featherville	    & \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} & \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e} \\
-Twin Springs	   	& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} 	& \VAR{SUB2_SWI|e} \\
-Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} & \VAR{SUB3_SWEDEL|e} 	& \VAR{SUB3_SWI|e} \\
-\bottomrule
-\end{tabular}
-% \caption{yupperdep}
-\label{tab:snotel}
+	\midrule
+	Boise River Basin	& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} & \VAR{TOTAL_SWEDEL|e} \\
+	Featherville	    & \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} & \VAR{SUB1_SWEDEL|e} \\
+	Twin Springs	   	& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e}  \\
+	Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} & \VAR{SUB3_SWEDEL|e} 	 \\
+	\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel}
+\end{table}
+
+
+
+% \hskip-4cm
+\begin{table}[h!]
+	\caption*{\textbf{SWI}}
+	\centering
+	\begin{tabular}{l c c c c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& SWI & Melt & Rain & $\%$Rain \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] &  \\
+		
+		\midrule
+		Boise River Basin	& \VAR{TOTAL_SWI|e} & \VAR{TOTAL_MEL|e}  & \VAR{TOTAL_RAI|e} & \VAR{TOTAL_RAT|e}  \\
+		Featherville	    & \VAR{SUB1_SWI|e}	& \VAR{SUB1_MEL|e}  &  \VAR{SUB1_RAI|e} & \VAR{SUB1_RAT|e} \\
+		Twin Springs	   	& \VAR{SUB2_SWI|e}	& \VAR{SUB2_MEL|e}  & \VAR{SUB2_RAI|e} & \VAR{SUB2_RAT|e} \\
+		Mores Creek	        & \VAR{SUB3_SWI|e}	& \VAR{SUB3_MEL|e}  & \VAR{SUB3_RAI|e} & \VAR{SUB3_RAT|e} \\
+		\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel2}
 \end{table}
 
 \begin{itemize}
@@ -82,7 +106,6 @@ Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 
 \item[] $\Delta$SWE: change in SWE during the reporting period
 \item[] SWI: Surface Water Inputs, the combination of snowmelt and rain
 \item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
-\item[] KAF: thousands of acre-feet
 \end{itemize}
 
 \clearpage
@@ -106,7 +129,7 @@ Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 
 \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{SWI_FIG}}
-	\caption{Current Surface Water Inputs (SWI) for the reporting period.}
+	\caption{Current Surface Water Inputs (SWI) for the reporting period. Hatching indicates the portion of SWI that came as snowmelt, rather than rain.}
 	\label{fig:SWI}
 \end{centering}
 \end{figure}
@@ -130,7 +153,6 @@ Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
-
 
 
 \clearpage

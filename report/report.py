@@ -44,12 +44,28 @@ def report(obj):
         sub2_swe_del    = obj.delta_state_byelev[obj.sub2_lbl].sum()
         sub3_swe_del    = obj.delta_state_byelev[obj.sub3_lbl].sum()
         
-        # Calculate mean basin depths
+        
+        # Calculate mean basin depths in mm
         total_pm        = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.total_lbl]['mask'].sum()
         sub1_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub1_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub1_lbl]['mask'].sum()
         sub2_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub2_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub2_lbl]['mask'].sum()
         sub3_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub3_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub3_lbl]['mask'].sum()
-        print(total_pm,sub1_pm)
+        
+        # More SWI stuff
+        total_mel       = obj.snowmelt_byelev[obj.total_lbl].sum()
+        sub1_mel        = obj.snowmelt_byelev[obj.sub1_lbl].sum()
+        sub2_mel        = obj.snowmelt_byelev[obj.sub2_lbl].sum()
+        sub3_mel        = obj.snowmelt_byelev[obj.sub3_lbl].sum()
+        
+        total_rai       = total_swi - total_mel
+        sub1_rai        = sub1_swi - sub1_mel
+        sub2_rai        = sub2_swi - sub2_mel
+        sub3_rai        = sub3_swi - sub3_mel
+        
+        total_rat       = (total_rai/total_swi)*100
+        sub1_rat        = (sub1_rai/sub1_swi)*100
+        sub2_rat        = (sub2_rai/sub2_swi)*100
+        sub3_rat        = (sub3_rai/sub3_swi)*100
     
     else: 
 
@@ -99,6 +115,10 @@ def report(obj):
                     'TOTALS_FIG':totals_fig,
                                     
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
+                    'TOTAL_MEL':total_mel,'SUB1_MEL':sub1_mel,'SUB2_MEL':sub2_mel,'SUB3_MEL':sub3_mel,
+                    'TOTAL_RAI':total_rai,'SUB1_RAI':sub1_rai,'SUB2_RAI':sub2_rai,'SUB3_RAI':sub3_rai,
+                    'TOTAL_RAT':total_rat,'SUB1_RAT':sub1_rat,'SUB2_RAT':sub2_rat,'SUB3_RAT':sub3_rat,
+                    
                     'TOTAL_SWE':total_swe,'SUB1_SWE':sub1_swe,'SUB2_SWE':sub2_swe,'SUB3_SWE':sub3_swe,
                     'TOTAL_SWE_AV':totalav_swe,'SUB1_SWE_AV':sub1av_swe,'SUB2_SWE_AV':sub2av_swe,'SUB3_SWE_AV':sub3av_swe,
                     'TOTAL_PM':total_pm,'SUB1_PM':sub1_pm,'SUB2_PM':sub2_pm,'SUB3_PM':sub3_pm,
