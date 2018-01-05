@@ -598,22 +598,24 @@ class snowav(object):
         colors          = np.vstack((colors1,colorsbad))
         mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
         state[ixo]      = np.nan        
-        mymap.set_bad('white',1.)   
+        mymap.set_bad('white',1.) 
+        mymap.set_under('grey',-1)     
         
         # Colormap for cold content
         colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
-        colors1         = plt.cm.winter(np.linspace(0., 1, 128))
-        colors2         = plt.cm.autumn_r(np.linspace(0., 1, 127))
+        colors1         = plt.cm.ocean_r(np.linspace(0., 1, 128))
+        colors2         = plt.cm.YlOrRd(np.linspace(0., 1, 127))
         # colors2         = cmocean.cm.thermal(np.linspace(0., 1, 127))
         colors          = np.vstack((colorsbad, colors1, colors2))
         mymap1          = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
-        cold[ixo]  = np.nan
-        mymap1.set_bad('white',1.) 
+        cold[ixo]       = np.nan
+        mymap1.set_bad('white')
+        mymap1.set_over('lightgrey',1) 
         
         # Prepare no-snow and outside of the basin for the colormaps   
         ixz             = state == 0
-        state[ixz]      = 999
-        cold[ixz]       = -999                  
+        state[ixz]      = -1
+        cold[ixz]       = 1                  
         
         sns.set_style('dark')
         sns.set_context("notebook")
@@ -641,7 +643,11 @@ class snowav(object):
         h.axes.get_yaxis().set_ticks([])
         divider = make_axes_locatable(ax)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
-        cbar    = plt.colorbar(h, cax = cax)
+        cbar    = plt.colorbar(h, cax = cax, extend='both')
+        oldlabels = cbar.ax.get_yticklabels()
+        oldlabels[0] = 'snow\nfree'
+        cbar.ax.set_yticklabels(oldlabels)
+        
         cbar.ax.tick_params()  
         
         # Do pretty stuff for the right plot
@@ -650,7 +656,7 @@ class snowav(object):
         h1.axes.set_title('Cold Content [MJ/$m^3$] \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
         divider = make_axes_locatable(ax1)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
-        cbar1    = plt.colorbar(h1, cax = cax)
+        cbar1    = plt.colorbar(h1, cax = cax, extend='max')
         cbar1.set_label('Cold Content [MJ/$m^3$]')
         cbar1.ax.tick_params() 
         
@@ -704,7 +710,7 @@ class snowav(object):
         delta_state[ixo]    = np.nan
         cmap                = copy.copy(mymap)
         cmap.set_bad('white',1.)   
-        cmap.set_over('lightslategrey')         
+        cmap.set_over('darkslategrey')         
         
         sns.set_style('dark')
         sns.set_context("notebook")
@@ -728,8 +734,13 @@ class snowav(object):
         h.axes.get_yaxis().set_ticks([])
         divider = make_axes_locatable(ax)
         cax     = divider.append_axes("right", size="5%", pad=0.2)
-        cbar    = plt.colorbar(h, cax = cax)
+        cbar    = plt.colorbar(h, cax = cax,extend='both')
         pos     = cbar.ax.get_position()
+        
+        oldlabels = cbar.ax.get_yticklabels()
+        oldlabels[0] = 'snow\nfree'
+        cbar.ax.set_yticklabels(oldlabels)
+        
         cbar.ax.tick_params() 
         # cax.grid(False)
         

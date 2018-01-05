@@ -15,7 +15,7 @@ SNOWAV.snowav.current_image(snow)
 SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
-# SNOWAV.snowav.stn_validate(snow) # just for BRB right now
+SNOWAV.snowav.stn_validate(snow) # just for BRB right now
 
 # Report
 SNOWAV.report(snow)
