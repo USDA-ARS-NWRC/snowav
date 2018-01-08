@@ -25,7 +25,9 @@
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
  {\end{list}}
 
-\rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft} \includegraphics[width=1cm]{/home/markrobertson/mrworkspace/reports/Tuolumne/figs/logo.png}}
+% \rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft} \includegraphics[width=1cm]{/home/markrobertson/mrworkspace/reports/Tuolumne/figs/logo.png}}
+
+\rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
 
 \title{ {\color{red} DRAFT } \\ \VAR{REPORT_TITLE|e} \\
 Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}
@@ -36,22 +38,14 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 \emph{in cooperation with} U.S. Bureau of Reclamation, Boise, Idaho}
 \date{}							% Activate to display a given date or no date
 
-% \newsavebox\mybox
-% \savebox\mybox{\tikz[color=red,opacity=0.3]\node{DRAFT};}
-% \newwatermark*[
-% allpages,
-% angle=45,
-% scale=6,
-% xpos=-20,
-% ypos=15
-% ]{\usebox\mybox}
+
 
 \begin{document}
 \maketitle
 
-\begin{tikzpicture}[remember picture,overlay]
-\node[anchor=west,inner sep=0pt] at (-1.5,4cm) {\includegraphics[height=3.5cm]{/home/markrobertson/mrworkspace/code/SNOWAV/report/figs/logo.png}};
-\end{tikzpicture}
+% \begin{tikzpicture}[remember picture,overlay]
+% \node[anchor=west,inner sep=0pt] at (-1.5,4cm) {\includegraphics[height=3.5cm]{/home/markrobertson/mrworkspace/code/SNOWAV/report/figs/logo.png}};
+% \end{tikzpicture}
 
 \vspace{-2cm}
 \section{Summary}
@@ -161,7 +155,7 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 	\begin{centering}
 		% \hspace*{-.7in}
 		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
-		\caption{Daily SWE and SWI basin totals.}
+		\caption{Total basin SWE and SWI.}
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
@@ -172,17 +166,20 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 	\begin{centering}
 		% \hspace*{-.7in}
 		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
-		\caption{iSnobal validation at several Snotel locations.}
+		\caption{iSnobal validation at selected Snotel locations.}
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
 
-\vspace{2cm}
+\vspace{1cm}
 
 \noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. 
 This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement.
 USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided.
 
-Contact: Mark Robertson mark.robertson@ars.usda.gov, office phone (208) 422-0739. 
+Contact: \\
+\hspace{2cm} Mark Robertson mark.robertson@ars.usda.gov, office phone (208) 422-0729 \\
+\hspace{2cm} Scott Havens scott.havens@ars.usda.gov, office phone (208) 422-0739 
+
 
 \end{document}  

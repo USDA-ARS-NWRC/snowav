@@ -525,14 +525,13 @@ class snowav(object):
             snowmelt    = self.snowmelt_byelev[name]
             rain        = self.accum_byelev[name] - snowmelt
             if self.units == 'KAF':
-                # b = ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], label = '%s = %s KAF'%(name,str(int(self.accum_byelev[name].sum()))))
-                b = ax1.bar(range(0,len(self.edges)),snowmelt, color = self.barcolors[iters], edgecolor = 'k', hatch = '/////')
+                ax1.bar(range(0,len(self.edges)),snowmelt, color = self.barcolors[iters], edgecolor = 'k', hatch = '/////')
                 plt.rcParams['hatch.linewidth'] = 0.5
                 ax1.bar(range(0,len(self.edges)),rain, bottom = snowmelt, color = self.barcolors[iters], label = '%s = %s KAF'%(name,str(int(self.accum_byelev[name].sum()))))
                 ax1.set_xlim(self.xlims)
                  
             if self.units == 'SI':
-                b = ax1.bar(range(0,len(self.edges)),snowmelt, color = self.barcolors[iters], edgecolor = 'k', hatch = '/////')
+                ax1.bar(range(0,len(self.edges)),snowmelt, color = self.barcolors[iters], edgecolor = 'k', hatch = '/////')
                 plt.rcParams['hatch.linewidth'] = 0.5
                 ax1.bar(range(0,len(self.edges)),rain, bottom = snowmelt - rain, color = self.barcolors[iters], label = r'%s = %s $M m^3$'%(name,str(int(self.accum_byelev[name].sum()))))
                 ax1.set_xlim(self.xlims)
@@ -599,7 +598,7 @@ class snowav(object):
         mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
         state[ixo]      = np.nan        
         mymap.set_bad('white',1.) 
-        mymap.set_under('grey',-1)     
+        mymap.set_under('darkslategrey',-1)     
         
         # Colormap for cold content
         colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
@@ -610,7 +609,7 @@ class snowav(object):
         mymap1          = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
         cold[ixo]       = np.nan
         mymap1.set_bad('white')
-        mymap1.set_over('lightgrey',1) 
+        mymap1.set_over('darkslategrey',1) 
         
         # Prepare no-snow and outside of the basin for the colormaps   
         ixz             = state == 0
@@ -907,7 +906,7 @@ class snowav(object):
         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
         
     def basin_total(self): 
-        # self.barcolors
+        
               
         sns.set_style('darkgrid')
         sns.set_context("notebook")
@@ -940,8 +939,6 @@ class snowav(object):
             ax.set_ylabel('storage [KAF]') 
             axb.set_ylabel('change during period [KAF]')  
             ax1.set_ylabel('SWI [KAF]')
-            # ax.axes.set_title('Total Basin SWE [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
-            # ax1.axes.set_title('Accumulated Basin SWI [in] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
             ax.axes.set_title('Total Basin SWE [KAF]')
             ax1.axes.set_title('Accumulated Basin SWI [KAF]')
         
@@ -949,8 +946,6 @@ class snowav(object):
             ax.set_ylabel(r'storage [M $m^3$]') 
             axb.set_ylabel(r'change during period [M $m^3$]')  
             ax1.set_ylabel('SWI [KAF]')            
-            # ax.axes.set_title('Total Basin SWE [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))
-            # ax1.axes.set_title('Accumulated Basin SWI [M $m^3$] \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))         
             ax.axes.set_title('Total Basin SWE [M $m^3$]')
             ax1.axes.set_title('Accumulated Basin SWI [M $m^3$]')
         
@@ -961,7 +956,8 @@ class snowav(object):
              
     def stn_validate(self):
         stns        = ['ATAI1','BASI1','CCDI1','DHDI1','JKPI1','TRMI1']
-        lbls        = ['Atlanta','Banner Summit','Cozy Cove','Dollarhide','Jackson Peak','Trinity Mountain']
+        # stns        = ['CCDI1','COZI1','GGSI1','GLNI1','MRKI1','PRAI1']
+        lbls        = ['Atlanta Summit','Banner Summit','Camas Creek','Dollarhide','Jackson Peak','Trinity Mountain']
 
         client      = 'BRB_2017'
         
@@ -994,12 +990,11 @@ class snowav(object):
         
         # Now get pixel results
         ncpath  = self.run_dir.split('output')
-        # ncpath = '/mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20180101/'
-        ncf     = nc.Dataset(ncpath[0] + 'snow.nc', 'r') # open netcdf file
+        ncf     = nc.Dataset(ncpath[0] + 'snow.nc', 'r')    # open netcdf file
         nctvec  = ncf.variables['time'][:]
-        vswe    = ncf.variables['specific_mass'] # get variable
-        ncxvec  = ncf.variables['x'][:]   # get x vec
-        ncyvec  = ncf.variables['y'][:]   # get y vec  
+        vswe    = ncf.variables['specific_mass']            # get variable
+        ncxvec  = ncf.variables['x'][:]                     # get x vec
+        ncyvec  = ncf.variables['y'][:]                     # get y vec  
         
         for stn in stns:
             ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
