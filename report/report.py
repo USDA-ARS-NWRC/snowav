@@ -90,13 +90,9 @@ def report(obj):
     changes_fig     = 'swe_change%s.png'%(obj.name_append)
     elev_fig        = 'swe_elev%s.png'%(obj.name_append)
     totals_fig      = 'basin_total%s.png'%(obj.name_append)
+    totalsmy_fig    = 'basin_total_multiyr%s.png'%(obj.name_append)
     valid_fig       = 'validation%s.png'%(obj.name_append)
-    
-    # Check that figures actually exist
-    # for name in []
-    #     os.path.isfile() 
-
-    
+     
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
                     'REPORT_TITLE':report_title,
@@ -113,6 +109,7 @@ def report(obj):
                     'CHANGES_FIG':changes_fig,
                     'ELEV_FIG':elev_fig,
                     'TOTALS_FIG':totals_fig,
+                    'TOTALSMY_FIG':totalsmy_fig,
                                     
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
                     'TOTAL_MEL':total_mel,'SUB1_MEL':sub1_mel,'SUB2_MEL':sub2_mel,'SUB3_MEL':sub3_mel,

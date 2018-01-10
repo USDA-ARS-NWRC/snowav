@@ -6,7 +6,7 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir_p = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/
+run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/
 run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171218_20180101/output/
 snowband = 2
 emband = 8

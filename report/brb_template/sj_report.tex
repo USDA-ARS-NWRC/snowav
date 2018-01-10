@@ -11,6 +11,7 @@
 \usepackage{graphicx}
 \usepackage{tikz}
 \usepackage{lipsum}
+\usepackage{multirow}
 
 \setlength{\droptitle}{-8em}
 
@@ -24,8 +25,9 @@
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
  {\end{list}}
 
+\rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
 
-\title{ \VAR{REPORT_TITLE|e} \\
+\title{ {\color{red} DRAFT } \\ \VAR{REPORT_TITLE|e} \\
 Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}
 }
 
@@ -38,32 +40,59 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 \begin{document}
 \maketitle
 
+% \begin{tikzpicture}[remember picture,overlay]
+% \node[anchor=west,inner sep=0pt] at (-1.5,4cm) {\includegraphics[height=3.5cm]{/home/markrobertson/mrworkspace/code/SNOWAV/report/figs/logo.png}};
+% \end{tikzpicture}
+
 \vspace{-1.2cm}
 \section{Summary}
 \VAR{SUMMARY|e}
 
 \begin{table}[h!]
-\centering
-\begin{tabular}{l c c c c }
-\toprule
-\bf{Basin} 				& SWE [\VAR{UNITS|e}]		& SWE AVAIL [\VAR{UNITS|e}] & $\Delta$SWE [\VAR{UNITS|e}] & SWI [\VAR{UNITS|e}]	 \\
-\midrule
-San Joaquin River Basin	& \VAR{TOTAL_SWE|e}& \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_SWEDEL|e}& \VAR{TOTAL_SWI|e} \\
-Jose Creek	    		& \VAR{SUB1_SWE|e} 	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_SWEDEL|e} 	& \VAR{SUB1_SWI|e} \\
-South Fork	    		& \VAR{SUB2_SWE|e} 	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_SWEDEL|e} 	& \VAR{SUB2_SWI|e} \\
-Main   	    			& \VAR{SUB3_SWE|e} 	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_SWEDEL|e} 	& \VAR{SUB3_SWI|e} \\
+	\caption*{\textbf{Basin Snow Storage}}
+	\centering
+	\begin{tabular}{l c c c c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }			& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE  \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [mm] & [\VAR{UNITS|e}]	\\
+		
+		\midrule
+		San Joaquin		& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} & \VAR{TOTAL_SWEDEL|e} \\
+		Main	    	& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} & \VAR{SUB3_SWEDEL|e} \\
+		South Fork	   	& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e}  \\
+		Jose Creek	    & \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} & \VAR{SUB1_SWEDEL|e} 	 \\
+		\bottomrule
+	\end{tabular}
+	\label{tab:snotel}
+\end{table}
 
-\bottomrule
-\end{tabular}
-% \caption{yupperdep}
-\label{tab:snotel}
+
+\begin{table}[h!]
+	\caption*{\textbf{Basin Surface Water Inputs}}
+	\centering
+	\begin{tabular}{l c c c c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& SWI & Melt & Rain & $\%$ Rain \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] &  \\
+		
+		\midrule
+		San Joaquin	& \VAR{TOTAL_SWI|e} & \VAR{TOTAL_MEL|e}  & \VAR{TOTAL_RAI|e} & \VAR{TOTAL_RAT|e}  \\
+		Main	    & \VAR{SUB3_SWI|e}	& \VAR{SUB3_MEL|e}  &  \VAR{SUB3_RAI|e} & \VAR{SUB3_RAT|e} \\
+		South Fork 	& \VAR{SUB2_SWI|e}	& \VAR{SUB2_MEL|e}  & \VAR{SUB2_RAI|e} & \VAR{SUB2_RAT|e} \\
+		Jose Creek	& \VAR{SUB1_SWI|e}	& \VAR{SUB1_MEL|e}  & \VAR{SUB1_RAI|e} & \VAR{SUB1_RAT|e} \\
+		\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel2}
 \end{table}
 
 \begin{itemize}
-\item[] SWE: total snow storage in the basin.
-\item[] SWE AVAIL: amount of isothermal snow, which will melt with any additional energy inputs.
-\item[] $\Delta$SWE: change in SWE during the reporting period.
-\item[] SWI: Snow Water Input, the combination of snowmelt and rain, during the reporting period.
+	\item[] SWE: Snow Water Equivalent, snow storage in the basin
+	\item[] SWE (avail): amount of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
+	\item[] SWE (mean): basin-wide mean SWE, as a depth
+	\item[] $\Delta$SWE: change in SWE during the reporting period
+	\item[] SWI: Surface Water Inputs, the combination of snowmelt and rain
+	\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
 \end{itemize}
 
 \clearpage
@@ -129,7 +158,10 @@ Main   	    			& \VAR{SUB3_SWE|e} 	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_SWEDEL|e} 
 \noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. 
 This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement.
 USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided.
-
-Contact: Mark Robertson mark.robertson@ars.usda.gov, office phone (208) 422-0739. 
+\vspace{0.5cm} \\
+\noindent
+Contact: \\
+\hspace{2cm} Mark Robertson, mark.robertson@ars.usda.gov, (208) 422-0729 \\
+\hspace{2cm} Scott Havens, scott.havens@ars.usda.gov, (208) 422-0739 
 
 \end{document}  
