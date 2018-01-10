@@ -121,6 +121,12 @@ class snowav(object):
             self.psnowFile  = self.snow_files[0] 
             self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
             self.cemFile    = self.em_files[len(self.em_files)-1]
+            
+            if cfg.has_option('Outputs','csnowFile_flt') and cfg.has_option('Outputs','psnowFile_flt'):
+                self.psnowFile_flt  = cfg.get('Outputs','psnowFile_flt')
+                self.csnowFile_flt  = cfg.get('Outputs','csnowFile_flt')
+                self.cemFile_flt    = cfg.get('Outputs','csnowFile_flt').replace('snow','em')
+                
 
 
             ####################################################
@@ -342,7 +348,7 @@ class snowav(object):
         except:
             print('error reading config file')
 
-    def process(self):
+    def process(self,*args):
         '''
         This function calculates everything we will need for the plots.
         
@@ -362,6 +368,13 @@ class snowav(object):
   
         print('Processing iSnobal outputs...')
         
+        if len(args) != 0:
+            self.psnowFile  = args[0]
+            self.csnowFile  = args[1]
+            self.cemFile    = args[1].replace('snow','em')
+            self.snow_files = [self.psnowFile, self.csnowFile]
+            self.em_files   = [self.psnowFile.replace('snow','em'), self.csnowFile.replace('snow','em')]
+       
         cclimit             = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
         accum               = np.zeros((self.nrows,self.ncols))
@@ -685,13 +698,17 @@ class snowav(object):
         print('saving figure to %sresults%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sresults%s.png'%(self.figs_path,self.name_append))  
         
-    def image_change(self): 
+    def image_change(self,*args): 
         '''
         This plots self.delta_state
         
         Should add in more functionality for plotting differences between various images/runs
         
-        '''        
+        '''  
+        
+        if args is not None:
+            self.name_append = self.name_append + args[0]
+              
         # Make copy so that we can add nans for the plots, but not mess up the original
         delta_state     = copy.deepcopy(self.delta_state)
         
@@ -750,8 +767,13 @@ class snowav(object):
         cbar    = plt.colorbar(h, cax = cax,extend='both')
         pos     = cbar.ax.get_position()
         
+        # Add a snow free label
+        ticks = [float(t.get_text().replace(u'\N{MINUS SIGN}', '-')) for t in cbar.ax.get_yticklabels()]    
+        cticks  = np.append((ticks[0]- (ticks[2] - ticks[1])/2),ticks)
+        cbar.set_ticks(cticks)
         oldlabels = cbar.ax.get_yticklabels()
-        oldlabels[0] = '\nsnow\nfree'
+        oldlabels[0] = '\n\nsnow\nfree'
+        
         cbar.ax.set_yticklabels(oldlabels)
         
         cbar.ax.tick_params() 

@@ -8,6 +8,10 @@ wy = 2018
 [Outputs]
 run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/
 run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171218_20180101/output/
+
+psnowFile_flt = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/snow.1870
+csnowFile_flt = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171218_20180101/output/snow.1895
+
 snowband = 2
 emband = 8
 
@@ -55,4 +59,4 @@ sub3_lbl = Eleanor
 rep_path = /mnt/volumes/wkspace/reports/tuol/wy18/ops/
 env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
 templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
-tex_file = tuol_report.tex
+tex_file = tuol_report_flt.tex

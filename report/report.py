@@ -7,7 +7,7 @@ import datetime
 import copy
 
 
-def report(obj):
+def report(obj,*args):
     '''
     Need to add flexibility/checking with what band was specified and actually using SWE/SWI
     -forecast date
@@ -17,6 +17,9 @@ def report(obj):
     -consider printing out summary info for sanity check...
     
     '''
+    if len(args) != 0:
+        # parts = obj.report_name
+        obj.report_name = obj.report_name.split('.')[0] + args[0] + '.pdf'
     
     total_swi       = obj.accum_byelev[obj.total_lbl].sum()
     total_swe       = obj.state_byelev[obj.total_lbl].sum()
@@ -92,6 +95,9 @@ def report(obj):
     totals_fig      = 'basin_total%s.png'%(obj.name_append)
     totalsmy_fig    = 'basin_total_multiyr%s.png'%(obj.name_append)
     valid_fig       = 'validation%s.png'%(obj.name_append)
+    
+    if obj.tex_file == 'tuol_report_flt.tex':
+        changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
      
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
@@ -125,6 +131,9 @@ def report(obj):
     
     if obj.basin == 'BRB':
         variables['VALID_FIG'] = valid_fig
+        
+    if obj.basin == 'TUOL' and obj.tex_file == 'tuol_report_flt.tex':
+        variables['CHANGES_FLT_FIG'] = changes_flt_fig
     
     # Convert floats to strings    
     for name in variables:
@@ -141,7 +150,10 @@ def report(obj):
         results_summary = '%sbrb_results_summary.txt'%(obj.env_path)
         
     if obj.basin == 'TUOL':
-        summary         = '%stuol_summary.txt'%(obj.env_path)
+        if obj.tex_file == 'tuol_report_flt.tex':
+            summary         = '%stuol_summary_flt.txt'%(obj.env_path)
+        else:
+            summary         = '%stuol_summary.txt'%(obj.env_path)
         results_summary = '%stuol_results_summary.txt'%(obj.env_path)
 
     if obj.basin == 'SJ':
@@ -159,8 +171,7 @@ def report(obj):
     for iters,name in enumerate(variables):
         summary         = summary.replace(name,variables[name])         
         results_summary = results_summary.replace(name,variables[name]) 
-
-             
+            
     # Add the section text variables to what we'll pass to the document
     variables['SUMMARY']            = summary 
     variables['RESULTS_SUMMARY']    = results_summary 
