@@ -98,6 +98,10 @@ def report(obj,*args):
     
     if obj.tex_file == 'tuol_report_flt.tex':
         changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
+        pre_swe         = obj.pre_swe
+        pre_pm          = obj.pre_pm
+        diff_pm         = total_pm - pre_pm
+        
      
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
@@ -134,12 +138,17 @@ def report(obj,*args):
         
     if obj.basin == 'TUOL' and obj.tex_file == 'tuol_report_flt.tex':
         variables['CHANGES_FLT_FIG'] = changes_flt_fig
+        variables['PRE_SWE']        = pre_swe
+        variables['PRE_PM']         = pre_pm
+        variables['DIFF_PM']        = diff_pm
+        variables['FLT_SWEDEL']     = total_swe - pre_swe
     
     # Convert floats to strings    
     for name in variables:
         try:
             if isinstance(variables[name], float):
-                tmp     = str(int(variables[name]))
+                # tmp     = str(int(variables[name]))
+                tmp     = str(round(variables[name],1))
                 variables[name] = tmp
         except:
             print('Failed converting variables to strings for report...')

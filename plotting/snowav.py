@@ -368,12 +368,17 @@ class snowav(object):
   
         print('Processing iSnobal outputs...')
         
+        # If we add pre and current snow files for flights, force those
+        # and add a few new things to calculate
         if len(args) != 0:
             self.psnowFile  = args[0]
             self.csnowFile  = args[1]
             self.cemFile    = args[1].replace('snow','em')
             self.snow_files = [self.psnowFile, self.csnowFile]
             self.em_files   = [self.psnowFile.replace('snow','em'), self.csnowFile.replace('snow','em')]
+            
+    
+            # self.pre_pm  = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.total_lbl]['mask'].sum()
        
         cclimit             = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
@@ -409,6 +414,14 @@ class snowav(object):
             snow_file   = ipw.IPW(snow_name)
             tmpstate    = snow_file.bands[self.snowband].data  
             state_byday[:,:,iters] = tmpstate
+            
+            # Currently this is grabbing the second to last
+            # Being used for flight difference
+            # Definitely a better way to do this...
+            if iters == (len(self.snow_files) - 1):
+                # Mean pixel depth [mm] on psnowFile
+                self.pre_pm     =  np.nansum(tmpstate*self.masks[self.total_lbl]['mask'])/self.masks[self.total_lbl]['mask'].sum()  
+                self.pre_swe    =  np.nansum(tmpstate*self.masks[self.total_lbl]['mask'])*self.conversion_factor          
             
             # Store daily sub-basin totals
             for mask_name in self.masks:
