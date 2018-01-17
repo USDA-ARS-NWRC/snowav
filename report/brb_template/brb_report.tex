@@ -29,14 +29,14 @@
 
 \rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
 
-\title{ {\color{red} DRAFT } \\ \VAR{REPORT_TITLE|e} \\
-Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}
-}
+\title{ {\color{red} DRAFT } \\ \textbf{\VAR{REPORT_TITLE|e}} \\
+Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}}
 
-\author{USDA Agricultural Research Service, Boise, Idaho\\
-NRCS National Water and Climate Center, Portland, Oregon\\
-\emph{in cooperation with} U.S. Bureau of Reclamation, Boise, Idaho}
-\date{}							% Activate to display a given date or no date
+\author{USDA Agricultural Research Service, Boise, Idaho \\
+	NASA Jet Propulsion Lab, Pasadena, California \\
+	\emph{in cooperation with} NRCS National Water and Climate Center, Portland, Oregon\\
+	\emph{and} U.S. Bureau of Reclamation, Sacramento, California} 
+\date{}	
 
 
 
@@ -119,7 +119,7 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{SWI_FIG}}
-	\caption{Current Surface Water Inputs (SWI) for the reporting period. Hatching indicates the portion of SWI that came as snowmelt, rather than rain.}
+	\caption{Current Surface Water Inputs (SWI) for the reporting period. Hatching indicates the portion of SWI that is attributed to snowmelt, rather than rain.}
 	\label{fig:SWI}
 \end{centering}
 \end{figure}
@@ -139,7 +139,7 @@ NRCS National Water and Climate Center, Portland, Oregon\\
  \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
-	\caption{Current SWE per elevation band for each sub basin.}
+	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
@@ -180,7 +180,7 @@ NRCS National Water and Climate Center, Portland, Oregon\\
 
 \noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement. USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided.
 
-\vspace{0.5cm} \\
+\vspace{0.5cm} 
 \noindent
 Contact: \\
 \hspace{2cm} Mark Robertson, mark.robertson@ars.usda.gov, (208) 422-0729 \\
