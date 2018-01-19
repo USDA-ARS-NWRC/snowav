@@ -84,42 +84,53 @@ class snowav(object):
                     print('error parsing self.run_files...')
                             
                 self.em_files   = [value for value in run_files_filt if 'em' in value]
-                self.snow_files = [value for value in run_files_filt if 'snow' in value]
-    
-            else:
-                self.snow_files = [value for value in self.run_files if not 'em' in value]
-                self.em_files   = [value for value in self.run_files if 'em' in value]
-            
-            # Going to change this to be the full path so that we can also go between two directories
-            self.snow_files     = [self.run_dir + s for s in self.snow_files] 
-            self.em_files       = [self.run_dir + s for s in self.em_files]  
-            
-            # If a previous run dir is listed, add those paths
-            if cfg.has_option('Outputs','run_dir1'):
-                self.run_dir1  = cfg.get('Outputs','run_dir1')
-                run_files1     = [self.run_dir1 + s for s in sorted(os.listdir(self.run_dir1))]
-                snow_files1    = [value for value in run_files1 if not 'em' in value]
-                em_files1      = [value for value in run_files1 if 'em' in value]
-                self.snow_files = snow_files1 + self.snow_files
-                self.em_files   = em_files1 + self.em_files
+                self.snow_files = [value for value in run_files_filt if not 'em' in value]
                 
-            if cfg.has_option('Outputs','run_dir2'):
-                run_dir2        = cfg.get('Outputs','run_dir2')
-                run_files2     = [run_dir2 + s for s in sorted(os.listdir(run_dir2))]
-                snow_files2    = [value for value in run_files2 if 'snow' in value]
-                em_files2      = [value for value in run_files2 if 'em' in value]
-                self.snow_files = snow_files2 + self.snow_files
-                self.em_files   = em_files2 + self.em_files    
-            
-            self.psnowFile  = self.snow_files[0] 
-            self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
-            self.cemFile    = self.em_files[len(self.em_files)-1]
+                # Going to change this to be the full path so that we can also go between two directories
+                self.snow_files     = [self.run_dir + s for s in self.snow_files] 
+                self.em_files       = [self.run_dir + s for s in self.em_files]       
+            else:
+                self.em_files       = [value for value in self.run_files if 'em' in value]
+                self.snow_files     = [value for value in self.run_files if not 'em' in value]
+                self.snow_files     = [self.run_dir + s for s in self.snow_files] 
+                self.em_files       = [self.run_dir + s for s in self.em_files]  
+
+                # Now define p and s
+                self.psnowFile  = self.snow_files[0] 
+                self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
+                self.cemFile    = self.em_files[len(self.em_files)-1]     
             
             if cfg.has_option('Outputs','csnowFile_flt') and cfg.has_option('Outputs','psnowFile_flt'):
                 self.psnowFile_flt  = cfg.get('Outputs','psnowFile_flt')
                 self.csnowFile_flt  = cfg.get('Outputs','csnowFile_flt')
                 self.cemFile_flt    = cfg.get('Outputs','csnowFile_flt').replace('snow','em')
                 
+            ####################################################
+            #           Runs                                   #
+            ####################################################
+            if cfg.has_section('Runs'): 
+                runs = list(cfg.items('Runs'))   
+                
+                psfiles = []
+                pefiles = []
+                for rdir in runs:
+                    # rdir = '/mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/'
+                    run_files     = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
+                    snow_files    = [value for value in run_files if not 'em' in value]
+                    em_files      = [value for value in run_files if 'em' in value]
+                    psfiles         = psfiles + snow_files
+                    pefiles         = pefiles + em_files
+                    
+                self.snow_files = psfiles + self.snow_files
+                self.em_files   = pefiles + self.em_files 
+                
+                if not cfg.has_option('Outputs','csnowFile') and cfg.has_option('Outputs','psnowFile'):
+                
+                    # Now define p and s
+                    self.psnowFile  = self.snow_files[0] 
+                    self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
+                    self.cemFile    = self.em_files[len(self.em_files)-1]   
+              
             ####################################################
             #           Accumulated                            #
             ####################################################   
@@ -370,24 +381,32 @@ class snowav(object):
         cclimit             = -5*1000*1000  #  based on an average of 60 W/m2 from TL paper
 
         accum               = np.zeros((self.nrows,self.ncols))
+        accum_sub           = np.zeros((self.nrows,self.ncols))
         snowmelt            = np.zeros((self.nrows,self.ncols))
+        snowmelt_sub        = np.zeros((self.nrows,self.ncols))
         state               = np.zeros((self.nrows,self.ncols))
         pstate              = np.zeros((self.nrows,self.ncols))
         state_byday         = np.zeros((self.nrows,self.ncols,len(self.snow_files)))
-        accum_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys()) 
+        accum_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        accum_byelev_sub    = pd.DataFrame(index = self.edges, columns = self.masks.keys())  
         state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         delta_state_byelev  = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         melt                = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         nonmelt             = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         snowmelt_byelev     = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        snowmelt_byelev_sub = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         state_summary       = pd.DataFrame(columns = self.masks.keys())
         accum_summary       = pd.DataFrame(columns = self.masks.keys())
                
         # Loop through output files
         # Currently we need to load in each em.XXXX file to 'accumulate',
         # but only the first and last snow.XXXX file for changes
+        accum_sub_flag = False
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,self.snow_files)):
             print(em_name,snow_name)
+            # iters = iters + 1
+            # em_name = self.em_files[iters]
+            # snow_name = self.snow_files[iters]
                      
             # Make date for pd index
             date        = wy.wyhr_to_datetime(self.wy,int(snow_name.split('.')[-1]))
@@ -414,15 +433,27 @@ class snowav(object):
             for mask_name in self.masks:
                 accum_summary.loc[date, mask_name]   = np.nansum(np.multiply(accum,self.masks[mask_name]['mask'])) 
                 state_summary.loc[date, mask_name]   = np.nansum(np.multiply(tmpstate,self.masks[mask_name]['mask'])) 
-            
+
             # When it is the first snow file, copy
             if snow_name.split('/')[-1] == self.psnowFile.split('/')[-1]:
                 print('psnowfile is %s'%(snow_name))
+                accum_sub_flag  = True
                 pstate          = copy.deepcopy(tmpstate)
+                
+            # This only add between psnowFile and csnowFile
+            if accum_sub_flag:
+                accum_sub       = accum_sub + copy.deepcopy(band)
+                snowmelt_sub    = snowmelt_sub + copy.deepcopy(em_file.bands[7].data) 
+                print(sum(sum(accum_sub)),sum(sum(snowmelt_sub)))  
+                # sum(sum(snowmelt_sub)) 
             
             # When it hits the current snow file, copy
             if snow_name.split('/')[-1] == self.csnowFile.split('/')[-1]:
                 print('csnowfile is %s'%(snow_name))
+                
+                # Turn off, but last one will still have been added
+                accum_sub_flag  = False
+             
                 state           = copy.deepcopy(tmpstate)
                 self.cold       = em_file.bands[9].data        
 
@@ -440,7 +471,9 @@ class snowav(object):
         # Mask by subbasin and elevation band
         for mask_name in self.masks:
             accum_mask              = np.multiply(accum,self.masks[mask_name]['mask'])
+            accum_mask_sub          = np.multiply(accum_sub,self.masks[mask_name]['mask'])
             snowmelt_mask           = np.multiply(snowmelt,self.masks[mask_name]['mask'])
+            snowmelt_mask_sub       = np.multiply(snowmelt_sub,self.masks[mask_name]['mask'])
             state_mask              = np.multiply(state,self.masks[mask_name]['mask'])
             delta_state_byelev_mask = np.multiply(delta_state,self.masks[mask_name]['mask'])
             state_byelev_mask       = np.multiply(state,self.masks[mask_name]['mask'])
@@ -456,7 +489,9 @@ class snowav(object):
                 cind        = ccb > cclimit
                 
                 accum_byelev.loc[self.edges[n],mask_name]       = np.nansum(accum_mask[ind])
+                accum_byelev_sub.loc[self.edges[n],mask_name]   = np.nansum(accum_mask_sub[ind])
                 snowmelt_byelev.loc[self.edges[n],mask_name]    = np.nansum(snowmelt_mask[ind])
+                snowmelt_byelev_sub.loc[self.edges[n],mask_name] = np.nansum(snowmelt_mask_sub[ind])
                 state_byelev.loc[self.edges[n],mask_name]       = np.nansum(state_byelev_mask[ind])
                 delta_state_byelev.loc[self.edges[n],mask_name] = np.nansum(delta_state_byelev_mask[ind])
                 melt.loc[self.edges[n],mask_name]               = np.nansum(state_bin[cind])
@@ -466,13 +501,16 @@ class snowav(object):
         
         # Convert to desired units
         self.accum                  = np.multiply(accum,self.depth_factor)                  # sum over all time steps, spatial
+        self.accum_sub              = np.multiply(accum_sub,self.depth_factor)                  # sum over all time steps, spatial
         self.state                  = np.multiply(state,self.depth_factor)                  # at last time step, spatial
         self.state_byday            = np.multiply(state_byday,self.depth_factor)
         self.pstate                 = np.multiply(pstate,self.conversion_factor)            # at first time step, spatial
         self.delta_state            = np.multiply(delta_state,self.depth_factor)            # at last time step, spatial
         self.delta_state_byelev     = np.multiply(delta_state_byelev,self.conversion_factor)# at last time step, by elevation
         self.accum_byelev           = np.multiply(accum_byelev,self.conversion_factor)      # at last time step, by elevation
+        self.accum_byelev_sub       = np.multiply(accum_byelev_sub,self.conversion_factor)      # at last time step, by elevation
         self.snowmelt_byelev        = np.multiply(snowmelt_byelev,self.conversion_factor)      # at last time step, by elevation
+        self.snowmelt_byelev_sub    = np.multiply(snowmelt_byelev_sub,self.conversion_factor)      # at last time step, by elevation
         self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)      # at last time step, by elevation
         self.melt                   = np.multiply(melt,self.conversion_factor)              # at last time step, based on cold content
         self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)           # at last time step, based on cold content
@@ -485,13 +523,22 @@ class snowav(object):
         # Consider writing summaries to the config file...?
     
        
-    def accumulated(self):
+    def accumulated(self,*arg):
         '''
         This function plots self.accum (typically SWI)
         
         '''
-        # Make copy so that we can add nans for the plots, but not mess up the original
-        accum           = copy.deepcopy(self.accum)
+        
+        # if this is supplied, only report accum by the subsection between psnowFile and csnowFile
+        if len(arg) != 0:
+            accum           = copy.deepcopy(self.accum_sub) 
+            snowmelt_byelev = copy.deepcopy(self.snowmelt_byelev_sub) 
+            accum_byelev    = copy.deepcopy(self.accum_byelev_sub) 
+                                      
+        else:    
+            accum           = copy.deepcopy(self.accum)
+            snowmelt_byelev = copy.deepcopy(self.snowmelt_byelev)
+            accum_byelev    = copy.deepcopy(self.accum_byelev)
 
         # qMin,qMax       = np.percentile(accum,[0,self.acc_clmax])
         qMin,qMax       = np.percentile(accum,[0,100])
@@ -509,6 +556,11 @@ class snowav(object):
         ixo             = pmask == 0
         accum[ixo]      = np.nan
         mymap.set_bad('white',1.) 
+        
+        # Now set SWI-free
+        ixf             = accum == 0
+        accum[ixf]      = -1
+        mymap.set_under('grey',1.) 
         
         plt.close(0)
         fig,(ax,ax1)    = plt.subplots(num=0, figsize = self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)      
@@ -534,9 +586,9 @@ class snowav(object):
         cbar.ax.tick_params() 
         
         if self.units == 'KAF':
-            cbar.set_label('[in]', labelpad = -2)
+            cbar.set_label('[in]')
         if self.units == 'SI':
-            cbar.set_label('[mm]', labelpad = 1)           
+            cbar.set_label('[mm]')           
         
         # These are for the multi-y colorbar if we decide to resurrect...            
         # cax.yaxis.set_label_position('left') 
@@ -545,39 +597,48 @@ class snowav(object):
         
         # Total basin label
         sumorder        = self.plotorder[1:]
-        percent_melt    = str(int((self.snowmelt_byelev[self.plotorder[0]].sum()/self.accum_byelev[self.plotorder[0]].sum())*100))
+        percent_melt    = str(int((snowmelt_byelev[self.plotorder[0]].sum()/accum_byelev[self.plotorder[0]].sum())*100))
         
         if self.units == 'KAF':
-            tlbl        = '%s = %s KAF (%s%% melt)'%(self.plotorder[0],str(int(self.accum_byelev[self.plotorder[0]].sum())),percent_melt)
+            # tlbl        = '%s = %s KAF (%s%% melt)'%(self.plotorder[0],str(int(accum_byelev[self.plotorder[0]].sum())),percent_melt)
+            tlbl        = '%s = %s KAF'%(self.plotorder[0],str(int(accum_byelev[self.plotorder[0]].sum())))
         if self.units == 'SI':
-            tlbl        = '%s = %s M $m^3$ (%s %%melt)'%(self.plotorder[0],str(int(self.accum_byelev[self.plotorder[0]].sum())),percent_melt)            
+            # tlbl        = '%s = %s M $m^3$ (%s %%melt)'%(self.plotorder[0],str(int(accum_byelev[self.plotorder[0]].sum())),percent_melt) 
+            tlbl        = '%s = %s KAF'%(self.plotorder[0],str(int(accum_byelev[self.plotorder[0]].sum())))           
             
         for iters,name in enumerate(sumorder):
-            percent_melt    = str(int((self.snowmelt_byelev[self.plotorder[iters + 1]].sum()/self.accum_byelev[self.plotorder[iters + 1]].sum())*100))
+            percent_melt    = str(int((snowmelt_byelev[self.plotorder[iters + 1]].sum()/accum_byelev[self.plotorder[iters + 1]].sum())*100))
 
             # Make the labels            
             if self.units == 'KAF':
-                lbl = '%s = %s KAF (%s%% melt)'%(name,str(int(self.accum_byelev[name].sum())),percent_melt)
+                # lbl = '%s = %s KAF (%s%% melt)'%(name,str(int(accum_byelev[name].sum())),percent_melt)
+                lbl = '%s = %s KAF'%(name,str(int(accum_byelev[name].sum())))
             if self.units == 'SI':
-                lbl = '%s = %s M $m^3$ (%s%% melt)'%(name,str(int(self.accum_byelev[name].sum())),percent_melt)
-                
+                # lbl = '%s = %s M $m^3$ (%s%% melt)'%(name,str(int(accum_byelev[name].sum())),percent_melt)
+                lbl = '%s = %s KAF'%(name,str(int(accum_byelev[name].sum())))
+            
+            # UMMMMM, does snowmelt include re-freezing...?
+            if any(snowmelt_byelev[name] > accum_byelev[name]):
+                ix = snowmelt_byelev[name] > accum_byelev[name]
+                snowmelt_byelev[name][ix] = accum_byelev[name][ix]
+   
             if iters == 0:
-                ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-                ax1.bar(range(0,len(self.edges)),self.snowmelt_byelev[name], color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')
+                ax1.bar(range(0,len(self.edges)),accum_byelev[name], color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+                # ax1.bar(range(0,len(self.edges)),snowmelt_byelev[name], color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')
             elif iters == 1:   
-                ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], bottom = self.accum_byelev[sumorder[iters-1]], color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-                ax1.bar(range(0,len(self.edges)),self.snowmelt_byelev[name], bottom = self.accum_byelev[sumorder[iters-1]], color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')
+                ax1.bar(range(0,len(self.edges)),accum_byelev[name], bottom = accum_byelev[sumorder[iters-1]], color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+                # ax1.bar(range(0,len(self.edges)),snowmelt_byelev[name], bottom = accum_byelev[sumorder[iters-1]], color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')
             elif iters == 2:   
-                ax1.bar(range(0,len(self.edges)),self.accum_byelev[name], bottom = self.accum_byelev[sumorder[iters-1]] + self.accum_byelev[sumorder[iters-2]], color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-                ax1.bar(range(0,len(self.edges)),self.snowmelt_byelev[name], bottom = self.accum_byelev[sumorder[iters-1]] + self.accum_byelev[sumorder[iters-2]], color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')               
+                ax1.bar(range(0,len(self.edges)),accum_byelev[name], bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]]), color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+                # ax1.bar(range(0,len(self.edges)),snowmelt_byelev[name], bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]]), color = self.barcolors[iters], edgecolor = 'k',hatch = '/////')               
             
             plt.rcParams['hatch.linewidth'] = 1
             plt.rcParams['hatch.color'] = 'k'                
             ax1.set_xlim(self.xlims)
 
         # Just for hatching legend entry
-        ax1.bar(range(0,1),0.1, color = self.barcolors[iters], alpha = 0, hatch = '/////', label = 'snowmelt') 
-        plt.rcParams['hatch.color'] = 'k'
+        # ax1.bar(range(0,1),0.1, color = self.barcolors[iters], alpha = 0, hatch = '/////', label = 'snowmelt') 
+        # plt.rcParams['hatch.color'] = 'k'
         
         plt.tight_layout()
         xts         = ax1.get_xticks()
@@ -624,7 +685,11 @@ class snowav(object):
 #         axc.set_yticklabels(newlabels)
         
         ax1.legend(loc= (0.01,0.68))
-        ax1.text(0.35,0.94,tlbl,horizontalalignment='center',transform=ax1.transAxes,fontsize = 10)
+        ax1.text(0.37,0.94,tlbl,horizontalalignment='center',transform=ax1.transAxes,fontsize = 10)
+        
+        if sum(sum(ixf)) > 0:
+            patches = [mpatches.Patch(color='grey', label='no SWI')]
+            ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
              
         print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
@@ -1007,7 +1072,7 @@ class snowav(object):
 
         
         ax1.yaxis.set_label_position("right")
-        ax1.set_xlim((self.dateFrom,self.dateTo))
+        ax1.set_xlim((datetime(2017, 10, 1),self.dateTo))
         ax1.tick_params(axis='y')
         ax1.yaxis.tick_right()
         ax.legend(loc='upper left')

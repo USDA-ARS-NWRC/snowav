@@ -3,14 +3,14 @@ import sys
 sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import SNOWAV
 
-config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_brb_wy2018_ops.txt'
+config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_tuol_wy2018.txt'
 snow            = SNOWAV.snowav(config_file)
     
 # Make all the calculations
 SNOWAV.snowav.process(snow)
 
 # To make a report for the BRB, or with no flight updates, run these
-SNOWAV.snowav.accumulated(snow)
+SNOWAV.snowav.accumulated(snow,'sub')
 SNOWAV.snowav.current_image(snow)
 SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
