@@ -87,7 +87,7 @@ class snowav(object):
                 self.snow_files = [value for value in run_files_filt if 'snow' in value]
     
             else:
-                self.snow_files = [value for value in self.run_files if 'snow' in value]
+                self.snow_files = [value for value in self.run_files if not 'em' in value]
                 self.em_files   = [value for value in self.run_files if 'em' in value]
             
             # Going to change this to be the full path so that we can also go between two directories
@@ -96,9 +96,9 @@ class snowav(object):
             
             # If a previous run dir is listed, add those paths
             if cfg.has_option('Outputs','run_dir1'):
-                run_dir1       = cfg.get('Outputs','run_dir1')
-                run_files1     = [run_dir1 + s for s in sorted(os.listdir(run_dir1))]
-                snow_files1    = [value for value in run_files1 if 'snow' in value]
+                self.run_dir1  = cfg.get('Outputs','run_dir1')
+                run_files1     = [self.run_dir1 + s for s in sorted(os.listdir(self.run_dir1))]
+                snow_files1    = [value for value in run_files1 if not 'em' in value]
                 em_files1      = [value for value in run_files1 if 'em' in value]
                 self.snow_files = snow_files1 + self.snow_files
                 self.em_files   = em_files1 + self.em_files
@@ -387,7 +387,8 @@ class snowav(object):
         # Currently we need to load in each em.XXXX file to 'accumulate',
         # but only the first and last snow.XXXX file for changes
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,self.snow_files)):
-            
+            print(em_name,snow_name)
+                     
             # Make date for pd index
             date        = wy.wyhr_to_datetime(self.wy,int(snow_name.split('.')[-1]))
             
@@ -416,10 +417,12 @@ class snowav(object):
             
             # When it is the first snow file, copy
             if snow_name.split('/')[-1] == self.psnowFile.split('/')[-1]:
+                print('psnowfile is %s'%(snow_name))
                 pstate          = copy.deepcopy(tmpstate)
             
             # When it hits the current snow file, copy
             if snow_name.split('/')[-1] == self.csnowFile.split('/')[-1]:
+                print('csnowfile is %s'%(snow_name))
                 state           = copy.deepcopy(tmpstate)
                 self.cold       = em_file.bands[9].data        
 
@@ -506,8 +509,6 @@ class snowav(object):
         ixo             = pmask == 0
         accum[ixo]      = np.nan
         mymap.set_bad('white',1.) 
-        
-        print(np.max(np.multiply(self.dem,self.masks['Boise River Basin']['mask'])))
         
         plt.close(0)
         fig,(ax,ax1)    = plt.subplots(num=0, figsize = self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)      
@@ -708,7 +709,7 @@ class snowav(object):
         cbar    = plt.colorbar(h, cax = cax)
         
         if self.units == 'KAF':         
-            cbar.set_label('[in]', labelpad = -2)
+            cbar.set_label('[in]', labelpad = 0)
         if self.units == 'SI':
             cbar.set_label('[mm]', labelpad = 0)
          
@@ -1145,7 +1146,25 @@ class snowav(object):
             dind    = pd.date_range(st_time,end_time,freq='D')
             swe_meas[stn]   = data.reindex(dind)
         
-        # Now get pixel results
+        if hasattr(self, 'run_dir1'):
+            ncpath  = self.run_dir1.split('output')
+            ncf     = nc.Dataset(ncpath[0] + 'snow.nc', 'r')    # open netcdf file
+            nctvec  = ncf.variables['time'][:]
+            vswe    = ncf.variables['specific_mass']            # get variable
+            ncxvec  = ncf.variables['x'][:]                     # get x vec
+            ncyvec  = ncf.variables['y'][:]                     # get y vec      
+            
+            for stn in stns:
+                ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
+                xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
+                yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
+                
+                swe     = pd.Series(vswe[:,yind,xind].flatten(),index=nctvec)  # pull out closest model pixel data
+                swe_mod.loc[0:len(swe.values),stn] = swe.values  
+                
+                st = len(swe.values)    
+        
+        # Now get pixel results  
         ncpath  = self.run_dir.split('output')
         ncf     = nc.Dataset(ncpath[0] + 'snow.nc', 'r')    # open netcdf file
         nctvec  = ncf.variables['time'][:]
@@ -1158,7 +1177,7 @@ class snowav(object):
             xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
             yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
             swe     = pd.Series(vswe[:,yind,xind].flatten(),index=nctvec)  # pull out closest model pixel data
-            swe_mod.loc[0:len(swe.values),stn] = swe.values
+            swe_mod.loc[st:st + len(swe.values),stn] = swe.values    
              
         # Plot
         maxswe = swe_meas.max()

@@ -7,11 +7,12 @@ wy = 2018
 
 [Outputs]
 ; Specific psnowFile and csnowFile take precedence over run_dir
-run_dir1 = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20171217/output/
-run_dir = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20180107/output/
+run_dir1 = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20180107/output/
+run_dir = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20180108_20180117/output/
 ;psnowFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/snow.1007
 ;csnowFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/snow.1870
 ;cemFile = /mnt/data/snowdrift/brb/devel/wy2017/tblauto_ta/runs/run20161001_20170801/output/em.1870
+
 snowband = 2
 emband = 8
 
