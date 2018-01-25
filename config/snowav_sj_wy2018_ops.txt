@@ -7,11 +7,17 @@ wy = 2018
 
 [Outputs]
 run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
-;psnowFile = /mnt/data/blizzard/
-;csnowFile = /mnt/data/blizzard/
-;cemFile = /mnt/data/blizzard/
+
+; run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/
+; psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/snow.0023
+; csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
+; cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
 snowband = 2
 emband = 8
+
+; [Runs]
+; Ouput directories listed here get added to the run
+; run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
 
 [Accumulated]
 clmin = 0

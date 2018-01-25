@@ -6,10 +6,10 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/
-; psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/snow.2231
-; csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/snow.2303
-; cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/snow.2303
+run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180123_20180125/output/
+psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/snow.0023
+csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180123_20180125/output/snow.2783
+cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180123_20180125/output/snow.2783
 ; psnowFile_flt =
 ; csnowFile_flt =
 
@@ -20,6 +20,8 @@ emband = 8
 ; Ouput directories listed here get added to the run
 run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/
 run_dir2 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171218_20180101/output/
+run_dir3 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/
+run_dir4 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180119_20180123/output/
 
 [Accumulated]
 clmin = 0

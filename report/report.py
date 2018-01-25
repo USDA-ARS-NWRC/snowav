@@ -3,7 +3,7 @@ from latex.jinja2 import make_env
 from latex import build_pdf
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime
 import copy
 
 
@@ -17,6 +17,7 @@ def report(obj,*args):
     -consider printing out summary info for sanity check...
     
     '''
+    
     if len(args) != 0:
         # parts = obj.report_name
         obj.report_name = obj.report_name.split('.')[0] + args[0] + '.pdf'
@@ -25,9 +26,10 @@ def report(obj,*args):
     total_swe       = obj.state_byelev[obj.total_lbl].sum()
     totalav_swe     = obj.melt[obj.total_lbl].sum()
     total_swe_del   = obj.delta_state_byelev[obj.total_lbl].sum()
+    report_time     = datetime.now().strftime("%Y-%-m-%-d %H:%M")
     
     # HACK, somewhere the rounding is different when we start from Oct 1...
-    if obj.dateFrom == datetime.datetime(2017,10,1,23,0):
+    if obj.dateFrom == datetime(2017,10,1,23,0):
         total_swe_del = copy.copy(total_swe)
     
     # Total hack for different number of subbasins, needs improvement...
@@ -49,10 +51,11 @@ def report(obj,*args):
         
         
         # Calculate mean basin depths in mm
-        total_pm        = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.total_lbl]['mask'].sum()
-        sub1_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub1_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub1_lbl]['mask'].sum()
-        sub2_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub2_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub2_lbl]['mask'].sum()
-        sub3_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub3_lbl]['mask'],(1/obj.depth_factor)))/obj.masks[obj.sub3_lbl]['mask'].sum()
+        # if want mm, np.multiply with (1/obj.depth_factor)
+        total_pm        = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
+        sub1_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub1_lbl]['mask'],1))/obj.masks[obj.sub1_lbl]['mask'].sum()
+        sub2_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub2_lbl]['mask'],1))/obj.masks[obj.sub2_lbl]['mask'].sum()
+        sub3_pm         = np.nansum(np.multiply(obj.state*obj.masks[obj.sub3_lbl]['mask'],1))/obj.masks[obj.sub3_lbl]['mask'].sum()
         
         # More SWI stuff
         total_mel       = obj.snowmelt_byelev[obj.total_lbl].sum()
@@ -60,15 +63,38 @@ def report(obj,*args):
         sub2_mel        = obj.snowmelt_byelev[obj.sub2_lbl].sum()
         sub3_mel        = obj.snowmelt_byelev[obj.sub3_lbl].sum()
         
-        total_rai       = total_swi - total_mel
-        sub1_rai        = sub1_swi - sub1_mel
-        sub2_rai        = sub2_swi - sub2_mel
-        sub3_rai        = sub3_swi - sub3_mel
+        # total_rai       = total_swi - total_mel
+        # sub1_rai        = sub1_swi - sub1_mel
+        # sub2_rai        = sub2_swi - sub2_mel
+        # sub3_rai        = sub3_swi - sub3_mel
         
-        total_rat       = (total_rai/total_swi)*100
-        sub1_rat        = (sub1_rai/sub1_swi)*100
-        sub2_rat        = (sub2_rai/sub2_swi)*100
-        sub3_rat        = (sub3_rai/sub3_swi)*100
+        # total_rai       = obj.rain_bg_byelev[obj.total_lbl].sum()
+        # sub1_rai        = obj.rain_bg_byelev[obj.sub1_lbl].sum()
+        # sub2_rai        = obj.rain_bg_byelev[obj.sub2_lbl].sum()
+        # sub3_rai        = obj.rain_bg_byelev[obj.sub3_lbl].sum()
+        
+        total_rai       = obj.rain_bg_byelev[obj.total_lbl].sum()
+        sub1_rai        = obj.rain_bg_byelev[obj.sub1_lbl].sum()
+        sub2_rai        = obj.rain_bg_byelev[obj.sub2_lbl].sum()
+        sub3_rai        = obj.rain_bg_byelev[obj.sub3_lbl].sum()        
+        
+        # Calculate mean rain in mm
+        totalpre_pm    = np.nansum(np.multiply(obj.precip*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
+        sub1pre_pm     = np.nansum(np.multiply(obj.precip*obj.masks[obj.sub1_lbl]['mask'],1))/obj.masks[obj.sub1_lbl]['mask'].sum()
+        sub2pre_pm     = np.nansum(np.multiply(obj.precip*obj.masks[obj.sub2_lbl]['mask'],1))/obj.masks[obj.sub2_lbl]['mask'].sum()
+        sub3pre_pm     = np.nansum(np.multiply(obj.precip*obj.masks[obj.sub3_lbl]['mask'],1))/obj.masks[obj.sub3_lbl]['mask'].sum()
+            
+        
+        # DEBUG for rain calculation
+        for s in obj.plotorder:
+            sub = obj.accum_byelev[s].sum() - obj.snowmelt_byelev[s].sum()
+            cal = obj.rain_bg_byelev[s].sum()
+            print(sub,cal)
+        
+        total_rat       = str(int((total_rai/total_swi)*100))
+        sub1_rat        = str(int((sub1_rai/sub1_swi)*100))
+        sub2_rat        = str(int((sub2_rai/sub2_swi)*100))
+        sub3_rat        = str(int((sub3_rai/sub3_swi)*100))
     
     else: 
 
@@ -106,6 +132,7 @@ def report(obj,*args):
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
                     'REPORT_TITLE':report_title,
+                    'REPORT_TIME':report_time,
                     'WATERYEAR':str(obj.wy),
                     'UNITS':obj.reportunits,
                     'START_DATE':start_date,
@@ -129,6 +156,7 @@ def report(obj,*args):
                     'TOTAL_SWE':total_swe,'SUB1_SWE':sub1_swe,'SUB2_SWE':sub2_swe,'SUB3_SWE':sub3_swe,
                     'TOTAL_SWE_AV':totalav_swe,'SUB1_SWE_AV':sub1av_swe,'SUB2_SWE_AV':sub2av_swe,'SUB3_SWE_AV':sub3av_swe,
                     'TOTAL_PM':total_pm,'SUB1_PM':sub1_pm,'SUB2_PM':sub2_pm,'SUB3_PM':sub3_pm,
+                    'TOTALPRE_PM':totalpre_pm,'SUB1PRE_PM':sub1pre_pm,'SUB2PRE_PM':sub2pre_pm,'SUB3PRE_PM':sub3pre_pm,
                     'TOTAL_SWEDEL':total_swe_del,'SUB1_SWEDEL':sub1_swe_del,'SUB2_SWEDEL':sub2_swe_del,'SUB3_SWEDEL':sub3_swe_del
                     
                     }
@@ -177,7 +205,7 @@ def report(obj,*args):
     fid.close()
     fid1.close()  
     
-    for iters,name in enumerate(variables):
+    for name in variables:
         summary         = summary.replace(name,variables[name])         
         results_summary = results_summary.replace(name,variables[name]) 
             
