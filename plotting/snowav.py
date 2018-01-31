@@ -60,6 +60,11 @@ class snowav(object):
             self.run_dir        = cfg.get('Outputs','run_dir')           
             self.run_files      = sorted(os.listdir(self.run_dir))
             
+            if 'error.out' in self.run_files:
+                self.run_files.remove('error.out')
+            if '._error.out' in self.run_files:
+                self.run_files.remove('._error.out')
+            
             if cfg.has_option('Outputs','csnowFile') and cfg.has_option('Outputs','psnowFile'):
                 self.psnowFile  = cfg.get('Outputs','psnowFile')
                 self.csnowFile  = cfg.get('Outputs','csnowFile')
@@ -74,7 +79,7 @@ class snowav(object):
                 # This could be made more robust
                 try:
                     for name in self.run_files:
-                        if not 'error.out' in name:
+                        if not 'error.out' or '._error.out' in name:
                             file_hr     = int(name.split('.')[-1])
   
                             if file_hr >= int(sthr) and file_hr <= int(enhr):
@@ -116,6 +121,10 @@ class snowav(object):
                 pefiles = []
                 for rdir in runs:
                     run_files     = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
+                    if 'error.out' in run_files:
+                        run_files.remove('error.out')
+                    if '._error.out' in self.run_files:
+                        self.run_files.remove('._error.out')                        
                     snow_files    = [value for value in run_files if not 'em' in value]
                     em_files      = [value for value in run_files if 'em' in value]
                     psfiles         = psfiles + snow_files
@@ -130,7 +139,7 @@ class snowav(object):
                     self.psnowFile  = self.snow_files[0] 
                     self.csnowFile  = self.snow_files[len(self.snow_files)-1] 
                     self.cemFile    = self.em_files[len(self.em_files)-1]   
-              
+            
             ####################################################
             #           Accumulated                            #
             ####################################################   
@@ -1316,6 +1325,116 @@ class snowav(object):
         print('saving figure to %svalidation%s.png'%(self.figs_path,self.name_append))   
         plt.savefig('%svalidation%s.png'%(self.figs_path,self.name_append))                  
         
+    def basin_detail(self):
+        import math
+        import copy
+        import numpy as np
+
+        emin        = int(math.ceil(np.min(self.dem)/100.0))*100
+        emax        = int(math.ceil(np.max(self.dem)/100.0))*100
+        step        = 500 # 50
+        edges       = np.arange(emin,emax+step,step)
+        ixd         = np.digitize(self.dem,edges) 
+        
+        hypsom      = pd.DataFrame(index = edges, columns = self.masks.keys())  
+
+        for name in self.masks:
+            # name = 'San Joaquin'
+            elevbin     = np.multiply(ixd,self.masks[name]['mask'])
+
+            # Do it by elevation band
+            for n in np.arange(0,len(edges)):
+                ind        = elevbin == n
+                elev_bin   = self.dem[ind] 
+                hypsom.loc[edges[n],name] = np.nansum(np.nansum(ind))
+    
+        map     = plt.cm.terrain
+        
+        demcopy = copy.copy(self.dem)
+        pmask           = self.masks[self.total_lbl]['mask']
+        ixo             = pmask == 0
+        demcopy[ixo]      = np.nan
+        map.set_bad('white')
+        
+        sns.set_style('dark')
+        sns.set_context("notebook")
+       
+        clrs = copy.copy(self.barcolors)
+        clrs.insert(0,'k')
+        factor      = 0.000006 # m^2 to km^2
+       
+        plt.close(9) 
+        fig,(ax,ax1)    = plt.subplots(num=9, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
+        h               = ax.imshow(demcopy, cmap=map)
+        
+        # Basin boundaries
+        for name in self.masks:
+            ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)   
+            
+        for iters,name in enumerate(self.plotorder):
+            ax1.barh(range(0,len(edges)-1),hypsom[name][1::]*self.pixel*factor, color = clrs[iters])
+        
+        axb             = ax1.twiny()
+        for iters,name in enumerate(self.plotorder):
+            axb.plot(hypsom[name][1::].cumsum()*self.pixel*factor,range(1,len(edges)), color = clrs[iters]) 
+            axb.plot(hypsom[name][1::].cumsum()*self.pixel*factor,range(1,len(edges)), color = 'k', linestyle = ':',linewidth = 0.8)    
+         
+        ax1.set_ylim((0.5,len(edges)))
+        axb.set_ylim((0.5,len(edges)-1))
+        ax1.set_xlim((0,(max(hypsom[1::].max()*self.pixel*factor))+(max(hypsom[1::].max()*self.pixel*factor))*0.1))
+        
+        nlbls = 6
+        setpos = axb.set_xticks(np.linspace(0,max(hypsom[1::].cumsum().max()*self.pixel*factor),nlbls))
+        pos = axb.get_xticks()
+        edges_lbl   = []
+        
+        for i in pos:
+            p = np.round(i/pos[-1],2)
+
+            edges_lbl.append(str(p))        
+        
+        axb.set_xticklabels(str(i) for i in edges_lbl)  
+        axb.set_xlim((-0.2,(pos[-1]+pos[-1]*0.1)))
+        axb.set_xlabel('normalized cumulative area')
+                                  
+        yts         = ax1.get_yticks()
+        edges_lbl   = []
+        for i in yts[0:len(yts)-1]:
+            edges_lbl.append(str(int(edges[int(i)])))
+
+        ax1.set_yticklabels(str(i) for i in edges_lbl)   
+        ax1.yaxis.tick_right()
+        ax1.set_ylabel('elevation [m]')
+        ax1.yaxis.set_label_position("right")
+             
+        xts         = ax1.get_xticks()
+        edges_lbl   = []
+        for i in xts[0:len(xts)-1]:
+            
+            edges_lbl.append(str(int(edges[int(i)])))        
+        
+        ax1.set_xlabel(r'area [$km^2$]')
+        
+        ax.set_title(self.plotorder[0])    
+
+        h.axes.get_xaxis().set_ticks([])
+        h.axes.get_yaxis().set_ticks([])
+        divider = make_axes_locatable(ax)
+        cax     = divider.append_axes("left", size="5%", pad=0.2)
+        cbar    = plt.colorbar(h, cax = cax)
+        cax.yaxis.set_ticks_position('left')
+        cax.yaxis.set_label_position('left')
+        cax.set_ylabel('elevation [m]')
+        # pos     = cbar.ax.get_position()
+        
+        if self.units == 'KAF':
+            cbar.set_label('elevation [ft]')
+        if self.units == 'SI':
+            cbar.set_label('elevation [m]')
+        
+        plt.subplots_adjust(top=0.88)
+        plt.tight_layout()    
+    
     def write_summary(self,df):
 
         # df          = 'accum_byelev'

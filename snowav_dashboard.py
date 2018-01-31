@@ -10,13 +10,14 @@ snow            = SNOWAV.snowav(config_file)
 SNOWAV.snowav.process(snow)
 
 # To make a report for the BRB, or with no flight updates, run these
-SNOWAV.snowav.accumulated(snow)
-SNOWAV.snowav.current_image(snow)
-SNOWAV.snowav.state_by_elev(snow)
-SNOWAV.snowav.image_change(snow)
-SNOWAV.snowav.basin_total(snow)
-SNOWAV.snowav.stn_validate(snow) # just for BRB right now
-SNOWAV.report(snow)
+#SNOWAV.snowav.accumulated(snow)
+#SNOWAV.snowav.current_image(snow)
+#SNOWAV.snowav.state_by_elev(snow)
+#SNOWAV.snowav.image_change(snow)
+#SNOWAV.snowav.basin_total(snow)
+#SNOWAV.snowav.stn_validate(snow) # just for BRB right now
+SNOWAV.snowav.basin_detail(snow)
+#SNOWAV.report(snow)
 
 # To make a report with flight updates, add this figure
 #     [Report]  -> tex_file = tuol_report_flt.tex
