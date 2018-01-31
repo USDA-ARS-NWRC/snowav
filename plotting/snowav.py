@@ -1356,7 +1356,7 @@ class snowav(object):
         demcopy[ixo]      = np.nan
         map.set_bad('white')
         
-        sns.set_style('dark')
+        sns.set_style('darkgrid')
         sns.set_context("notebook")
        
         clrs = copy.copy(self.barcolors)
@@ -1370,50 +1370,37 @@ class snowav(object):
         # Basin boundaries
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)   
-            
+
         for iters,name in enumerate(self.plotorder):
-            ax1.barh(range(0,len(edges)-1),hypsom[name][1::]*self.pixel*factor, color = clrs[iters])
-        
-        axb             = ax1.twiny()
-        for iters,name in enumerate(self.plotorder):
-            axb.plot(hypsom[name][1::].cumsum()*self.pixel*factor,range(1,len(edges)), color = clrs[iters]) 
-            axb.plot(hypsom[name][1::].cumsum()*self.pixel*factor,range(1,len(edges)), color = 'k', linestyle = ':',linewidth = 0.8)    
+            ax1.plot(range(1,len(edges)),hypsom[name][1::].cumsum()*self.pixel*factor, color = clrs[iters]) 
          
-        ax1.set_ylim((0.5,len(edges)))
-        axb.set_ylim((0.5,len(edges)-1))
-        ax1.set_xlim((0,(max(hypsom[1::].max()*self.pixel*factor))+(max(hypsom[1::].max()*self.pixel*factor))*0.1))
+        ax1.set_xlim((1,len(edges)))
+        ax1.set_ylim((-5,(max(hypsom[1::].cumsum().max()*self.pixel*factor))+(max(hypsom[1::].cumsum().max()*self.pixel*factor))*0.1))
         
         nlbls = 6
-        setpos = axb.set_xticks(np.linspace(0,max(hypsom[1::].cumsum().max()*self.pixel*factor),nlbls))
-        pos = axb.get_xticks()
-        edges_lbl   = []
+        # setpos = ax1.set_yticks(np.linspace(0,max(hypsom[1::].cumsum().max()*self.pixel*factor),nlbls))
+        # pos = ax1.get_yticks()
+        setpos = ax1.set_xticks(np.linspace(0,len(edges),nlbls))
+        pos = ax1.get_xticks()
         
+        edges_lbl   = []
         for i in pos:
-            p = np.round(i/pos[-1],2)
-
-            edges_lbl.append(str(p))        
+            p = ((1 - (i/pos[-1]))*100)
+            edges_lbl.append(str(int(np.round(p))))        
         
-        axb.set_xticklabels(str(i) for i in edges_lbl)  
-        axb.set_xlim((-0.2,(pos[-1]+pos[-1]*0.1)))
-        axb.set_xlabel('normalized cumulative area')
-                                  
-        yts         = ax1.get_yticks()
-        edges_lbl   = []
-        for i in yts[0:len(yts)-1]:
-            edges_lbl.append(str(int(edges[int(i)])))
-
-        ax1.set_yticklabels(str(i) for i in edges_lbl)   
-        ax1.yaxis.tick_right()
+        ax1.set_xticklabels(str(i) for i in edges_lbl)  
         ax1.set_ylabel('elevation [m]')
+        ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
+        
+        ax1.invert_xaxis()
              
         xts         = ax1.get_xticks()
         edges_lbl   = []
         for i in xts[0:len(xts)-1]:
-            
             edges_lbl.append(str(int(edges[int(i)])))        
         
-        ax1.set_xlabel(r'area [$km^2$]')
+        ax1.set_xlabel(r'Basin area above elevation [%]')
         
         ax.set_title(self.plotorder[0])    
 
@@ -1425,12 +1412,6 @@ class snowav(object):
         cax.yaxis.set_ticks_position('left')
         cax.yaxis.set_label_position('left')
         cax.set_ylabel('elevation [m]')
-        # pos     = cbar.ax.get_position()
-        
-        if self.units == 'KAF':
-            cbar.set_label('elevation [ft]')
-        if self.units == 'SI':
-            cbar.set_label('elevation [m]')
         
         plt.subplots_adjust(top=0.88)
         plt.tight_layout()    
