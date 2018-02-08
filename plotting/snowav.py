@@ -279,10 +279,19 @@ class snowav(object):
                 self.pixel          = 50
                 self.nrows          = 1657 
                 self.ncols          = 1875 
+                self.subbasin1      = cfg.get('DEM','subbasin1')
+                self.subbasin2      = cfg.get('DEM','subbasin2')
+                self.subbasin3      = cfg.get('DEM','subbasin3')
                 self.total_lbl      = cfg.get('DEM','total_lbl') 
-                self.plotorder      = [self.total_lbl]                             
+                self.sub1_lbl       = cfg.get('DEM','sub1_lbl')
+                self.sub2_lbl       = cfg.get('DEM','sub2_lbl')
+                self.sub3_lbl       = cfg.get('DEM','sub3_lbl')
+                self.plotorder      = [self.total_lbl, self.sub3_lbl, self.sub2_lbl, self.sub1_lbl]                               
                 
-                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl} 
+                self.masks  = { self.total_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.total),'label':self.total_lbl},
+                                self.sub1_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin1),'label':self.sub1_lbl},
+                                self.sub2_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin2),'label':self.sub2_lbl},
+                                self.sub3_lbl: {'border': np.zeros((self.nrows,self.ncols)), 'mask': np.genfromtxt(self.subbasin3),'label':self.sub3_lbl}
                                 }  
             
             # Get the DEM 
@@ -307,7 +316,7 @@ class snowav(object):
                     emin        = 800       # [m]
                     emax        = 3600      # [m]  
                     self.step   = 500  
-            if self.basin == 'SJ' or self.basin == 'LAKES':
+            if self.basin == 'SJ': 
                 if self.units == 'KAF':
                     emin        = 1000      # [ft]
                     emax        = 13000     # [ft]  
@@ -316,6 +325,15 @@ class snowav(object):
                     emin        = 300       # [m]
                     emax        = 4000      # [m]  
                     self.step   = 500 
+            if self.basin == 'LAKES':
+                if self.units == 'KAF':
+                    emin        = 8000      # [ft]
+                    emax        = 12500     # [ft]  
+                    self.step   = 500
+                if self.units == 'SI':
+                    emin        = 2400       # [m]
+                    emax        = 3800      # [m]  
+                    self.step   = 200                         
             
             # Do unit-specific things
             if self.units == 'KAF':
@@ -326,8 +344,11 @@ class snowav(object):
                 self.ixd                = np.digitize(self.dem,self.edges)     
                 self.depthlbl           = 'in'
                 self.vollbl             = 'KAF' 
-                self.elevlbl            = 'ft'    
-                self.dplcs              = 1   
+                self.elevlbl            = 'ft'  
+                if self.basin == 'LAKES':
+                    self.dplcs = 3
+                else:    
+                    self.dplcs              = 1   
             
             if self.units == 'SI':
                 self.conversion_factor  = (self.pixel**2)*0.000000810713194*1233.48/1e9 # storage in km^3
@@ -370,8 +391,8 @@ class snowav(object):
                 self.xlims          = (0,len(self.edges))
             if self.basin == 'LAKES':
                 self.xlims          = (0,len(self.edges))
-                self.imgx           = (700,1600)
-                self.imgy           = (700,1600)
+                self.imgx           = (1200,1375)
+                self.imgy           = (425,225)
                     
             
             print('done.')    
@@ -661,6 +682,10 @@ class snowav(object):
             fix2 = np.arange(1555,1618)
             ax.plot(fix1*0,fix1,'k')
             ax.plot(fix2*0,fix2,'k')
+            
+        if self.basin == 'LAKES':
+            ax.set_xlim(self.imgx)
+            ax.set_ylim(self.imgy)
                    
         # Do pretty stuff
         h.axes.get_xaxis().set_ticks([])
@@ -677,7 +702,7 @@ class snowav(object):
         # Total basin label
         sumorder        = self.plotorder[1:]
         if self.basin == 'LAKES':
-            sumorder = self.plotorder[0]
+            sumorder = [self.plotorder[0]]
             
         if self.dplcs == 0:
             tlbl        = '%s = %s %s'%(self.plotorder[0],str(int(accum_byelev[self.plotorder[0]].sum())),self.vollbl)
@@ -685,7 +710,7 @@ class snowav(object):
             tlbl        = '%s = %s %s'%(self.plotorder[0],str(np.round(accum_byelev[self.plotorder[0]].sum(),self.dplcs)),self.vollbl)
               
         for iters,name in enumerate(sumorder):
-
+            print(name)
             if self.dplcs == 0:           
                 lbl = '%s = %s %s'%(name,str(int(accum_byelev[name].sum())),self.vollbl)
             else:
@@ -741,7 +766,9 @@ class snowav(object):
         fig.subplots_adjust(top=0.88)
       
         # ax1.legend(loc= (0.01,0.74))
-        ax1.legend(loc= (0.01,0.74))
+        if self.basin != 'LAKES':
+            ax1.legend(loc= (0.01,0.74))
+            
         if self.basin == 'BRB':
             ax1.text(0.26,0.94,tlbl,horizontalalignment='center',transform=ax1.transAxes,fontsize = 10)
         else:
@@ -816,6 +843,12 @@ class snowav(object):
         h             = ax.imshow(state, clim = clims, cmap = mymap)
         h1            = ax1.imshow(cold, clim=clims2, cmap = mymap1)
         
+        if self.basin == 'LAKES':
+            ax.set_xlim(self.imgx)
+            ax.set_ylim(self.imgy)
+            ax1.set_xlim(self.imgx)
+            ax1.set_ylim(self.imgy)
+        
         # Basin boundaries
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
@@ -855,6 +888,8 @@ class snowav(object):
         
         h.axes.set_title('SWE \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
         fig.subplots_adjust(top=0.95,bottom=0.05,right = 0.92, left = 0.05, wspace = 0.12)
+        if self.basin == 'LAKES':
+            plt.tight_layout()
         
         patches = [mpatches.Patch(color='grey', label='snow free')]
         if self.basin == 'SJ':
@@ -917,6 +952,10 @@ class snowav(object):
         fig,(ax,ax1)    = plt.subplots(num=2, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
         h               = ax.imshow(delta_state, clim = clims, interpolation='none', cmap = cmap, norm=MidpointNormalize(midpoint= 0 ,vmin = qMin,vmax = qMax))
 
+        if self.basin == 'LAKES':    
+            ax.set_xlim(self.imgx)
+            ax.set_ylim(self.imgy)
+
         # Basin boundaries
         for name in self.masks:
             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
@@ -945,7 +984,9 @@ class snowav(object):
         h.axes.set_title('Change in SWE \n %s to %s'%(self.dateFrom.date().strftime("%Y-%-m-%-d"),self.dateTo.date().strftime("%Y-%-m-%-d")))    
       
         # Plot the bar in order
-        sumorder    = self.plotorder[1:]    
+        sumorder    = self.plotorder[1:]  
+        if self.basin == 'LAKES':
+            sumorder = [self.plotorder[0]]  
         if self.dplcs == 0:
             tlbl        = '%s = %s %s'%(self.plotorder[0],str(int(self.delta_state_byelev[self.plotorder[0]].sum())),self.vollbl)
         else: 
@@ -1009,8 +1050,8 @@ class snowav(object):
             ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
         else:
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
-        
-        ax1.legend(loc= (0.01,0.74))
+        if self.basin != 'LAKES':
+            ax1.legend(loc= (0.01,0.74))
         if self.basin == 'BRB':
             ax1.text(0.27,0.94,tlbl,horizontalalignment='center',transform=ax1.transAxes,fontsize = 10)
         else:
@@ -1030,7 +1071,7 @@ class snowav(object):
         '''
             
         lim     = np.max(self.melt[self.total_lbl]) + np.max(self.nonmelt[self.total_lbl])
-        ylim    = np.max(lim) + np.max(lim)*0.2 
+        ylim    = np.max(lim) + np.max(lim)*0.3 
         colors  = ['xkcd:light mustard','xkcd:dark violet']
         fs      = list(self.figsize)
         fs[0]   = fs[0]*0.8
@@ -1038,39 +1079,122 @@ class snowav(object):
 
         sns.set_style('darkgrid')
         sns.set_context("notebook")
-       
-        plt.close(1)
-        fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi, nrows = 2, ncols = 2)
-        axs     = ax.ravel()
-               
-        for iters,name in enumerate(self.plotorder):
-            axs[iters].bar(range(0,len(self.edges)),self.melt[name], color = colors[0], bottom = self.nonmelt[name])
-            axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], color = colors[1], label = 'unavail ')
+        
+        
+        if self.basin != 'LAKES':
+            plt.close(1)
+            fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi, nrows = 2, ncols = 2)
+            axs     = ax.ravel()
+    
+                   
+            for iters,name in enumerate(self.plotorder):
+                axs[iters].bar(range(0,len(self.edges)),self.melt[name], color = colors[0], bottom = self.nonmelt[name])
+                axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], color = colors[1], label = 'unavail ')
+                
+                axs[iters].set_xlim(self.xlims)                          
+                xts         = axs[iters].get_xticks()
+                edges_lbl   = []
+                for i in xts[0:len(xts)-1]:
+                    edges_lbl.append(str(int(self.edges[int(i)])))
+    
+                axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+                
+                if iters > 1:
+                    if self.units == 'KAF':
+                        axs[iters].set_xlabel('elevation [ft]')
+                    if self.units == 'SI':
+                        axs[iters].set_xlabel('elevation [m]')                    
+                      
+                # Put yaxis on right 
+                if iters == 1 or iters == 3:
+                    axs[iters].yaxis.set_label_position("right")
+                    axs[iters].yaxis.tick_right()
+                    
+                if iters == 0 or iters == 1:
+                    axs[iters].set_xticklabels([])
+                
+                axs[iters].tick_params(axis='x')
+                axs[iters].tick_params(axis='y')
+                
+                # Get basin total storage in strings for label
+                kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+                
+                if self.dplcs == 0:
+                    kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+                else: 
+                    kaf    = str(np.round(sum(self.melt[name]) + sum(self.nonmelt[name]),self.dplcs))             
+    
+                if self.units == 'KAF':          
+                    # axs[iters].axes.set_title('%s - %s KAF'%(self.masks[name]['label'],kaf))
+                    axs[iters].text(0.5,0.92,'%s - %s KAF'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes)
+                    axs[iters].set_ylabel('KAF')
+                if self.units == 'SI':          
+                    axs[iters].text(0.5,0.92,'%s - %s $km^3$'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes)
+                    axs[iters].set_ylabel(r'$km^3$')                
+                
+                lbl = []
+                for n in (0,1):
+                    if n == 0:
+                        
+                        if self.dplcs == 0:
+                            kafa = str(np.int(sum(self.melt[name]))) 
+                        else: 
+                            kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
+                        
+                        # kafa = str(np.int(sum(self.melt[name]))) 
+                        if self.units == 'KAF':   
+                            tmpa = ('avail = %s KAF')%(kafa)
+                        if self.units == 'SI':   
+                            tmpa = (r'avail = %s $km^3$')%(kafa)  
+                                              
+                        lbl.append(tmpa)
+                    
+                    # kafna = str(np.int(sum(self.nonmelt[name]))) 
+                    if self.dplcs == 0:
+                        kafna = str(np.int(sum(self.nonmelt[name]))) 
+                    else: 
+                        kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
+    
+                    if self.units == 'KAF':
+                        tmpna = ('unavail = %s KAF')%(kafna)
+                    if self.units == 'SI':
+                        tmpna = (r'unavail = %s $km^3$')%(kafna)                    
+                    lbl.append(tmpna)                     
+    
+                # axs[iters].legend(lbl,loc='upper left') 
+                axs[iters].legend(lbl,bbox_to_anchor=(0, 0, 0.65, 0.92),fontsize = 9)
+                axs[iters].set_ylim((0,ylim)) 
+                for tick in axs[iters].get_xticklabels():
+                    tick.set_rotation(30) 
             
-            axs[iters].set_xlim(self.xlims)                          
-            xts         = axs[iters].get_xticks()
+            fig.tight_layout()
+            for n in range(0,len(axs)):
+                axs[n].set_xticks(xts)
+                axs[n].set_xlim(self.xlims)       
+        
+        else:
+            name = self.plotorder[0]
+            plt.close(1)
+            fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi)
+                   
+            ax.bar(range(0,len(self.edges)),self.melt[name], color = colors[0], bottom = self.nonmelt[name])
+            ax.bar(range(0,len(self.edges)),self.nonmelt[name], color = colors[1], label = 'unavail ')
+            
+            ax.set_xlim(self.xlims)                          
+            xts         = ax.get_xticks()
             edges_lbl   = []
             for i in xts[0:len(xts)-1]:
                 edges_lbl.append(str(int(self.edges[int(i)])))
 
-            axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+            ax.set_xticklabels(str(i) for i in edges_lbl)
+
+            if self.units == 'KAF':
+                ax.set_xlabel('elevation [ft]')
+            if self.units == 'SI':
+                ax.set_xlabel('elevation [m]')                    
             
-            if iters > 1:
-                if self.units == 'KAF':
-                    axs[iters].set_xlabel('elevation [ft]')
-                if self.units == 'SI':
-                    axs[iters].set_xlabel('elevation [m]')                    
-                  
-            # Put yaxis on right 
-            if iters == 1 or iters == 3:
-                axs[iters].yaxis.set_label_position("right")
-                axs[iters].yaxis.tick_right()
-                
-            if iters == 0 or iters == 1:
-                axs[iters].set_xticklabels([])
-            
-            axs[iters].tick_params(axis='x')
-            axs[iters].tick_params(axis='y')
+            ax.tick_params(axis='x')
+            ax.tick_params(axis='y')
             
             # Get basin total storage in strings for label
             kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
@@ -1082,16 +1206,15 @@ class snowav(object):
 
             if self.units == 'KAF':          
                 # axs[iters].axes.set_title('%s - %s KAF'%(self.masks[name]['label'],kaf))
-                axs[iters].text(0.5,0.92,'%s - %s KAF'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes)
-                axs[iters].set_ylabel('KAF')
+                ax.text(.15,0.95,'%s - %s KAF'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=ax.transAxes)
+                ax.set_ylabel('KAF')
             if self.units == 'SI':          
-                axs[iters].text(0.5,0.92,'%s - %s $km^3$'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes)
-                axs[iters].set_ylabel(r'$km^3$')                
+                ax.text(-0.88,2.1,'%s - %s $km^3$'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=ax.transAxes)
+                ax.set_ylabel(r'$km^3$')                
             
             lbl = []
             for n in (0,1):
                 if n == 0:
-                    
                     if self.dplcs == 0:
                         kafa = str(np.int(sum(self.melt[name]))) 
                     else: 
@@ -1118,15 +1241,14 @@ class snowav(object):
                 lbl.append(tmpna)                     
 
             # axs[iters].legend(lbl,loc='upper left') 
-            axs[iters].legend(lbl,bbox_to_anchor=(0, 0, 0.65, 0.92),fontsize = 9)
-            axs[iters].set_ylim((0,ylim)) 
-            for tick in axs[iters].get_xticklabels():
-                tick.set_rotation(30) 
+            ax.legend(lbl,bbox_to_anchor=(0, 0, 0.3, 0.92),fontsize = 9)
+            ax.set_ylim((0,ylim)) 
+            for tick in ax.get_xticklabels():
+                tick.set_rotation(30)             
         
-        fig.tight_layout()
-        for n in range(0,len(axs)):
-            axs[n].set_xticks(xts)
-            axs[n].set_xlim(self.xlims)
+            fig.tight_layout()
+            ax.set_xticks(xts)
+            ax.set_xlim(self.xlims)
   
         fig.subplots_adjust(top=0.92)
         if self.units == 'KAF': 
@@ -1149,7 +1271,12 @@ class snowav(object):
 
         self.barcolors.insert(0,'black')
         
-        for iters,name in enumerate(self.plotorder):
+        if self.basin == 'LAKES':
+            plotorder = [self.plotorder[0]]
+        else:
+            plotorder = self.plotorder
+        
+        for iters,name in enumerate(plotorder):
             self.state_summary[name].plot(ax=ax, color = self.barcolors[iters])             
             # axb.plot(self.state_summary[name] - self.state_summary[name].iloc[0], color = self.barcolors[iters], linestyle=':')
             ax1.plot(self.accum_summary[name], color = self.barcolors[iters], label='_nolegend_')
@@ -1169,7 +1296,15 @@ class snowav(object):
         # ax1.legend(loc='upper left')
         
         # Put on the same yaxis
-        ax.set_ylim(ax1.get_ylim())
+        swey = ax.get_ylim()
+        swiy = ax1.get_ylim()
+        
+        if swey < swiy:
+            ax1.set_ylim(swey)
+            ax.set_ylim(swey)
+        else:
+            ax1.set_ylim(swiy)
+            ax.set_ylim(swiy)
         # axb.set_ylim(ax1.get_ylim())
         
         for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):

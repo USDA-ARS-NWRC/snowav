@@ -1,22 +1,20 @@
 [Basin]
-save_path = /mnt/volumes/wkspace/results/sj/wy18/ops
-name_append = _test
+save_path = /mnt/volumes/wkspace/results/lakes/wy18/ops
+name_append = _ops
 basin = LAKES
 units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/output/
-; run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/
-; psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/snow.0023
-; csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
-; cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
+run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/
+psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/output/snow.0023
+csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
+cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
 snowband = 2
 emband = 8
 
-; [Runs]
-; Ouput directories listed here get added to the run
-; run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
+[Runs]
+run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/output/
 
 [Accumulated]
 clmin = 0
@@ -48,9 +46,14 @@ dpi = 200
 [DEM]
 dempath = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_dem_50m.asc
 total = /mnt/data/blizzard/sanjoaquin/common_data/topo/Lakes_mask_50m.asc
+subbasin1 = /mnt/data/blizzard/sanjoaquin/common_data/topo/Lakes_mask_50m.asc
+subbasin2 = /mnt/data/blizzard/sanjoaquin/common_data/topo/Lakes_mask_50m.asc
+subbasin3 = /mnt/data/blizzard/sanjoaquin/common_data/topo/Lakes_mask_50m.asc
 
 total_lbl = Lakes
-
+sub1_lbl = Lakes
+sub2_lbl = Lakes
+sub3_lbl = Lakes
 
 [Report]
 ; Path to save report

@@ -207,6 +207,10 @@ def report(obj,*args):
     if obj.basin == 'SJ':
         summary         = '%ssj_summary.txt'%(obj.env_path)
         results_summary = '%ssj_results_summary.txt'%(obj.env_path)
+        
+    if obj.basin == 'LAKES':
+        summary         = '%slakes_summary.txt'%(obj.env_path)
+        results_summary = '%slakes_results_summary.txt'%(obj.env_path)        
     
     # Read in both section summaries and then replace variables
     fid                 = open(summary,'r')
