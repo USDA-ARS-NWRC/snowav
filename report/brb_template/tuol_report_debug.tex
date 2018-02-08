@@ -45,10 +45,10 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \section*{Summary}
 \VAR{SUMMARY}
 
-
+% \vspace{-0.5cm}
 
 \begin{table}[h!]
-	\caption*{\textbf{Water Year Precipitation Inputs}}
+	\caption*{\textbf{Precipitation Inputs}}
 	\centering
 	\begin{tabular}{l c c  }
 		\toprule
@@ -57,7 +57,7 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 		
 		\midrule
 		Extended Tuolumne			& \VAR{TOTALPRE_PM} 	& $\sim$\VAR{TOTAL_RAT}  	\\
-		Tuolumne	    			& \VAR{SUB1PRE_PM}    	& $\sim$\VAR{SUB1_RAT} 	\\
+		Tuolumne	    			& \VAR{SUB1PRE_PM}		& $\sim$\VAR{SUB1_RAT} 	\\
 		Cherry	   					& \VAR{SUB2PRE_PM}		& $\sim$\VAR{SUB2_RAT} 	\\
 		Eleanor 	        		& \VAR{SUB3PRE_PM}		& $\sim$\VAR{SUB3_RAT} 	\\
 		\bottomrule
@@ -75,10 +75,10 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS}] & [\VAR{UNITS}] & [\VAR{DEPLBL}] & [\VAR{UNITS}]	& [\VAR{UNITS}]\\
 		
 		\midrule
-		Extended Tuolumne	& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
-		Tuolumne	    	& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}		\\
-		Cherry	   			& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
-		Eleanor	        	& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}	 	\\
+		Extended Tuolumne		& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
+		Tuolumne	    		& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}		\\
+		Cherry	   				& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
+		Eleanor	        		& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}	 	\\
 		\bottomrule
 	\end{tabular}
 	\label{tab:snotel}
@@ -149,7 +149,7 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{CHANGES_FIG}}
-	\caption{Change in SWE during the reporting period, as a depth (left) and as a function of elevation band (right).}
+	\caption{Change in SWE during the reporting period, as a depth (left) and as a function of elevation band (right). Since this is the first report of Water Year 2018, this is also the current model state of the snowpack.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
@@ -195,6 +195,37 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{HYP_FIG}}
+		\caption{Basin and sub-basin hypsometry.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
+
+\begin{table}[h!]
+	\caption*{\textbf{Basin Elevation}}
+	\centering
+	\begin{tabular}{l c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& min elevation & max elevation \\ & [m] & [m] \\
+		
+		\midrule
+		Extended Tuolumne		& 1079 		& 3991  	\\
+		Tuolumne	    		& 1150		& 3991	\\
+		Cherry   				& 1433		& 3273 	\\
+		Eleanor	        		& 1406		& 3195 	\\
+		\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel2}
+\end{table}
+
 
 \vspace{2cm}
 

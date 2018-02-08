@@ -111,7 +111,9 @@ def report(obj,*args):
     report_title    = obj.rep_title
     fore_date       = ' '
     swe_in          = total_swe
-    swi_in          = total_swi       
+    swi_in          = total_swi 
+    vollbl          = obj.vollbl
+    deplbl          = obj.depthlbl        
     
     fig_path        = obj.figs_path
     swi_fig         = 'swi%s.png'%(obj.name_append)
@@ -121,6 +123,7 @@ def report(obj,*args):
     totals_fig      = 'basin_total%s.png'%(obj.name_append)
     totalsmy_fig    = 'basin_total_multiyr%s.png'%(obj.name_append)
     valid_fig       = 'validation%s.png'%(obj.name_append)
+    hyp_fig         = 'hypsometry%s.png'%(obj.name_append)
     
     if obj.tex_file == 'tuol_report_flt.tex':
         changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
@@ -128,13 +131,18 @@ def report(obj,*args):
         pre_pm          = obj.pre_pm
         diff_pm         = total_pm - pre_pm
         
-     
+    if obj.units == 'SI':
+        unitlbl = '$km^3$'
+    else:
+        unitlbl = vollbl
     # Upper case variables are used in the LaTex file, lower case versions are assigned here
     variables = {
                     'REPORT_TITLE':report_title,
                     'REPORT_TIME':report_time,
                     'WATERYEAR':str(obj.wy),
-                    'UNITS':obj.reportunits,
+                    'UNITS':unitlbl,
+                    'VOLLBL':vollbl,
+                    'DEPLBL':deplbl,
                     'START_DATE':start_date,
                     'END_DATE':end_date,
                     'FORE_DATE':fore_date,
@@ -147,6 +155,7 @@ def report(obj,*args):
                     'ELEV_FIG':elev_fig,
                     'TOTALS_FIG':totals_fig,
                     'TOTALSMY_FIG':totalsmy_fig,
+                    'HYP_FIG':hyp_fig,
                                     
                     'TOTAL_SWI':total_swi,'SUB1_SWI':sub1_swi,'SUB2_SWI':sub2_swi,'SUB3_SWI':sub3_swi,
                     'TOTAL_MEL':total_mel,'SUB1_MEL':sub1_mel,'SUB2_MEL':sub2_mel,'SUB3_MEL':sub3_mel,
@@ -175,8 +184,10 @@ def report(obj,*args):
     for name in variables:
         try:
             if isinstance(variables[name], float):
-                # tmp     = str(int(variables[name]))
-                tmp     = str(round(variables[name],1))
+                if obj.dplcs == 0:
+                    tmp     = str(int(variables[name]))
+                else:
+                    tmp     = str(round(variables[name],obj.dplcs))
                 variables[name] = tmp
         except:
             print('Failed converting variables to strings for report...')

@@ -42,23 +42,20 @@
 
 \vspace{-1.2cm}
 \section*{Summary}
-\VAR{SUMMARY} \\
+\VAR{SUMMARY|e}
 
 \vspace{-0.5cm}
 
 \begin{table}[h!]
-	\caption*{\textbf{Water Year Precipitation Inputs}}
+	\caption*{\textbf{Precipitation Inputs}}
 	\centering
 	\begin{tabular}{l c c  }
 		\toprule
 		
-		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [\VAR{DEPLBL|e}] & [$\%$] \\
+		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [\VAR{DEPLBL}] & [$\%$] \\
 		
 		\midrule
-		San Joaquin					& \VAR{TOTALPRE_PM|e} 		& $\sim$\VAR{TOTAL_RAT|e}  	\\
-		Main	    				& \VAR{SUB3PRE_PM|e}		& $\sim$\VAR{SUB3_RAT|e} 	\\
-		South Fork	   				& \VAR{SUB2PRE_PM|e}		& $\sim$\VAR{SUB2_RAT|e} 	\\
-		Jose Creek	        		& \VAR{SUB1PRE_PM|e}		& $\sim$\VAR{SUB1_RAT|e} 	\\
+	    Lakes					& \VAR{TOTALPRE_PM} 		& $\sim$\VAR{TOTAL_RAT}  	\\
 		\bottomrule
 	\end{tabular}
 	% \caption{yupperdep}
@@ -71,13 +68,11 @@
 	\begin{tabular}{l c c c c c c }
 		\toprule
 		
-		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{VOLLBL}] & [\VAR{VOLLBL}] & [\VAR{DEPLBL}] & [\VAR{VOLLBL}]	& [\VAR{VOLLBL}]\\
+		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS}] & [\VAR{UNITS}] & [\VAR{DEPLBL}] & [\VAR{UNITS}]	& [\VAR{UNITS}]\\
 		
 		\midrule
-		San Joaquin				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
-		Main	    			& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}		\\
-		South Fork	   			& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
-		Jose Creek	        	& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}	 	\\
+		Lakes				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
+
 		\bottomrule
 	\end{tabular}
 	\label{tab:snotel}
@@ -110,7 +105,7 @@
 \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{CHANGES_FIG}}
-	\caption{Change in SWE during the reporting period, as a depth (left) and as a function of elevation band (right).}
+	\caption{Change in SWE during the reporting period, as a depth (left) and as a function of elevation band (right). Since this is the first report of Water Year 2018, this is also the current model state of the snowpack.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}

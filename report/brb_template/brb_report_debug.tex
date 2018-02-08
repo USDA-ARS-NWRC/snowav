@@ -25,11 +25,12 @@
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
  {\end{list}}
 
+% \rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft} \includegraphics[width=1cm]{/home/markrobertson/mrworkspace/reports/Tuolumne/figs/logo.png}}
+
 \rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
 
-\title{ {\color{red} DRAFT SUBJECT TO CHANGE} \\ \textbf{\VAR{REPORT_TITLE|e}} \\
-	Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}
-}
+\title{ {\color{red}  DRAFT SUBJECT TO CHANGE} \\ \textbf{\VAR{REPORT_TITLE|e}} \\
+Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}}
 
 \author{USDA Agricultural Research Service, Boise, Idaho \\
 	NASA Jet Propulsion Lab, Pasadena, California \\
@@ -37,17 +38,23 @@
 	\emph{and} U.S. Bureau of Reclamation, Sacramento, California} 
 \date{}	
 
+
+
 \begin{document}
 \maketitle
 
-\vspace{-1.2cm}
-\section*{Summary}
-\VAR{SUMMARY} \\
+% \begin{tikzpicture}[remember picture,overlay]
+% \node[anchor=west,inner sep=0pt] at (-1.5,4cm) {\includegraphics[height=3.5cm]{/home/markrobertson/mrworkspace/code/SNOWAV/report/figs/logo.png}};
+% \end{tikzpicture}
 
-\vspace{-0.5cm}
+\vspace{-2cm}
+\section*{Summary}
+\VAR{SUMMARY}
+
+% \vspace{-0.5cm}
 
 \begin{table}[h!]
-	\caption*{\textbf{Water Year Precipitation Inputs}}
+	\caption*{\textbf{Precipitation Inputs}}
 	\centering
 	\begin{tabular}{l c c  }
 		\toprule
@@ -55,10 +62,10 @@
 		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [\VAR{DEPLBL|e}] & [$\%$] \\
 		
 		\midrule
-		San Joaquin					& \VAR{TOTALPRE_PM|e} 		& $\sim$\VAR{TOTAL_RAT|e}  	\\
-		Main	    				& \VAR{SUB3PRE_PM|e}		& $\sim$\VAR{SUB3_RAT|e} 	\\
-		South Fork	   				& \VAR{SUB2PRE_PM|e}		& $\sim$\VAR{SUB2_RAT|e} 	\\
-		Jose Creek	        		& \VAR{SUB1PRE_PM|e}		& $\sim$\VAR{SUB1_RAT|e} 	\\
+		Boise River Basin			& \VAR{TOTALPRE_PM|e} 		& $\sim$\VAR{TOTAL_RAT|e}  	\\
+		Featherville	    		& \VAR{SUB1PRE_PM|e}		& $\sim$\VAR{SUB1_RAT|e} 	\\
+		Twin Springs   				& \VAR{SUB2PRE_PM|e}		& $\sim$\VAR{SUB2_RAT|e} 	\\
+		Mores Creek	        		& \VAR{SUB3PRE_PM|e}		& $\sim$\VAR{SUB3_RAT|e} 	\\
 		\bottomrule
 	\end{tabular}
 	% \caption{yupperdep}
@@ -74,10 +81,10 @@
 		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{VOLLBL}] & [\VAR{VOLLBL}] & [\VAR{DEPLBL}] & [\VAR{VOLLBL}]	& [\VAR{VOLLBL}]\\
 		
 		\midrule
-		San Joaquin				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
-		Main	    			& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}		\\
-		South Fork	   			& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
-		Jose Creek	        	& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}	 	\\
+		Boise River Basin				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
+		Featherville	    			& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}		\\
+		Twin Springs	   				& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
+		Mores Creek	        			& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}	 	\\
 		\bottomrule
 	\end{tabular}
 	\label{tab:snotel}
@@ -97,7 +104,6 @@
 		\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
 	}
 \end{itemize}
-
 
 \clearpage
 
@@ -137,10 +143,10 @@
 
 % SWE elevation
 \begin{figure}[htbp]
-\begin{centering}	
+ \begin{centering}
 	% \hspace*{-.7in}
 	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
-	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content. Model results currently suggest that nearly all snow is available for melt given additional energy inputs.}
+	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
@@ -152,23 +158,75 @@
 	\begin{centering}
 		% \hspace*{-.7in}
 		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
-		\caption{Water year total SWE (left), SWI (right) volumes.}
+		\caption{Water year total SWE (left), SWI (right) volumes}
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
 
-\vspace{2cm}
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{TOTALSMY_FIG}}
+		\caption{Total basin SWE and SWI, with results from previous years.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
 
-\noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement. USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided. \\
-\vspace{0.5cm}  \\
+\clearpage
+
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
+		\caption{iSnobal validation at selected Snotel locations.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
+
+\clearpage
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{HYP_FIG}}
+		\caption{Basin and sub-basin hypsometry.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
+
+\begin{table}[h!]
+	\caption*{\textbf{Basin Elevation}}
+	\centering
+	\begin{tabular}{l c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& min elevation & max elevation \\ & [m] & [m] \\
+		
+		\midrule
+		Boise River Basin			& 858 		& 3187  	\\
+		Featherville	    		& 1290		& 3139	\\
+		Twin Springs   				& 1000		& 3180 	\\
+		Mores Creek	        		& 941		& 2467 	\\
+		\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel2}
+\end{table}
+
+
+\vspace{1cm}
+
+\noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement. USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided.
+
+\vspace{0.5cm} 
 \noindent
 Contact: \\
 \hspace{2cm} Mark Robertson, mark.robertson@ars.usda.gov, (208) 422-0729 \\
-\hspace{2cm} Scott Havens, scott.havens@ars.usda.gov, (208) 422-0739 \\
+\hspace{2cm} Scott Havens, scott.havens@ars.usda.gov, (208) 422-0739 
 
 \par\vspace*{\fill}
 \noindent
 \footnotesize{
 	Published: \VAR{REPORT_TIME}
 }
+
 \end{document}  

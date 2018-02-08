@@ -29,7 +29,7 @@
 
 \rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
 
-\title{ {\color{red} DRAFT } \\ \textbf{\VAR{REPORT_TITLE|e}} \\
+\title{ {\color{red}  DRAFT SUBJECT TO CHANGE} \\ \textbf{\VAR{REPORT_TITLE|e}} \\
 Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE_DATE|e}}
 
 \author{USDA Agricultural Research Service, Boise, Idaho \\
@@ -48,68 +48,75 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 % \end{tikzpicture}
 
 \vspace{-2cm}
-\section{Summary}
-\VAR{SUMMARY|e}
+\section*{Summary}
+\VAR{SUMMARY}
+
+% \vspace{-0.5cm}
 
 \begin{table}[h!]
-	\caption*{\textbf{Basin Snow Storage}}
+	\caption*{\textbf{Water Year Precipitation Inputs}}
 	\centering
-	\begin{tabular}{l c c c c c }
-	\toprule
-
-	\multirow{2}{*} {\bf{Basin} }			& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE  \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [mm] & [\VAR{UNITS|e}]	\\
-
-	\midrule
-	Boise River Basin	& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} & \VAR{TOTAL_SWEDEL|e} \\
-	Featherville	    & \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} & \VAR{SUB1_SWEDEL|e} \\
-	Twin Springs	   	& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e}  \\
-	Mores Creek	        & \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} & \VAR{SUB3_SWEDEL|e} 	 \\
-	\bottomrule
-	\end{tabular}
-	\label{tab:snotel}
-\end{table}
-
-
-\begin{table}[h!]
-	\caption*{\textbf{Basin Surface Water Inputs}}
-	\centering
-	\begin{tabular}{l c c c c c }
+	\begin{tabular}{l c c  }
 		\toprule
 		
-		\multirow{2}{*} {\bf{Basin} }	& SWI & Melt & Rain & $\%$ Rain \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] &  \\
+		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [\VAR{DEPLBL}] & [$\%$] \\
 		
 		\midrule
-		Boise River Basin	& \VAR{TOTAL_SWI|e} & \VAR{TOTAL_MEL|e}  & \VAR{TOTAL_RAI|e} & \VAR{TOTAL_RAT|e}  \\
-		Featherville	    & \VAR{SUB1_SWI|e}	& \VAR{SUB1_MEL|e}  &  \VAR{SUB1_RAI|e} & \VAR{SUB1_RAT|e} \\
-		Twin Springs	   	& \VAR{SUB2_SWI|e}	& \VAR{SUB2_MEL|e}  & \VAR{SUB2_RAI|e} & \VAR{SUB2_RAT|e} \\
-		Mores Creek	        & \VAR{SUB3_SWI|e}	& \VAR{SUB3_MEL|e}  & \VAR{SUB3_RAI|e} & \VAR{SUB3_RAT|e} \\
+		Boise River Basin			& \VAR{TOTALPRE_PM|e} 		& $\sim$\VAR{TOTAL_RAT|e}  	\\
+		Featherville	    		& \VAR{SUB1PRE_PM|e}		& $\sim$\VAR{SUB1_RAT|e} 	\\
+		Twin Springs   				& \VAR{SUB2PRE_PM|e}		& $\sim$\VAR{SUB2_RAT|e} 	\\
+		Mores Creek	        		& \VAR{SUB3PRE_PM|e}		& $\sim$\VAR{SUB3_RAT|e} 	\\
 		\bottomrule
 	\end{tabular}
 	% \caption{yupperdep}
 	\label{tab:snotel2}
 \end{table}
 
+\begin{table}[h!]
+	\caption*{\textbf{Snow Storage and Surface Water Inputs}}
+	\centering
+	\begin{tabular}{l c c c c c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{VOLLBL}] & [\VAR{VOLLBL}] & [\VAR{DEPLBL}] & [\VAR{VOLLBL}]	& [\VAR{VOLLBL}]\\
+		
+		\midrule
+		Boise River Basin				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
+		Featherville	    			& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}		\\
+		Twin Springs	   				& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
+		Mores Creek	        			& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}	 	\\
+		\bottomrule
+	\end{tabular}
+	\label{tab:snotel}
+\end{table}
+
+\vspace{-0.5cm}
 \begin{itemize}
-\item[] SWE: Snow Water Equivalent, snow storage in the basin
-\item[] SWE (avail): amount of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
-\item[] SWE (mean): basin-wide mean SWE, as a depth
-\item[] $\Delta$SWE: change in SWE during the reporting period
-\item[] SWI: Surface Water Inputs, the combination of snowmelt and rain
-\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
+	\setlength\itemsep{0.05em}
+	\footnotesize{
+		\item[] SWE: Snow Water Equivalent, snow storage in the basin
+		\item[] SWE (avail): amount of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
+		\item[] SWE (mean): basin-wide mean SWE, as a depth
+		\item[] $\Delta$SWE: change in SWE during the reporting period
+		\item[] SWI: Surface Water Inputs, the combination of snowmelt and rain that exited the base of the snowpack, and rain on bare ground
+		\item[] ppt (mean): basin-wide mean precipitation, as a depth
+		\item[] Rain: approximate percent of precipitation that fell as rain (\textit{NOTE:} in most cases this is different than \%SWI that is attributable to rain)
+		\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
+	}
 \end{itemize}
 
 \clearpage
 
 %%  \section{Current Model Results (through \VAR{END_DATE|e}, 2017)}
-\section{Results}
+\section*{Results}
 \VAR{RESULTS_SUMMARY|e}
 
 % SWE change
 \begin{figure}[htbp]
 \begin{centering}
 	% \hspace*{-.7in}
-	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{CHANGES_FIG}}
-	\caption{Change in SWE during the reporting period.}
+	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{CHANGES_FIG}}
+	\caption{Change in SWE during the reporting period, as a depth (left) and as a function of elevation band (right).}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
@@ -118,8 +125,8 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
 \begin{centering}
 	% \hspace*{-.7in}
-	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{SWI_FIG}}
-	\caption{Current Surface Water Inputs (SWI) for the reporting period. Hatching indicates the portion of SWI that is attributed to snowmelt, rather than rain.}
+	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{SWI_FIG}}
+	\caption{Current Surface Water Inputs (SWI) for the reporting period, as a depth (left) and as a function of elevation band (right).}
 	\label{fig:SWI}
 \end{centering}
 \end{figure}
@@ -128,8 +135,8 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
 \begin{centering}
 	% \hspace*{-.7in}
-	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{RESULTS_FIG}}
-	\caption{Current distribution of SWE and cold content.}
+	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{RESULTS_FIG}}
+	\caption{Current SWE and cold content.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
@@ -138,7 +145,7 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
  \begin{centering}
 	% \hspace*{-.7in}
-	\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
+	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
 	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content.}
 	\label{fig:RESULTS}
 \end{centering}
@@ -150,8 +157,8 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
 	\begin{centering}
 		% \hspace*{-.7in}
-		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
-		\caption{Total basin SWE and SWI.}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
+		\caption{Water year total SWE (left), SWI (right) volumes}
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
@@ -159,7 +166,7 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
 	\begin{centering}
 		% \hspace*{-.7in}
-		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{TOTALSMY_FIG}}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{TOTALSMY_FIG}}
 		\caption{Total basin SWE and SWI, with results from previous years.}
 		\label{fig:TOTALS}
 	\end{centering}
@@ -170,7 +177,7 @@ Water Year \VAR{WATERYEAR|e} \\ \VAR{START_DATE|e} to \VAR{END_DATE|e} \VAR{FORE
 \begin{figure}[htbp]
 	\begin{centering}
 		% \hspace*{-.7in}
-		\includegraphics[width=0.9\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
 		\caption{iSnobal validation at selected Snotel locations.}
 		\label{fig:TOTALS}
 	\end{centering}
@@ -186,5 +193,10 @@ Contact: \\
 \hspace{2cm} Mark Robertson, mark.robertson@ars.usda.gov, (208) 422-0729 \\
 \hspace{2cm} Scott Havens, scott.havens@ars.usda.gov, (208) 422-0739 
 
+\par\vspace*{\fill}
+\noindent
+\footnotesize{
+	Published: \VAR{REPORT_TIME}
+}
 
 \end{document}  

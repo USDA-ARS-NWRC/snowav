@@ -6,18 +6,15 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
-
-; run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/
-; psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/snow.0023
-; csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
-; cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
+run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/
+psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
+csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
+cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
 snowband = 2
 emband = 8
 
-; [Runs]
-; Ouput directories listed here get added to the run
-; run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20171217/output/
+[Runs]
+run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/output/
 
 [Accumulated]
 clmin = 0
@@ -64,3 +61,4 @@ rep_path = /mnt/volumes/wkspace/reports/sj/wy18/ops/
 env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
 templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
 tex_file = sj_report.tex
+; tex_file = sj_report_debug.tex

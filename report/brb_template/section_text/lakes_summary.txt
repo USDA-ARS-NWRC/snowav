@@ -1,0 +1,1 @@
+This is the Lakes Basin Snowpack Summary for the period between START_DATE, 2017, and END_DATE, 2018, based on iSnobal model simulation. The reporting domain covers... The total amount of water stored in the snowpack as of END_DATE is estimated to be TOTAL_SWE UNITS.
