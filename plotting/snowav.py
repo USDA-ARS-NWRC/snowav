@@ -193,6 +193,8 @@ class snowav(object):
             self.tex_file       = cfg.get('Report','tex_file')
             self.rep_path       = cfg.get('Report','rep_path')
             self.templ_path     = cfg.get('Report','templ_path')
+            if cfg.has_option('Report','orig_date'):
+                self.orig_date   = cfg.get('Report','orig_date')
             
             # These will later get appended with self.dateTo once it is calculated
             if self.basin == 'BRB':
@@ -446,6 +448,7 @@ class snowav(object):
         precip_byelev_sub   = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         accum_byelev_sub    = pd.DataFrame(index = self.edges, columns = self.masks.keys())  
         state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        state_mswe_byelev   = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         delta_state_byelev  = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         melt                = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         nonmelt             = pd.DataFrame(index = self.edges, columns = self.masks.keys())
@@ -572,6 +575,7 @@ class snowav(object):
             state_mask              = np.multiply(state,self.masks[mask_name]['mask'])
             delta_state_byelev_mask = np.multiply(delta_state,self.masks[mask_name]['mask'])
             state_byelev_mask       = np.multiply(state,self.masks[mask_name]['mask'])
+            state_mswe_byelev_mask  = np.multiply(state,self.masks[mask_name]['mask'])
             elevbin                 = np.multiply(self.ixd,self.masks[mask_name]['mask'])
             
             # Do it by elevation band
@@ -591,6 +595,7 @@ class snowav(object):
                 snowmelt_byelev.loc[self.edges[n],mask_name]    = np.nansum(snowmelt_mask[ind])
                 snowmelt_byelev_sub.loc[self.edges[n],mask_name] = np.nansum(snowmelt_mask_sub[ind])
                 state_byelev.loc[self.edges[n],mask_name]       = np.nansum(state_byelev_mask[ind])
+                state_mswe_byelev.loc[self.edges[n],mask_name]  = np.nanmean(state_mswe_byelev_mask[ind])
                 delta_state_byelev.loc[self.edges[n],mask_name] = np.nansum(delta_state_byelev_mask[ind])
                 melt.loc[self.edges[n],mask_name]               = np.nansum(state_bin[cind])
                 nonmelt.loc[self.edges[n],mask_name]            = np.nansum(state_bin[~cind])    
@@ -614,6 +619,7 @@ class snowav(object):
         self.snowmelt_byelev        = np.multiply(snowmelt_byelev,self.conversion_factor)       # at last time step, by elevation
         self.snowmelt_byelev_sub    = np.multiply(snowmelt_byelev_sub,self.conversion_factor)   # at last time step, by elevation
         self.state_byelev           = np.multiply(state_byelev,self.conversion_factor)          # at last time step, by elevation
+        self.state_mswe_byelev      = np.multiply(state_mswe_byelev,self.depth_factor)          # at last time step, by elevation
         self.melt                   = np.multiply(melt,self.conversion_factor)                  # at last time step, based on cold content
         self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)               # at last time step, based on cold content
         self.cold                   = np.multiply(self.cold,0.000001)                           # at last time step, spatial [MJ]
@@ -907,6 +913,41 @@ class snowav(object):
         print('saving figure to %sresults%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%sresults%s.png'%(self.figs_path,self.name_append))  
         
+    def pixel_swe(self):
+        
+        
+        plt.close(8) 
+        fig,(ax,ax1)    = plt.subplots(num=8, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
+   
+        sumorder = self.plotorder[1::]
+        wid = np.linspace(-0.25,0.25,len(sumorder))
+        
+        for iters,name in enumerate(sumorder): 
+            # iters = 0
+            # name = sumorder[iters]                             
+            ax1.bar(range(0,len(self.edges))-wid[iters],
+                    self.state_mswe_byelev[name], 
+                    color = self.barcolors[iters], width = 0.15, edgecolor = 'k',label = name)  
+            
+        ax1.set_xlim((4,len(self.edges)))        
+        
+        plt.tight_layout()                            
+        xts         = ax1.get_xticks()
+        edges_lbl   = []
+        for i in xts[0:len(xts)-1]:
+            edges_lbl.append(str(int(self.edges[int(i)])))
+  
+        ax1.set_xticklabels(str(i) for i in edges_lbl)
+        for tick in ax1.get_xticklabels():
+            tick.set_rotation(30) 
+             
+        ylims = ax1.get_ylim()
+        ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))               
+
+        ax1.set_ylabel('mean SWE [%s]'%(self.depthlbl))
+        ax1.set_xlabel('elevation [ft]')
+        ax1.legend(loc='upper left')
+    
     def image_change(self,*args): 
         '''
         This plots self.delta_state
@@ -1128,6 +1169,11 @@ class snowav(object):
                 
                 axs[iters].set_xlim(self.xlims)                          
                 xts         = axs[iters].get_xticks()
+                if len(xts) < 6:
+                    dxt = xts[1] - xts[0]
+                    xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
+                    axs[iters].set_xticks(xts)                 
+        
                 edges_lbl   = []
                 for i in xts[0:len(xts)-1]:
                     edges_lbl.append(str(int(self.edges[int(i)])))
@@ -1163,7 +1209,6 @@ class snowav(object):
                     kaf    = str(np.round(sum(self.melt[name]) + sum(self.nonmelt[name]),self.dplcs))             
     
                 if self.units == 'KAF':          
-                    # axs[iters].axes.set_title('%s - %s KAF'%(self.masks[name]['label'],kaf))
                     axs[iters].text(0.5,0.92,'%s - %s KAF'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes, fontsize = 10)
                 if self.units == 'SI':          
                     axs[iters].text(0.5,0.92,'%s - %s $km^3$'%(self.masks[name]['label'],kaf),horizontalalignment='center',transform=axs[iters].transAxes)                
@@ -1181,25 +1226,16 @@ class snowav(object):
                             kafa = str(np.int(sum(self.melt[name]))) 
                         else: 
                             kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
-                        
-                        # kafa = str(np.int(sum(self.melt[name]))) 
-                        if self.units == 'KAF':   
-                            tmpa = ('avail = %s KAF')%(kafa)
-                        if self.units == 'SI':   
-                            tmpa = (r'avail = %s $km^3$')%(kafa)  
-                                              
+
+                        tmpa = (r'avail = %s')%(kafa)                         
                         lbl.append(tmpa)
-                    
-                    # kafna = str(np.int(sum(self.nonmelt[name]))) 
+
                     if self.dplcs == 0:
                         kafna = str(np.int(sum(self.nonmelt[name]))) 
                     else: 
                         kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
-    
-                    if self.units == 'KAF':
-                        tmpna = ('unavail = %s KAF')%(kafna)
-                    if self.units == 'SI':
-                        tmpna = (r'unavail = %s $km^3$')%(kafna)                    
+
+                    tmpna = ('unavail = %s')%(kafna)
                     lbl.append(tmpna)                     
     
                 # axs[iters].legend(lbl,bbox_to_anchor=(0, 0, 0.65, 0.92),fontsize = 9)
@@ -1261,11 +1297,7 @@ class snowav(object):
                     else: 
                         kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
                     
-                    # kafa = str(np.int(sum(self.melt[name]))) 
-                    if self.units == 'KAF':   
-                        tmpa = ('avail = %s KAF')%(kafa)
-                    if self.units == 'SI':   
-                        tmpa = (r'avail = %s $km^3$')%(kafa)  
+                    tmpa = ('avail = %s')%(kafa)
                                           
                     lbl.append(tmpa)
                 
@@ -1275,10 +1307,7 @@ class snowav(object):
                 else: 
                     kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
 
-                if self.units == 'KAF':
-                    tmpna = ('unavail = %s KAF')%(kafna)
-                if self.units == 'SI':
-                    tmpna = (r'unavail = %s $km^3$')%(kafna)                    
+                tmpna = ('unavail = %s')%(kafna)                     
                 lbl.append(tmpna)                     
 
             # axs[iters].legend(lbl,loc='upper left') 
@@ -1292,10 +1321,7 @@ class snowav(object):
             ax.set_xlim(self.xlims)
   
         fig.subplots_adjust(top=0.92,wspace = 0.1)
-        if self.units == 'KAF': 
-            fig.suptitle('SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
-        if self.units == 'SI': 
-            fig.suptitle(r'SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
+        fig.suptitle('SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
               
         print('saving figure to %sswe_elev%s.png'%(self.figs_path,self.name_append))   
         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
