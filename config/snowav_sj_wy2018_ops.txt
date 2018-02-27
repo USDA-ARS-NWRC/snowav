@@ -6,15 +6,22 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/
-psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171218_20180125/output/snow.2783
-csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
-cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
+run_dir = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180207_20180222/output/
+psnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/snow.3095
+csnowFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180207_20180222/output/snow.3455
+cemFile = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180207_20180222/output/em.3455
 snowband = 2
 emband = 8
+decimals = 1
 
 [Runs]
 run_dir1 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/output/
+run_dir2 = /mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/output/
+
+[Validate]
+stations = X
+labels = X
+client = X
 
 [Accumulated]
 clmin = 0
@@ -27,8 +34,8 @@ ymin = -15
 ymax = 5
 
 [Changes]
-clmin = 1
-clmax = 99
+clmin = 2
+clmax = 98
 ;clminabs = -22
 ;clmaxabs = 1
 ;ymin = -10
@@ -49,11 +56,13 @@ total = /mnt/data/blizzard/sanjoaquin/common_data/topo/SJ_Millerton_mask_50m.asc
 subbasin1 = /mnt/data/blizzard/sanjoaquin/common_data/topo/JoseCreek_mask.asc
 subbasin2 = /mnt/data/blizzard/sanjoaquin/common_data/topo/SouthFork_mask.asc
 subbasin3 = /mnt/data/blizzard/sanjoaquin/common_data/topo/Main_mask.asc
+subbasin4 = /mnt/data/blizzard/sanjoaquin/common_data/topo/WillowCreek_mask_50m.asc
 
 total_lbl = San Joaquin
 sub1_lbl = Jose Creek
 sub2_lbl = South Fork
 sub3_lbl = Main
+sub4_lbl = Willow Creek
 
 [Report]
 ; Path to save report
@@ -62,3 +71,6 @@ env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/secti
 templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
 tex_file = sj_report.tex
 ; tex_file = sj_report_debug.tex
+
+; this string gets added to pub date if it exists
+; orig_date = 2018-2-5

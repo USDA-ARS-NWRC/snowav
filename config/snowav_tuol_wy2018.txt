@@ -1,29 +1,29 @@
 [Basin]
 save_path = /mnt/volumes/wkspace/results/tuol/wy18/ops/
-name_append = _ops_si
+name_append = _ops
 basin = TUOL
-units = SI
+units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180125_20180206/output/
-; psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180125_20180206/output/snow.2807
-psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180123_20180125/output/snow.2783
-csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180125_20180206/output/snow.3071
-cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180125_20180206/output/snow.3071
+run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180206_20180215/output/
+psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20171001_20180206/output/snow.3071
+csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180206_20180215/output/snow.3287
+cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180206_20180215/output/em.3287
 ; psnowFile_flt =
 ; csnowFile_flt =
 
 snowband = 2
 emband = 8
+decimals = 1
 
 [Runs]
-; Ouput directories listed here get added to the run
-run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171001_20171217/output/
-run_dir2 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20171218_20180101/output/
-run_dir3 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180101_20180119/output/
-run_dir4 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180119_20180123/output/
-run_dir5 = /mnt/data/blizzard/tuolumne/ops/wy2018/runs/run20180123_20180125/output/
+run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20171001_20180206/output/
+
+[Validate]
+stations = DDM,LELC1,LVTC1,TIOC1,TUM,VGAC1
+labels = DDM,LELC1,LVTC1,TIOC1,TUM,VGAC1
+client = TUOL_2017
 
 [Accumulated]
 clmin = 0
@@ -69,6 +69,7 @@ sub3_lbl = Eleanor
 rep_path = /mnt/volumes/wkspace/reports/tuol/wy18/ops/
 env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
 templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/
-; tex_file = tuol_report.tex
+tex_file = tuol_report.tex
 ; tex_file = tuol_report_flt.tex
-tex_file = tuol_report_debug.tex
+; tex_file = tuol_report_debug.tex
+orig_date = 2018-2-5

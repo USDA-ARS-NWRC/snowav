@@ -6,18 +6,25 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/
-psnowFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/snow.2615
-csnowFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/snow.3047
-cemFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/em.3047
+run_dir = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180214_20180222/output/
+psnowFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/snow.3047
+csnowFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180214_20180222/output/snow.3455
+cemFile = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180214_20180222/output/em.3455
 
+decimals = 1
 snowband = 2
 emband = 8
 
 [Runs]
 run_dir1 = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20171001_20180107/output/
 run_dir2 = /mnt/data/snowdrift/brb/ops/wy2018/runs/run20180108_20180117/output/
-# run_dir3 = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180201/output/
+run_dir3 = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180117_20180205/output/
+run_dir4 = /mnt/data/snowdrift/brb/ops/wy2018/ops/runs/run20180205_20180214/output/
+
+[Validate]
+stations = ATAI1,BASI1,CCDI1,GLNI1,JKPI1,TRMI1
+labels = Atlanta Summit,Banner Summit,Camas Creek, Galena, Jackson Peak, Trinity Mountain
+client = BRB_2017
 
 [Accumulated]
 clmin = 0
@@ -30,16 +37,16 @@ ymin = -15
 ymax = 5
 
 [Changes]
-clmin = 1
-clmax = 99
+clmin = 0
+clmax = 100
 ;clminabs = -22
 ;clmaxabs = 1
 ;ymin = -10
 ;ymax = 10
 
 [Results]
-clmin = 1
-clmax = 99
+clmin = 0
+clmax = 100
 
 [Plots]
 fig_length = 10
