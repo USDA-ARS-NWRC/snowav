@@ -1001,7 +1001,102 @@ class snowav(object):
         
         plt.tight_layout()
         print('saving figure to %smean_swe_depth%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%smean_swe_depth%s.png'%(self.figs_path,self.name_append))          
+        plt.savefig('%smean_swe_depth%s.png'%(self.figs_path,self.name_append))   
+        
+    def distribution_detail(self,*args):  
+                
+        colors  = ['xkcd:rose red','xkcd:cool blue']
+        
+        if len(args) != 0:
+            if args == 'depth':
+                name = self.plotorder[args[1]]
+                print(name)
+                
+                value = self.state_mswe_byelev
+                lim     = np.max(value[self.total_lbl]) 
+                ylim    = np.max(lim) + np.max(lim)*0.15 
+
+            elif args == 'volume':
+                value =  self.melt
+                value2 =  self.nonmelt 
+                lim     = np.max(value[self.total_lbl]) + np.max(value[self.total_lbl])
+                ylim    = np.max(lim) + np.max(lim)*0.1                        
+        
+        sns.set_style('darkgrid')
+        
+        plt.close(9)
+        fig  = plt.figure(num=9, figsize=(self.figsize[0]*0.9,self.figsize[1]), dpi=self.dpi)
+        ax = plt.gca()
+     
+        if 'value2' in locals():
+            ax.bar(range(0,len(self.edges)),value[name], color = colors[0], bottom = self.nonmelt[name])
+            ax.bar(range(0,len(self.edges)),value2[name], color = colors[1], label = 'unavail ') 
+            
+            # Get basin total storage in strings for label
+            kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+                
+            if self.dplcs == 0:
+                kaf    = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+            else: 
+                kaf    = str(np.round(sum(self.melt[name]) + sum(self.nonmelt[name]),self.dplcs))             
+    
+            ax.text(.25,0.95,'%s - %s %s'%(self.masks[name]['label'],kaf,self.vollbl),horizontalalignment='center',transform=ax.transAxes)
+            ax.set_ylabel('%s'%(self.vollbl))
+                  
+                
+            lbl = []
+            for n in (0,1):
+                if n == 0:
+                    if self.dplcs == 0:
+                        kafa = str(np.int(sum(self.melt[name]))) 
+                    else: 
+                        kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
+                    
+                    tmpa = ('avail = %s')%(kafa)
+                                          
+                    lbl.append(tmpa)
+                    
+                # kafna = str(np.int(sum(self.nonmelt[name]))) 
+                if self.dplcs == 0:
+                    kafna = str(np.int(sum(self.nonmelt[name]))) 
+                else: 
+                    kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
+    
+                tmpna = ('unavail = %s')%(kafna)                     
+                lbl.append(tmpna) 
+                
+            ax.legend(lbl, loc = (0.025, 0.8),fontsize = 9)    
+            fig.suptitle('SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))                                                   
+        
+        else:
+            ax.bar(range(0,len(self.edges)),value[name], color = 'xkcd:peacock blue')  
+               
+            ax.set_ylabel('Mean SWE [%s]'%(self.depthlbl)) 
+            fig.suptitle('%s, Mean SWE, %s'%(name,self.dateTo.date().strftime("%Y-%-m-%-d")) ) 
+      
+        
+        ax.set_xlim(self.xlims)                          
+        xts         = ax.get_xticks()
+        edges_lbl   = []
+        for i in xts[0:len(xts)-1]:
+            edges_lbl.append(str(int(self.edges[int(i)])))
+
+        ax.set_xticklabels(str(i) for i in edges_lbl)
+        ax.set_xlabel('elevation [%s]'%(self.elevlbl))
+        
+        ax.set_ylim((0,ylim)) 
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(30)             
+        
+        fig.tight_layout()
+        ax.set_xticks(xts)
+        ax.set_xlim(self.xlims)
+  
+        fig.subplots_adjust(top=0.92,wspace = 0.1)  
+
+        print('saving figure to %smean_detail%s.png'%(self.figs_path,self.name_append))
+        plt.savefig('%smean_detail%s.png'%(self.figs_path,self.name_append))       
+    
     
     def image_change(self,*args): 
         '''
@@ -1536,16 +1631,6 @@ class snowav(object):
         stns    = self.val_stns
         lbls    = self.val_lbls
         client  = self.val_client
-
-
-#         
-#         ##############################
-#         # stns        = ['CHMC1','HNTC1','KSPC1','OSTC1','POSC1','RCKC1','TMRC1','DOEC1','DPPC1','MAMC1']
-#         # rundirs = ['/mnt/data/blizzard/sanjoaquin/ops/wy2018/runs/run20171001_20180125/',
-#         #            '/mnt/data/blizzard/sanjoaquin/ops/wy2018/ops/runs/run20180125_20180207/']    
-#         # lbls = copy.deepcopy(stns)
-#         # client = 'SJ_2017'
-#         #########################
         
         # get metadata from the data base from snotel sites
         if self.basin == 'BRB':
