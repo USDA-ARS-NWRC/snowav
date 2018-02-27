@@ -6,24 +6,20 @@ units = KAF
 wy = 2018
 
 [Outputs]
-run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180212_20180220/output/
-psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180205_20180211/output/snow.3072
-csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180212_20180220/output/snow.3287
-cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180212_20180220/output/em.3287
+run_dir = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20180202_20180226/output/
+psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20180202_20180226/output/snow.3072
+csnowFile =/mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20180202_20180226/output/snow.3288
+cemFile = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20180202_20180226/output/em.3288
 
 snowband = 2
 emband = 8
 decimals = 2
 
 [Runs]
-run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20171119_20171217/output/
-run_dir2 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20171218_20171219/output/
-run_dir3 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20171220_20180107/output/
-run_dir4 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180107_20180108/output/
-run_dir5 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180110_20180125/output/
-run_dir6 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180127_20180131/output/
-run_dir7 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180202_20180204/output/
-run_dir8 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops/runs/run20180205_20180211/output/
+run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20171119_20171217/output/
+run_dir2 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20171218_20171218/output/
+run_dir3 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20171220_20180125/output/
+run_dir4 = /mnt/data/blizzard/tuolumne/ops/wy2018/hrrr_ops2/runs/run20180127_20180131/output/
 
 [Validate]
 stations = DDM,LELC1,LVTC1,TIOC1,TUM,VGAC1
@@ -70,7 +66,7 @@ sub2_lbl = Cherry
 sub3_lbl = Eleanor
 
 [Report]
-; Path to save report
+report_name_append = _HRRR
 rep_path = /mnt/volumes/wkspace/reports/tuol/wy18/devel/
 env_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/section_text/
 templ_path = /home/markrobertson/mrworkspace/code/SNOWAV/report/brb_template/

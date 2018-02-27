@@ -12,8 +12,8 @@ def report(obj,*args):
     
     '''
     
-    if len(args) != 0:
-        obj.report_name = obj.report_name.split('.')[0] + args[0] + '.pdf'
+    if hasattr(obj, 'report_name_append'):
+        obj.report_name = obj.report_name.split('.')[0] + 'report_name_append' + '.pdf'
     
     # Initialize all the variables to pass to latex file
     variables       = {}
@@ -159,7 +159,12 @@ def report(obj,*args):
         results_summary = '%stuol_results_summary.txt'%(obj.env_path)
 
     if obj.basin == 'SJ':
-        summary         = '%ssj_summary.txt'%(obj.env_path)
+        
+        if obj.tex_file == 'sj_report_hrrr.tex':
+            summary         = '%ssj_summary_hrrr.txt'%(obj.env_path)
+        else:
+            summary         = '%ssj_summary.txt'%(obj.env_path)
+        
         results_summary = '%ssj_results_summary.txt'%(obj.env_path)
         
     if obj.basin == 'LAKES':
