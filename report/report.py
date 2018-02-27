@@ -9,49 +9,33 @@ import copy
 
 def report(obj,*args):
     '''
-    Need to add flexibility/checking with what band was specified and actually using SWE/SWI
-    -forecast date
-    -currently the string replacer only handles str and float
-    -simple check for if figures even exist
-    -make report environment paths relative
-    -consider printing out summary info for sanity check...
     
     '''
     
     if len(args) != 0:
-        # parts = obj.report_name
         obj.report_name = obj.report_name.split('.')[0] + args[0] + '.pdf'
     
     # Initialize all the variables to pass to latex file
     variables       = {}
-    
-    total_swi       = obj.accum_byelev[obj.total_lbl].sum()
-    total_swe       = obj.state_byelev[obj.total_lbl].sum()
-    totalav_swe     = obj.melt[obj.total_lbl].sum()
-    total_swe_del   = obj.delta_state_byelev[obj.total_lbl].sum()
-    total_pm        = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
-    totalpre_pm     = np.nansum(np.multiply(obj.precip*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
-    total_rai       = obj.rain_bg_byelev[obj.total_lbl].sum()
-    total_rat       = str(int((total_rai/total_swi)*100))
-    
-    variables['TOTALPRE_PM']    = totalpre_pm
-    variables['TOTAL_PM']       = total_pm
-    variables['TOTAL_RAT']      = total_rat
-    variables['TOTAL_SWI']      = total_swi
-    variables['TOTAL_SWE']      = total_swe
-    variables['TOTAL_SWE_AV']   = totalav_swe
-    variables['TOTAL_SWEDEL']   = total_swe_del
-    
-    report_time     = datetime.now().strftime("%Y-%-m-%-d %H:%M")   
-    # report_time     = '2018-2-7, revised ' + report_time
-
-    
+       
+    variables['TOTAL_SWI']      = obj.accum_byelev[obj.total_lbl].sum()
+    variables['TOTAL_SWE']      = obj.state_byelev[obj.total_lbl].sum()
+    variables['TOTAL_SWE_AV']   = obj.melt[obj.total_lbl].sum()
+    variables['TOTAL_SWEDEL']   = obj.delta_state_byelev[obj.total_lbl].sum()
+    variables['TOTAL_PM']       = np.nansum(np.multiply(obj.state*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
+    variables['TOTALPRE_PM']    = np.nansum(np.multiply(obj.precip*obj.masks[obj.total_lbl]['mask'],1))/obj.masks[obj.total_lbl]['mask'].sum()
+    total_rai                   = obj.rain_bg_byelev[obj.total_lbl].sum()
+    variables['TOTAL_RAT']      = str(int((total_rai/obj.accum_byelev[obj.total_lbl].sum())*100))
+  
+    report_time                 = datetime.now().strftime("%Y-%-m-%-d %H:%M")   
+    if hasattr(obj,'orig_date'):
+        report_time = obj.orig_date + ', revised ' + report_time
+   
     # HACK, somewhere the rounding is different when we start from Oct 1...
-    if obj.dateFrom == datetime(2017,10,1,23,0):
-        total_swe_del = copy.copy(total_swe)
+    # if obj.dateFrom == datetime(2017,10,1,23,0):
+    #     total_swe_del = copy.copy(total_swe)
     
     numsubs         = range(1,len(obj.plotorder))
-    
 
     for n,sub in zip(numsubs,obj.suborder):
         print(n,sub)
@@ -88,8 +72,8 @@ def report(obj,*args):
     
     report_title    = obj.rep_title
     fore_date       = ' '
-    swe_in          = total_swe
-    swi_in          = total_swi 
+    swe_in          = obj.state_byelev[obj.total_lbl].sum()
+    swi_in          = obj.accum_byelev[obj.total_lbl].sum()
     vollbl          = obj.vollbl
     deplbl          = obj.depthlbl        
     
@@ -102,12 +86,13 @@ def report(obj,*args):
     totalsmy_fig    = 'basin_total_multiyr%s.png'%(obj.name_append)
     valid_fig       = 'validation%s.png'%(obj.name_append)
     hyp_fig         = 'hypsometry%s.png'%(obj.name_append)
+    mean_fig        = 'mean_swe_depth%s.png'%(obj.name_append)
     
     if obj.tex_file == 'tuol_report_flt.tex':
         changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
         pre_swe         = obj.pre_swe
         pre_pm          = obj.pre_pm
-        diff_pm         = total_pm - pre_pm
+        diff_pm         = variables['TOTAL_PM'] - pre_pm
         
     if obj.units == 'SI':
         unitlbl = '$km^3$'
@@ -133,7 +118,8 @@ def report(obj,*args):
     variables['ELEV_FIG']       = elev_fig
     variables['TOTALS_FIG']     = totals_fig
     variables['TOTALSMY_FIG']   = totalsmy_fig
-    variables['HYP_FIG']        = hyp_fig                                  
+    variables['HYP_FIG']        = hyp_fig         
+    variables['MEAN_FIG']       = mean_fig                           
     
     if obj.basin == 'BRB' or 'TUOL':
         variables['VALID_FIG'] = valid_fig
@@ -143,20 +129,17 @@ def report(obj,*args):
         variables['PRE_SWE']        = pre_swe
         variables['PRE_PM']         = pre_pm
         variables['DIFF_PM']        = diff_pm
-        variables['FLT_SWEDEL']     = total_swe - pre_swe
+        variables['FLT_SWEDEL']     = variables['TOTAL_SWE'] - pre_swe
     
     # Convert floats to strings    
     for name in variables:
-        try:
-            if isinstance(variables[name], float):
-                if obj.dplcs == 0:
-                    tmp     = str(int(variables[name]))
-                else:
-                    tmp     = str(round(variables[name],obj.dplcs))
-                variables[name] = tmp
-        except:
-            print('Failed converting variables to strings for report...')
-    
+        if isinstance(variables[name], float):
+            if obj.dplcs == 0:
+                tmp     = str(int(variables[name]))
+            else:
+                tmp     = str(round(variables[name],obj.dplcs))
+            variables[name] = tmp
+  
     # Load in summary.txt files, and replace variables with values
     if obj.basin == 'BRB':
         summary         = '%sbrb_summary.txt'%(obj.env_path)
