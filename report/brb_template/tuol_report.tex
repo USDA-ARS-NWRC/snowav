@@ -46,7 +46,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \VAR{SUMMARY}
 
 
-
 \begin{table}[h!]
 	\caption*{\textbf{Water Year Precipitation Inputs}}
 	\centering
@@ -72,56 +71,19 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\begin{tabular}{l c c c c c c }
 		\toprule
 		
-		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS}] & [\VAR{UNITS}] & [\VAR{DEPLBL}] & [\VAR{UNITS}]	& [\VAR{UNITS}]\\
+		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS}] & [\VAR{UNITS}] & [\VAR{DEPLBL}] & [\VAR{UNITS}] & [\VAR{UNITS}]\\
 		
 		\midrule
-		Extended Tuolumne	& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
-		Tuolumne	    	& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} & \VAR{SUB1_SWI|e}		\\
-		Cherry	   			& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e} & \VAR{SUB2_SWI|e} 	\\
-		Eleanor	        	& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} & \VAR{SUB3_SWI|e}	 	\\
+		Extended Tuolumne	& \VAR{TOTAL_SWE} & \VAR{TOTAL_SWE_AV} & \VAR{TOTAL_PM} 	& \VAR{TOTAL_SWEDEL} & \VAR{TOTAL_SWI}  \\
+		Tuolumne	    	& \VAR{SUB1_SWE}	& \VAR{SUB1_SWE_AV}  & \VAR{SUB1_PM} 	& \VAR{SUB1_SWEDEL} & \VAR{SUB1_SWI}		\\
+		Cherry	   			& \VAR{SUB2_SWE}	& \VAR{SUB2_SWE_AV}  & \VAR{SUB2_PM} 	& \VAR{SUB2_SWEDEL} & \VAR{SUB2_SWI} 	\\
+		Eleanor	        	& \VAR{SUB3_SWE}	& \VAR{SUB3_SWE_AV}  & \VAR{SUB3_PM} 	& \VAR{SUB3_SWEDEL} & \VAR{SUB3_SWI}	 	\\
 		\bottomrule
 	\end{tabular}
 	\label{tab:snotel}
 \end{table}
 
 
-%\begin{table}[h!]
-%	\caption*{\textbf{Basin Surface Water Inputs}}
-%	\centering
-%	\begin{tabular}{l c c c c c }
-%		\toprule
-%		
-%		\multirow{2}{*} {\bf{Basin} }	& SWI & Melt & Rain & $\%$ Rain \\ & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] & [\VAR{UNITS|e}] &  \\
-%		
-%		\midrule
-%		Extended Tuolumne	& \VAR{TOTAL_SWI|e} & \VAR{TOTAL_MEL|e} & \VAR{TOTAL_RAI|e} & \VAR{TOTAL_RAT|e}  \\
-%		Tuolumne	    			& \VAR{SUB1_SWI|e}	& \VAR{SUB1_MEL|e}  &  \VAR{SUB1_RAI|e} & \VAR{SUB1_RAT|e} \\
-%		Cherry	   			& \VAR{SUB2_SWI|e}	& \VAR{SUB2_MEL|e}  & \VAR{SUB2_RAI|e} & \VAR{SUB2_RAT|e} \\
-%		Eleanor 	        		& \VAR{SUB3_SWI|e}	& \VAR{SUB3_MEL|e}  & \VAR{SUB3_RAI|e} & \VAR{SUB3_RAT|e} \\
-%		\bottomrule
-%	\end{tabular}
-%	% \caption{yupperdep}
-%	\label{tab:snotel2}
-%\end{table}
-
-%\begin{table}[h!]
-%	\caption*{\textbf{Basin Surface Water Inputs}}
-%	\centering
-%	\begin{tabular}{l c c c c c }
-%		\toprule
-%		
-%		\multirow{2}{*} {\bf{Basin} }	& SWI  \\ & [\VAR{UNITS|e}]  \\
-%		
-%		\midrule
-%		Extended Tuolumne	& \VAR{TOTAL_SWI|e}  \\
-%		Tuolumne	    			& \VAR{SUB1_SWI|e}	 \\
-%		Cherry	   			& \VAR{SUB2_SWI|e}	 \\
-%		Eleanor 	        		& \VAR{SUB3_SWI|e}	 \\
-%		\bottomrule
-%	\end{tabular}
-%	% \caption{yupperdep}
-%	\label{tab:snotel2}
-%\end{table}
 
 \vspace{-0.5cm}
 \begin{itemize}
@@ -196,7 +158,17 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\end{centering}
 \end{figure}
 
-\vspace{2cm}
+\clearpage
+
+\begin{figure}[htbp]
+	\begin{centering}
+		% \hspace*{-.7in}
+		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
+		\caption{Model validation with measured SWE at select locations in the domain. The black line is SWE measured by the pillow, and blue lines are model results for the surrounding pixels.}
+		\label{fig:TOTALS}
+	\end{centering}
+\end{figure}
+
 
 \noindent\textbf{STATEMENT OF INTENT:} This report is created as a product of a research agreement between the USDA-ARS Northwest Watershed Research Center and the NRCS National Water and Climate Center. This report is intended to demonstrate the capabilities of real time physically-based snow modeling and the tools being developed within the scope of that research agreement. USDA-ARS provides the data to the best of its knowledge and shall not be liable for any consequences of any kind, including, but not limited to, lost revenues and profits, that arise from using the products provided. \\
 \vspace{0.5cm}  \\

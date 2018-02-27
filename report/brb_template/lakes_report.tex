@@ -37,6 +37,17 @@
 	\emph{and} U.S. Bureau of Reclamation, Sacramento, California} 
 \date{}	
 
+\newsavebox\mybox
+\savebox\mybox{\tikz[color=red,opacity=0.3]\node{DO  NOT  DISTRIBUTE};}
+\newwatermark*[
+allpages,
+angle=45,
+scale=4,
+xpos=-20,
+ypos=15
+]{\usebox\mybox}
+
+
 \begin{document}
 \maketitle
 
