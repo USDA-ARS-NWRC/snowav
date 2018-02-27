@@ -88,6 +88,8 @@ def report(obj,*args):
     hyp_fig         = 'hypsometry%s.png'%(obj.name_append)
     mean_fig        = 'mean_swe_depth%s.png'%(obj.name_append)
     detail_fig      = 'mean_detail%s.png'%(obj.name_append)
+    density_fig     = 'density%s.png'%(obj.name_append)
+    density_sub_fig = 'density_sub%s.png'%(obj.name_append)
     
     if obj.tex_file == 'tuol_report_flt.tex':
         changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
@@ -121,7 +123,9 @@ def report(obj,*args):
     variables['TOTALSMY_FIG']   = totalsmy_fig
     variables['HYP_FIG']        = hyp_fig         
     variables['MEAN_FIG']       = mean_fig
-    variables['DETAIL_FIG']     = detail_fig                             
+    variables['DETAIL_FIG']     = detail_fig 
+    variables['DENSITY_FIG']    = density_fig    
+    variables['DENSITY_SUB_FIG'] = density_sub_fig                                
     
     if obj.basin == 'BRB' or 'TUOL':
         variables['VALID_FIG'] = valid_fig

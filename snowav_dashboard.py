@@ -16,9 +16,11 @@ SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
 SNOWAV.snowav.pixel_swe(snow)
-# SNOWAV.snowav.stn_validate(snow) 
+SNOWAV.snowav.distribution_detail(snow,['depth',2]) # ['depth',2] is for SJ HRRR debugging
+SNOWAV.snowav.density(snow)
+SNOWAV.snowav.stn_validate(snow) 
 
-SNOWAV.report(snow)
+SNOWAV.report(snow,'_HRRR')
 
 # Hypsometry 
 # SNOWAV.snowav.basin_detail(snow)

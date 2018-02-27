@@ -473,6 +473,7 @@ class snowav(object):
         precip_byelev_sub   = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         accum_byelev_sub    = pd.DataFrame(index = self.edges, columns = self.masks.keys())  
         state_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
+        density_m_byelev    = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         depth_byelev        = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         state_mswe_byelev   = pd.DataFrame(index = self.edges, columns = self.masks.keys())
         depth_mdep_byelev   = pd.DataFrame(index = self.edges, columns = self.masks.keys())
@@ -580,6 +581,8 @@ class snowav(object):
              
                 state           = copy.deepcopy(tmpstate)
                 depth           = snow_file.bands[0].data
+                density         = snow_file.bands[1].data
+                self.density    = copy.deepcopy(density)
                 self.cold       = em_file.bands[9].data        
 
         # Time range based on ipw file headers
@@ -606,6 +609,10 @@ class snowav(object):
             delta_state_byelev_mask = np.multiply(delta_state,self.masks[mask_name]['mask'])
             state_byelev_mask       = np.multiply(state,self.masks[mask_name]['mask'])
             state_mswe_byelev_mask  = np.multiply(state,self.masks[mask_name]['mask'])
+            density_m_byelev_mask   = np.multiply(density,self.masks[mask_name]['mask'])
+            ix = density_m_byelev_mask == 0
+            density_m_byelev_mask[ix] = np.nan
+            
             depth_mdep_byelev_mask  = np.multiply(depth,self.masks[mask_name]['mask'])
             elevbin                 = np.multiply(self.ixd,self.masks[mask_name]['mask'])
             
@@ -628,6 +635,7 @@ class snowav(object):
                 state_byelev.loc[self.edges[n],mask_name]       = np.nansum(state_byelev_mask[ind])
                 depth_byelev.loc[self.edges[n],mask_name]       = np.nansum(state_byelev_mask[ind])
                 state_mswe_byelev.loc[self.edges[n],mask_name]  = np.nanmean(state_mswe_byelev_mask[ind])
+                density_m_byelev.loc[self.edges[n],mask_name]   = np.nanmean(density_m_byelev_mask[ind])
                 depth_mdep_byelev.loc[self.edges[n],mask_name]  = np.nanmean(depth_mdep_byelev_mask[ind])
                 delta_state_byelev.loc[self.edges[n],mask_name] = np.nansum(delta_state_byelev_mask[ind])
                 melt.loc[self.edges[n],mask_name]               = np.nansum(state_bin[cind])
@@ -656,6 +664,7 @@ class snowav(object):
         self.depth_byelev           = np.multiply(depth_byelev,self.conversion_factor)          # at last time step, by elevation
         self.state_mswe_byelev      = np.multiply(state_mswe_byelev,self.depth_factor)          # at last time step, by elevation
         self.depth_mdep_byelev      = np.multiply(np.multiply(depth_mdep_byelev,1000),self.depth_factor)          # at last time step, by elevation
+        self.density_m_byelev       = density_m_byelev
         self.melt                   = np.multiply(melt,self.conversion_factor)                  # at last time step, based on cold content
         self.nonmelt                = np.multiply(nonmelt,self.conversion_factor)               # at last time step, based on cold content
         self.cold                   = np.multiply(self.cold,0.000001)                           # at last time step, spatial [MJ]
@@ -803,10 +812,7 @@ class snowav(object):
         ylims = ax1.get_ylim()
         
         # If ylims were specified
-        if hasattr(self,"asylims"):
-            ax1.set_ylim(self.asylims)
-        else:
-            ax1.set_ylim((0,ylims[1]+ylims[1]*0.35))
+        ax1.set_ylim((0,600))
 
         plt.tight_layout()
         fig.subplots_adjust(top=0.88)
@@ -830,8 +836,8 @@ class snowav(object):
             else:
                 ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
              
-        print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
+        print('saving figure to %sdensity%s.png'%(self.figs_path,self.name_append))
+        plt.savefig('%sdensity%s.png'%(self.figs_path,self.name_append))   
         
     def current_image(self):
         '''
@@ -1003,12 +1009,181 @@ class snowav(object):
         print('saving figure to %smean_swe_depth%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%smean_swe_depth%s.png'%(self.figs_path,self.name_append))   
         
+    def density(self): 
+        
+        value = copy.deepcopy(self.density_m_byelev)
+        
+        lim     = np.max(value[self.total_lbl]) 
+        ylim    = np.max(lim) + np.max(lim)*0.15 
+        color  = 'xkcd:windows blue'
+
+        sns.set_style('darkgrid')
+        sns.set_context("notebook")        
+
+        nf = len(self.masks)
+        
+        if nf > 1 and nf < 5:
+            nr = 2
+            nc = 2
+        elif nf < 7:
+            nr = 2
+            nc = 3
+            
+        plt.close(11)
+        fig,ax  = plt.subplots(num=11, figsize=self.figsize, dpi=self.dpi, nrows = nr, ncols = nc)
+        axs     = ax.ravel()
+        if nf == 5:
+            fig.delaxes(axs[5])
+               
+        for iters,name in enumerate(self.plotorder):
+            # iters = 0
+            # name = self.plotorder[iters]
+            axs[iters].bar(range(0,len(self.edges)),value[name], color = color)
+            
+            axs[iters].set_xlim(self.xlims)                          
+            xts         = axs[iters].get_xticks()
+            if len(xts) < 6:
+                dxt = xts[1] - xts[0]
+                xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
+                axs[iters].set_xticks(xts)                 
+    
+            edges_lbl   = []
+            for i in xts[0:len(xts)-1]:
+                edges_lbl.append(str(int(self.edges[int(i)])))
+
+            axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+            
+            if iters == 0:
+                axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
+            
+            if iters > nc - 1:
+                axs[iters].set_xlabel('elevation [%s]'%(self.elevlbl))
+   
+            # Put yaxis on right 
+            if iters == nc - 1 or iters == nf -1 :
+                axs[iters].yaxis.set_label_position("right")
+                axs[iters].yaxis.tick_right()
+                axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
+            
+            if iters == 1 and nc == 3:
+                axs[iters].set_yticklabels([])
+                
+            if iters <= nc - 1:
+                axs[iters].set_xticklabels([])
+            
+            axs[iters].set_ylim((0,ylim)) 
+            for tick in axs[iters].get_xticklabels():
+                tick.set_rotation(30) 
+                
+            axs[iters].text(0.5,0.92,name,horizontalalignment='center',transform=axs[iters].transAxes,fontsize = 10)
+        
+        for n in range(0,len(axs)):
+            axs[n].set_xticks(xts)
+            axs[n].set_xlim(self.xlims)       
+
+        fig.tight_layout()
+        fig.subplots_adjust(top=0.92,wspace = 0.1)
+        fig.suptitle(r'Density, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")) )       
+        
+        print('saving figure to %sdensity_subs%s.png'%(self.figs_path,self.name_append))
+        plt.savefig('%sdensity_subs%s.png'%(self.figs_path,self.name_append))     
+        
+        ###############################
+
+        cvalue           = copy.deepcopy(self.density)
+        
+        colors1         = cmocean.cm.speed(np.linspace(0., 1, 255))
+        colors2         = plt.cm.binary(np.linspace(0, 1, 1))
+        colors          = np.vstack((colors2, colors1))
+        mymap           = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+        sns.set_style('darkgrid')
+        sns.set_context("notebook")
+        
+        # This is to get the background white
+        pmask           = self.masks[self.total_lbl]['mask']
+        ixo             = pmask == 0
+        cvalue[ixo]     = np.nan
+        mymap.set_bad('white',1.) 
+        
+        # Now set SWI-free
+        ixf             = cvalue == 0
+        cvalue[ixf]      = -1
+        mymap.set_under('lightgrey',1.) 
+        
+        plt.close(0)
+        fig,(ax,ax1)    = plt.subplots(num=0, figsize = self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)      
+        h               = ax.imshow(cvalue, clim = (0,600), interpolation='none', cmap = mymap)
+        
+        # Basin boundaries
+        for name in self.masks:
+            ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+        
+        if self.basin == 'SJ':
+            fix1 = np.arange(1275,1377)
+            fix2 = np.arange(1555,1618)
+            ax.plot(fix1*0,fix1,'k')
+            ax.plot(fix2*0,fix2,'k')
+            
+        if self.basin == 'LAKES':
+            ax.set_xlim(self.imgx)
+            ax.set_ylim(self.imgy)
+                   
+        # Do pretty stuff
+        h.axes.get_xaxis().set_ticks([])
+        h.axes.get_yaxis().set_ticks([])
+        divider = make_axes_locatable(ax)
+        
+        cax     = divider.append_axes("right", size="4%", pad=0.2)
+        cbar    = plt.colorbar(h, cax = cax)
+        cbar.ax.tick_params() 
+        cbar.set_label('[kg/$m^3$]')
+ 
+        h.axes.set_title('Density\n%s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))  
+
+
+        ax1.bar(range(0,len(self.edges)),value[self.total_lbl], color = 'g', edgecolor = 'k')
+      
+        plt.rcParams['hatch.linewidth'] = 1
+        plt.rcParams['hatch.color'] = 'k'                
+        ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
+        
+        plt.tight_layout()
+        xts         = ax1.get_xticks()
+        edges_lbl   = []
+        for i in xts[0:len(xts)-1]:
+            edges_lbl.append(str(int(self.edges[int(i)])))
+        
+        ax1.set_xticklabels(str(i) for i in edges_lbl)
+        for tick in ax1.get_xticklabels():
+            tick.set_rotation(30)        
+
+        ax1.set_ylabel('density - per elevation band')
+        ax1.set_xlabel('elevation [%s]'%(self.elevlbl))
+       
+        ax1.yaxis.set_label_position("right")
+        ax1.yaxis.tick_right()
+        ax1.set_ylim((0,600))
+
+        plt.tight_layout()
+        fig.subplots_adjust(top=0.88)
+    
+        if sum(sum(ixf)) > 1000:
+            patches = [mpatches.Patch(color='grey', label='snow free')]
+            if self.basin == 'SJ':
+                ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
+            else:
+                ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
+        
+        print('saving figure to %sdensity%s.png'%(self.figs_path,self.name_append))
+        plt.savefig('%sdensity%s.png'%(self.figs_path,self.name_append))           
+    
     def distribution_detail(self,*args):  
                 
         colors  = ['xkcd:rose red','xkcd:cool blue']
         
         if len(args) != 0:
-            if args == 'depth':
+            if args[0] == 'depth':
                 name = self.plotorder[args[1]]
                 print(name)
                 
@@ -1016,9 +1191,9 @@ class snowav(object):
                 lim     = np.max(value[self.total_lbl]) 
                 ylim    = np.max(lim) + np.max(lim)*0.15 
 
-            elif args == 'volume':
-                value =  self.melt
-                value2 =  self.nonmelt 
+            elif args[0] == 'volume':
+                value   =  self.melt
+                value2  =  self.nonmelt 
                 lim     = np.max(value[self.total_lbl]) + np.max(value[self.total_lbl])
                 ylim    = np.max(lim) + np.max(lim)*0.1                        
         
