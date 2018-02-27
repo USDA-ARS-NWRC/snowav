@@ -3,7 +3,7 @@ import sys
 sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import SNOWAV
 
-config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_sj_wy2018_devel.txt'
+config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_tuol_devel.txt'
 snow            = SNOWAV.snowav(config_file)
     
 # Make all the calculations
@@ -16,14 +16,11 @@ SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
 SNOWAV.snowav.pixel_swe(snow)
-SNOWAV.snowav.distribution_detail(snow,['depth',2]) # ['depth',2] is for SJ HRRR debugging
+# SNOWAV.snowav.distribution_detail(snow,['depth',1]) # ['depth',2] is for SJ HRRR debugging
 SNOWAV.snowav.density(snow)
 SNOWAV.snowav.stn_validate(snow) 
 
-SNOWAV.report(snow,'_HRRR')
-
-# Hypsometry 
-# SNOWAV.snowav.basin_detail(snow)
+SNOWAV.report(snow)
 
 # To make a report with flight updates, add this figure
 #     [Report]  -> tex_file = tuol_report_flt.tex
@@ -34,4 +31,7 @@ SNOWAV.report(snow,'_HRRR')
 
 # Summaries for previous years
 # SNOWAV.snowav.write_summary(snow, 'state_summary')
+
+# Hypsometry 
+# SNOWAV.snowav.basin_detail(snow)
 
