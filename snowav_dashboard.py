@@ -3,8 +3,8 @@ import sys
 sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import SNOWAV
 
-config_file     = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_tuol_devel.txt'
-snow            = SNOWAV.snowav(config_file)
+config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_brb_wy2018_ops.txt'
+snow = SNOWAV.snowav(config_file)
     
 # Make all the calculations
 SNOWAV.snowav.process(snow)
@@ -17,8 +17,8 @@ SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
 SNOWAV.snowav.pixel_swe(snow)
 # SNOWAV.snowav.distribution_detail(snow,['depth',1]) # ['depth',2] is for SJ HRRR debugging
-SNOWAV.snowav.density(snow)
-SNOWAV.snowav.stn_validate(snow) 
+# SNOWAV.snowav.density(snow)
+# SNOWAV.snowav.stn_validate(snow,31+19) # 31+19 or 0
 
 SNOWAV.report(snow)
 
@@ -31,6 +31,7 @@ SNOWAV.report(snow)
 
 # Summaries for previous years
 # SNOWAV.snowav.write_summary(snow, 'state_summary')
+# SNOWAV.snowav.write_summary(snow, 'accum_summary')
 
 # Hypsometry 
 # SNOWAV.snowav.basin_detail(snow)

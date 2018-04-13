@@ -12,8 +12,8 @@ def report(obj,*args):
     
     '''
     
-    if hasattr(obj, 'report_name_append'):
-        obj.report_name = obj.report_name.split('.')[0] + 'report_name_append' + '.pdf'
+    if hasattr(obj, 'rep_append'):
+        obj.report_name = obj.report_name.split('.')[0] + obj.rep_append + '.pdf'
     
     # Initialize all the variables to pass to latex file
     variables       = {}
@@ -90,6 +90,7 @@ def report(obj,*args):
     detail_fig      = 'mean_detail%s.png'%(obj.name_append)
     density_fig     = 'density%s.png'%(obj.name_append)
     density_sub_fig = 'density_sub%s.png'%(obj.name_append)
+    density_swe_fig = 'density_swe%s.png'%(obj.name_append)
     
     if obj.tex_file == 'tuol_report_flt.tex':
         changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
@@ -125,10 +126,9 @@ def report(obj,*args):
     variables['MEAN_FIG']       = mean_fig
     variables['DETAIL_FIG']     = detail_fig 
     variables['DENSITY_FIG']    = density_fig    
-    variables['DENSITY_SUB_FIG'] = density_sub_fig                                
-    
-    if obj.basin == 'BRB' or 'TUOL':
-        variables['VALID_FIG'] = valid_fig
+    variables['DENSITY_SUB_FIG'] = density_sub_fig 
+    variables['DENSITY_SWE_FIG'] = density_swe_fig                                  
+    variables['VALID_FIG']      = valid_fig
         
     if obj.basin == 'TUOL' and obj.tex_file == 'tuol_report_flt.tex':
         variables['CHANGES_FLT_FIG'] = changes_flt_fig
@@ -169,7 +169,10 @@ def report(obj,*args):
         
     if obj.basin == 'LAKES':
         summary         = '%slakes_summary.txt'%(obj.env_path)
-        results_summary = '%slakes_results_summary.txt'%(obj.env_path)        
+        results_summary = '%slakes_results_summary.txt'%(obj.env_path)   
+    if obj.basin == 'RCEW':
+        summary         = '%srcew_summary.txt'%(obj.env_path)
+        results_summary = '%srcew_results_summary.txt'%(obj.env_path)               
     
     # Read in both section summaries and then replace variables
     fid                 = open(summary,'r')

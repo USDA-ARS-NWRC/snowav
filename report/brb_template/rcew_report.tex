@@ -21,16 +21,6 @@
 %    \includegraphics[scale=0.9]{../ARSlogo.png}
 }
 
-% \newsavebox\mybox
-% \savebox\mybox{\tikz[color=red,opacity=0.6]\node{DO NOT DISTRIBUTE};}
-% \newwatermark*[
-% allpages,
-% angle=45,
-% scale=6,
-% xpos=-20,
-% ypos=15
-% ]{\usebox\mybox}
-
 \newenvironment{noindlist}
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
  {\end{list}}
@@ -47,35 +37,56 @@
 	\emph{and} U.S. Bureau of Reclamation, Sacramento, California} 
 \date{}	
 
+%\newsavebox\mybox
+%\savebox\mybox{\tikz[color=red,opacity=0.3]\node{DO  NOT  DISTRIBUTE};}
+%\newwatermark*[
+%allpages,
+%angle=45,
+%scale=4,
+%xpos=-20,
+%ypos=15
+%]{\usebox\mybox}
+
+
 \begin{document}
 \maketitle
 
-\vspace{-1.5cm}
+\vspace{-1.2cm}
 \section*{Summary}
-\VAR{SUMMARY} \\
+\VAR{SUMMARY}
 
 
+\begin{table}[h!]
+	\caption*{\textbf{Water Year Precipitation Inputs}}
+	\centering
+	\begin{tabular}{l c c  }
+		\toprule		
+		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [\VAR{DEPLBL}] & [$\%$] \\		
+		\midrule
+	    RCEW					& \VAR{TOTALPRE_PM} 		& $\sim$\VAR{TOTAL_RAT}  	\\
+		\bottomrule
+	\end{tabular}
+	% \caption{yupperdep}
+	\label{tab:snotel2}
+\end{table}
 
 \begin{table}[h!]
 	\caption*{\textbf{Snow Storage and Surface Water Inputs}}
 	\centering
-	\begin{tabular}{l c c c c c }
+	\begin{tabular}{l c c c c c c }
 		\toprule
 		
-		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE \\ & [\VAR{VOLLBL}] & [\VAR{VOLLBL}] & [\VAR{DEPLBL}] & [\VAR{VOLLBL}]	\\
+		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [\VAR{UNITS}] & [\VAR{UNITS}] & [\VAR{DEPLBL}] & [\VAR{UNITS}]	& [\VAR{UNITS}]\\
 		
 		\midrule
-		San Joaquin				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e}  \\
-		Main	    			& \VAR{SUB3_SWE|e}	& \VAR{SUB3_SWE_AV|e}  & \VAR{SUB3_PM|e} 	& \VAR{SUB3_SWEDEL|e} 	\\
-		South Fork	   			& \VAR{SUB2_SWE|e}	& \VAR{SUB2_SWE_AV|e}  & \VAR{SUB2_PM|e} 	& \VAR{SUB2_SWEDEL|e}  	\\
-		Jose Creek	        	& \VAR{SUB1_SWE|e}	& \VAR{SUB1_SWE_AV|e}  & \VAR{SUB1_PM|e} 	& \VAR{SUB1_SWEDEL|e} 	\\
-	    Willow Creek	        & \VAR{SUB4_SWE|e}	& \VAR{SUB4_SWE_AV|e}  & \VAR{SUB4_PM|e} 	& \VAR{SUB4_SWEDEL|e} 	\\
+		RCEW				& \VAR{TOTAL_SWE|e} & \VAR{TOTAL_SWE_AV|e} & \VAR{TOTAL_PM|e} 	& \VAR{TOTAL_SWEDEL|e} & \VAR{TOTAL_SWI|e}  \\
+
 		\bottomrule
 	\end{tabular}
 	\label{tab:snotel}
 \end{table}
 
-\vspace{-0.5cm}
+
 \begin{itemize}
 	\setlength\itemsep{0.05em}
 	\footnotesize{
@@ -117,13 +128,11 @@
 \end{centering}
 \end{figure}
 
-\clearpage
-
 % SWE distribution
 \begin{figure}[htbp]
 \begin{centering}
 	% \hspace*{-.7in}
-	\includegraphics[width=0.80\textwidth]{\VAR{FIG_PATH}\VAR{RESULTS_FIG}}
+	\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{RESULTS_FIG}}
 	\caption{Current SWE and cold content.}
 	\label{fig:RESULTS}
 \end{centering}
@@ -133,22 +142,14 @@
 \begin{figure}[htbp]
 \begin{centering}	
 	% \hspace*{-.7in}
-	\includegraphics[width=0.80\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
-	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content. Model results currently suggest that nearly all snow is available for melt given additional energy inputs.}
+	\includegraphics[width=0.75\textwidth]{\VAR{FIG_PATH}\VAR{ELEV_FIG}}
+	\caption{Current SWE per elevation band for each sub basin, grouped by storage that is available and unavailable for melt based on the cold content. Model results currently suggest that all snow is available for melt given additional energy inputs.}
 	\label{fig:RESULTS}
 \end{centering}
 \end{figure}
 
-\clearpage
 
-%\begin{figure}[htbp]
-%	\begin{centering}	
-%		% \hspace*{-.7in}
-%		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{DETAIL_FIG}}
-%		\caption{Mean depth of SWE as a function of elevation band.}
-%		\label{fig:DETAIL}
-%	\end{centering}
-%\end{figure}
+\clearpage
 
 \begin{figure}[htbp]
 	\begin{centering}	
@@ -159,47 +160,17 @@
 	\end{centering}
 \end{figure}
 
-
-%\begin{figure}[htbp]
-%	\begin{centering}	
-%		% \hspace*{-.7in}
-%		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{DENSITY_FIG}}
-%		\caption{Current snow density, as a depth (left) and as a function of elevation band (right).}
-%		\label{fig:RESULTS}
-%	\end{centering}
-%\end{figure}
-
-\clearpage
-
-\begin{figure}[htbp]
-	\begin{centering}	
-		% \hspace*{-.7in}
-		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{VALID_FIG}}
-		\caption{Model validation with measured SWE at select locations in the domain. The black line is SWE
-			measured by the pillow, and blue lines are model results for the surrounding pixels. Model SWE values generated from hybrid HRRR inputs begin on Nov 19.}
-		\label{fig:RESULTS}
-	\end{centering}
-\end{figure}
-
-%\begin{figure}[htbp]
-%	\begin{centering}	
-%		% \hspace*{-.7in}
-%		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{DENSITY_SWE_FIG}}
-%		\caption{Modeled snow density as a function of SWE, colored by elevation.}
-%		\label{fig:RESULTS}
-%	\end{centering}
-%\end{figure}
-
-\clearpage
-
 \begin{figure}[htbp]
 	\begin{centering}
 		% \hspace*{-.7in}
 		\includegraphics[width=0.88\textwidth]{\VAR{FIG_PATH}\VAR{TOTALS_FIG}}
-		\caption{Water year total SWE (left), SWI (right) volumes created from the hybrid model input approach. SWE and SWI values prior to November 19 are not shown. \textbf{NOTE:} Total SWI values begin on Nov. 19, 2017, and do \textbf{NOT} include SWI prior to then.}
+		\caption{Water year total SWE (left), SWI (right) volumes. }
 		\label{fig:TOTALS}
 	\end{centering}
 \end{figure}
+
+
+\clearpage
 
 \vspace{2cm}
 
