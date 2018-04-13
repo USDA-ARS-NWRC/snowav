@@ -25,11 +25,7 @@ class snowav(object):
     def __init__(self,config_file):
         '''
         Notes: 
-        - pixel, nrows, ncols are assigned automatically for BRB, TUOL - other things could be still...
-        - consider adding defaults and overwrite options for all plot labels (KAF per elevation band, 
-            elevation [m], etc.), would eliminate a lot of if/else statements in plotting, and allow
-            for plotting in cm too...
-        
+
         '''
         
         try:
@@ -49,115 +45,65 @@ class snowav(object):
             ####################################################
             #           Outputs section                        #
             ####################################################        
-            self.snowband = int(cfg.get('Outputs','snowband'))
-            self.emband = int(cfg.get('Outputs','emband'))          
-            self.run_dir = cfg.get('Outputs','run_dir') 
-            self.nc_dir = [self.run_dir]
-            self.dplcs = int(cfg.get('Outputs','decimals'))         
-            
-            # do all of this at the end?
-            self.run_files = sorted(os.listdir(self.run_dir))
-            
-            # Should be changed to just get 'snow' and 'em'
-            if 'error.out' in self.run_files:
-                self.run_files.remove('error.out')
-            if '._error.out' in self.run_files:
-                self.run_files.remove('._error.out')
-            if 'snow.nc' in self.run_files:
-                self.run_files.remove('snow.nc') 
-            if 'em.nc' in self.run_files:
-                self.run_files.remove('em.nc')                 
-            
-            if cfg.has_option('Outputs','csnowFile') and cfg.has_option('Outputs','psnowFile'):
-                self.psnowFile = cfg.get('Outputs','psnowFile')
-                self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = cfg.get('Outputs','cemFile')
-                
-                spts = self.psnowFile.split('.')
-                sthr = int(spts[-1])
-                epts = self.csnowFile.split('.')
-                enhr = int(epts[-1])
-                run_files_filt = []
-
-                # This could be made more robust
-                for name in self.run_files:
-                    file_hr = int(name.split('.')[-1])
-
-                    if file_hr >= int(sthr) and file_hr <= int(enhr):
-                        run_files_filt.append(name) 
-         
-                # ! 
-                # self.em_files   = [value for value in run_files_filt if 'em' in value]
-                # self.snow_files = [value for value in run_files_filt if not 'em' in value]
-                self.em_files = [value for value in self.run_files if 'em' in value]
-                self.snow_files = [value for value in self.run_files if not 'em' in value]
-                
-                # Going to change this to be the full path so that we can also go between two directories
-                self.snow_files = [self.run_dir + s for s in self.snow_files] 
-                self.em_files = [self.run_dir + s for s in self.em_files]       
+            # Default for snow.0000 file is 2 (SWE)
+            if (cfg.has_option('Outputs','snowband')): 
+                self.snowband = int(cfg.get('Outputs','snowband'))     
             else:
-                self.em_files = [value for value in self.run_files if 'em' in value]
-                self.snow_files = [value for value in self.run_files if not 'em' in value]
-                self.snow_files = [self.run_dir + s for s in self.snow_files] 
-                self.em_files = [self.run_dir + s for s in self.em_files]  
-
-                # Now define p and s
-                self.psnowFile = self.snow_files[0] 
-                self.csnowFile = self.snow_files[len(self.snow_files)-1] 
-                self.cemFile = self.em_files[len(self.em_files)-1]     
+                self.snowband = 2
             
-            if cfg.has_option('Outputs','csnowFile_flt') and cfg.has_option('Outputs','psnowFile_flt'):
-                self.psnowFile_flt = cfg.get('Outputs','psnowFile_flt')
-                self.csnowFile_flt = cfg.get('Outputs','csnowFile_flt')
-                self.cemFile_flt  = cfg.get('Outputs','csnowFile_flt').replace('snow','em')
-                
+            # Default for em.0000 is 8 (SWI)
+            if (cfg.has_option('Outputs','emband')): 
+                self.snowband = int(cfg.get('Outputs','emband'))     
+            else:
+                self.emband = 8           
+
+            # Default rounding decimals for volume and depth 
+            if (cfg.has_option('Outputs','decimals')): 
+                self.dplcs = int(cfg.get('Outputs','decimals'))   
+            else:
+                self.dplcs = 1   
+             
+            # If psnowFile and csnowFile are specified, use those, 
+            # otherwise they will get defined as the first and last
+            # snow.XXXX file once [Runs] has been compiled
+            if (cfg.has_option('Outputs','psnowFile') and 
+                cfg.has_option('Outputs','csnowFile')):   
+                self.psnowFile = cfg.get('Outputs','psnowFile')
+                self.csnowFile = cfg.get('Outputs','csnowFile') 
+                self.cemFile = self.csnowFile.replace('snow.','em.')        
+            
             ####################################################
             #           Runs                                   #
-            ####################################################
-        
-            # Directories in 'Runs' are added underneath run_dir
-            if cfg.has_section('Runs'): 
-                runs = list(cfg.items('Runs'))   
-                
-                psfiles = []
-                pefiles = []
-                for iters,rdir in enumerate(runs):
+            ####################################################       
+            # Collect all the run directories
+            runs = list(cfg.items('Runs'))             
+            self.snow_files = []
+            self.em_files = []
+            
+            for rdir in runs:
 
-                    run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
-                    self.nc_dir.insert(iters,rdir[1])
-                    if 'error.out' in run_files:
-                        run_files.remove('error.out')
-                    if '._error.out' in self.run_files:
-                        self.run_files.remove('._error.out')  
-                    if 'DS_Store' in self.run_files:
-                        self.run_files.remove('DS_Store')                          
-                    if 'snow.nc' in self.run_files:
-                        self.run_files.remove('snow.nc') 
-                    if 'em.nc' in self.run_files:
-                        self.run_files.remove('em.nc')                                              
-                    #snow_files = [value for value in run_files if not 'em' in value]
-                    snow_files = [value for value in run_files if 'snow.' in value]
-                    em_files = [value for value in run_files if 'em.' in value]
-                    psfiles = psfiles + snow_files
-                    pefiles = pefiles + em_files
-                    
-                self.snow_files = psfiles + self.snow_files
-                self.em_files   = pefiles + self.em_files 
+                run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
                 
-                if not cfg.has_option('Outputs','csnowFile') and cfg.has_option('Outputs','psnowFile'):
-                
-                    # Now define p and s
-                    self.psnowFile = self.snow_files[0] 
-                    self.csnowFile = self.snow_files[len(self.snow_files)-1] 
-                    self.cemFile = self.em_files[len(self.em_files)-1]   
+                self.snow_files = (self.snow_files 
+                                   + [value for value in run_files 
+                                   if 'snow.' in value])
+                self.em_files = (self.em_files 
+                                 + [value for value in run_files 
+                                 if 'em.' in value])
+       
+            # If no psnowFile and csnowFile specified, use first and last
+            if (not cfg.has_option('Outputs','csnowFile') 
+                and cfg.has_option('Outputs','psnowFile')):
+                self.psnowFile = self.snow_files[0] 
+                self.csnowFile = self.snow_files[len(self.snow_files)-1] 
+                self.cemFile = self.em_files[len(self.em_files)-1]   
             
             ####################################################
             #           Validate                               #
             #################################################### 
             self.val_stns = cfg.get('Validate','stations').split(',')
             self.val_lbls = cfg.get('Validate','labels').split(',')
-            self.val_client = cfg.get('Validate','client')       
-            
+            self.val_client = cfg.get('Validate','client')                  
             
             ####################################################
             #           Accumulated                            #
@@ -165,14 +111,18 @@ class snowav(object):
             self.acc_clmin = cfg.get('Accumulated','clmin')
             self.acc_clmax = cfg.get('Accumulated','clmax')
             
-            if cfg.has_option('Accumulated','ymin') and cfg.has_option('Accumulated','ymax'):
-                self.acc_ylims = (int(cfg.get('Accumulated','ymin')),int(cfg.get('Accumulated','ymax')))        
+            if (cfg.has_option('Accumulated','ymin') 
+                and cfg.has_option('Accumulated','ymax')):
+                self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
+                                  int(cfg.get('Accumulated','ymax')))        
     
             ####################################################
             #           Elevation                              #
             ####################################################             
-            if cfg.has_option('Elevation','ymin') and cfg.has_option('Elevation','ymax'):
-                self.el_ylims = (int(cfg.get('Elevation','ymin')),int(cfg.get('Elevation','ymax')))                      
+            if (cfg.has_option('Elevation','ymin') 
+                and cfg.has_option('Elevation','ymax')):
+                self.el_ylims = (int(cfg.get('Elevation','ymin')),
+                                 int(cfg.get('Elevation','ymax')))                      
             
             ####################################################
             #           Changes                                #
@@ -180,11 +130,14 @@ class snowav(object):
             self.ch_clmin = cfg.get('Changes','clmin')
             self.ch_clmax = cfg.get('Changes','clmax')
                  
-            if cfg.has_option('Changes','clminabs') and cfg.has_option('Changes','clmaxabs'):   
+            if (cfg.has_option('Changes','clminabs') 
+                and cfg.has_option('Changes','clmaxabs')):   
                 self.ch_clminabs = int(cfg.get('Changes','clminabs'))
                 self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
-            if cfg.has_option('Changes','ymin') and cfg.has_option('Changes','ymax'):
-                self.ch_ylims = (int(cfg.get('Changes','ymin')),int(cfg.get('Changes','ymax')))            
+            if (cfg.has_option('Changes','ymin') 
+                and cfg.has_option('Changes','ymax')):
+                self.ch_ylims = (int(cfg.get('Changes','ymin')),
+                                 int(cfg.get('Changes','ymax')))            
             
             ####################################################
             #           Results                                #
@@ -201,9 +154,11 @@ class snowav(object):
             ####################################################
             #          Plots                                   #
             ####################################################  
-            self.figsize = (int(cfg.get('Plots','fig_length')),int(cfg.get('Plots','fig_height')))
+            self.figsize = (int(cfg.get('Plots','fig_length')),
+                            int(cfg.get('Plots','fig_height')))
             self.dpi = int(cfg.get('Plots','dpi'))
-            self.barcolors = ['xkcd:true green','palegreen','xkcd:dusty green','xkcd:vibrant green','red']     
+            self.barcolors = ['xkcd:true green','palegreen',
+                              'xkcd:dusty green','xkcd:vibrant green','red']     
     
             ####################################################
             #          Report                                  #
@@ -212,32 +167,19 @@ class snowav(object):
             self.tex_file = cfg.get('Report','tex_file')
             self.rep_path = cfg.get('Report','rep_path')
             self.templ_path = cfg.get('Report','templ_path')
+            
             if cfg.has_option('Report','orig_date'):
                 self.orig_date = cfg.get('Report','orig_date')
             if cfg.has_option('Report','report_name_append'):
                 self.rep_append = cfg.get('Report','report_name_append')                
             
-            # These will later get appended with self.dateTo once it is calculated
-            if self.basin == 'BRB':
-                self.report_name = ('BoiseRiverBasin_SnowpackSummary_.pdf')
-                self.rep_title = 'Boise River Basin Snowpack Summary'
-            if self.basin == 'TUOL':
-                self.report_name = ('TuolumneRiverBasin_SnowpackSummary_.pdf') 
-                self.rep_title = 'Tuolumne River Basin Snowpack Summary'
-            if self.basin == 'SJ':
-                self.report_name = ('SanJoaquinRiverBasin_SnowpackSummary_.pdf') 
-                self.rep_title = 'San Joaquin River Basin Snowpack Summary'
-            if self.basin == 'LAKES':
-                self.report_name = ('LakesBasin_SnowpackSummary_.pdf') 
-                self.rep_title = 'Lakes Basin Snowpack Summary'
-            if self.basin == 'RCEW':
-                self.report_name = ('RCEW_SnowpackSummary_.pdf') 
-                self.rep_title = 'RCEW Snowpack Summary'                
+            # These will later get appended with self.dateTo 
+            self.report_name = cfg.get('Report','report_name')
+            self.rep_title = cfg.get('Report','report_title')          
               
-            # These are strings for the report
+            # Strings for the report
             if self.units == 'KAF':
-                self.reportunits = 'KAF'
-                
+                self.reportunits = 'KAF' 
             if self.units == 'SI':
                 self.reportunits = 'km^3'
                            
