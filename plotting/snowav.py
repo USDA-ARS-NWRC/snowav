@@ -680,23 +680,16 @@ class snowav(object):
         print('%s entries in dataframe index with gaps larger than 24h '%(msum))
         print('done.')
        
-    def accumulated(self,*arg):
+    def accumulated(self):
         '''
         This function plots self.accum (typically SWI)
         
         '''
         
-        # This is outdated and probably needs to be re-done...
-        # If this is supplied, only report accum by the subsection between 
-        # psnowFile and csnowFile 
-        if arg == 'sub':
-            accum = copy.deepcopy(self.accum_sub) 
-            accum_byelev = copy.deepcopy(self.accum_byelev_sub) 
-                                       
-        else:    
-            accum = copy.deepcopy(self.accum)
-            accum_byelev = copy.deepcopy(self.accum_byelev)
-            
+        # )nly report accum by the subsection between 
+        accum = copy.deepcopy(self.accum_sub) 
+        accum_byelev = copy.deepcopy(self.accum_byelev_sub) 
+   
         qMin,qMax = np.percentile(accum,[0,99.8])
         clims = (0,qMax)
         colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
