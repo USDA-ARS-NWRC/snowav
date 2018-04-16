@@ -1,13 +1,13 @@
 
 import SNOWAV
 
-config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/config/snowav_brb_wy2018_ops.txt'
+config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_ops.txt'
 snow = SNOWAV.snowav(config_file)
     
 # Make all the calculations
 SNOWAV.snowav.process(snow)
 
-# To make a report for the BRB, or with no flight updates, run these
+# Figures
 SNOWAV.snowav.accumulated(snow,'sub')
 SNOWAV.snowav.current_image(snow)
 SNOWAV.snowav.state_by_elev(snow)
@@ -18,12 +18,6 @@ SNOWAV.snowav.pixel_swe(snow)
 # SNOWAV.snowav.stn_validate(snow,31+19) # 31+19 or 0
 
 SNOWAV.report(snow)
-
-# To make a report with flight updates, add this figure
-#     [Report]  -> tex_file = tuol_report_flt.tex
-#     [Outputs] -> psnowFile_flt and csnowFile_flt
-# SNOWAV.snowav.process(snow,snow.psnowFile_flt,snow.csnowFile_flt)
-# SNOWAV.snowav.image_change(snow,'_flt')
 
 # Summaries for previous years
 # SNOWAV.snowav.write_summary(snow, 'state_summary')
