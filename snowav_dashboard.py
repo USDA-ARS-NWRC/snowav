@@ -8,14 +8,14 @@ snow = SNOWAV.snowav(config_file)
 SNOWAV.snowav.process(snow)
 
 # Figures
-SNOWAV.snowav.accumulated(snow,'sub')
+SNOWAV.snowav.accumulated(snow)
 SNOWAV.snowav.current_image(snow)
 SNOWAV.snowav.state_by_elev(snow)
 SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
 SNOWAV.snowav.pixel_swe(snow)
-# SNOWAV.snowav.density(snow)
-SNOWAV.snowav.stn_validate(snow,0) # 31+19 or 0
+SNOWAV.snowav.density(snow)
+SNOWAV.snowav.stn_validate(snow) 
 
 SNOWAV.report(snow)
 

@@ -112,7 +112,8 @@ class snowav(object):
             #################################################### 
             self.val_stns = cfg.get('Validate','stations').split(',')
             self.val_lbls = cfg.get('Validate','labels').split(',')
-            self.val_client = cfg.get('Validate','client')                  
+            self.val_client = cfg.get('Validate','client')     
+            self.offset = cfg.get('Validate','offset')             
             
             ####################################################
             #           Accumulated                            #
@@ -1805,7 +1806,7 @@ class snowav(object):
             print('saving figure to %sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))   
             plt.savefig('%sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))                   
              
-    def stn_validate(self,initswe):
+    def stn_validate(self):
         
         rundirs = self.run_dirs
         stns = self.val_stns
@@ -1884,9 +1885,7 @@ class snowav(object):
             for n,m in zip(px,py): 
                 # n = 0
                 # m = 0
-                # iswe = 0  
-                # iswe = 31+19 # brb
-                iswe = initswe
+                iswe = self.offset
         
                 for rname in rundirs:
                     # rname = rundirs[1]
