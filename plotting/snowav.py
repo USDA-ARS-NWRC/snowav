@@ -79,11 +79,11 @@ class snowav(object):
             #           Runs                                   #
             ####################################################       
             # Collect all the run directories
-            runs = list(cfg.items('Runs'))             
+            self.run_dirs = list(cfg.items('Runs'))             
             self.snow_files = []
             self.em_files = []
             
-            for rdir in runs:
+            for rdir in self.run_dirs:
 
                 run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
                 
@@ -1814,7 +1814,7 @@ class snowav(object):
              
     def stn_validate(self,initswe):
         
-        rundirs = self.nc_dir
+        rundirs = self.run_dirs
         stns = self.val_stns
         lbls = self.val_lbls
         client = self.val_client
@@ -1898,13 +1898,8 @@ class snowav(object):
                 for rname in rundirs:
                     # rname = rundirs[1]
                     
-                    try:
-                        ncpath  = rname.split('output')[0]
-                        ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
-                    except:
-                        ncpath  = rname
-                        ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
-                        
+                    ncpath  = rname[1].split('output')[0]
+                    ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
                     nctvec  = ncf.variables['time'][:]
                     vswe    = ncf.variables['specific_mass']            # get variable
                     ncxvec  = ncf.variables['x'][:]                     # get x vec

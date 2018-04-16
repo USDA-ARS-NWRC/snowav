@@ -15,7 +15,7 @@ SNOWAV.snowav.image_change(snow)
 SNOWAV.snowav.basin_total(snow)
 SNOWAV.snowav.pixel_swe(snow)
 # SNOWAV.snowav.density(snow)
-# SNOWAV.snowav.stn_validate(snow,31+19) # 31+19 or 0
+SNOWAV.snowav.stn_validate(snow,0) # 31+19 or 0
 
 SNOWAV.report(snow)
 
