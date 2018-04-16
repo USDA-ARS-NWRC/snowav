@@ -113,7 +113,7 @@ class snowav(object):
             self.val_stns = cfg.get('Validate','stations').split(',')
             self.val_lbls = cfg.get('Validate','labels').split(',')
             self.val_client = cfg.get('Validate','client')     
-            self.offset = cfg.get('Validate','offset')             
+            self.offset = int(cfg.get('Validate','offset'))             
             
             ####################################################
             #           Accumulated                            #
@@ -681,1280 +681,1280 @@ class snowav(object):
         print('%s entries in dataframe index with gaps larger than 24h '%(msum))
         print('done.')
        
-    def accumulated(self):
-        '''
-        This function plots self.accum (typically SWI)
-        
-        '''
-        
-        # )nly report accum by the subsection between 
-        accum = copy.deepcopy(self.accum_sub) 
-        accum_byelev = copy.deepcopy(self.accum_byelev_sub) 
-   
-        qMin,qMax = np.percentile(accum,[0,99.8])
-        clims = (0,qMax)
-        colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
-        colors2 = plt.cm.binary(np.linspace(0, 1, 1))
-        colors = np.vstack((colors2, colors1))
-        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")
-        
-        # White background
-        pmask = self.masks[self.total_lbl]['mask']
-        ixo = pmask == 0
-        accum[ixo] = np.nan
-        mymap.set_bad('white',1.) 
-        
-        # Now set SWI-free to some color
-        ixf = accum == 0
-        accum[ixf] = -1
-        mymap.set_under('grey',1.) 
-        
-        plt.close(0)
-        fig,(ax,ax1) = plt.subplots(num=0, 
-                                    figsize = self.figsize, 
-                                    dpi=self.dpi, 
-                                    nrows = 1, ncols = 2)      
-        h = ax.imshow(accum, clim = clims, cmap = mymap)
-        
-        # Basin boundaries
-        for name in self.masks:
-            ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
-        
-        if self.basin == 'SJ':
-            fix1 = np.arange(1275,1377)
-            fix2 = np.arange(1555,1618)
-            ax.plot(fix1*0,fix1,'k')
-            ax.plot(fix2*0,fix2,'k')
-            
-        if self.basin == 'LAKES':
-            ax.set_xlim(self.imgx)
-            ax.set_ylim(self.imgy)
-                   
-        # Do pretty stuff
-        h.axes.get_xaxis().set_ticks([])
-        h.axes.get_yaxis().set_ticks([])
-        divider = make_axes_locatable(ax)
-        
-        cax = divider.append_axes("right", size="4%", pad=0.2)
-        cbar = plt.colorbar(h, cax = cax)
-        # cbar.ax.tick_params() 
-        cbar.set_label('[%s]'%(self.depthlbl))
- 
-        h.axes.set_title('Accumulated SWI \n %s to %s'
-                         %(self.dateFrom.date().strftime("%Y-%-m-%-d"),
-                           self.dateTo.date().strftime("%Y-%-m-%-d")))  
-        
-        # Total basin label
-        sumorder = self.plotorder[1:]
-        if self.basin == 'LAKES' or self.basin == 'RCEW':
-            sumorder = [self.plotorder[0]]
-            
-        if self.dplcs == 0:
-            tlbl = '%s = %s %s'%(self.plotorder[0],
-                                 str(int(accum_byelev[self.plotorder[0]].sum())),
-                                 self.vollbl)
-        else: 
-            tlbl = '%s = %s %s'%(self.plotorder[0],
-                                 str(np.round(accum_byelev[self.plotorder[0]].sum(),
-                                self.dplcs)),self.vollbl)
-              
-        # Plot the bars
-        for iters,name in enumerate(sumorder):
-            if self.dplcs == 0:           
-                lbl = '%s = %s %s'%(name,str(int(accum_byelev[name].sum())),
-                                    self.vollbl)
-            else:
-                lbl = '%s = %s %s'%(name,str(np.round(accum_byelev[name].sum(),
-                                    self.dplcs)),self.vollbl)
-
-            if iters == 0:
-                ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
-                        color = self.barcolors[iters], 
-                        edgecolor = 'k',label = lbl)
-            elif iters == 1:   
-                ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
-                        bottom = accum_byelev[sumorder[iters-1]], 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-              
-            elif iters == 2:   
-                ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
-                        bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]]), 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-
-            elif iters == 3:   
-                ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
-                        bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]] + accum_byelev[sumorder[iters-3]]), 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-                
-               
-            plt.rcParams['hatch.linewidth'] = 1
-            plt.rcParams['hatch.color'] = 'k'                
-            ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
-
-        
-        plt.tight_layout()
-        xts         = ax1.get_xticks()
-        edges_lbl   = []
-        for i in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(self.edges[int(i)])))
-        
-        ax1.set_xticklabels(str(i) for i in edges_lbl)
-        for tick in ax1.get_xticklabels():
-            tick.set_rotation(30)        
-
-        ax1.set_ylabel('%s - per elevation band'%(self.vollbl))
-        ax1.set_xlabel('elevation [%s]'%(self.elevlbl))
-       
-        ax1.yaxis.set_label_position("right")
-        ax1.yaxis.tick_right()
-        ylims = ax1.get_ylim()
-        
-        ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
-
-        plt.tight_layout()
-        fig.subplots_adjust(top=0.88)
-      
-        if self.basin != 'LAKES' and self.basin != 'RCEW':
-            # more ifs for number subs...
-            if len(self.plotorder) == 5:
-                ax1.legend(loc= (0.01,0.68))
-            elif len(self.plotorder) == 4:
-                ax1.legend(loc= (0.01,0.74))
-            
-        if self.basin == 'BRB':
-            ax1.text(0.26,0.94,tlbl,horizontalalignment='center',
-                     transform=ax1.transAxes,fontsize = 10)
-        else:
-            ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
-                     transform=ax1.transAxes,fontsize = 10)
-        
-        # Make SWI-free legend if we need one
-        if sum(sum(ixf)) > 1000:
-            patches = [mpatches.Patch(color='grey', label='no SWI')]
-            if self.basin == 'SJ':
-                ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), 
-                          loc=2, borderaxespad=0. )
-            else:
-                ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), 
-                          loc=2, borderaxespad=0. )
-             
-        print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
-        
-    def current_image(self):
-        '''
-        This plots self.state (typically SWE) and self.cold
-        
-        edits: make flexible input arguments for depth, density, etc
-        
-        '''
-        # Make a copy so we can edit for plots
-
-        state = copy.deepcopy(self.state)
-        cold = copy.deepcopy(self.cold)
-
-        qMin,qMax = np.nanpercentile(state,[0,99.9])    
-        clims = (qMin,qMax)
-        clims2 = (-5,0) 
-        
-        # Areas outside basin
-        pmask = self.masks[self.total_lbl]['mask']
-        ixo = pmask == 0   
-        
-        # Prepare no-snow and outside of the basin for the colormaps   
-        ixz = state == 0
-        state[ixz] = -1
-        cold[ixz]  = 1     
-        
-        # Colormap for self.state
-        colorsbad = plt.cm.Set2_r(np.linspace(0., 1, 1))
-        colors1 = cmocean.cm.haline_r(np.linspace(0., 1, 254))
-        colors = np.vstack((colorsbad,colors1))
-        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
-        
-        state[ixo] = np.nan        
-        mymap.set_bad('white',1.) 
-        # mymap.set_under('lightgrey',1)    
-        
-        # Colormap for cold content
-        # colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
-        # colors1         = plt.cm.ocean_r(np.linspace(0., 1, 128))
-        # colors2         = plt.cm.YlOrRd(np.linspace(0., 1, 127))
-        # colors          = np.vstack((colorsbad, colors1, colors2))
-        # mymap1          = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-        # mymap1          = plt.cm.RdYlBu_r 
-        # mymap1          = cc.m_diverging_linear_bjy_30_90_c45
-        mymap1 = plt.cm.Spectral_r
-        cold[ixo] = np.nan
-        mymap1.set_bad('white')
-        mymap1.set_over('lightgrey',1) 
-                         
-        sns.set_style('dark')
-        sns.set_context("notebook")
-        
-        plt.close(1)
-        fig,(ax,ax1) = plt.subplots(num=1, figsize=self.figsize, 
-                                    facecolor = 'white', dpi=self.dpi, 
-                                    nrows = 1, ncols = 2)
-        h = ax.imshow(state, cmap = mymap, clim=clims)
-        h1 = ax1.imshow(cold, clim=clims2, cmap = mymap1)
-        
-        if self.basin == 'LAKES':
-            ax.set_xlim(self.imgx)
-            ax.set_ylim(self.imgy)
-            ax1.set_xlim(self.imgx)
-            ax1.set_ylim(self.imgy)
-        
-        # Basin boundaries
-        for name in self.masks:
-            ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
-            ax1.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
-            
-        if self.basin == 'SJ':
-            fix1 = np.arange(1275,1377)
-            fix2 = np.arange(1555,1618)
-            ax.plot(fix1*0,fix1,'k')
-            ax.plot(fix2*0,fix2,'k')
-            ax1.plot(fix1*0,fix1,'k')
-            ax1.plot(fix2*0,fix2,'k')
-        
-        # Do pretty stuff for the left plot
-        h.axes.get_xaxis().set_ticks([])
-        h.axes.get_yaxis().set_ticks([])
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.2)
-        cbar = plt.colorbar(h, cax = cax)
-        
-        if self.units == 'KAF':         
-            cbar.set_label('[in]')
-        if self.units == 'SI':
-            cbar.set_label('[mm]')
-         
-        # cbar.ax.tick_params()                
-        
-        # Do pretty stuff for the right plot
-        h1.axes.get_xaxis().set_ticks([])
-        h1.axes.get_yaxis().set_ticks([])
-        h1.axes.set_title('Cold Content \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
-        divider = make_axes_locatable(ax1)
-        cax2 = divider.append_axes("right", size="5%", pad=0.2)
-        cbar1 = plt.colorbar(h1, cax = cax2)
-        cbar1.set_label('Cold Content [MJ/$m^3$]')
-        cbar1.ax.tick_params() 
-        
-        h.axes.set_title('SWE \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
-        fig.subplots_adjust(top=0.95,bottom=0.05,
-                            right = 0.92, left = 0.05, wspace = 0.12)
-        if self.basin == 'LAKES':
-            plt.tight_layout()
-        
-        patches = [mpatches.Patch(color='grey', label='snow free')]
-        if self.basin == 'SJ':
-            ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
-        if self.basin == 'RCEW':
-            ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )            
-        else:
-            ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
-        
-        print('saving figure to %sresults%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sresults%s.png'%(self.figs_path,self.name_append))  
-        
-    def pixel_swe(self):
-        
-        
-        plt.close(2) 
-        fig,(ax,ax1) = plt.subplots(num=2, figsize=self.figsize,
-                                    dpi=self.dpi, nrows = 1, ncols = 2)
-   
-        sumorder = self.plotorder[1:]
-        if self.basin == 'LAKES' or self.basin == 'RCEW':
-            sumorder = [self.plotorder[0]]  
-            swid = 0.45
-        else:
-            sumorder = self.plotorder[1::]
-            swid = 0.25
-        
-        wid = np.linspace(-0.3,0.3,len(sumorder))
-        
-        for iters,name in enumerate(sumorder): 
-            # iters = 0
-            # name = sumorder[iters]                             
-            ax.bar(range(0,len(self.edges))-wid[iters],
-                    self.depth_mdep_byelev[name], 
-                    color = self.barcolors[iters], width = swid, edgecolor = 'k',label = name) 
-                        
-            ax1.bar(range(0,len(self.edges))-wid[iters],
-                    self.state_mswe_byelev[name], 
-                    color = self.barcolors[iters], width = swid, edgecolor = 'k',label = name)  
-            
-        ax.set_xlim((0,len(self.edges)))    
-        ax1.set_xlim((0,len(self.edges)))        
-        
-        plt.tight_layout()                            
-        xts         = ax1.get_xticks()
-        edges_lbl   = []
-        for i in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(self.edges[int(i)])))
-  
-        ax.set_xticklabels(str(i) for i in edges_lbl)
-        ax1.set_xticklabels(str(i) for i in edges_lbl)
-        for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
-            tick.set_rotation(30)
-            tick1.set_rotation(30)  
-             
-        ylims = ax1.get_ylim()
-        ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))  
-        
-        ylims = ax.get_ylim()
-        ax.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))               
-
-        ax.set_ylabel('mean depth [%s]'%(self.depthlbl))
-        ax.set_xlabel('elevation [ft]')
-        ax1.set_ylabel('mean SWE [%s]'%(self.depthlbl))
-        ax1.set_xlabel('elevation [ft]')
-        ax.legend(loc='upper left')
-        ax.grid('on')
-        ax1.grid('on')
-        
-        ax1.yaxis.set_label_position("right")
-        ax1.yaxis.tick_right()       
-        
-        ax.set_title('Mean Depth, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
-        ax1.set_title('Mean SWE, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
-        
-        plt.tight_layout()
-        print('saving figure to %smean_swe_depth%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%smean_swe_depth%s.png'%(self.figs_path,self.name_append))   
-        
-    def density(self): 
-        '''
-        None of these are really finished...
-        '''
-        
-        value = copy.deepcopy(self.density_m_byelev)
-        lim = np.max(value[self.total_lbl]) 
-        ylim = (0,600) 
-        color = 'xkcd:windows blue'
-
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")        
-
-        nf = len(self.masks)
-        
-        if nf > 1 and nf < 5:
-            nr = 2
-            nc = 2
-        elif nf < 7:
-            nr = 2
-            nc = 3
-            
-        plt.close(3)
-        fig,ax  = plt.subplots(num=3, figsize=self.figsize, dpi=self.dpi, nrows = nr, ncols = nc)
-        axs     = ax.ravel()
-        if nf == 5:
-            fig.delaxes(axs[5])
-               
-        for iters,name in enumerate(self.plotorder):
-            # iters = 0
-            # name = self.plotorder[iters]
-            axs[iters].bar(range(0,len(self.edges)),value[name], color = color)
-            
-            axs[iters].set_xlim(self.xlims)                          
-            xts         = axs[iters].get_xticks()
-            if len(xts) < 6:
-                dxt = xts[1] - xts[0]
-                xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
-                axs[iters].set_xticks(xts)                 
-    
-            edges_lbl   = []
-            for i in xts[0:len(xts)-1]:
-                edges_lbl.append(str(int(self.edges[int(i)])))
-
-            axs[iters].set_xticklabels(str(i) for i in edges_lbl)
-            
-            if iters == 0:
-                axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
-            
-            if iters > nc - 1:
-                axs[iters].set_xlabel('elevation [%s]'%(self.elevlbl))
-   
-            # Put yaxis on right 
-            if iters == nc - 1 or iters == nf -1 :
-                axs[iters].yaxis.set_label_position("right")
-                axs[iters].yaxis.tick_right()
-                axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
-            
-            if iters == 1 and nc == 3:
-                axs[iters].set_yticklabels([])
-                
-            if iters <= nc - 1:
-                axs[iters].set_xticklabels([])
-            
-            axs[iters].set_ylim((ylim)) 
-            for tick in axs[iters].get_xticklabels():
-                tick.set_rotation(30) 
-                
-            axs[iters].text(0.5,0.92,name,horizontalalignment='center',transform=axs[iters].transAxes,fontsize = 10)
-        
-        for n in range(0,len(axs)):
-            axs[n].set_xticks(xts)
-            axs[n].set_xlim(self.xlims)       
-
-        fig.tight_layout()
-        fig.subplots_adjust(top=0.92,wspace = 0.1)
-        fig.suptitle(r'Density, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")) )       
-        
-        print('saving figure to %sdensity_subs%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sdensity_subs%s.png'%(self.figs_path,self.name_append))     
-        
-        ###############################
-        # 2nd density fig
-        ###############################
-
-        cvalue = copy.deepcopy(self.density)
-        
-        colors1 = cmocean.cm.speed(np.linspace(0., 1, 255))
-        colors2 = plt.cm.binary(np.linspace(0, 1, 1))
-        colors = np.vstack((colors2, colors1))
-        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")
-        
-        # This is to get the background white
-        pmask = self.masks[self.total_lbl]['mask']
-        ixo = pmask == 0
-        cvalue[ixo] = np.nan
-        mymap.set_bad('white',1.) 
-        
-        ixf = cvalue == 0
-        cvalue[ixf] = -1
-        mymap.set_under('lightgrey',1.) 
-        
-        plt.close(4)
-        fig,(ax,ax1) = plt.subplots(num=4, figsize = self.figsize, 
-                                    dpi=self.dpi, nrows = 1, ncols = 2)      
-        h = ax.imshow(cvalue, clim = (50,550), interpolation='none', cmap = mymap)
-        
-        # Basin boundaries
-        for name in self.masks:
-            ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
-        
-        if self.basin == 'SJ':
-            fix1 = np.arange(1275,1377)
-            fix2 = np.arange(1555,1618)
-            ax.plot(fix1*0,fix1,'k')
-            ax.plot(fix2*0,fix2,'k')
-            
-        if self.basin == 'LAKES':
-            ax.set_xlim(self.imgx)
-            ax.set_ylim(self.imgy)
-                   
-        # Do pretty stuff
-        h.axes.get_xaxis().set_ticks([])
-        h.axes.get_yaxis().set_ticks([])
-        divider = make_axes_locatable(ax)
-        
-        cax = divider.append_axes("right", size="4%", pad=0.2)
-        cbar = plt.colorbar(h, cax = cax)
-        cbar.ax.tick_params() 
-        cbar.set_label('[kg/$m^3$]')
- 
-        h.axes.set_title('Density\n%s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))  
-
-        ax1.bar(range(0,len(self.edges)),value[self.total_lbl], 
-                color = 'g', edgecolor = 'k')
-      
-        plt.rcParams['hatch.linewidth'] = 1
-        plt.rcParams['hatch.color'] = 'k'                
-        ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
-        
-        plt.tight_layout()
-        xts = ax1.get_xticks()
-        edges_lbl = []
-        for i in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(self.edges[int(i)])))
-        
-        ax1.set_xticklabels(str(i) for i in edges_lbl)
-        for tick in ax1.get_xticklabels():
-            tick.set_rotation(30)        
-
-        ax1.set_ylabel('density - per elevation band')
-        ax1.set_xlabel('elevation [%s]'%(self.elevlbl))
-       
-        ax1.yaxis.set_label_position("right")
-        ax1.yaxis.tick_right()
-        ax1.set_ylim((0,600))
-
-        plt.tight_layout()
-        fig.subplots_adjust(top=0.88)
-    
-        if sum(sum(ixf)) > 1000:
-            patches = [mpatches.Patch(color='grey', label='snow free')]
-            if self.basin == 'SJ':
-                ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
-            else:
-                ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
-        
-        print('saving figure to %sdensity%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sdensity%s.png'%(self.figs_path,self.name_append))         
-        
-        
-        ###############################
-        # 3rd density fig
-        ###############################
-        
-        nsub = 100
-        depth  = copy.deepcopy(self.depth)
-        density = cvalue
-        swe = copy.deepcopy(self.state)
-        
-        depths = np.reshape(depth,(1,len(depth[:,0])*len(depth[0,:])))
-        densitys = np.reshape(density,(1,len(depth[:,0])*len(density[0,:])))
-        swesats = np.reshape(swe,(1,len(swe[:,0])*len(swe[0,:])))
-        densitys = densitys[0,:]
-        depths = depths[0,:]
-        swesats = swesats[0,:]
-        depthsub = depths[::nsub]
-        densitysub = densitys[::nsub]
-        swesub = swesats[::nsub]
-        
-        z = self.dem
-        zs = np.reshape(z,(1,len(z[:,0])*len(z[0,:])))
-        zs = zs[0,:]
-        zsub = zs[::100]
-        
-        cm = cc.m_bgy
-        
-        plt.close(20)
-        fig = plt.figure(num=20, figsize = (6,4), dpi=self.dpi)      
-        ax = plt.gca()       
-        h = ax.scatter(swesub,densitysub,c=zsub,vmin=5000,vmax=12500 ,cmap=cm,s=5)
-        
-        ax.set_ylabel(r'$\rho$ [kg/$m^3$]')
-        ax.set_xlabel('SWE [in]')
-        
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="4%", pad=0.2)
-        cbar = plt.colorbar(h, cax = cax)
-        cbar.ax.tick_params() 
-        cbar.set_label('elevation [ft]')
-        plt.tight_layout()
-              
-        print('saving figure to %sdensity_swe%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sdensity_swe%s.png'%(self.figs_path,self.name_append))          
-    
-    
-    def image_change(self,*args): 
-        '''
-        This plots self.delta_state
-        
-        Should add in more functionality for plotting differences between various images/runs
-        
-        '''  
-        
-        # if len(args) != 0:
-        #     self.name_append = self.name_append + args[0]
-              
-        # Make copy so that we can add nans for the plots, but not mess up the original
-        delta_state = copy.deepcopy(self.delta_state)
-        qMin,qMax = np.percentile(delta_state,[1,99.5])
-        
-        ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
-        delta_state[ix] = qMin + qMin*0.2
-        vMin,vMax = np.percentile(delta_state,[1,99])
-        # clims = (qMin,qMax )
-           
-        # Override if absolute limits are provide in the config
-        if hasattr(self,'ch_clminabs') and hasattr(self,'ch_clmaxabs'):
-            clims       = (self.ch_clminabs,self.ch_clmaxabs)
-     
-        # if qMin is 0, need to change things 
-        if qMax > 0:
-            colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))           
-            colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
-            colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
-            colors = np.vstack((colorsbad,colors1, colors2))
-            mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-        else:
-            colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 255))
-            colors2 = plt.cm.Set2_r(np.linspace(0, 1, 1))
-            colors = np.vstack((colors1, colors2))
-            mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-    
-        ixf = delta_state == 0
-        delta_state[ixf] = -100000 # set snow-free  
-        pmask = self.masks[self.total_lbl]['mask']
-        ixo = pmask == 0
-        delta_state[ixo] = np.nan
-        cmap = copy.copy(mymap)
-        cmap.set_bad('white',1.)   
-             
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")
-       
-        plt.close(6) 
-        fig,(ax,ax1) = plt.subplots(num=6, figsize=self.figsize, 
-                                    dpi=self.dpi, nrows = 1, ncols = 2)
-        h = ax.imshow(delta_state, interpolation='none', 
-            cmap = cmap, norm=MidpointNormalize(midpoint=0,
-                                                vmin = vMin-0.01,vmax=vMax+0.01))
-
-        if self.basin == 'LAKES':    
-            ax.set_xlim(self.imgx)
-            ax.set_ylim(self.imgy)
-
-        # Basin boundaries
-        for name in self.masks:
-            ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
- 
-        if self.basin == 'SJ':
-            fix1 = np.arange(1275,1377)
-            fix2 = np.arange(1555,1618)
-            ax.plot(fix1*0,fix1,'k')
-            ax.plot(fix2*0,fix2,'k')    
-        
-        # Do pretty stuff
-        h.axes.get_xaxis().set_ticks([])
-        h.axes.get_yaxis().set_ticks([])
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.2)
-        cbar = plt.colorbar(h, cax = cax)     
-        # cbar.ax.tick_params() 
-        
-        if self.units == 'KAF': 
-            cbar.set_label(r'$\Delta$ SWE [in]')           
-        if self.units == 'SI':
-            cbar.set_label(r'$\Delta$ SWE [mm]')   
-            
-        h.axes.set_title('Change in SWE \n %s to %s'
-                         %(self.dateFrom.date().strftime("%Y-%-m-%-d"),
-                           self.dateTo.date().strftime("%Y-%-m-%-d")))    
-      
-        # Plot the bar in order
-        sumorder  = self.plotorder[1:]  
-        if self.basin == 'LAKES' or self.basin == 'RCEW':
-            sumorder = [self.plotorder[0]]  
-        if self.dplcs == 0:
-            tlbl = '%s = %s %s'%(self.plotorder[0],
-                                 str(int(self.delta_state_byelev[self.plotorder[0]].sum())),
-                                 self.vollbl)
-        else: 
-            tlbl = '%s = %s %s'%(self.plotorder[0],
-                                 str(np.round(self.delta_state_byelev[self.plotorder[0]].sum(),
-                                              self.dplcs)),self.vollbl)            
-        
-        for iters,name in enumerate(sumorder):  
-                
-            if self.dplcs == 0:
-                lbl = '%s = %s %s'%(name,
-                                    str(int(self.delta_state_byelev[name].sum())),
-                                    self.vollbl)
-            else: 
-                lbl = '%s = %s %s'%(name,
-                                    str(np.round(self.delta_state_byelev[name].sum(),
-                                    self.dplcs)),self.vollbl)                                 
- 
-            if iters == 0:
-                ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name],
-                        color = self.barcolors[iters],
-                        edgecolor = 'k',label = lbl)
-            elif iters == 1:   
-                ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
-                        bottom = self.delta_state_byelev[sumorder[iters-1]], 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-            elif iters == 2:   
-                ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
-                        bottom = self.delta_state_byelev[sumorder[iters-1]]
-                        + self.delta_state_byelev[sumorder[iters-2]], 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-            elif iters == 3:   
-                ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
-                        bottom = self.delta_state_byelev[sumorder[iters-1]]
-                        + self.delta_state_byelev[sumorder[iters-2]]
-                        + self.delta_state_byelev[sumorder[iters-3]], 
-                        color = self.barcolors[iters], edgecolor = 'k',label = lbl)
-               
-        ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
-        plt.tight_layout()                            
-        xts = ax1.get_xticks()
-        edges_lbl = []
-        for i in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(self.edges[int(i)])))
-  
-        ax1.set_xticklabels(str(i) for i in edges_lbl)
-        for tick in ax1.get_xticklabels():
-            tick.set_rotation(30) 
-             
-        if hasattr(self,"ch_ylims"):
-            ax1.set_ylim(self.ch_ylims)
-        else:
-            ylims = ax1.get_ylim()
-            if ylims[0] < 0 and ylims[1] == 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-            if ylims[0] < 0 and ylims[1] > 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))  
-                if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-                    ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
-                        
-            if ylims[1] == 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.5))
-            if ylims[0] == 0:
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))               
-                         
-        if self.units == 'KAF':
-            ax1.set_ylabel('KAF - per elevation band')
-            ax1.set_xlabel('elevation [ft]')
-            ax1.axes.set_title('Change in SWE')
-        if self.units == 'SI':
-            ax1.set_ylabel(r'$km^3$')
-            ax1.set_xlabel('elevation [m]')
-            ax1.axes.set_title(r'Change in SWE')
-               
-        ax1.yaxis.set_label_position("right")
-        ax1.tick_params(axis='x')
-        ax1.tick_params(axis='y')
-        ax1.yaxis.tick_right()
-        
-        patches = [mpatches.Patch(color='grey', label='snow free')]
-        if self.basin == 'SJ':
-            ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        elif self.basin == 'RCEW':
-            ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
-                      loc=2, borderaxespad=0. )            
-        else:
-            ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                      loc=2, borderaxespad=0. )
-            
-        if self.basin != 'LAKES' and self.basin != 'RCEW':
-            # more ifs for number subs...
-            if len(self.plotorder) == 5:
-                ax1.legend(loc= (0.01,0.68))
-            elif len(self.plotorder) == 4:
-                ax1.legend(loc= (0.01,0.76))
-            
-        if self.basin == 'BRB':
-            ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
-                     transform=ax1.transAxes,fontsize = 10)
-        
-        if self.basin == 'TUOL' or self.basin == 'SJ':
-            ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
-                     transform=ax1.transAxes,fontsize = 10)
-      
-        plt.tight_layout() 
-        fig.subplots_adjust(top=0.88)
-        
-        print('saving figure to %sswe_change%s.png'%(self.figs_path,self.name_append))
-        plt.savefig('%sswe_change%s.png'%(self.figs_path,self.name_append))    
-        
-    def state_by_elev(self): 
-        '''
-        Plots SWE by elevation, delineated by melt/nonmelt
-        
-        '''
-            
-        lim = np.max(self.melt[self.total_lbl]) + np.max(self.nonmelt[self.total_lbl])
-        ylim = np.max(lim) + np.max(lim)*0.3 
-        colors = ['xkcd:rose red','xkcd:cool blue']
-        fs = list(self.figsize)
-        fs[0] = fs[0]*0.9
-        fs = tuple(fs)
-
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")
-        
-        nf = len(self.masks)
-        
-        if nf > 1 and nf < 5:
-            nr = 2
-            nc = 2
-        elif nf < 7:
-            nr = 2
-            nc = 3
-            
-        if nf > 1:
-            plt.close(7)
-            fig,ax  = plt.subplots(num=7, figsize=fs, dpi=self.dpi,
-                                   nrows = nr, ncols = nc)
-            axs = ax.ravel()
-            if nf == 5:
-                fig.delaxes(axs[5])
-                   
-            for iters,name in enumerate(self.plotorder):
-                # iters = 0
-                # name = self.plotorder[iters]
-                axs[iters].bar(range(0,len(self.edges)),self.melt[name], 
-                               color = colors[0], bottom = self.nonmelt[name])
-                axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], 
-                               color = colors[1], label = 'unavail ')
-                
-                axs[iters].set_xlim(self.xlims)                          
-                xts = axs[iters].get_xticks()
-                if len(xts) < 6:
-                    dxt = xts[1] - xts[0]
-                    xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
-                    axs[iters].set_xticks(xts)                 
-        
-                edges_lbl = []
-                for i in xts[0:len(xts)-1]:
-                    edges_lbl.append(str(int(self.edges[int(i)])))
-    
-                axs[iters].set_xticklabels(str(i) for i in edges_lbl)
-                
-                if iters > nc - 1:
-                    if self.units == 'KAF':
-                        axs[iters].set_xlabel('elevation [ft]')
-                    if self.units == 'SI':
-                        axs[iters].set_xlabel('elevation [m]')                    
-                      
-                # Put yaxis on right 
-                if iters == nc - 1 or iters == nf -1 :
-                    axs[iters].yaxis.set_label_position("right")
-                    axs[iters].yaxis.tick_right()
-                
-                if iters == 1 and nc == 3:
-                    axs[iters].set_yticklabels([])
-                    
-                if iters <= nc - 1:
-                    axs[iters].set_xticklabels([])
-                
-                axs[iters].tick_params(axis='x')
-                axs[iters].tick_params(axis='y')
-                
-                # Get basin total storage in strings for label
-                kaf = str(np.int(sum(self.melt[name])
-                                 + sum(self.nonmelt[name]))) 
-                
-                if self.dplcs == 0:
-                    kaf = str(np.int(sum(self.melt[name])
-                                     + sum(self.nonmelt[name]))) 
-                else: 
-                    kaf = str(np.round(sum(self.melt[name])
-                                       + sum(self.nonmelt[name]),self.dplcs))             
-    
-                if self.units == 'KAF':          
-                    axs[iters].text(0.5,0.92,'%s - %s KAF'
-                                    %(self.masks[name]['label'],kaf),
-                                    horizontalalignment='center',
-                                    transform=axs[iters].transAxes, fontsize = 10)
-                if self.units == 'SI':          
-                    axs[iters].text(0.5,0.92,'%s - %s $km^3$'
-                                    %(self.masks[name]['label'],kaf),
-                                    horizontalalignment='center',
-                                    transform=axs[iters].transAxes)                
-                
-                if iters == 1 and nc == 3:
-                    axs[iters].set_yticklabels([])
-                else:
-                    axs[iters].set_ylabel(self.units)
-                
-                lbl = []
-                for n in (0,1):
-                    if n == 0:
-                        
-                        if self.dplcs == 0:
-                            kafa = str(np.int(sum(self.melt[name]))) 
-                        else: 
-                            kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
-
-                        tmpa = (r'avail = %s')%(kafa)                         
-                        lbl.append(tmpa)
-
-                    if self.dplcs == 0:
-                        kafna = str(np.int(sum(self.nonmelt[name]))) 
-                    else: 
-                        kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
-
-                    tmpna = ('unavail = %s')%(kafna)
-                    lbl.append(tmpna)                     
-
-                axs[iters].legend(lbl, loc = (0.025, 0.65),fontsize = 9)
-                axs[iters].set_ylim((0,ylim)) 
-                for tick in axs[iters].get_xticklabels():
-                    tick.set_rotation(30) 
-            
-            fig.tight_layout()
-            for n in range(0,len(axs)):
-                axs[n].set_xticks(xts)
-                axs[n].set_xlim(self.xlims)       
-        
-        else:
-            name = self.plotorder[0]
-            plt.close(1)
-            fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi)
-                   
-            ax.bar(range(0,len(self.edges)),self.melt[name],
-                   color = colors[0], bottom = self.nonmelt[name])
-            ax.bar(range(0,len(self.edges)),self.nonmelt[name],
-                   color = colors[1], label = 'unavail ')
-            
-            ax.set_xlim(self.xlims)                          
-            xts = ax.get_xticks()
-            edges_lbl = []
-            for i in xts[0:len(xts)-1]:
-                edges_lbl.append(str(int(self.edges[int(i)])))
-
-            ax.set_xticklabels(str(i) for i in edges_lbl)
-
-            if self.units == 'KAF':
-                ax.set_xlabel('elevation [ft]')
-            if self.units == 'SI':
-                ax.set_xlabel('elevation [m]')                    
-            
-            ax.tick_params(axis='x')
-            ax.tick_params(axis='y')
-            
-            # Get basin total storage in strings for label
-            kaf = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
-            
-            if self.dplcs == 0:
-                kaf = str(np.int(sum(self.melt[name]) 
-                                 + sum(self.nonmelt[name]))) 
-            else: 
-                kaf = str(np.round(sum(self.melt[name]) 
-                                   + sum(self.nonmelt[name]),self.dplcs))             
-
-            if self.units == 'KAF':          
-                ax.text(.25,0.95,'%s - %s KAF'
-                        %(self.masks[name]['label'],kaf),
-                        horizontalalignment='center',transform=ax.transAxes)
-                ax.set_ylabel('KAF')
-            if self.units == 'SI':          
-                ax.text(-0.88,2.1,'%s - %s $km^3$'
-                        %(self.masks[name]['label'],kaf),
-                        horizontalalignment='center',transform=ax.transAxes)
-                ax.set_ylabel(r'$km^3$')                
-            
-            lbl = []
-            for n in (0,1):
-                if n == 0:
-                    if self.dplcs == 0:
-                        kafa = str(np.int(sum(self.melt[name]))) 
-                    else: 
-                        kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
-                    
-                    tmpa = ('avail = %s')%(kafa)
-                                          
-                    lbl.append(tmpa)
-                
-                # kafna = str(np.int(sum(self.nonmelt[name]))) 
-                if self.dplcs == 0:
-                    kafna = str(np.int(sum(self.nonmelt[name]))) 
-                else: 
-                    kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
-
-                tmpna = ('unavail = %s')%(kafna)                     
-                lbl.append(tmpna)                     
-
-            # axs[iters].legend(lbl,loc='upper left') 
-            ax.legend(lbl, loc = (0.025, 0.8),fontsize = 9)
-            ax.set_ylim((0,ylim)) 
-            for tick in ax.get_xticklabels():
-                tick.set_rotation(30)             
-        
-            fig.tight_layout()
-            ax.set_xticks(xts)
-            ax.set_xlim(self.xlims)
-  
-        fig.subplots_adjust(top=0.92,wspace = 0.1)
-        fig.suptitle('SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
-              
-        print('saving figure to %sswe_elev%s.png'%(self.figs_path,self.name_append))   
-        plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
-        
-    def basin_total(self):       
-             
-        sns.set_style('darkgrid')
-        sns.set_context("notebook")
-        
-        plt.close(8)
-        fig,(ax,ax1) = plt.subplots(num=8, figsize=self.figsize, 
-                                    dpi=self.dpi, nrows = 1, ncols = 2)
-      
-        self.barcolors.insert(0,'black')
-        
-        if self.basin == 'LAKES' or self.basin == 'RCEW':
-            plotorder = [self.plotorder[0]]
-        else:
-            plotorder = self.plotorder
-        
-        for iters,name in enumerate(plotorder):
-            # name = self.plotorder[0]
-            # iters = 0
-            self.state_summary[name].plot(ax=ax, color = self.barcolors[iters])             
-            ax1.plot(self.accum_summary[name], 
-                     color = self.barcolors[iters], label='_nolegend_')
-        
-        ax1.yaxis.set_label_position("right")
-        ax1.set_xlim((datetime(self.wy -1 , 10, 1),self.dateTo))
-        ax.set_xlim((datetime(self.wy - 1, 10, 1),self.dateTo))
-        ax1.tick_params(axis='y')
-        ax1.yaxis.tick_right()
-        ax.legend(loc='upper left')
-
-        # Put on the same yaxis
-        swey = ax.get_ylim()
-        swiy = ax1.get_ylim()
-        
-        if swey[1] < swiy[1]:
-            ax1.set_ylim((-0.1,swiy[1]))
-            ax.set_ylim((-0.1,swiy[1]))
-                        
-        if swey[1] >= swiy[1]:
-            ax1.set_ylim((-0.1,swey[1]))
-            ax.set_ylim((-0.1,swey[1]))
-        
-        for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
-            tick.set_rotation(30) 
-            tick1.set_rotation(30) 
-             
-        ax1.set_ylabel(r'[%s]'%(self.vollbl))
-        ax.axes.set_title('Basin SWE')
-        ax1.axes.set_title('Accumulated Basin SWI')
-        ax.set_ylabel(r'[%s]'%(self.vollbl)) 
-        
-        # plt.tight_layout()   
-        del self.barcolors[0] 
-        
-        print('saving figure to %sbasin_total%s.png'%(self.figs_path,
-                                                      self.name_append))   
-        plt.savefig('%sbasin_total%s.png'%(self.figs_path,self.name_append))       
-
-        ########################################
-        #         Second figure
-        ########################################
-        
-        # This needs to be improved...
-        
-        if self.basin == 'BRB':
-            accum_summary = self.accum_summary
-            main = 'Boise River Basin'
-            multiswe = pd.DataFrame.from_csv(
-                '/mnt/volumes/wkspace/results/brb/brb_multiyear_summary.csv') 
-            multiswi = pd.DataFrame.from_csv(
-                '/mnt/volumes/wkspace/results/brb/brb_multiyear_swi.csv')
-            
-            multiswe.wy17.iloc[304:] = 0
-            multiswi.wy17 = np.cumsum(multiswi.wy17)
-            multiswi.wy17.iloc[304:] = multiswi.wy17[303]
-            
-            state_summary = self.state_summary.asfreq('D')
-            
-            # Put in this year
-            multiswe.wy18.iloc[:len(state_summary[main])] = (
-                                                state_summary[main].values) 
-            multiswi.wy18.iloc[:len(accum_summary[main])] = (
-                                                accum_summary[main].values)          
-            
-            if self.units == 'SI':
-                multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
-                multiswi.wy17 = np.multiply(multiswi.wy17,0.00123348)
-                multiswe.wy16 = np.multiply(multiswe.wy16,0.00123348)
-                multiswi.wy16 = np.multiply(multiswi.wy16,0.00123348)
-                multiswe.wy15 = np.multiply(multiswe.wy15,0.00123348)
-                multiswi.wy15 = np.multiply(multiswi.wy15,0.00123348)                
-            
-            plt.close(8)
-            fig,(ax,ax1)    = plt.subplots(num=8, figsize=self.figsize,
-                                           dpi=self.dpi, nrows = 1, ncols = 2)
-    
-            ax.plot(multiswe['wy15'], color = 'g',label = 'wy2015')
-            ax.plot(multiswe['wy16'], color = 'r',label = 'wy2016')
-            ax.plot(multiswe['wy17'], color = 'k',label = 'wy2017')
-            ax.plot(multiswe['wy18'], color = 'b', label = 'wy2018')
-       
-            ax1.plot(multiswi['wy15'], color = 'g',label = 'wy2015')
-            ax1.plot(multiswi['wy16'], color = 'r',label = 'wy2016')
-            ax1.plot(multiswi['wy17'], color = 'k',label = 'wy2017')
-            ax1.plot(multiswi['wy18'], color = 'b', label = 'wy2018')
-            
-            formatter = DateFormatter('%b')
-            ax.xaxis.set_major_formatter(formatter)
-            ax1.xaxis.set_major_formatter(formatter)
-       
-            ax1.yaxis.set_label_position("right")
-            ax1.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
-            ax.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
-            ax1.tick_params(axis='y')
-            ax1.yaxis.tick_right()
-            ax.legend(loc='upper left')
-            
-            for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
-                tick.set_rotation(30) 
-                tick1.set_rotation(30) 
-                 
-            if self.units == 'KAF':
-                ax.set_ylabel('[KAF]')  
-                ax1.set_ylabel('[KAF]')
-                ax.axes.set_title('Water Year SWE')
-                ax1.axes.set_title('Accumulated Basin SWI')
-            
-            if self.units == 'SI':
-                ax.set_ylabel(r'[$km^3$]') 
-                ax1.set_ylabel(r'[$km^3$]')            
-                ax.axes.set_title('Basin SWE [$km^3$]')
-                ax1.axes.set_title('Accumulated Basin SWI [$km^3$]')
-            
-            ax.set_ylim((0,ax1.get_ylim()[1]))
-            plt.tight_layout()      
-            
-            print('saving figure to %sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))   
-            plt.savefig('%sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))                   
-             
-    def stn_validate(self):
-        
-        rundirs = self.run_dirs
-        stns = self.val_stns
-        lbls = self.val_lbls
-        client = self.val_client
-           
-        # get metadata from the data base from snotel sites
-        if self.basin == 'BRB':
-            qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
-                   + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id = '
-                   + 'tbl_stations.station_id WHERE tbl_stations.client = '
-                   + ' "'"%s"'" HAVING network_name = "'"SNOTEL"'";'%client)
-        else:
-            qry = ('SELECT tbl_metadata.* FROM tbl_metadata ' 
-                   + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
-                   + 'tbl_stations.station_id WHERE tbl_stations.client = '
-                   + '"'"%s"'" ;'%client)        
-        cnx = mysql.connector.connect(user='markrobertson', 
-                                      password='whatdystm?1',
-                                      host='10.200.28.137',
-                                      database='weather_db')
-        
-        meta_sno = pd.read_sql(qry, cnx)
-        meta_sno.index = meta_sno['primary_id']
-        swe_meas    = pd.DataFrame(index = pd.date_range(datetime(2017,10,1), 
-                                                         self.dateTo, 
-                                                         freq='D'),columns = stns)  
-        swe_mod     = pd.DataFrame(index = pd.date_range(datetime(2017,10,1),
-                                                         self.dateTo, 
-                                                         freq='D'),columns = stns)   
-        tbl         = 'tbl_level1'
-        var         = 'snow_water_equiv'
-        st_time     = '2017-10-1 00:00:00'
-        end_time    = self.dateTo.date().strftime("%Y-%-m-%-d")
-        
-        # Get Snotel station results
-        for iters,stn in enumerate(stns): 
-            cnx     = mysql.connector.connect(user='markrobertson',
-                                              password='whatdystm?1',
-                                              host='10.200.28.137',
-                                              port='32768',database='weather_db')
-            var_qry = ('SELECT weather_db.%s.date_time, weather_db.%s.%s ' % (tbl,tbl,var) +
-                        'FROM weather_db.%s ' % tbl +
-                        "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
-                        "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
-            
-            data = pd.read_sql(var_qry, cnx, index_col='date_time')
-            dind = pd.date_range(st_time,end_time,freq='D')
-            swe_meas[stn] = data.reindex(dind)
-            
-        if self.basin == 'TUOL':
-            swe_meas.TIOC1 = swe_meas.TIOC1 - 300  
-            
-        if 'AGP' in swe_meas:
-            swe_meas.AGP = swe_meas.AGP - 40   
-        if 'VLC' in swe_meas:
-            swe_meas.VLC = swe_meas.VLC + 250  
-        if 'UBC' in swe_meas:
-            swe_meas.UBC = swe_meas.UBC - 50      
-        
-        sns.set_style('darkgrid')
-        sns.set_context('notebook')
-        
-        plt.close(9)
-        fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)   
-        axs = axs.flatten() 
-        
-        ### sdwitching the loop!###
-        
-        # First need to combine all nc files... 
-        px = (1,1,1,0,0,0,-1,-1,-1)
-        py = (1,0,-1,1,0,-1,1,0,-1)       
-        for iters,stn in enumerate(stns):
-            # iters = 0
-            # stn = stns[iters]
-            for n,m in zip(px,py): 
-                # n = 0
-                # m = 0
-                iswe = self.offset
-        
-                for rname in rundirs:
-                    # rname = rundirs[1]
-                    
-                    ncpath  = rname[1].split('output')[0]
-                    ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
-                    nctvec  = ncf.variables['time'][:]
-                    vswe    = ncf.variables['specific_mass']            # get variable
-                    ncxvec  = ncf.variables['x'][:]                     # get x vec
-                    ncyvec  = ncf.variables['y'][:]                     # get y vec                      
-                    ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
-                    # ll      = utm.from_latlon(37.641922,-119.055443)
-                    # ll      = utm.from_latlon(37.655201,-119.060783)
-        
-                    xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
-                    yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
-                    # print(xind,yind)
-                    swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)  # pull out closest model pixel data
-             
-                    try:
-                        swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values  
-                    except:
-                        sv = swe_mod[stn].values
-                        lx = len(sv[iswe::])
-                        swe_mod.loc[iswe:(iswe + lx),stn] = swe.values[0:lx]
-                        
-                    ncf.close()   
-                    iswe = iswe + len(swe.values)
-                    
-                z = self.dem[yind,xind]    
-               
-                axs[iters].plot(swe_meas[stn],'k',label='measured')
-                axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')    
-                axs[iters].set_title(lbls[iters])
-                axs[iters].set_xlim((datetime(2017, 10, 1),self.dateTo))
-            
-            if iters == 1 or iters == 3 or iters == 5:
-                axs[iters].yaxis.tick_right()
-            
-            if iters == 4 or iters == 5:
-                for tick in axs[iters].get_xticklabels():
-                    tick.set_rotation(30) 
-            else:
-                axs[iters].set_xticklabels('')         
-             
-        # Plot
-        maxm = np.nanmax(swe_meas)
-        maxi = np.nanmax(swe_mod.max().values)
-        
-        if maxm > maxi:
-            maxswe = maxm
-        else:
-            maxswe = maxi
-            
-        for iters in range(0,len(stns)):
-            axs[iters].set_ylim((-0.1,maxswe + maxswe*0.05))     
-        
-        axs[0].legend(['measured','modelled'],loc='upper left')
-        axs[0].set_ylabel('SWE [mm]')
-        
-        plt.suptitle('Validation at Measured Sites')
-        plt.tight_layout()
-        plt.subplots_adjust(top=0.92)
-        
-        self.swe_meas = swe_meas
-        self.swe_mod = swe_mod
-        
-        print('saving figure to %svalidation%s.png'%(self.figs_path,self.name_append))   
-        plt.savefig('%svalidation%s.png'%(self.figs_path,self.name_append))                  
+#     def accumulated(self):
+#         '''
+#         This function plots self.accum (typically SWI)
+#         
+#         '''
+#         
+#         # )nly report accum by the subsection between 
+#         accum = copy.deepcopy(self.accum_sub) 
+#         accum_byelev = copy.deepcopy(self.accum_byelev_sub) 
+#    
+#         qMin,qMax = np.percentile(accum,[0,99.8])
+#         clims = (0,qMax)
+#         colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
+#         colors2 = plt.cm.binary(np.linspace(0, 1, 1))
+#         colors = np.vstack((colors2, colors1))
+#         mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+# 
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")
+#         
+#         # White background
+#         pmask = self.masks[self.total_lbl]['mask']
+#         ixo = pmask == 0
+#         accum[ixo] = np.nan
+#         mymap.set_bad('white',1.) 
+#         
+#         # Now set SWI-free to some color
+#         ixf = accum == 0
+#         accum[ixf] = -1
+#         mymap.set_under('grey',1.) 
+#         
+#         plt.close(0)
+#         fig,(ax,ax1) = plt.subplots(num=0, 
+#                                     figsize = self.figsize, 
+#                                     dpi=self.dpi, 
+#                                     nrows = 1, ncols = 2)      
+#         h = ax.imshow(accum, clim = clims, cmap = mymap)
+#         
+#         # Basin boundaries
+#         for name in self.masks:
+#             ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+#         
+#         if self.basin == 'SJ':
+#             fix1 = np.arange(1275,1377)
+#             fix2 = np.arange(1555,1618)
+#             ax.plot(fix1*0,fix1,'k')
+#             ax.plot(fix2*0,fix2,'k')
+#             
+#         if self.basin == 'LAKES':
+#             ax.set_xlim(self.imgx)
+#             ax.set_ylim(self.imgy)
+#                    
+#         # Do pretty stuff
+#         h.axes.get_xaxis().set_ticks([])
+#         h.axes.get_yaxis().set_ticks([])
+#         divider = make_axes_locatable(ax)
+#         
+#         cax = divider.append_axes("right", size="4%", pad=0.2)
+#         cbar = plt.colorbar(h, cax = cax)
+#         # cbar.ax.tick_params() 
+#         cbar.set_label('[%s]'%(self.depthlbl))
+#  
+#         h.axes.set_title('Accumulated SWI \n %s to %s'
+#                          %(self.dateFrom.date().strftime("%Y-%-m-%-d"),
+#                            self.dateTo.date().strftime("%Y-%-m-%-d")))  
+#         
+#         # Total basin label
+#         sumorder = self.plotorder[1:]
+#         if self.basin == 'LAKES' or self.basin == 'RCEW':
+#             sumorder = [self.plotorder[0]]
+#             
+#         if self.dplcs == 0:
+#             tlbl = '%s = %s %s'%(self.plotorder[0],
+#                                  str(int(accum_byelev[self.plotorder[0]].sum())),
+#                                  self.vollbl)
+#         else: 
+#             tlbl = '%s = %s %s'%(self.plotorder[0],
+#                                  str(np.round(accum_byelev[self.plotorder[0]].sum(),
+#                                 self.dplcs)),self.vollbl)
+#               
+#         # Plot the bars
+#         for iters,name in enumerate(sumorder):
+#             if self.dplcs == 0:           
+#                 lbl = '%s = %s %s'%(name,str(int(accum_byelev[name].sum())),
+#                                     self.vollbl)
+#             else:
+#                 lbl = '%s = %s %s'%(name,str(np.round(accum_byelev[name].sum(),
+#                                     self.dplcs)),self.vollbl)
+# 
+#             if iters == 0:
+#                 ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
+#                         color = self.barcolors[iters], 
+#                         edgecolor = 'k',label = lbl)
+#             elif iters == 1:   
+#                 ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
+#                         bottom = accum_byelev[sumorder[iters-1]], 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+#               
+#             elif iters == 2:   
+#                 ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
+#                         bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]]), 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+# 
+#             elif iters == 3:   
+#                 ax1.bar(range(0,len(self.edges)),accum_byelev[name], 
+#                         bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]] + accum_byelev[sumorder[iters-3]]), 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+#                 
+#                
+#             plt.rcParams['hatch.linewidth'] = 1
+#             plt.rcParams['hatch.color'] = 'k'                
+#             ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
+# 
+#         
+#         plt.tight_layout()
+#         xts         = ax1.get_xticks()
+#         edges_lbl   = []
+#         for i in xts[0:len(xts)-1]:
+#             edges_lbl.append(str(int(self.edges[int(i)])))
+#         
+#         ax1.set_xticklabels(str(i) for i in edges_lbl)
+#         for tick in ax1.get_xticklabels():
+#             tick.set_rotation(30)        
+# 
+#         ax1.set_ylabel('%s - per elevation band'%(self.vollbl))
+#         ax1.set_xlabel('elevation [%s]'%(self.elevlbl))
+#        
+#         ax1.yaxis.set_label_position("right")
+#         ax1.yaxis.tick_right()
+#         ylims = ax1.get_ylim()
+#         
+#         ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
+# 
+#         plt.tight_layout()
+#         fig.subplots_adjust(top=0.88)
+#       
+#         if self.basin != 'LAKES' and self.basin != 'RCEW':
+#             # more ifs for number subs...
+#             if len(self.plotorder) == 5:
+#                 ax1.legend(loc= (0.01,0.68))
+#             elif len(self.plotorder) == 4:
+#                 ax1.legend(loc= (0.01,0.74))
+#             
+#         if self.basin == 'BRB':
+#             ax1.text(0.26,0.94,tlbl,horizontalalignment='center',
+#                      transform=ax1.transAxes,fontsize = 10)
+#         else:
+#             ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
+#                      transform=ax1.transAxes,fontsize = 10)
+#         
+#         # Make SWI-free legend if we need one
+#         if sum(sum(ixf)) > 1000:
+#             patches = [mpatches.Patch(color='grey', label='no SWI')]
+#             if self.basin == 'SJ':
+#                 ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), 
+#                           loc=2, borderaxespad=0. )
+#             else:
+#                 ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), 
+#                           loc=2, borderaxespad=0. )
+#              
+#         print('saving figure to %sswi%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sswi%s.png'%(self.figs_path,self.name_append))   
+        
+#     def current_image(self):
+#         '''
+#         This plots self.state (typically SWE) and self.cold
+#         
+#         edits: make flexible input arguments for depth, density, etc
+#         
+#         '''
+#         # Make a copy so we can edit for plots
+# 
+#         state = copy.deepcopy(self.state)
+#         cold = copy.deepcopy(self.cold)
+# 
+#         qMin,qMax = np.nanpercentile(state,[0,99.9])    
+#         clims = (qMin,qMax)
+#         clims2 = (-5,0) 
+#         
+#         # Areas outside basin
+#         pmask = self.masks[self.total_lbl]['mask']
+#         ixo = pmask == 0   
+#         
+#         # Prepare no-snow and outside of the basin for the colormaps   
+#         ixz = state == 0
+#         state[ixz] = -1
+#         cold[ixz]  = 1     
+#         
+#         # Colormap for self.state
+#         colorsbad = plt.cm.Set2_r(np.linspace(0., 1, 1))
+#         colors1 = cmocean.cm.haline_r(np.linspace(0., 1, 254))
+#         colors = np.vstack((colorsbad,colors1))
+#         mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors) 
+#         
+#         state[ixo] = np.nan        
+#         mymap.set_bad('white',1.) 
+#         # mymap.set_under('lightgrey',1)    
+#         
+#         # Colormap for cold content
+#         # colorsbad       = plt.cm.binary(np.linspace(0., 1, 1))
+#         # colors1         = plt.cm.ocean_r(np.linspace(0., 1, 128))
+#         # colors2         = plt.cm.YlOrRd(np.linspace(0., 1, 127))
+#         # colors          = np.vstack((colorsbad, colors1, colors2))
+#         # mymap1          = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+#         # mymap1          = plt.cm.RdYlBu_r 
+#         # mymap1          = cc.m_diverging_linear_bjy_30_90_c45
+#         mymap1 = plt.cm.Spectral_r
+#         cold[ixo] = np.nan
+#         mymap1.set_bad('white')
+#         mymap1.set_over('lightgrey',1) 
+#                          
+#         sns.set_style('dark')
+#         sns.set_context("notebook")
+#         
+#         plt.close(1)
+#         fig,(ax,ax1) = plt.subplots(num=1, figsize=self.figsize, 
+#                                     facecolor = 'white', dpi=self.dpi, 
+#                                     nrows = 1, ncols = 2)
+#         h = ax.imshow(state, cmap = mymap, clim=clims)
+#         h1 = ax1.imshow(cold, clim=clims2, cmap = mymap1)
+#         
+#         if self.basin == 'LAKES':
+#             ax.set_xlim(self.imgx)
+#             ax.set_ylim(self.imgy)
+#             ax1.set_xlim(self.imgx)
+#             ax1.set_ylim(self.imgy)
+#         
+#         # Basin boundaries
+#         for name in self.masks:
+#             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+#             ax1.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+#             
+#         if self.basin == 'SJ':
+#             fix1 = np.arange(1275,1377)
+#             fix2 = np.arange(1555,1618)
+#             ax.plot(fix1*0,fix1,'k')
+#             ax.plot(fix2*0,fix2,'k')
+#             ax1.plot(fix1*0,fix1,'k')
+#             ax1.plot(fix2*0,fix2,'k')
+#         
+#         # Do pretty stuff for the left plot
+#         h.axes.get_xaxis().set_ticks([])
+#         h.axes.get_yaxis().set_ticks([])
+#         divider = make_axes_locatable(ax)
+#         cax = divider.append_axes("right", size="5%", pad=0.2)
+#         cbar = plt.colorbar(h, cax = cax)
+#         
+#         if self.units == 'KAF':         
+#             cbar.set_label('[in]')
+#         if self.units == 'SI':
+#             cbar.set_label('[mm]')
+#          
+#         # cbar.ax.tick_params()                
+#         
+#         # Do pretty stuff for the right plot
+#         h1.axes.get_xaxis().set_ticks([])
+#         h1.axes.get_yaxis().set_ticks([])
+#         h1.axes.set_title('Cold Content \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
+#         divider = make_axes_locatable(ax1)
+#         cax2 = divider.append_axes("right", size="5%", pad=0.2)
+#         cbar1 = plt.colorbar(h1, cax = cax2)
+#         cbar1.set_label('Cold Content [MJ/$m^3$]')
+#         cbar1.ax.tick_params() 
+#         
+#         h.axes.set_title('SWE \n %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
+#         fig.subplots_adjust(top=0.95,bottom=0.05,
+#                             right = 0.92, left = 0.05, wspace = 0.12)
+#         if self.basin == 'LAKES':
+#             plt.tight_layout()
+#         
+#         patches = [mpatches.Patch(color='grey', label='snow free')]
+#         if self.basin == 'SJ':
+#             ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
+#         if self.basin == 'RCEW':
+#             ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )            
+#         else:
+#             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
+#         
+#         print('saving figure to %sresults%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sresults%s.png'%(self.figs_path,self.name_append))  
+#         
+#     def pixel_swe(self):
+#         
+#         
+#         plt.close(2) 
+#         fig,(ax,ax1) = plt.subplots(num=2, figsize=self.figsize,
+#                                     dpi=self.dpi, nrows = 1, ncols = 2)
+#    
+#         sumorder = self.plotorder[1:]
+#         if self.basin == 'LAKES' or self.basin == 'RCEW':
+#             sumorder = [self.plotorder[0]]  
+#             swid = 0.45
+#         else:
+#             sumorder = self.plotorder[1::]
+#             swid = 0.25
+#         
+#         wid = np.linspace(-0.3,0.3,len(sumorder))
+#         
+#         for iters,name in enumerate(sumorder): 
+#             # iters = 0
+#             # name = sumorder[iters]                             
+#             ax.bar(range(0,len(self.edges))-wid[iters],
+#                     self.depth_mdep_byelev[name], 
+#                     color = self.barcolors[iters], width = swid, edgecolor = 'k',label = name) 
+#                         
+#             ax1.bar(range(0,len(self.edges))-wid[iters],
+#                     self.state_mswe_byelev[name], 
+#                     color = self.barcolors[iters], width = swid, edgecolor = 'k',label = name)  
+#             
+#         ax.set_xlim((0,len(self.edges)))    
+#         ax1.set_xlim((0,len(self.edges)))        
+#         
+#         plt.tight_layout()                            
+#         xts         = ax1.get_xticks()
+#         edges_lbl   = []
+#         for i in xts[0:len(xts)-1]:
+#             edges_lbl.append(str(int(self.edges[int(i)])))
+#   
+#         ax.set_xticklabels(str(i) for i in edges_lbl)
+#         ax1.set_xticklabels(str(i) for i in edges_lbl)
+#         for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
+#             tick.set_rotation(30)
+#             tick1.set_rotation(30)  
+#              
+#         ylims = ax1.get_ylim()
+#         ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))  
+#         
+#         ylims = ax.get_ylim()
+#         ax.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))               
+# 
+#         ax.set_ylabel('mean depth [%s]'%(self.depthlbl))
+#         ax.set_xlabel('elevation [ft]')
+#         ax1.set_ylabel('mean SWE [%s]'%(self.depthlbl))
+#         ax1.set_xlabel('elevation [ft]')
+#         ax.legend(loc='upper left')
+#         ax.grid('on')
+#         ax1.grid('on')
+#         
+#         ax1.yaxis.set_label_position("right")
+#         ax1.yaxis.tick_right()       
+#         
+#         ax.set_title('Mean Depth, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
+#         ax1.set_title('Mean SWE, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))
+#         
+#         plt.tight_layout()
+#         print('saving figure to %smean_swe_depth%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%smean_swe_depth%s.png'%(self.figs_path,self.name_append))   
+#         
+#     def density(self): 
+#         '''
+#         None of these are really finished...
+#         '''
+#         
+#         value = copy.deepcopy(self.density_m_byelev)
+#         lim = np.max(value[self.total_lbl]) 
+#         ylim = (0,600) 
+#         color = 'xkcd:windows blue'
+# 
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")        
+# 
+#         nf = len(self.masks)
+#         
+#         if nf > 1 and nf < 5:
+#             nr = 2
+#             nc = 2
+#         elif nf < 7:
+#             nr = 2
+#             nc = 3
+#             
+#         plt.close(3)
+#         fig,ax  = plt.subplots(num=3, figsize=self.figsize, dpi=self.dpi, nrows = nr, ncols = nc)
+#         axs     = ax.ravel()
+#         if nf == 5:
+#             fig.delaxes(axs[5])
+#                
+#         for iters,name in enumerate(self.plotorder):
+#             # iters = 0
+#             # name = self.plotorder[iters]
+#             axs[iters].bar(range(0,len(self.edges)),value[name], color = color)
+#             
+#             axs[iters].set_xlim(self.xlims)                          
+#             xts         = axs[iters].get_xticks()
+#             if len(xts) < 6:
+#                 dxt = xts[1] - xts[0]
+#                 xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
+#                 axs[iters].set_xticks(xts)                 
+#     
+#             edges_lbl   = []
+#             for i in xts[0:len(xts)-1]:
+#                 edges_lbl.append(str(int(self.edges[int(i)])))
+# 
+#             axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+#             
+#             if iters == 0:
+#                 axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
+#             
+#             if iters > nc - 1:
+#                 axs[iters].set_xlabel('elevation [%s]'%(self.elevlbl))
+#    
+#             # Put yaxis on right 
+#             if iters == nc - 1 or iters == nf -1 :
+#                 axs[iters].yaxis.set_label_position("right")
+#                 axs[iters].yaxis.tick_right()
+#                 axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]') 
+#             
+#             if iters == 1 and nc == 3:
+#                 axs[iters].set_yticklabels([])
+#                 
+#             if iters <= nc - 1:
+#                 axs[iters].set_xticklabels([])
+#             
+#             axs[iters].set_ylim((ylim)) 
+#             for tick in axs[iters].get_xticklabels():
+#                 tick.set_rotation(30) 
+#                 
+#             axs[iters].text(0.5,0.92,name,horizontalalignment='center',transform=axs[iters].transAxes,fontsize = 10)
+#         
+#         for n in range(0,len(axs)):
+#             axs[n].set_xticks(xts)
+#             axs[n].set_xlim(self.xlims)       
+# 
+#         fig.tight_layout()
+#         fig.subplots_adjust(top=0.92,wspace = 0.1)
+#         fig.suptitle(r'Density, %s'%(self.dateTo.date().strftime("%Y-%-m-%-d")) )       
+#         
+#         print('saving figure to %sdensity_subs%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sdensity_subs%s.png'%(self.figs_path,self.name_append))     
+#         
+#         ###############################
+#         # 2nd density fig
+#         ###############################
+# 
+#         cvalue = copy.deepcopy(self.density)
+#         
+#         colors1 = cmocean.cm.speed(np.linspace(0., 1, 255))
+#         colors2 = plt.cm.binary(np.linspace(0, 1, 1))
+#         colors = np.vstack((colors2, colors1))
+#         mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+# 
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")
+#         
+#         # This is to get the background white
+#         pmask = self.masks[self.total_lbl]['mask']
+#         ixo = pmask == 0
+#         cvalue[ixo] = np.nan
+#         mymap.set_bad('white',1.) 
+#         
+#         ixf = cvalue == 0
+#         cvalue[ixf] = -1
+#         mymap.set_under('lightgrey',1.) 
+#         
+#         plt.close(4)
+#         fig,(ax,ax1) = plt.subplots(num=4, figsize = self.figsize, 
+#                                     dpi=self.dpi, nrows = 1, ncols = 2)      
+#         h = ax.imshow(cvalue, clim = (50,550), interpolation='none', cmap = mymap)
+#         
+#         # Basin boundaries
+#         for name in self.masks:
+#             ax.contour(self.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+#         
+#         if self.basin == 'SJ':
+#             fix1 = np.arange(1275,1377)
+#             fix2 = np.arange(1555,1618)
+#             ax.plot(fix1*0,fix1,'k')
+#             ax.plot(fix2*0,fix2,'k')
+#             
+#         if self.basin == 'LAKES':
+#             ax.set_xlim(self.imgx)
+#             ax.set_ylim(self.imgy)
+#                    
+#         # Do pretty stuff
+#         h.axes.get_xaxis().set_ticks([])
+#         h.axes.get_yaxis().set_ticks([])
+#         divider = make_axes_locatable(ax)
+#         
+#         cax = divider.append_axes("right", size="4%", pad=0.2)
+#         cbar = plt.colorbar(h, cax = cax)
+#         cbar.ax.tick_params() 
+#         cbar.set_label('[kg/$m^3$]')
+#  
+#         h.axes.set_title('Density\n%s'%(self.dateTo.date().strftime("%Y-%-m-%-d")))  
+# 
+#         ax1.bar(range(0,len(self.edges)),value[self.total_lbl], 
+#                 color = 'g', edgecolor = 'k')
+#       
+#         plt.rcParams['hatch.linewidth'] = 1
+#         plt.rcParams['hatch.color'] = 'k'                
+#         ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
+#         
+#         plt.tight_layout()
+#         xts = ax1.get_xticks()
+#         edges_lbl = []
+#         for i in xts[0:len(xts)-1]:
+#             edges_lbl.append(str(int(self.edges[int(i)])))
+#         
+#         ax1.set_xticklabels(str(i) for i in edges_lbl)
+#         for tick in ax1.get_xticklabels():
+#             tick.set_rotation(30)        
+# 
+#         ax1.set_ylabel('density - per elevation band')
+#         ax1.set_xlabel('elevation [%s]'%(self.elevlbl))
+#        
+#         ax1.yaxis.set_label_position("right")
+#         ax1.yaxis.tick_right()
+#         ax1.set_ylim((0,600))
+# 
+#         plt.tight_layout()
+#         fig.subplots_adjust(top=0.88)
+#     
+#         if sum(sum(ixf)) > 1000:
+#             patches = [mpatches.Patch(color='grey', label='snow free')]
+#             if self.basin == 'SJ':
+#                 ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
+#             else:
+#                 ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
+#         
+#         print('saving figure to %sdensity%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sdensity%s.png'%(self.figs_path,self.name_append))         
+#         
+#         
+#         ###############################
+#         # 3rd density fig
+#         ###############################
+#         
+#         nsub = 100
+#         depth  = copy.deepcopy(self.depth)
+#         density = cvalue
+#         swe = copy.deepcopy(self.state)
+#         
+#         depths = np.reshape(depth,(1,len(depth[:,0])*len(depth[0,:])))
+#         densitys = np.reshape(density,(1,len(depth[:,0])*len(density[0,:])))
+#         swesats = np.reshape(swe,(1,len(swe[:,0])*len(swe[0,:])))
+#         densitys = densitys[0,:]
+#         depths = depths[0,:]
+#         swesats = swesats[0,:]
+#         depthsub = depths[::nsub]
+#         densitysub = densitys[::nsub]
+#         swesub = swesats[::nsub]
+#         
+#         z = self.dem
+#         zs = np.reshape(z,(1,len(z[:,0])*len(z[0,:])))
+#         zs = zs[0,:]
+#         zsub = zs[::100]
+#         
+#         cm = cc.m_bgy
+#         
+#         plt.close(20)
+#         fig = plt.figure(num=20, figsize = (6,4), dpi=self.dpi)      
+#         ax = plt.gca()       
+#         h = ax.scatter(swesub,densitysub,c=zsub,vmin=5000,vmax=12500 ,cmap=cm,s=5)
+#         
+#         ax.set_ylabel(r'$\rho$ [kg/$m^3$]')
+#         ax.set_xlabel('SWE [in]')
+#         
+#         divider = make_axes_locatable(ax)
+#         cax = divider.append_axes("right", size="4%", pad=0.2)
+#         cbar = plt.colorbar(h, cax = cax)
+#         cbar.ax.tick_params() 
+#         cbar.set_label('elevation [ft]')
+#         plt.tight_layout()
+#               
+#         print('saving figure to %sdensity_swe%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sdensity_swe%s.png'%(self.figs_path,self.name_append))          
+#     
+#     
+#     def image_change(self,*args): 
+#         '''
+#         This plots self.delta_state
+#         
+#         Should add in more functionality for plotting differences between various images/runs
+#         
+#         '''  
+#         
+#         # if len(args) != 0:
+#         #     self.name_append = self.name_append + args[0]
+#               
+#         # Make copy so that we can add nans for the plots, but not mess up the original
+#         delta_state = copy.deepcopy(self.delta_state)
+#         qMin,qMax = np.percentile(delta_state,[1,99.5])
+#         
+#         ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
+#         delta_state[ix] = qMin + qMin*0.2
+#         vMin,vMax = np.percentile(delta_state,[1,99])
+#         # clims = (qMin,qMax )
+#            
+#         # Override if absolute limits are provide in the config
+#         if hasattr(self,'ch_clminabs') and hasattr(self,'ch_clmaxabs'):
+#             clims       = (self.ch_clminabs,self.ch_clmaxabs)
+#      
+#         # if qMin is 0, need to change things 
+#         if qMax > 0:
+#             colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))           
+#             colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
+#             colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
+#             colors = np.vstack((colorsbad,colors1, colors2))
+#             mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+# 
+#         else:
+#             colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 255))
+#             colors2 = plt.cm.Set2_r(np.linspace(0, 1, 1))
+#             colors = np.vstack((colors1, colors2))
+#             mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+#     
+#         ixf = delta_state == 0
+#         delta_state[ixf] = -100000 # set snow-free  
+#         pmask = self.masks[self.total_lbl]['mask']
+#         ixo = pmask == 0
+#         delta_state[ixo] = np.nan
+#         cmap = copy.copy(mymap)
+#         cmap.set_bad('white',1.)   
+#              
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")
+#        
+#         plt.close(6) 
+#         fig,(ax,ax1) = plt.subplots(num=6, figsize=self.figsize, 
+#                                     dpi=self.dpi, nrows = 1, ncols = 2)
+#         h = ax.imshow(delta_state, interpolation='none', 
+#             cmap = cmap, norm=MidpointNormalize(midpoint=0,
+#                                                 vmin = vMin-0.01,vmax=vMax+0.01))
+# 
+#         if self.basin == 'LAKES':    
+#             ax.set_xlim(self.imgx)
+#             ax.set_ylim(self.imgy)
+# 
+#         # Basin boundaries
+#         for name in self.masks:
+#             ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+#  
+#         if self.basin == 'SJ':
+#             fix1 = np.arange(1275,1377)
+#             fix2 = np.arange(1555,1618)
+#             ax.plot(fix1*0,fix1,'k')
+#             ax.plot(fix2*0,fix2,'k')    
+#         
+#         # Do pretty stuff
+#         h.axes.get_xaxis().set_ticks([])
+#         h.axes.get_yaxis().set_ticks([])
+#         divider = make_axes_locatable(ax)
+#         cax = divider.append_axes("right", size="5%", pad=0.2)
+#         cbar = plt.colorbar(h, cax = cax)     
+#         # cbar.ax.tick_params() 
+#         
+#         if self.units == 'KAF': 
+#             cbar.set_label(r'$\Delta$ SWE [in]')           
+#         if self.units == 'SI':
+#             cbar.set_label(r'$\Delta$ SWE [mm]')   
+#             
+#         h.axes.set_title('Change in SWE \n %s to %s'
+#                          %(self.dateFrom.date().strftime("%Y-%-m-%-d"),
+#                            self.dateTo.date().strftime("%Y-%-m-%-d")))    
+#       
+#         # Plot the bar in order
+#         sumorder  = self.plotorder[1:]  
+#         if self.basin == 'LAKES' or self.basin == 'RCEW':
+#             sumorder = [self.plotorder[0]]  
+#         if self.dplcs == 0:
+#             tlbl = '%s = %s %s'%(self.plotorder[0],
+#                                  str(int(self.delta_state_byelev[self.plotorder[0]].sum())),
+#                                  self.vollbl)
+#         else: 
+#             tlbl = '%s = %s %s'%(self.plotorder[0],
+#                                  str(np.round(self.delta_state_byelev[self.plotorder[0]].sum(),
+#                                               self.dplcs)),self.vollbl)            
+#         
+#         for iters,name in enumerate(sumorder):  
+#                 
+#             if self.dplcs == 0:
+#                 lbl = '%s = %s %s'%(name,
+#                                     str(int(self.delta_state_byelev[name].sum())),
+#                                     self.vollbl)
+#             else: 
+#                 lbl = '%s = %s %s'%(name,
+#                                     str(np.round(self.delta_state_byelev[name].sum(),
+#                                     self.dplcs)),self.vollbl)                                 
+#  
+#             if iters == 0:
+#                 ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name],
+#                         color = self.barcolors[iters],
+#                         edgecolor = 'k',label = lbl)
+#             elif iters == 1:   
+#                 ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
+#                         bottom = self.delta_state_byelev[sumorder[iters-1]], 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+#             elif iters == 2:   
+#                 ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
+#                         bottom = self.delta_state_byelev[sumorder[iters-1]]
+#                         + self.delta_state_byelev[sumorder[iters-2]], 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+#             elif iters == 3:   
+#                 ax1.bar(range(0,len(self.edges)),self.delta_state_byelev[name], 
+#                         bottom = self.delta_state_byelev[sumorder[iters-1]]
+#                         + self.delta_state_byelev[sumorder[iters-2]]
+#                         + self.delta_state_byelev[sumorder[iters-3]], 
+#                         color = self.barcolors[iters], edgecolor = 'k',label = lbl)
+#                
+#         ax1.set_xlim((self.xlims[0]-0.5,self.xlims[1]))
+#         plt.tight_layout()                            
+#         xts = ax1.get_xticks()
+#         edges_lbl = []
+#         for i in xts[0:len(xts)-1]:
+#             edges_lbl.append(str(int(self.edges[int(i)])))
+#   
+#         ax1.set_xticklabels(str(i) for i in edges_lbl)
+#         for tick in ax1.get_xticklabels():
+#             tick.set_rotation(30) 
+#              
+#         if hasattr(self,"ch_ylims"):
+#             ax1.set_ylim(self.ch_ylims)
+#         else:
+#             ylims = ax1.get_ylim()
+#             if ylims[0] < 0 and ylims[1] == 0:
+#                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+#             if ylims[0] < 0 and ylims[1] > 0:
+#                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))  
+#                 if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
+#                     ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+#                         
+#             if ylims[1] == 0:
+#                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.5))
+#             if ylims[0] == 0:
+#                 ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))               
+#                          
+#         if self.units == 'KAF':
+#             ax1.set_ylabel('KAF - per elevation band')
+#             ax1.set_xlabel('elevation [ft]')
+#             ax1.axes.set_title('Change in SWE')
+#         if self.units == 'SI':
+#             ax1.set_ylabel(r'$km^3$')
+#             ax1.set_xlabel('elevation [m]')
+#             ax1.axes.set_title(r'Change in SWE')
+#                
+#         ax1.yaxis.set_label_position("right")
+#         ax1.tick_params(axis='x')
+#         ax1.tick_params(axis='y')
+#         ax1.yaxis.tick_right()
+#         
+#         patches = [mpatches.Patch(color='grey', label='snow free')]
+#         if self.basin == 'SJ':
+#             ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
+#                       loc=2, borderaxespad=0. )
+#         elif self.basin == 'RCEW':
+#             ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
+#                       loc=2, borderaxespad=0. )            
+#         else:
+#             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
+#                       loc=2, borderaxespad=0. )
+#             
+#         if self.basin != 'LAKES' and self.basin != 'RCEW':
+#             # more ifs for number subs...
+#             if len(self.plotorder) == 5:
+#                 ax1.legend(loc= (0.01,0.68))
+#             elif len(self.plotorder) == 4:
+#                 ax1.legend(loc= (0.01,0.76))
+#             
+#         if self.basin == 'BRB':
+#             ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
+#                      transform=ax1.transAxes,fontsize = 10)
+#         
+#         if self.basin == 'TUOL' or self.basin == 'SJ':
+#             ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
+#                      transform=ax1.transAxes,fontsize = 10)
+#       
+#         plt.tight_layout() 
+#         fig.subplots_adjust(top=0.88)
+#         
+#         print('saving figure to %sswe_change%s.png'%(self.figs_path,self.name_append))
+#         plt.savefig('%sswe_change%s.png'%(self.figs_path,self.name_append))    
+#         
+#     def state_by_elev(self): 
+#         '''
+#         Plots SWE by elevation, delineated by melt/nonmelt
+#         
+#         '''
+#             
+#         lim = np.max(self.melt[self.total_lbl]) + np.max(self.nonmelt[self.total_lbl])
+#         ylim = np.max(lim) + np.max(lim)*0.3 
+#         colors = ['xkcd:rose red','xkcd:cool blue']
+#         fs = list(self.figsize)
+#         fs[0] = fs[0]*0.9
+#         fs = tuple(fs)
+# 
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")
+#         
+#         nf = len(self.masks)
+#         
+#         if nf > 1 and nf < 5:
+#             nr = 2
+#             nc = 2
+#         elif nf < 7:
+#             nr = 2
+#             nc = 3
+#             
+#         if nf > 1:
+#             plt.close(7)
+#             fig,ax  = plt.subplots(num=7, figsize=fs, dpi=self.dpi,
+#                                    nrows = nr, ncols = nc)
+#             axs = ax.ravel()
+#             if nf == 5:
+#                 fig.delaxes(axs[5])
+#                    
+#             for iters,name in enumerate(self.plotorder):
+#                 # iters = 0
+#                 # name = self.plotorder[iters]
+#                 axs[iters].bar(range(0,len(self.edges)),self.melt[name], 
+#                                color = colors[0], bottom = self.nonmelt[name])
+#                 axs[iters].bar(range(0,len(self.edges)),self.nonmelt[name], 
+#                                color = colors[1], label = 'unavail ')
+#                 
+#                 axs[iters].set_xlim(self.xlims)                          
+#                 xts = axs[iters].get_xticks()
+#                 if len(xts) < 6:
+#                     dxt = xts[1] - xts[0]
+#                     xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
+#                     axs[iters].set_xticks(xts)                 
+#         
+#                 edges_lbl = []
+#                 for i in xts[0:len(xts)-1]:
+#                     edges_lbl.append(str(int(self.edges[int(i)])))
+#     
+#                 axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+#                 
+#                 if iters > nc - 1:
+#                     if self.units == 'KAF':
+#                         axs[iters].set_xlabel('elevation [ft]')
+#                     if self.units == 'SI':
+#                         axs[iters].set_xlabel('elevation [m]')                    
+#                       
+#                 # Put yaxis on right 
+#                 if iters == nc - 1 or iters == nf -1 :
+#                     axs[iters].yaxis.set_label_position("right")
+#                     axs[iters].yaxis.tick_right()
+#                 
+#                 if iters == 1 and nc == 3:
+#                     axs[iters].set_yticklabels([])
+#                     
+#                 if iters <= nc - 1:
+#                     axs[iters].set_xticklabels([])
+#                 
+#                 axs[iters].tick_params(axis='x')
+#                 axs[iters].tick_params(axis='y')
+#                 
+#                 # Get basin total storage in strings for label
+#                 kaf = str(np.int(sum(self.melt[name])
+#                                  + sum(self.nonmelt[name]))) 
+#                 
+#                 if self.dplcs == 0:
+#                     kaf = str(np.int(sum(self.melt[name])
+#                                      + sum(self.nonmelt[name]))) 
+#                 else: 
+#                     kaf = str(np.round(sum(self.melt[name])
+#                                        + sum(self.nonmelt[name]),self.dplcs))             
+#     
+#                 if self.units == 'KAF':          
+#                     axs[iters].text(0.5,0.92,'%s - %s KAF'
+#                                     %(self.masks[name]['label'],kaf),
+#                                     horizontalalignment='center',
+#                                     transform=axs[iters].transAxes, fontsize = 10)
+#                 if self.units == 'SI':          
+#                     axs[iters].text(0.5,0.92,'%s - %s $km^3$'
+#                                     %(self.masks[name]['label'],kaf),
+#                                     horizontalalignment='center',
+#                                     transform=axs[iters].transAxes)                
+#                 
+#                 if iters == 1 and nc == 3:
+#                     axs[iters].set_yticklabels([])
+#                 else:
+#                     axs[iters].set_ylabel(self.units)
+#                 
+#                 lbl = []
+#                 for n in (0,1):
+#                     if n == 0:
+#                         
+#                         if self.dplcs == 0:
+#                             kafa = str(np.int(sum(self.melt[name]))) 
+#                         else: 
+#                             kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
+# 
+#                         tmpa = (r'avail = %s')%(kafa)                         
+#                         lbl.append(tmpa)
+# 
+#                     if self.dplcs == 0:
+#                         kafna = str(np.int(sum(self.nonmelt[name]))) 
+#                     else: 
+#                         kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
+# 
+#                     tmpna = ('unavail = %s')%(kafna)
+#                     lbl.append(tmpna)                     
+# 
+#                 axs[iters].legend(lbl, loc = (0.025, 0.65),fontsize = 9)
+#                 axs[iters].set_ylim((0,ylim)) 
+#                 for tick in axs[iters].get_xticklabels():
+#                     tick.set_rotation(30) 
+#             
+#             fig.tight_layout()
+#             for n in range(0,len(axs)):
+#                 axs[n].set_xticks(xts)
+#                 axs[n].set_xlim(self.xlims)       
+#         
+#         else:
+#             name = self.plotorder[0]
+#             plt.close(1)
+#             fig,ax  = plt.subplots(num=1, figsize=fs, dpi=self.dpi)
+#                    
+#             ax.bar(range(0,len(self.edges)),self.melt[name],
+#                    color = colors[0], bottom = self.nonmelt[name])
+#             ax.bar(range(0,len(self.edges)),self.nonmelt[name],
+#                    color = colors[1], label = 'unavail ')
+#             
+#             ax.set_xlim(self.xlims)                          
+#             xts = ax.get_xticks()
+#             edges_lbl = []
+#             for i in xts[0:len(xts)-1]:
+#                 edges_lbl.append(str(int(self.edges[int(i)])))
+# 
+#             ax.set_xticklabels(str(i) for i in edges_lbl)
+# 
+#             if self.units == 'KAF':
+#                 ax.set_xlabel('elevation [ft]')
+#             if self.units == 'SI':
+#                 ax.set_xlabel('elevation [m]')                    
+#             
+#             ax.tick_params(axis='x')
+#             ax.tick_params(axis='y')
+#             
+#             # Get basin total storage in strings for label
+#             kaf = str(np.int(sum(self.melt[name]) + sum(self.nonmelt[name]))) 
+#             
+#             if self.dplcs == 0:
+#                 kaf = str(np.int(sum(self.melt[name]) 
+#                                  + sum(self.nonmelt[name]))) 
+#             else: 
+#                 kaf = str(np.round(sum(self.melt[name]) 
+#                                    + sum(self.nonmelt[name]),self.dplcs))             
+# 
+#             if self.units == 'KAF':          
+#                 ax.text(.25,0.95,'%s - %s KAF'
+#                         %(self.masks[name]['label'],kaf),
+#                         horizontalalignment='center',transform=ax.transAxes)
+#                 ax.set_ylabel('KAF')
+#             if self.units == 'SI':          
+#                 ax.text(-0.88,2.1,'%s - %s $km^3$'
+#                         %(self.masks[name]['label'],kaf),
+#                         horizontalalignment='center',transform=ax.transAxes)
+#                 ax.set_ylabel(r'$km^3$')                
+#             
+#             lbl = []
+#             for n in (0,1):
+#                 if n == 0:
+#                     if self.dplcs == 0:
+#                         kafa = str(np.int(sum(self.melt[name]))) 
+#                     else: 
+#                         kafa = str(np.round(sum(self.melt[name]),self.dplcs)) 
+#                     
+#                     tmpa = ('avail = %s')%(kafa)
+#                                           
+#                     lbl.append(tmpa)
+#                 
+#                 # kafna = str(np.int(sum(self.nonmelt[name]))) 
+#                 if self.dplcs == 0:
+#                     kafna = str(np.int(sum(self.nonmelt[name]))) 
+#                 else: 
+#                     kafna = str(np.round(sum(self.nonmelt[name]),self.dplcs))            
+# 
+#                 tmpna = ('unavail = %s')%(kafna)                     
+#                 lbl.append(tmpna)                     
+# 
+#             # axs[iters].legend(lbl,loc='upper left') 
+#             ax.legend(lbl, loc = (0.025, 0.8),fontsize = 9)
+#             ax.set_ylim((0,ylim)) 
+#             for tick in ax.get_xticklabels():
+#                 tick.set_rotation(30)             
+#         
+#             fig.tight_layout()
+#             ax.set_xticks(xts)
+#             ax.set_xlim(self.xlims)
+#   
+#         fig.subplots_adjust(top=0.92,wspace = 0.1)
+#         fig.suptitle('SWE, %s'%self.dateTo.date().strftime("%Y-%-m-%-d"))
+#               
+#         print('saving figure to %sswe_elev%s.png'%(self.figs_path,self.name_append))   
+#         plt.savefig('%sswe_elev%s.png'%(self.figs_path,self.name_append))  
+#         
+#     def basin_total(self):       
+#              
+#         sns.set_style('darkgrid')
+#         sns.set_context("notebook")
+#         
+#         plt.close(8)
+#         fig,(ax,ax1) = plt.subplots(num=8, figsize=self.figsize, 
+#                                     dpi=self.dpi, nrows = 1, ncols = 2)
+#       
+#         self.barcolors.insert(0,'black')
+#         
+#         if self.basin == 'LAKES' or self.basin == 'RCEW':
+#             plotorder = [self.plotorder[0]]
+#         else:
+#             plotorder = self.plotorder
+#         
+#         for iters,name in enumerate(plotorder):
+#             # name = self.plotorder[0]
+#             # iters = 0
+#             self.state_summary[name].plot(ax=ax, color = self.barcolors[iters])             
+#             ax1.plot(self.accum_summary[name], 
+#                      color = self.barcolors[iters], label='_nolegend_')
+#         
+#         ax1.yaxis.set_label_position("right")
+#         ax1.set_xlim((datetime(self.wy -1 , 10, 1),self.dateTo))
+#         ax.set_xlim((datetime(self.wy - 1, 10, 1),self.dateTo))
+#         ax1.tick_params(axis='y')
+#         ax1.yaxis.tick_right()
+#         ax.legend(loc='upper left')
+# 
+#         # Put on the same yaxis
+#         swey = ax.get_ylim()
+#         swiy = ax1.get_ylim()
+#         
+#         if swey[1] < swiy[1]:
+#             ax1.set_ylim((-0.1,swiy[1]))
+#             ax.set_ylim((-0.1,swiy[1]))
+#                         
+#         if swey[1] >= swiy[1]:
+#             ax1.set_ylim((-0.1,swey[1]))
+#             ax.set_ylim((-0.1,swey[1]))
+#         
+#         for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
+#             tick.set_rotation(30) 
+#             tick1.set_rotation(30) 
+#              
+#         ax1.set_ylabel(r'[%s]'%(self.vollbl))
+#         ax.axes.set_title('Basin SWE')
+#         ax1.axes.set_title('Accumulated Basin SWI')
+#         ax.set_ylabel(r'[%s]'%(self.vollbl)) 
+#         
+#         # plt.tight_layout()   
+#         del self.barcolors[0] 
+#         
+#         print('saving figure to %sbasin_total%s.png'%(self.figs_path,
+#                                                       self.name_append))   
+#         plt.savefig('%sbasin_total%s.png'%(self.figs_path,self.name_append))       
+# 
+#         ########################################
+#         #         Second figure
+#         ########################################
+#         
+#         # This needs to be improved...
+#         
+#         if self.basin == 'BRB':
+#             accum_summary = self.accum_summary
+#             main = 'Boise River Basin'
+#             multiswe = pd.DataFrame.from_csv(
+#                 '/mnt/volumes/wkspace/results/brb/brb_multiyear_summary.csv') 
+#             multiswi = pd.DataFrame.from_csv(
+#                 '/mnt/volumes/wkspace/results/brb/brb_multiyear_swi.csv')
+#             
+#             multiswe.wy17.iloc[304:] = 0
+#             multiswi.wy17 = np.cumsum(multiswi.wy17)
+#             multiswi.wy17.iloc[304:] = multiswi.wy17[303]
+#             
+#             state_summary = self.state_summary.asfreq('D')
+#             
+#             # Put in this year
+#             multiswe.wy18.iloc[:len(state_summary[main])] = (
+#                                                 state_summary[main].values) 
+#             multiswi.wy18.iloc[:len(accum_summary[main])] = (
+#                                                 accum_summary[main].values)          
+#             
+#             if self.units == 'SI':
+#                 multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
+#                 multiswi.wy17 = np.multiply(multiswi.wy17,0.00123348)
+#                 multiswe.wy16 = np.multiply(multiswe.wy16,0.00123348)
+#                 multiswi.wy16 = np.multiply(multiswi.wy16,0.00123348)
+#                 multiswe.wy15 = np.multiply(multiswe.wy15,0.00123348)
+#                 multiswi.wy15 = np.multiply(multiswi.wy15,0.00123348)                
+#             
+#             plt.close(8)
+#             fig,(ax,ax1)    = plt.subplots(num=8, figsize=self.figsize,
+#                                            dpi=self.dpi, nrows = 1, ncols = 2)
+#     
+#             ax.plot(multiswe['wy15'], color = 'g',label = 'wy2015')
+#             ax.plot(multiswe['wy16'], color = 'r',label = 'wy2016')
+#             ax.plot(multiswe['wy17'], color = 'k',label = 'wy2017')
+#             ax.plot(multiswe['wy18'], color = 'b', label = 'wy2018')
+#        
+#             ax1.plot(multiswi['wy15'], color = 'g',label = 'wy2015')
+#             ax1.plot(multiswi['wy16'], color = 'r',label = 'wy2016')
+#             ax1.plot(multiswi['wy17'], color = 'k',label = 'wy2017')
+#             ax1.plot(multiswi['wy18'], color = 'b', label = 'wy2018')
+#             
+#             formatter = DateFormatter('%b')
+#             ax.xaxis.set_major_formatter(formatter)
+#             ax1.xaxis.set_major_formatter(formatter)
+#        
+#             ax1.yaxis.set_label_position("right")
+#             ax1.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
+#             ax.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
+#             ax1.tick_params(axis='y')
+#             ax1.yaxis.tick_right()
+#             ax.legend(loc='upper left')
+#             
+#             for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
+#                 tick.set_rotation(30) 
+#                 tick1.set_rotation(30) 
+#                  
+#             if self.units == 'KAF':
+#                 ax.set_ylabel('[KAF]')  
+#                 ax1.set_ylabel('[KAF]')
+#                 ax.axes.set_title('Water Year SWE')
+#                 ax1.axes.set_title('Accumulated Basin SWI')
+#             
+#             if self.units == 'SI':
+#                 ax.set_ylabel(r'[$km^3$]') 
+#                 ax1.set_ylabel(r'[$km^3$]')            
+#                 ax.axes.set_title('Basin SWE [$km^3$]')
+#                 ax1.axes.set_title('Accumulated Basin SWI [$km^3$]')
+#             
+#             ax.set_ylim((0,ax1.get_ylim()[1]))
+#             plt.tight_layout()      
+#             
+#             print('saving figure to %sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))   
+#             plt.savefig('%sbasin_total_multiyr%s.png'%(self.figs_path,self.name_append))                   
+#              
+#     def stn_validate(self):
+#         
+#         rundirs = self.run_dirs
+#         stns = self.val_stns
+#         lbls = self.val_lbls
+#         client = self.val_client
+#            
+#         # get metadata from the data base from snotel sites
+#         if self.basin == 'BRB':
+#             qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
+#                    + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id = '
+#                    + 'tbl_stations.station_id WHERE tbl_stations.client = '
+#                    + ' "'"%s"'" HAVING network_name = "'"SNOTEL"'";'%client)
+#         else:
+#             qry = ('SELECT tbl_metadata.* FROM tbl_metadata ' 
+#                    + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
+#                    + 'tbl_stations.station_id WHERE tbl_stations.client = '
+#                    + '"'"%s"'" ;'%client)        
+#         cnx = mysql.connector.connect(user='markrobertson', 
+#                                       password='whatdystm?1',
+#                                       host='10.200.28.137',
+#                                       database='weather_db')
+#         
+#         meta_sno = pd.read_sql(qry, cnx)
+#         meta_sno.index = meta_sno['primary_id']
+#         swe_meas    = pd.DataFrame(index = pd.date_range(datetime(2017,10,1), 
+#                                                          self.dateTo, 
+#                                                          freq='D'),columns = stns)  
+#         swe_mod     = pd.DataFrame(index = pd.date_range(datetime(2017,10,1),
+#                                                          self.dateTo, 
+#                                                          freq='D'),columns = stns)   
+#         tbl         = 'tbl_level1'
+#         var         = 'snow_water_equiv'
+#         st_time     = '2017-10-1 00:00:00'
+#         end_time    = self.dateTo.date().strftime("%Y-%-m-%-d")
+#         
+#         # Get Snotel station results
+#         for iters,stn in enumerate(stns): 
+#             cnx     = mysql.connector.connect(user='markrobertson',
+#                                               password='whatdystm?1',
+#                                               host='10.200.28.137',
+#                                               port='32768',database='weather_db')
+#             var_qry = ('SELECT weather_db.%s.date_time, weather_db.%s.%s ' % (tbl,tbl,var) +
+#                         'FROM weather_db.%s ' % tbl +
+#                         "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
+#                         "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
+#             
+#             data = pd.read_sql(var_qry, cnx, index_col='date_time')
+#             dind = pd.date_range(st_time,end_time,freq='D')
+#             swe_meas[stn] = data.reindex(dind)
+#             
+#         if self.basin == 'TUOL':
+#             swe_meas.TIOC1 = swe_meas.TIOC1 - 300  
+#             
+#         if 'AGP' in swe_meas:
+#             swe_meas.AGP = swe_meas.AGP - 40   
+#         if 'VLC' in swe_meas:
+#             swe_meas.VLC = swe_meas.VLC + 250  
+#         if 'UBC' in swe_meas:
+#             swe_meas.UBC = swe_meas.UBC - 50      
+#         
+#         sns.set_style('darkgrid')
+#         sns.set_context('notebook')
+#         
+#         plt.close(9)
+#         fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)   
+#         axs = axs.flatten() 
+#         
+#         ### sdwitching the loop!###
+#         
+#         # First need to combine all nc files... 
+#         px = (1,1,1,0,0,0,-1,-1,-1)
+#         py = (1,0,-1,1,0,-1,1,0,-1)       
+#         for iters,stn in enumerate(stns):
+#             # iters = 0
+#             # stn = stns[iters]
+#             for n,m in zip(px,py): 
+#                 # n = 0
+#                 # m = 0
+#                 iswe = self.offset
+#         
+#                 for rname in rundirs:
+#                     # rname = rundirs[1]
+#                     
+#                     ncpath  = rname[1].split('output')[0]
+#                     ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
+#                     nctvec  = ncf.variables['time'][:]
+#                     vswe    = ncf.variables['specific_mass']            # get variable
+#                     ncxvec  = ncf.variables['x'][:]                     # get x vec
+#                     ncyvec  = ncf.variables['y'][:]                     # get y vec                      
+#                     ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
+#                     # ll      = utm.from_latlon(37.641922,-119.055443)
+#                     # ll      = utm.from_latlon(37.655201,-119.060783)
+#         
+#                     xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
+#                     yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
+#                     # print(xind,yind)
+#                     swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)  # pull out closest model pixel data
+#              
+#                     try:
+#                         swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values  
+#                     except:
+#                         sv = swe_mod[stn].values
+#                         lx = len(sv[iswe::])
+#                         swe_mod.loc[iswe:(iswe + lx),stn] = swe.values[0:lx]
+#                         
+#                     ncf.close()   
+#                     iswe = iswe + len(swe.values)
+#                     
+#                 z = self.dem[yind,xind]    
+#                
+#                 axs[iters].plot(swe_meas[stn],'k',label='measured')
+#                 axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')    
+#                 axs[iters].set_title(lbls[iters])
+#                 axs[iters].set_xlim((datetime(2017, 10, 1),self.dateTo))
+#             
+#             if iters == 1 or iters == 3 or iters == 5:
+#                 axs[iters].yaxis.tick_right()
+#             
+#             if iters == 4 or iters == 5:
+#                 for tick in axs[iters].get_xticklabels():
+#                     tick.set_rotation(30) 
+#             else:
+#                 axs[iters].set_xticklabels('')         
+#              
+#         # Plot
+#         maxm = np.nanmax(swe_meas)
+#         maxi = np.nanmax(swe_mod.max().values)
+#         
+#         if maxm > maxi:
+#             maxswe = maxm
+#         else:
+#             maxswe = maxi
+#             
+#         for iters in range(0,len(stns)):
+#             axs[iters].set_ylim((-0.1,maxswe + maxswe*0.05))     
+#         
+#         axs[0].legend(['measured','modelled'],loc='upper left')
+#         axs[0].set_ylabel('SWE [mm]')
+#         
+#         plt.suptitle('Validation at Measured Sites')
+#         plt.tight_layout()
+#         plt.subplots_adjust(top=0.92)
+#         
+#         self.swe_meas = swe_meas
+#         self.swe_mod = swe_mod
+#         
+#         print('saving figure to %svalidation%s.png'%(self.figs_path,self.name_append))   
+#         plt.savefig('%svalidation%s.png'%(self.figs_path,self.name_append))                  
 
     def basin_detail(self):
         import math

@@ -1,6 +1,6 @@
 
-import SNOWAV
 
+import SNOWAV
 config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_ops.txt'
 snow = SNOWAV.snowav(config_file)
     
@@ -8,15 +8,16 @@ snow = SNOWAV.snowav(config_file)
 SNOWAV.snowav.process(snow)
 
 # Figures
-SNOWAV.snowav.accumulated(snow)
-SNOWAV.snowav.current_image(snow)
-SNOWAV.snowav.state_by_elev(snow)
-SNOWAV.snowav.image_change(snow)
-SNOWAV.snowav.basin_total(snow)
-SNOWAV.snowav.pixel_swe(snow)
-SNOWAV.snowav.density(snow)
-SNOWAV.snowav.stn_validate(snow) 
+SNOWAV.accumulated(snow)
+SNOWAV.current_image(snow)
+SNOWAV.state_by_elev(snow)
+SNOWAV.image_change(snow)
+SNOWAV.basin_total(snow)
+SNOWAV.pixel_swe(snow)
+SNOWAV.density(snow)
+SNOWAV.stn_validate(snow) 
 
+# Report
 SNOWAV.report(snow)
 
 # Summaries for previous years
