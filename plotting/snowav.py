@@ -302,7 +302,6 @@ class snowav(object):
             # Compile the masks 
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                print(lbl,mask)
                 self.masks[lbl] = {'border': blank, 
                                    'mask': np.genfromtxt(mask,skip_header=sr),
                                    'label': lbl}       
