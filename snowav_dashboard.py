@@ -3,7 +3,7 @@
 import sys
 sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import snowav
-from snowav.report import report
+from snowav.report.report import report
 from snowav.plotting.accumulated import accumulated
 from snowav.plotting.image_change import image_change
 from snowav.plotting.current_image import current_image
@@ -27,7 +27,7 @@ basin_total(snow)
 stn_validate(snow) 
 
 # Report
-report.report(snow)
+report(snow)
 
 
 

@@ -84,16 +84,14 @@ class SNOWAV(object):
                                  if 'em.' in value])
        
             # If no psnowFile and csnowFile specified, use first and last
-            if (not cfg.has_option('Outputs','csnowFile') 
-                and cfg.has_option('Outputs','psnowFile')):
+            if not cfg.has_option('Outputs','csnowFile'):
                 self.psnowFile = self.snow_files[0] 
                 self.csnowFile = self.snow_files[len(self.snow_files)-1] 
                 self.cemFile = self.em_files[len(self.em_files)-1]
                 
             # Check to see if they exist
-            if not (os.path.isfile(self.psnowFile) 
-                    and os.path.isfile(self.psnowFile)):   
-                print('psnowFile and/or csnowFile do not exist!')
+            if not (os.path.isfile(self.csnowFile)):   
+                print('csnowFile does not exist!')
                 return
             
             ####################################################
@@ -101,7 +99,10 @@ class SNOWAV(object):
             #################################################### 
             self.val_stns = cfg.get('Validate','stations').split(',')
             self.val_lbls = cfg.get('Validate','labels').split(',')
-            self.val_client = cfg.get('Validate','client')     
+            self.val_client = cfg.get('Validate','client')   
+            
+            # This is being used to combine HRRR data, which started in Nov
+            # 2017...  
             self.offset = int(cfg.get('Validate','offset'))             
             
             ####################################################
