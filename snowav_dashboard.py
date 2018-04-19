@@ -27,7 +27,7 @@ basin_total(snow)
 stn_validate(snow) 
 
 # Report
-# report(snow)
+report.report(snow)
 
 
 

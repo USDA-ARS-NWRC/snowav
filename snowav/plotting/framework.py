@@ -9,7 +9,7 @@ import os
 import copy
 import pandas as pd
 import ConfigParser as cfp
-import wyhr_to_datetime as wy
+import snowav.methods.wyhr_to_datetime as wy
 
 
 class SNOWAV(object):
@@ -62,9 +62,7 @@ class SNOWAV(object):
                 cfg.has_option('Outputs','csnowFile')):   
                 self.psnowFile = cfg.get('Outputs','psnowFile')
                 self.csnowFile = cfg.get('Outputs','csnowFile') 
-                self.cemFile = self.csnowFile.replace('snow.','em.')  
-                
-            # self.file_type = cfg.get('Outputs','file_type')         
+                self.cemFile = self.csnowFile.replace('snow.','em.')         
             
             ####################################################
             #           Runs                                   #
