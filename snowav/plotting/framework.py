@@ -12,9 +12,9 @@ import ConfigParser as cfp
 import wyhr_to_datetime as wy
 
 
-class snowav(object):
+class SNOWAV(object):
 
-    def __init__(self,config_file):
+    def __init__(self,config_file = None):
         '''
         Notes: 
 
