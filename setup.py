@@ -35,6 +35,7 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini']},
+    scripts=['./snow'],
     install_requires=requirements,
     license="GPL-3.0",
     zip_safe=False,
