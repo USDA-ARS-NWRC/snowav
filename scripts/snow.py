@@ -1,7 +1,7 @@
 
 
 import sys
-sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
+# sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import snowav
 
 

@@ -24,7 +24,7 @@ setup(
     description="Snow and Water Model Analysis and Visualization ",
     long_description=readme + '\n\n' + history,
     author="Mark Robertson",
-    author_email='mark.robertson@ars.usda.gov',
+    author_email='markrobertson@u.boisestate.edu',
     url='https://github.com/roberton-mark/SNOWAV',
     packages=['snowav',
 			  'snowav.methods',
@@ -35,7 +35,7 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini']},
-    scripts=['./snow'],
+    scripts=['./scripts/snow.py'],
     install_requires=requirements,
     license="GPL-3.0",
     zip_safe=False,
@@ -53,7 +53,5 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
-    test_suite='tests',
-    tests_require=test_requirements,
     setup_requires=setup_requirements,
 )
