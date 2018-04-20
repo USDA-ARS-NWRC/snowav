@@ -143,6 +143,14 @@ class SNOWAV(object):
             ####################################################           
             self.r_clmin = cfg.get('Results','clmin')
             self.r_clmax = cfg.get('Results','clmax')     
+
+            ####################################################
+            #           Basin Total                            #
+            ####################################################           
+            if (cfg.has_option('Basin Total','summary_swe') and 
+                cfg.has_option('Basin Total','summary_swi')):
+                self.summary_swe = cfg.get('Basin Total','summary_swe')
+                self.summary_swi = cfg.get('Basin Total','summary_swi')             
             
             ####################################################
             #           DEM                                    #

@@ -80,10 +80,8 @@ def basin_total(snow):
     if snow.basin == 'BRB':
         accum_summary = snow.accum_summary
         main = 'Boise River Basin'
-        multiswe = pd.DataFrame.from_csv(
-            '/mnt/volumes/wkspace/results/brb/brb_multiyear_summary.csv') 
-        multiswi = pd.DataFrame.from_csv(
-            '/mnt/volumes/wkspace/results/brb/brb_multiyear_swi.csv')
+        multiswe = pd.DataFrame.from_csv(self.summary_swe) 
+        multiswi = pd.DataFrame.from_csv(self.summary_swi)
         
         multiswe.wy17.iloc[304:] = 0
         multiswi.wy17 = np.cumsum(multiswi.wy17)
