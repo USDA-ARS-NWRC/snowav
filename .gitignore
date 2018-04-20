@@ -1,3 +1,4 @@
 *.pyc
-/snowav/plotting/.*pyc
+/snowav/plotting/*.pyc
+/snowav/report/*.pyc
 
