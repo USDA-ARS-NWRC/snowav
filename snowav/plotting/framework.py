@@ -104,7 +104,6 @@ class SNOWAV(object):
             # This is being used to combine HRRR data, which started in Nov
             # 2017...  
             self.offset = int(cfg.get('Validate','offset'))             
-            
             ####################################################
             #           Accumulated                            #
             ####################################################   
