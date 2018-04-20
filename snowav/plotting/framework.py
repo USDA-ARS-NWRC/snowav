@@ -14,7 +14,7 @@ import snowav.methods.wyhr_to_datetime as wy
 
 class SNOWAV(object):
 
-    def __init__(self,config_file = None):
+    def __init__(self,config_file):
         '''
         Notes: 
 
