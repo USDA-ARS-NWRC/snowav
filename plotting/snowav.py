@@ -302,10 +302,14 @@ class snowav(object):
             # Compile the masks 
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                print(lbl,mask)
-                self.masks[lbl] = {'border': blank, 
-                                   'mask': np.genfromtxt(mask,skip_header=sr),
-                                   'label': lbl}       
+                if lbl != self.sub4_lbl:
+                    self.masks[lbl] = {'border': blank, 
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'label': lbl}   
+                else:
+                    self.masks[lbl] = {'border': blank, 
+                                       'mask': np.genfromtxt(mask,skip_header=0),
+                                       'label': lbl}                               
             
             # Do unit-specific things
             if self.units == 'KAF':
