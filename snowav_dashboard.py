@@ -1,7 +1,7 @@
 
 import SNOWAV
 
-config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_ops.txt'
+config_file = '/mnt/volumes/wkspace/config/snowav/snowav_sj_wy2018_devel.txt'
 snow = SNOWAV.snowav(config_file)
     
 # Make all the calculations

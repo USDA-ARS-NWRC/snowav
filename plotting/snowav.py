@@ -295,9 +295,9 @@ class snowav(object):
             if cfg.has_option('DEM','sub4_lbl'): 
                 self.sub4_lbl = cfg.get('DEM','sub4_lbl') 
                 self.subbasin4 = cfg.get('DEM','subbasin4')
-                self.plotorder = self.plotorder + self.sub4_lbl   
-                self.suborder = self.suborder + self.sub4_lbl                        
-                maskpaths = maskpaths + self.subbasin4
+                self.plotorder = self.plotorder + [self.sub4_lbl]   
+                self.suborder = self.suborder + [self.sub4_lbl]                        
+                maskpaths = maskpaths + [self.subbasin4]
             
             # Compile the masks 
             self.masks = dict()
