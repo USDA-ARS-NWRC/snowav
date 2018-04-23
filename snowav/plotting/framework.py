@@ -293,16 +293,23 @@ class SNOWAV(object):
             if cfg.has_option('DEM','sub4_lbl'): 
                 self.sub4_lbl = cfg.get('DEM','sub4_lbl') 
                 self.subbasin4 = cfg.get('DEM','subbasin4')
-                self.plotorder = self.plotorder + self.sub4_lbl   
-                self.suborder = self.suborder + self.sub4_lbl                        
-                maskpaths = maskpaths + self.subbasin4
+                self.plotorder = self.plotorder + [self.sub4_lbl]   
+                self.suborder = self.suborder + [self.sub4_lbl]                        
+                maskpaths = maskpaths + [self.subbasin4]
             
             # Compile the masks 
+            # HACK FOR SJ SUB4!
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                self.masks[lbl] = {'border': blank, 
-                                   'mask': np.genfromtxt(mask,skip_header=sr),
-                                   'label': lbl}       
+                if lbl != self.sub4_lbl:
+                    self.masks[lbl] = {'border': blank, 
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'label': lbl}   
+                # hack
+                else:
+                    self.masks[lbl] = {'border': blank, 
+                                       'mask': np.genfromtxt(mask,skip_header=0),
+                                       'label': lbl}                              
             
             # Do unit-specific things
             if self.units == 'KAF':
