@@ -107,13 +107,19 @@ class SNOWAV(object):
             ####################################################
             #           Accumulated                            #
             ####################################################   
-            self.acc_clmin = cfg.get('Accumulated','clmin')
-            self.acc_clmax = cfg.get('Accumulated','clmax')
-            
+            # Right now we aren't using these because matplotlib and multiple
+            # colormaps don't get along well with clims...
+            # self.acc_clmin = cfg.get('Accumulated','clmin')
+            # self.acc_clmax = cfg.get('Accumulated','clmax') 
             if (cfg.has_option('Accumulated','ymin') 
                 and cfg.has_option('Accumulated','ymax')):
                 self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
-                                  int(cfg.get('Accumulated','ymax')))        
+                                  int(cfg.get('Accumulated','ymax')))  
+            
+            if cfg.has_option('Accumulated','save_fig'):
+                self.acc_flag = cfg.get('Accumulated','save_fig')
+            else:
+                self.acc_flag = True
     
             ####################################################
             #           Elevation                              #

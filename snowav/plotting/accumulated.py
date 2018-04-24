@@ -11,11 +11,12 @@ import matplotlib.patches as mpatches
 
 def accumulated(snow):
     '''
-    This function plots snow.accum (typically SWI)
+    Issues:
+    - matplotlib, multiple colormaps, and qMin/qMax do not play nice
     
     '''
     
-    # )nly report accum by the subsection between 
+    # Only report accum by the subsection between 
     accum = copy.deepcopy(snow.accum_sub) 
     accum_byelev = copy.deepcopy(snow.accum_byelev_sub) 
     
@@ -168,7 +169,9 @@ def accumulated(snow):
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), 
                       loc=2, borderaxespad=0. )
          
-    print('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))  
+    # Save if true
+    if snow.acc_flag:
+        print('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
+        plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))  
     
      
