@@ -23,8 +23,9 @@ def run(config_file):
     snowav.plotting.density.density(snow)
     snowav.plotting.stn_validate.stn_validate(snow)
 
-    # Report
-    snowav.report.report.report(snow)
+    # Generate report if desired
+    if not snow.report_flag:
+        snowav.report.report.report(snow)
 
 if __name__ == '__main__':
     config_file = sys.argv[1]
