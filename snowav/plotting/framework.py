@@ -301,14 +301,14 @@ class SNOWAV(object):
             # HACK FOR SJ SUB4!
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                if lbl != self.sub4_lbl:
+                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
                     self.masks[lbl] = {'border': blank, 
-                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'mask': np.genfromtxt(mask,skip_header=0),
                                        'label': lbl}   
                 # hack
                 else:
                     self.masks[lbl] = {'border': blank, 
-                                       'mask': np.genfromtxt(mask,skip_header=0),
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
                                        'label': lbl}                              
             
             # Do unit-specific things
