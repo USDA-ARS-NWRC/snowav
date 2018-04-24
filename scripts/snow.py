@@ -1,9 +1,7 @@
 
 
 import sys
-# sys.path.append('/home/markrobertson/mrworkspace/code/SNOWAV/')
 import snowav
-
 
 def run(config_file):
 
