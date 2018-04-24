@@ -127,8 +127,13 @@ class SNOWAV(object):
             ####################################################             
             if (cfg.has_option('Elevation','ymin') 
                 and cfg.has_option('Elevation','ymax')):
-                self.el_ylims = (int(cfg.get('Elevation','ymin')),
-                                 int(cfg.get('Elevation','ymax')))                      
+                self.elv_ylims = (int(cfg.get('Elevation','ymin')),
+                                 int(cfg.get('Elevation','ymax')))  
+            
+            if cfg.has_option('Elevation','save_fig'):
+                self.elv_flag = cfg.get('Elevation','save_fig')
+            else:
+                self.elv_flag = True                                    
             
             ####################################################
             #           Changes                                #

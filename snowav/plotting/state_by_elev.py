@@ -130,7 +130,12 @@ def state_by_elev(snow):
                 lbl.append(tmpna)                     
     
             axs[iters].legend(lbl, loc = (0.025, 0.65),fontsize = 9)
-            axs[iters].set_ylim((0,ylim)) 
+            
+            if hasattr(snow,'elv_ylims'):
+                axs[iters].set_ylim((snow.elv_ylims))
+            else:
+                axs[iters].set_ylim((0,ylim))          
+            
             for tick in axs[iters].get_xticklabels():
                 tick.set_rotation(30) 
         
@@ -220,5 +225,7 @@ def state_by_elev(snow):
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle('SWE, %s'%snow.dateTo.date().strftime("%Y-%-m-%-d"))
           
-    print('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))   
-    plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append))  
+    if snow.elv_flag:
+        print('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))   
+        plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append)) 
+         
