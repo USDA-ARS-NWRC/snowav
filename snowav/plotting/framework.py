@@ -113,6 +113,7 @@ class SNOWAV(object):
             # self.acc_clmax = cfg.get('Accumulated','clmax') 
             if (cfg.has_option('Accumulated','ymin') 
                 and cfg.has_option('Accumulated','ymax')):
+    
                 self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
                                   int(cfg.get('Accumulated','ymax')))  
             

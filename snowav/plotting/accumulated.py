@@ -138,9 +138,12 @@ def accumulated(snow):
     
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
-    ylims = ax1.get_ylim()
     
-    ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
+    if hasattr(snow,'acc_ylims'):
+        ax1.set_ylim((snow.acc_ylims))
+    else:
+        ylims = ax1.get_ylim()
+        ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
     
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
