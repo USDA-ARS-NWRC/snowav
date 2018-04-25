@@ -133,7 +133,7 @@ class SNOWAV(object):
             if cfg.has_option('Elevation','save_fig'):
                 self.elv_flag = cfg.get('Elevation','save_fig')
             else:
-                self.elv_flag = True                                    
+                self.elv_flag = True                                   
             
             ####################################################
             #           Changes                                #
@@ -182,7 +182,8 @@ class SNOWAV(object):
             ####################################################
             #          Report                                  #
             ####################################################    
-            self.report_flag = cfg.get('Report','report')    
+            self.report_flag = cfg.get('Report','report')  
+            print(self.report_flag)  
             self.env_path = cfg.get('Report','env_path')
             self.tex_file = cfg.get('Report','tex_file')
             self.rep_path = cfg.get('Report','rep_path')
