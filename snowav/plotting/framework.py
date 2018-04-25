@@ -10,6 +10,8 @@ import copy
 import pandas as pd
 import ConfigParser as cfp
 import snowav.methods.wyhr_to_datetime as wy
+import logging
+import sys
 
 
 class SNOWAV(object):
@@ -21,7 +23,12 @@ class SNOWAV(object):
         '''
         
         try:
-            print('Reading the config file...')
+            if not os.path.isfile(config_file):
+                print('Config file does not exist...')
+                self.error = True
+                return
+                
+            print('Reading the config file...')             
             cfg = cfp.ConfigParser()
             cfg.read(config_file)
     
