@@ -37,10 +37,8 @@ def accumulated(snow):
     mymap.set_bad('white',1.) 
     
     # Now set SWI-free to some color
-    if hasattr(snow,'min_swi'):
-        ixf = accum < snow.min_swi
-    else:
-        ixf = accum == 0
+
+    ixf = accum == 0
     accum[ixf] = -1
     mymap.set_under('grey',1.) 
     
