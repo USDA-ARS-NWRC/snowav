@@ -121,6 +121,9 @@ class SNOWAV(object):
                 self.acc_flag = cfg.get('Accumulated','save_fig')
             else:
                 self.acc_flag = True
+
+            if cfg.has_option('Accumulated','min_swi'):
+                self.min_swi = cfg.get('Accumulated','min_swi')             
     
             ####################################################
             #           Elevation                              #

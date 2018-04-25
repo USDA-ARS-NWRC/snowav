@@ -26,9 +26,7 @@ def accumulated(snow):
     colors2 = plt.cm.binary(np.linspace(0, 1, 1))
     colors = np.vstack((colors2, colors1))
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-    
-    
-    
+     
     sns.set_style('darkgrid')
     sns.set_context("notebook")
     
@@ -39,7 +37,10 @@ def accumulated(snow):
     mymap.set_bad('white',1.) 
     
     # Now set SWI-free to some color
-    ixf = accum < 0.1
+    if hasattr(snow,'min_swi'):
+        ixf = accum < snow.min_swi
+    else:
+        ixf = accum == 0
     accum[ixf] = -1
     mymap.set_under('grey',1.) 
     
