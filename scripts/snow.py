@@ -8,7 +8,7 @@ def run(config_file):
     # config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/snowav/config/snowav_brb_wy2018.ini'
     snow = snowav.plotting.framework.SNOWAV(config_file)
 
-    if not snow.error:
+    if not hasattr(snow,'error'):
         
         # Make all the calculations
         snow.process()

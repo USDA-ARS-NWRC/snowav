@@ -10,8 +10,6 @@ import copy
 import pandas as pd
 import ConfigParser as cfp
 import snowav.methods.wyhr_to_datetime as wy
-import logging
-import sys
 
 
 class SNOWAV(object):
@@ -24,7 +22,7 @@ class SNOWAV(object):
         
         try:
             if not os.path.isfile(config_file):
-                print('Config file does not exist...')
+                print('Config file does not exist!')
                 self.error = True
                 return
                 
@@ -92,13 +90,20 @@ class SNOWAV(object):
        
             # If no psnowFile and csnowFile specified, use first and last
             if not cfg.has_option('Outputs','csnowFile'):
+                print('Using first and last outputs as start and end times.')
                 self.psnowFile = self.snow_files[0] 
                 self.csnowFile = self.snow_files[len(self.snow_files)-1] 
                 self.cemFile = self.em_files[len(self.em_files)-1]
                 
             # Check to see if they exist
+            if not (os.path.isfile(self.psnowFile)):   
+                print('psnowFile %s does not exist!'%(self.psnowFile))
+                self.error = True
+                return            
+            
             if not (os.path.isfile(self.csnowFile)):   
                 print('csnowFile does not exist!')
+                self.error = True
                 return
             
             ####################################################
@@ -168,11 +173,16 @@ class SNOWAV(object):
 
             ####################################################
             #           Basin Total                            #
-            ####################################################           
+            ####################################################          
             if (cfg.has_option('Basin Total','summary_swe') and 
                 cfg.has_option('Basin Total','summary_swi')):
                 self.summary_swe = cfg.get('Basin Total','summary_swe')
-                self.summary_swi = cfg.get('Basin Total','summary_swi')             
+                self.summary_swi = cfg.get('Basin Total','summary_swi')  
+            if not (os.path.isfile(self.summary_swe) and 
+                    os.path.isfile(self.summary_swi) ):   
+                print('Failed reading in Basin Total section!')
+                self.error = True
+                return        
             
             ####################################################
             #           DEM                                    #
@@ -193,7 +203,6 @@ class SNOWAV(object):
             #          Report                                  #
             ####################################################    
             self.report_flag = cfg.get('Report','report')  
-            print(self.report_flag)  
             self.env_path = cfg.get('Report','env_path')
             self.tex_file = cfg.get('Report','tex_file')
             self.rep_path = cfg.get('Report','rep_path')
@@ -206,7 +215,12 @@ class SNOWAV(object):
             
             # These will later get appended with self.dateTo 
             self.report_name = cfg.get('Report','report_name')
-            self.rep_title = cfg.get('Report','report_title')          
+            self.rep_title = cfg.get('Report','report_title') 
+
+            if not (os.path.isfile(self.templ_path + self.tex_file)):
+                print('Error reading in Reports section!')
+                self.error = True
+                return                  
               
             # Strings for the report
             if self.units == 'KAF':
@@ -298,43 +312,48 @@ class SNOWAV(object):
             # Right now this is a placeholder, could edit by basin...
             self.xlims = (0,len(self.edges))
             
-            self.subbasin1 = cfg.get('DEM','subbasin1')
-            self.subbasin2 = cfg.get('DEM','subbasin2')
-            self.subbasin3 = cfg.get('DEM','subbasin3')
-            self.total_lbl = cfg.get('DEM','total_lbl')
-            self.sub1_lbl = cfg.get('DEM','sub1_lbl')
-            self.sub2_lbl = cfg.get('DEM','sub2_lbl')
-            self.sub3_lbl = cfg.get('DEM','sub3_lbl') 
-            
-            self.plotorder = [self.total_lbl, self.sub1_lbl, 
-                              self.sub2_lbl, self.sub3_lbl]  
-            self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]  
-            maskpaths = [self.total, self.subbasin1, 
-                         self.subbasin2,self.subbasin3 ]
-
-            # Add if necessary - need to generalize all this and change 
-            # in the config file!
-            if cfg.has_option('DEM','sub4_lbl'): 
-                self.sub4_lbl = cfg.get('DEM','sub4_lbl') 
-                self.subbasin4 = cfg.get('DEM','subbasin4')
-                self.plotorder = self.plotorder + [self.sub4_lbl]   
-                self.suborder = self.suborder + [self.sub4_lbl]                        
-                maskpaths = maskpaths + [self.subbasin4]
-            
-            # Compile the masks 
-            # HACK FOR SJ SUB4!
-            self.masks = dict()
-            for lbl,mask in zip(self.plotorder,maskpaths):
-                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
-                    self.masks[lbl] = {'border': blank, 
-                                       'mask': np.genfromtxt(mask,skip_header=0),
-                                       'label': lbl}   
-                # hack
-                else:
-                    self.masks[lbl] = {'border': blank, 
-                                       'mask': np.genfromtxt(mask,skip_header=sr),
-                                       'label': lbl}                              
-            
+            try:
+                self.subbasin1 = cfg.get('DEM','subbasin1')
+                self.subbasin2 = cfg.get('DEM','subbasin2')
+                self.subbasin3 = cfg.get('DEM','subbasin3')
+                self.total_lbl = cfg.get('DEM','total_lbl')
+                self.sub1_lbl = cfg.get('DEM','sub1_lbl')
+                self.sub2_lbl = cfg.get('DEM','sub2_lbl')
+                self.sub3_lbl = cfg.get('DEM','sub3_lbl') 
+                
+                self.plotorder = [self.total_lbl, self.sub1_lbl, 
+                                  self.sub2_lbl, self.sub3_lbl]  
+                self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]  
+                maskpaths = [self.total, self.subbasin1, 
+                             self.subbasin2,self.subbasin3 ]
+    
+                # Add if necessary - need to generalize all this and change 
+                # in the config file!
+                if cfg.has_option('DEM','sub4_lbl'): 
+                    self.sub4_lbl = cfg.get('DEM','sub4_lbl') 
+                    self.subbasin4 = cfg.get('DEM','subbasin4')
+                    self.plotorder = self.plotorder + [self.sub4_lbl]   
+                    self.suborder = self.suborder + [self.sub4_lbl]                        
+                    maskpaths = maskpaths + [self.subbasin4]
+                
+                # Compile the masks 
+                # HACK FOR SJ SUB4!
+                self.masks = dict()
+                for lbl,mask in zip(self.plotorder,maskpaths):
+                    if (self.basin == 'SJ' and lbl == self.sub4_lbl):
+                        self.masks[lbl] = {'border': blank, 
+                                           'mask': np.genfromtxt(mask,skip_header=0),
+                                           'label': lbl}   
+                    # hack
+                    else:
+                        self.masks[lbl] = {'border': blank, 
+                                           'mask': np.genfromtxt(mask,skip_header=sr),
+                                           'label': lbl}                              
+            except:
+                print('Error creating mask dicts!')
+                self.error = True
+                return
+                  
             # Do unit-specific things
             if self.units == 'KAF':
                 self.conversion_factor = ((self.pixel**2)
@@ -380,11 +399,9 @@ class SNOWAV(object):
             # If it doesn't already exist, make it
             if not os.path.isfile(self.config_copy): 
                 copyfile(config_file,self.config_copy)
-                       
-            print('done.')    
         
         except:
-            print('error reading config file.')
+            print('Error reading config file.')
 
     def process(self,*args):
         '''
