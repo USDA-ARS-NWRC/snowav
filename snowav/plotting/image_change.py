@@ -32,19 +32,11 @@ def image_change(snow):
     if hasattr(snow,'ch_clminabs') and hasattr(snow,'ch_clmaxabs'):
         clims       = (snow.ch_clminabs,snow.ch_clmaxabs)
  
-    # if qMin is 0, need to change things 
-    if qMax > 0:
-        colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))           
-        colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
-        colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
-        colors = np.vstack((colorsbad,colors1, colors2))
-        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-    else:
-        colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 255))
-        colors2 = plt.cm.Set2_r(np.linspace(0, 1, 1))
-        colors = np.vstack((colors1, colors2))
-        mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+    colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))           
+    colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
+    colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
+    colors = np.vstack((colorsbad,colors1, colors2))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
     ixf = delta_state == 0
     delta_state[ixf] = -100000 # set snow-free  
