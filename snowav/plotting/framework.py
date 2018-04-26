@@ -109,13 +109,23 @@ class SNOWAV(object):
             ####################################################
             #           Validate                               #
             #################################################### 
-            self.val_stns = cfg.get('Validate','stations').split(',')
-            self.val_lbls = cfg.get('Validate','labels').split(',')
-            self.val_client = cfg.get('Validate','client')   
+            if (cfg.has_option('Validate','stations')
+                and (cfg.has_option('Validate','labels'))
+                and (cfg.has_option('Validate','client'))
+                ):
+                self.val_stns = cfg.get('Validate','stations').split(',')
+                self.val_lbls = cfg.get('Validate','labels').split(',')
+                self.val_client = cfg.get('Validate','client')   
+                self.valid_flag = True
+            else:
+                self.valid_flag = False
+                print('No validation stations listed, will not generate figure')
             
-            # This is being used to combine HRRR data, which started in Nov
-            # 2017...  
-            self.offset = int(cfg.get('Validate','offset'))             
+            # This is being used to combine 2017 HRRR data
+            if cfg.has_option('Validate','offset'):
+                self.offset = int(cfg.get('Validate','offset'))   
+            else:
+                self.offset = 0                    
             ####################################################
             #           Accumulated                            #
             ####################################################   
