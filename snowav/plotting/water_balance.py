@@ -11,8 +11,9 @@ import matplotlib.patches as mpatches
 
 def water_balance(snow):
     
+    cmap = plt.cm.PuBu
+    
     precip = snow.precip
-    precip_byelev = snow.precip_byelev
     
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -22,7 +23,7 @@ def water_balance(snow):
                                 figsize = snow.figsize, 
                                 dpi=snow.dpi, 
                                 nrows = 1, ncols = 2)      
-    h = ax.imshow(precip)
+    h = ax.imshow(precip,cmap = cmap)
     
     # Basin boundaries
     for name in snow.masks:
@@ -47,49 +48,23 @@ def water_balance(snow):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[%s]'%(snow.depthlbl))
     
-    h.axes.set_title('Accumulated Precipitation \n %s to %s'
+    h.axes.set_title('Total Precipitation \n %s to %s'
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
                        snow.dateTo.date().strftime("%Y-%-m-%-d")))  
-    
-    # Total basin label
-    sumorder = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        
-    if snow.dplcs == 0:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
-                             str(int(precip_byelev[snow.plotorder[0]].sum())),
-                             snow.vollbl)
-    else: 
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
-                             str(np.round(precip_byelev[snow.plotorder[0]].sum(),
-                            snow.dplcs)),snow.vollbl)
           
     # Plot the bars
-    for iters,name in enumerate(sumorder):
-        if snow.dplcs == 0:           
-            lbl = '%s = %s %s'%(name,str(int(precip_byelev[name].sum())),
-                                snow.vollbl)
-        else:
-            lbl = '%s = %s %s'%(name,str(np.round(precip_byelev[name].sum(),
-                                snow.dplcs)),snow.vollbl)
+    # for iters,name in enumerate(snow.plotorder):
+    iters = 0
+    name = snow.plotorder[iters]
     
-        if iters == 0:
-            ax1.bar(range(0,len(snow.edges)),precip_byelev[name], 
-                    color = snow.barcolors[iters], 
-                    edgecolor = 'k',label = lbl)
-        elif iters == 1:   
-            ax1.bar(range(0,len(snow.edges)),precip_byelev[name], 
-                    bottom = precip_byelev[sumorder[iters-1]], 
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-          
-        elif iters == 2:   
-            ax1.bar(range(0,len(snow.edges)),precip_byelev[name], 
-                    bottom = (precip_byelev[sumorder[iters-1]] + precip_byelev[sumorder[iters-2]]), 
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
+    ax1.plot(snow.precip_summary[name],label = 'precipitation') 
     
-        elif iters == 3:   
-            ax1.bar(range(0,len(snow.edges)),precip_byelev[name], 
-                    bottom = (precip_byelev[sumorder[iters-1]] + precip_byelev[sumorder[iters-2]] + precip_byelev[sumorder[iters-3]]), 
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-            
+    ax1.plot(snow.accum_summary[name] 
+             + snow.state_summary[name] 
+             - snow.evap_summary[name],label = 'SWI + SWE - evap')
+    ax1.legend()
+       
+    print('saving figure to %swater_balance%s.png'%(snow.figs_path,snow.name_append))   
+    plt.savefig('%swater_balance%s.png'%(snow.figs_path,snow.name_append)) 
+    
+                  
