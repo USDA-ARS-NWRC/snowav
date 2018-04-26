@@ -62,6 +62,10 @@ def water_balance(snow):
     ax1.plot(snow.accum_summary[name] 
              + snow.state_summary[name] 
              - snow.evap_summary[name],label = 'SWI + SWE - evap')
+    
+    ax1.plot(snow.accum_summary[name] 
+             + snow.state_summary[name] 
+             + snow.evap_summary[name],label = 'SWI + SWE + evap','k')    
     ax1.legend()
        
     print('saving figure to %swater_balance%s.png'%(snow.figs_path,snow.name_append))   
