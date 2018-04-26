@@ -21,6 +21,7 @@ def run(config_file):
         snowav.plotting.basin_total.basin_total(snow)
         snowav.plotting.pixel_swe.pixel_swe(snow)
         snowav.plotting.density.density(snow)
+        snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
     
         # Generate report if desired

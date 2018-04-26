@@ -437,6 +437,7 @@ class SNOWAV(object):
         # ccM = cc./1000./1000; % cold content in MJ
 
         accum = np.zeros((self.nrows,self.ncols))
+        evap = copy.deepcopy(accum)
         accum_sub = copy.deepcopy(accum)
         snowmelt = copy.deepcopy(accum)
         rain_bg = copy.deepcopy(accum)
@@ -450,6 +451,7 @@ class SNOWAV(object):
         
         accum_byelev = pd.DataFrame(index = self.edges, 
                                     columns = self.masks.keys())
+        evap_byelev = copy.deepcopy(accum_byelev)
         rain_bg_byelev = copy.deepcopy(accum_byelev)
         precip_byelev = copy.deepcopy(accum_byelev)
         precip_byelev_sub = copy.deepcopy(accum_byelev)
@@ -500,6 +502,7 @@ class SNOWAV(object):
             band = em_file.bands[self.emband].data
             accum = accum + band
             snowmelt = snowmelt + em_file.bands[7].data
+            evap = evap + em_file.bands[6].data
  
             # load and calculate sub-basin total
             snow_file = ipw.IPW(snow_name)
@@ -615,6 +618,7 @@ class SNOWAV(object):
             mask = copy.deepcopy(self.masks[name]['mask'])
             
             accum_mask = np.multiply(accum,mask)
+            evap_mask = np.multiply(evap,mask)
             rain_bg_mask = np.multiply(rain_bg,mask)
             precip_mask = np.multiply(precip,mask)
             precip_sub_mask = np.multiply(precip_sub,mask)
@@ -644,6 +648,7 @@ class SNOWAV(object):
                 cind = ccb > cclimit
                 
                 accum_byelev.loc[b,name] = np.nansum(accum_mask[ind])
+                evap_byelev.loc[b,name] = np.nansum(evap_mask[ind])
                 rain_bg_byelev.loc[b,name] = np.nansum(rain_bg_mask[ind])
                 precip_byelev.loc[b,name] = np.nansum(precip_mask[ind])
                 precip_byelev_sub.loc[b,name] = np.nansum(precip_sub_mask[ind])
@@ -689,6 +694,7 @@ class SNOWAV(object):
         
         # Sum, by elevation
         self.accum_byelev = np.multiply(accum_byelev,self.conversion_factor) 
+        self.evap_byelev = np.multiply(evap_byelev,self.conversion_factor) 
         self.precip_byelev = np.multiply(precip_byelev,self.conversion_factor) 
         self.rain_bg_byelev = np.multiply(rain_bg_byelev,
                                           self.conversion_factor)
