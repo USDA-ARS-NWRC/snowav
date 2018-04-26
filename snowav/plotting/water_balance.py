@@ -68,7 +68,8 @@ def water_balance(snow):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)    
         
-    plt.tight_layout()    
+    plt.tight_layout()  
+    fig.subplots_adjust(top=0.88)  
        
     print('saving figure to %swater_balance%s.png'%(snow.figs_path,snow.name_append))   
     plt.savefig('%swater_balance%s.png'%(snow.figs_path,snow.name_append)) 

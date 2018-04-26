@@ -9,6 +9,7 @@ import os
 import copy
 import pandas as pd
 import ConfigParser as cfp
+import netCDF4 as nc
 import snowav.methods.wyhr_to_datetime as wy
 
 
@@ -701,7 +702,14 @@ class SNOWAV(object):
         # Convert to desired units
         
         # Sum over all time steps, spatial
-        self.precip = np.multiply(precip,self.depth_factor)  
+        self.precip = np.multiply(precip,self.depth_factor)     
+
+        fileout = nc.Dataset('%sprecip.nc'%(self.figs_path), 'w')
+        fileout.createDimension('precip', len(self.precip))
+        precip_out = fileout.createVariable('precip', str, 'precip',)
+        precip_out[:] = self.precip
+        fileout.close()        
+        
         self.accum = np.multiply(accum,self.depth_factor)     
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)   
         

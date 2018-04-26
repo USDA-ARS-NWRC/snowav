@@ -25,7 +25,7 @@ def run(config_file):
         snowav.plotting.stn_validate.stn_validate(snow)
     
         # Generate report if desired
-        if snow.report_flag:
+        if snow.report_flag == True:
             snowav.report.report.report(snow)
 
 if __name__ == '__main__':
