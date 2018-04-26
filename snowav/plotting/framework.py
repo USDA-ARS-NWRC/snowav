@@ -470,6 +470,7 @@ class SNOWAV(object):
         state_summary = pd.DataFrame(columns = self.masks.keys())
         accum_summary = pd.DataFrame(columns = self.masks.keys())
         precip_summary = pd.DataFrame(columns = self.masks.keys())
+        evap_summary = pd.DataFrame(columns = self.masks.keys())
                
         # Loop through output files
         # Currently we need to load in each em.XXXX file to 'accumulate',
@@ -521,9 +522,15 @@ class SNOWAV(object):
             pFlag = False
             ppt_files = []
             for hr in hrs:
-                if os.path.isfile(ppt_path +'ppt.4b_'+ str(hr)):
+                if hr < 100:
+                    shr = '00' + str(hr)
+                    
+                if hr >=100 and hr < 1000:
+                    shr = '0' + str(hr)   
+                
+                if os.path.isfile(ppt_path +'ppt.4b_'+ shr):
                     pFlag = True
-                    ppt_files = ppt_files + [ppt_path +'ppt.4b_'+ str(hr)]
+                    ppt_files = ppt_files + [ppt_path +'ppt.4b_'+ shr]
             
             rain_hrly = np.zeros((self.nrows,self.ncols))
             precip_hrly = np.zeros((self.nrows,self.ncols))
@@ -566,6 +573,9 @@ class SNOWAV(object):
                 precip_summary.loc[date, name] = (np.nansum(
                                                 np.multiply(precip,
                                                 self.masks[name]['mask'])) )
+                evap_summary.loc[date, name] = (np.nansum(
+                                                np.multiply(evap,
+                                                self.masks[name]['mask'])) )                
 
             # This only add between psnowFile and csnowFile
             if accum_sub_flag:
@@ -719,11 +729,9 @@ class SNOWAV(object):
         # Daily 
         self.state_summary = np.multiply(state_summary,self.conversion_factor)       
         self.accum_summary = np.multiply(accum_summary,self.conversion_factor)         
-        self.precip_summary = np.multiply(precip_summary,self.conversion_factor)                                
-        self.state_byday = np.multiply(state_byday,self.depth_factor)
-        self.state_summary = np.multiply(state_summary,self.conversion_factor)        
-        self.accum_summary = np.multiply(accum_summary,self.conversion_factor)     
-        self.precip_summary = np.multiply(precip_summary,self.conversion_factor)   
+        self.precip_summary = np.multiply(precip_summary,self.conversion_factor) 
+        self.evap_summary = np.multiply(evap_summary,self.conversion_factor)                                
+        self.state_byday = np.multiply(state_byday,self.depth_factor)  
     
         # Mean      
         self.state_mswe_byelev = np.multiply(state_mswe_byelev,
