@@ -83,16 +83,16 @@ class SNOWAV(object):
                 
                 self.snow_files = (self.snow_files 
                                    + [value for value in run_files 
-                                   if 'snow.' in value])
+                                   if ( ('snow.' in value) and not ('.nc' in value))])
                 self.em_files = (self.em_files 
                                  + [value for value in run_files 
-                                 if 'em.' in value])
+                                 if ( ('em.' in value) and not ('.nc' in value))])
             
-            while 'snow.nc' in self.snow_files:
-                self.snow_files.remove('snow.nc')
+            while '*snow.nc' in self.snow_files:
+                self.snow_files.remove('*snow.nc')
             
-            while 'em.nc' in self.em_files:
-                self.snow_files.remove('em.nc')                
+            while '*em.nc' in self.em_files:
+                self.em_files.remove('*em.nc')                
        
             # If no psnowFile and csnowFile specified, use first and last
             if not cfg.has_option('Outputs','csnowFile'):
