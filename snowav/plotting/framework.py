@@ -87,6 +87,12 @@ class SNOWAV(object):
                 self.em_files = (self.em_files 
                                  + [value for value in run_files 
                                  if 'em.' in value])
+            
+            while 'snow.nc' in self.snow_files:
+                self.snow_files.remove('snow.nc')
+            
+            while 'em.nc' in self.em_files:
+                self.snow_files.remove('em.nc')                
        
             # If no psnowFile and csnowFile specified, use first and last
             if not cfg.has_option('Outputs','csnowFile'):
@@ -145,7 +151,8 @@ class SNOWAV(object):
                 self.acc_flag = True
 
             if cfg.has_option('Accumulated','min_swi'):
-                self.min_swi = cfg.get('Accumulated','min_swi')             
+                self.min_swi = cfg.get('Accumulated','min_swi')   
+                       
     
             ####################################################
             #           Elevation                              #
