@@ -62,10 +62,7 @@ def water_balance(snow):
     ax1.plot(snow.accum_summary[name] 
              + snow.state_summary[name] 
              - snow.evap_summary[name],label = 'SWI + SWE - evap')
-    
-    ax1.plot(snow.accum_summary[name] 
-             + snow.state_summary[name] 
-             + snow.evap_summary[name],label = 'SWI + SWE + evap',color = 'k')    
+       
     ax1.legend()
     
     for tick in ax1.get_xticklabels():
