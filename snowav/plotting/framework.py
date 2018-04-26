@@ -526,7 +526,10 @@ class SNOWAV(object):
                     shr = '00' + str(hr)
                     
                 if hr >=100 and hr < 1000:
-                    shr = '0' + str(hr)   
+                    shr = '0' + str(hr)  
+                    
+                if hr >= 1000:
+                    shr = str(hr)     
                 
                 if os.path.isfile(ppt_path +'ppt.4b_'+ shr):
                     pFlag = True
