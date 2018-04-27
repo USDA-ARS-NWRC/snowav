@@ -15,7 +15,11 @@ def accumulated(snow):
     - matplotlib, multiple colormaps, and qMin/qMax do not play nice
     
     '''
-    
+
+    if snow.acc_flag == 'False':
+        print('Config option, not creating accumulated() fig')
+        return
+         
     # Only report accum by the subsection between 
     accum = copy.deepcopy(snow.accum_sub) 
     accum_byelev = copy.deepcopy(snow.accum_byelev_sub) 
