@@ -13,6 +13,10 @@ def run(config_file):
         
         # Make all the calculations
         snow.process()
+        
+        # Save processed variables to netcdf if desired
+        if snow.nc_flag == True:
+            snowav.methods.output_nc.output_nc(snow)
     
         # Plots
         snowav.plotting.accumulated.accumulated(snow)

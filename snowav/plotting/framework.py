@@ -9,7 +9,6 @@ import os
 import copy
 import pandas as pd
 import ConfigParser as cfp
-import netCDF4 as nc
 import snowav.methods.wyhr_to_datetime as wy
 
 
@@ -204,7 +203,10 @@ class SNOWAV(object):
             
             #
             if cfg.has_option('Basin Total','netcdf'):
-                self.ncvars = cfg.get('Basin Total','netcdf')       
+                self.ncvars = cfg.get('Basin Total','netcdf').split(',')     
+                self.nc_flag = True
+            else:
+                self.nc_flag = False    
             
             ####################################################
             #           DEM                                    #
@@ -761,18 +763,6 @@ class SNOWAV(object):
         self.melt = np.multiply(melt,self.conversion_factor)
         self.nonmelt = np.multiply(nonmelt,self.conversion_factor)               
         self.cold = np.multiply(self.cold,0.000001)                                    
-        
-        
-        nx = len(self.precip[:,0])
-        ny = len(self.precip[0,:])
-        my_data = np.reshape(self.precip,(ny,nx),'F')
-        f = nc.Dataset('%sprecip%s.nc'%(self.figs_path,self.name_append), 'w')
-        f.createDimension('nx',nx)
-        f.createDimension('ny',ny)
-        data = f.createVariable('total_precip', 'f4', ('nx','ny'))
-        data[:] = my_data
-        f.close()           
-        
         
         # Let's print some summary info...
         mask        = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
