@@ -6,6 +6,7 @@ import snowav
 def run(config_file):
 
     # config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/snowav/config/snowav_brb_wy2018.ini'
+    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_devel.txt'
     snow = snowav.plotting.framework.SNOWAV(config_file)
 
     if not hasattr(snow,'error'):

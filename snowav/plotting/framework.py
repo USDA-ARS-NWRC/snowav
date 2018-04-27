@@ -200,7 +200,11 @@ class SNOWAV(object):
                     os.path.isfile(self.summary_swi) ):   
                 print('Failed reading in Basin Total section!')
                 self.error = True
-                return        
+                return 
+            
+            #
+            if cfg.has_option('Basin Total','netcdf'):
+                self.ncvars = cfg.get('Basin Total','netcdf')       
             
             ####################################################
             #           DEM                                    #
@@ -547,14 +551,17 @@ class SNOWAV(object):
             precip_hrly = np.zeros((self.nrows,self.ncols))
             
             # Load 'em in
-            if pFlag:
+            if pFlag and accum_sub_flag == True:
+                print('adding precip for %s'%(snow_name))
                 for pfile in ppt_files:
                     ppt = ipw.IPW(pfile)
                     pre = ppt.bands[0].data
                     percent_snow = ppt.bands[1].data
                     rain_hrly = rain_hrly + np.multiply(pre,(1-percent_snow))
                     precip_hrly = precip_hrly + pre
-
+            else:
+                print(pFlag,accum_sub_flag)
+            
             rain_bg = rain_bg + rain_hrly 
             precip = precip + precip_hrly    
                 
@@ -702,14 +709,7 @@ class SNOWAV(object):
         # Convert to desired units
         
         # Sum over all time steps, spatial
-        self.precip = np.multiply(precip,self.depth_factor)     
-
-        fileout = nc.Dataset('%sprecip.nc'%(self.figs_path), 'w')
-        fileout.createDimension('precip', len(self.precip))
-        precip_out = fileout.createVariable('precip', str, 'precip',)
-        precip_out[:] = self.precip
-        fileout.close()        
-        
+        self.precip = np.multiply(precip,self.depth_factor)                
         self.accum = np.multiply(accum,self.depth_factor)     
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)   
         
@@ -761,6 +761,18 @@ class SNOWAV(object):
         self.melt = np.multiply(melt,self.conversion_factor)
         self.nonmelt = np.multiply(nonmelt,self.conversion_factor)               
         self.cold = np.multiply(self.cold,0.000001)                                    
+        
+        
+        nx = len(self.precip[:,0])
+        ny = len(self.precip[0,:])
+        my_data = np.reshape(self.precip,(ny,nx),'F')
+        f = nc.Dataset('%sprecip%s.nc'%(self.figs_path,self.name_append), 'w')
+        f.createDimension('nx',nx)
+        f.createDimension('ny',ny)
+        data = f.createVariable('total_precip', 'f4', ('nx','ny'))
+        data[:] = my_data
+        f.close()           
+        
         
         # Let's print some summary info...
         mask        = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
