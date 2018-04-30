@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+from codecs import open
+from os import path
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
@@ -24,12 +26,9 @@ setup(
     description="Snow and Water Model Analysis and Visualization ",
     long_description=readme + '\n\n' + history,
     author="Mark Robertson",
-    author_email='markrobertson@u.boisestate.edu',
+    author_email='mark.robertson@ars.usda.gov',
     url='https://github.com/roberton-mark/SNOWAV',
-    packages=['snowav',
-			  'snowav.methods',
-			  'snowav.report',
-			  'snowav.plotting'
+    packages=['snowav'
 			  ],
 
 
@@ -54,4 +53,9 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     setup_requires=setup_requirements,
+
+    entry_points={
+       'console_scripts': ['snowav = scripts.snow:run',],
+    }
+
 )
