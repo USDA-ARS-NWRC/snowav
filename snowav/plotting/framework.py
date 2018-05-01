@@ -191,15 +191,16 @@ class SNOWAV(object):
             ####################################################
             #           Basin Total                            #
             ####################################################          
-            if (cfg.has_option('Basin Total','summary_swe') and 
-                cfg.has_option('Basin Total','summary_swi')):
+            
+            
+            if cfg.has_option('Basin Total','summary_swe'):
                 self.summary_swe = cfg.get('Basin Total','summary_swe')
                 self.summary_swi = cfg.get('Basin Total','summary_swi')  
-            if not (os.path.isfile(self.summary_swe) and 
-                    os.path.isfile(self.summary_swi) ):   
-                print('Failed reading in Basin Total section!')
-                self.error = True
-                return 
+                if not (os.path.isfile(self.summary_swe) and 
+                        os.path.isfile(self.summary_swi) ):   
+                    print('Failed reading in Basin Total section!')
+                    self.error = True
+                    return 
             
             #
             if cfg.has_option('Basin Total','netcdf'):
@@ -554,15 +555,13 @@ class SNOWAV(object):
             
             # Load 'em in
             if pFlag and accum_sub_flag == True:
-                print('adding precip for %s'%(snow_name))
+                # print('adding precip for %s'%(snow_name))
                 for pfile in ppt_files:
                     ppt = ipw.IPW(pfile)
                     pre = ppt.bands[0].data
                     percent_snow = ppt.bands[1].data
                     rain_hrly = rain_hrly + np.multiply(pre,(1-percent_snow))
                     precip_hrly = precip_hrly + pre
-            else:
-                print(pFlag,accum_sub_flag)
             
             rain_bg = rain_bg + rain_hrly 
             precip = precip + precip_hrly    
