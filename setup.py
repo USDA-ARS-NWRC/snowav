@@ -28,7 +28,10 @@ setup(
     author="Mark Robertson",
     author_email='mark.robertson@ars.usda.gov',
     url='https://github.com/roberton-mark/SNOWAV',
-    packages=['snowav'
+    packages=['snowav',
+                'snowav.plotting',
+                'snowav.report',
+                'snowav.methods'
 			  ],
 
 
