@@ -85,7 +85,7 @@ def swe_change(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
 
-    wid = np.linspace(-0.3,0.3,len(sumorder))
+    wid = np.linspace(-0.25,0.25,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         # iters = 0
@@ -126,7 +126,7 @@ def swe_change(snow):
             ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
     if snow.units == 'KAF':
-        ax1.set_ylabel(r'$\delta$[in] - per elevation band')
+        ax1.set_ylabel(r'$\Delta$[in] - per elevation band')
         ax1.set_xlabel('elevation [ft]')
         ax1.axes.set_title('Change in SWE')
 
