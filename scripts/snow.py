@@ -24,6 +24,7 @@ def run(config_file):
         snowav.plotting.current_image.current_image(snow)
         snowav.plotting.state_by_elev.state_by_elev(snow)
         snowav.plotting.image_change.image_change(snow)
+        snowav.plotting.swe_change.swe_change(snow)
         snowav.plotting.basin_total.basin_total(snow)
         snowav.plotting.pixel_swe.pixel_swe(snow)
         snowav.plotting.density.density(snow)
