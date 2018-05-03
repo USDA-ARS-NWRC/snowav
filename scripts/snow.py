@@ -11,14 +11,14 @@ def run(config_file):
     snow = snowav.plotting.framework.SNOWAV(config_file)
 
     if not hasattr(snow,'error'):
-        
+
         # Make all the calculations
         snow.process()
-        
+
         # Save processed variables to netcdf if desired
         if snow.nc_flag == True:
             snowav.methods.output_nc.output_nc(snow)
-    
+
         # Plots
         snowav.plotting.accumulated.accumulated(snow)
         snowav.plotting.current_image.current_image(snow)
@@ -29,7 +29,7 @@ def run(config_file):
         snowav.plotting.density.density(snow)
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
-    
+
         # Generate report if desired
         if snow.report_flag == True:
             snowav.report.report.report(snow)

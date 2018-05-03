@@ -477,6 +477,7 @@ class SNOWAV(object):
         state_mswe_byelev = copy.deepcopy(accum_byelev)
         depth_mdep_byelev = copy.deepcopy(accum_byelev)
         delta_state_byelev = copy.deepcopy(accum_byelev)
+        delta_swe_byelev = copy.deepcopy(accum_byelev)
         melt = copy.deepcopy(accum_byelev)
         nonmelt = copy.deepcopy(accum_byelev)
         snowmelt_byelev = copy.deepcopy(accum_byelev)
@@ -699,10 +700,13 @@ class SNOWAV(object):
                                                 depth_mdep_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
+                    delta_swe_byelev.loc[b,name] = np.nanmean(
+                                                delta_state_byelev_mask[ind])
                 else:
                     state_mswe_byelev.loc[b,name] = np.nan
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
+                    delta_swe_byelev.loc[b,name] = np.nan
 
             self.masks[name]['SWE'] = ( (melt[name].sum() + nonmelt[name].sum())
                                        * self.conversion_factor )
@@ -741,6 +745,8 @@ class SNOWAV(object):
         # Change, by elevation
         self.delta_state_byelev = np.multiply(delta_state_byelev,
                                               self.conversion_factor)
+        self.delta_swe_byelev = np.multiply(delta_swe_byelev,
+                                              self.depth_factor)                                         
 
         # At first time step, spatial
         self.pstate = np.multiply(pstate,self.conversion_factor)
