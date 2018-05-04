@@ -34,7 +34,7 @@ def run(config_file):
         snow.write_summary('state_summary')
 
         # Generate report if desired
-        if snow.report_flag == 'True':
+        if snow.report_flag == True:
             snowav.report.report.report(snow)
 
 if __name__ == '__main__':

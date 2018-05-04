@@ -227,7 +227,7 @@ class SNOWAV(object):
             ####################################################
             #          Report                                  #
             ####################################################
-            self.report_flag = cfg.get('Report','report')
+            self.report_flag = cfg.getboolean('Report','report')
             self.env_path = cfg.get('Report','env_path')
             self.tex_file = cfg.get('Report','tex_file')
             self.rep_path = cfg.get('Report','rep_path')
