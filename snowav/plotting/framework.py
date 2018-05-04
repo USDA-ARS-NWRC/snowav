@@ -983,7 +983,7 @@ class SNOWAV(object):
         print('saving figure to %smean_detail%s.png'%(self.figs_path,self.name_append))
         plt.savefig('%smean_detail%s.png'%(self.figs_path,self.name_append))
 
-    def write_summary(self,df):
+    def write_summary(snow,df):
 
         # df          = 'accum_byelev'
 
@@ -994,9 +994,9 @@ class SNOWAV(object):
             print('df needs to be one of: %s'%(dataframes))
             # break
 
-        print('Writing summary file to %s%s_summary.csv'%(self.figs_path,df))
+        print('Writing summary file to %s%s%s.csv'%(snow.figs_path,df,snow.name_append))
 
         if df == 'state_summary':
-            self.state_summary.to_csv('%s%s_summary.csv'%(self.figs_path,df))
+            snow.state_summary.to_csv('%s%s%s.csv'%(snow.figs_path,df,snow.name_append))
         if df == 'accum_summary':
-            self.accum_summary.to_csv('%s%s_summary.csv'%(self.figs_path,df))
+            snow.accum_summary.to_csv('%s%s%s.csv'%(snow.figs_path,df,snow.name_append))

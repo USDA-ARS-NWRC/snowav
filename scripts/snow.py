@@ -7,7 +7,7 @@ def run(config_file):
 
     # config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/snowav/config/snowav_brb_wy2018.ini '
     # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_devel.txt'
-    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_devel.txt'
+    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018.txt'
     snow = snowav.plotting.framework.SNOWAV(config_file)
 
     if not hasattr(snow,'error'):
@@ -30,6 +30,8 @@ def run(config_file):
         snowav.plotting.density.density(snow)
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
+        snow.write_summary('accum_summary')
+        snow.write_summary('state_summary')
 
         # Generate report if desired
         if snow.report_flag == 'True':
