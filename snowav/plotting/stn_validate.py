@@ -39,15 +39,15 @@ def stn_validate(snow):
     
     meta_sno = pd.read_sql(qry, cnx)
     meta_sno.index = meta_sno['primary_id']
-    swe_meas    = pd.DataFrame(index = pd.date_range(datetime(2017,10,1), 
+    swe_meas    = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1), 
                                                      snow.dateTo, 
                                                      freq='D'),columns = stns)  
-    swe_mod     = pd.DataFrame(index = pd.date_range(datetime(2017,10,1),
+    swe_mod     = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
                                                      snow.dateTo, 
                                                      freq='D'),columns = stns)   
     tbl         = 'tbl_level1'
     var         = 'snow_water_equiv'
-    st_time     = '2017-10-1 00:00:00'
+    st_time     = '%s-10-1 00:00:00'%(str(snow.wy - 1))
     end_time    = snow.dateTo.date().strftime("%Y-%-m-%-d")
     
     # Get Snotel station results
@@ -65,15 +65,16 @@ def stn_validate(snow):
         dind = pd.date_range(st_time,end_time,freq='D')
         swe_meas[stn] = data.reindex(dind)
         
-    if snow.basin == 'TUOL':
-        swe_meas.TIOC1 = swe_meas.TIOC1 - 300  
-        
-    if 'AGP' in swe_meas:
-        swe_meas.AGP = swe_meas.AGP - 40   
-    if 'VLC' in swe_meas:
-        swe_meas.VLC = swe_meas.VLC + 250  
-    if 'UBC' in swe_meas:
-        swe_meas.UBC = swe_meas.UBC - 50      
+    if snow.wy == 2017:
+    
+        if 'TIOC1' in swe_meas:
+            swe_meas.TIOC1 = swe_meas.TIOC1 - 300       
+        if 'AGP' in swe_meas:
+            swe_meas.AGP = swe_meas.AGP - 40   
+        if 'VLC' in swe_meas:
+            swe_meas.VLC = swe_meas.VLC + 250  
+        if 'UBC' in swe_meas:
+            swe_meas.UBC = swe_meas.UBC - 50      
     
     sns.set_style('darkgrid')
     sns.set_context('notebook')
@@ -128,7 +129,7 @@ def stn_validate(snow):
             axs[iters].plot(swe_meas[stn],'k',label='measured')
             axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')    
             axs[iters].set_title(lbls[iters])
-            axs[iters].set_xlim((datetime(2017, 10, 1),snow.dateTo))
+            axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.dateTo))
         
         if iters == 1 or iters == 3 or iters == 5:
             axs[iters].yaxis.tick_right()
