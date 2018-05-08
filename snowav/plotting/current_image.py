@@ -117,10 +117,11 @@ def current_image(snow):
     patches = [mpatches.Patch(color='grey', label='snow free')]
     if snow.basin == 'SJ':
         ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
+    else:
+        ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. ) 
+                  
     if snow.basin == 'RCEW':
         ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )            
-    else:
-        ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
     
     print('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sresults%s.png'%(snow.figs_path,snow.name_append))  
