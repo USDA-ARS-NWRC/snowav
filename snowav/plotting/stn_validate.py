@@ -44,7 +44,8 @@ def stn_validate(snow):
                                                      freq='D'),columns = stns)  
     swe_mod     = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
                                                      snow.dateTo, 
-                                                     freq='D'),columns = stns)   
+                                                     freq='D'),columns = stns)
+       
     tbl         = 'tbl_level1'
     var         = 'snow_water_equiv'
     st_time     = '%s-10-1 00:00:00'%(str(snow.wy - 1))
@@ -87,13 +88,21 @@ def stn_validate(snow):
     
     # First need to combine all nc files... 
     px = (1,1,1,0,0,0,-1,-1,-1)
-    py = (1,0,-1,1,0,-1,1,0,-1)       
+    py = (1,0,-1,1,0,-1,1,0,-1)  
+    # stnpix = []
+    # for n,m in zip(px,py): 
+    #     stnpix = stnpix + ['%s,%s'%(str(m),str(n))]      
+           
     for iters,stn in enumerate(stns):
         # iters = 0
-        # stn = stns[iters]
+        # stn = stns[iters]     
+        
+        # swe_mod_pix = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
+        #                                 snow.dateTo, freq='D'), columns = stnpix)    
+        
         for n,m in zip(px,py): 
             # n = 0
-            # m = 0
+            # m = 0         
             iswe = snow.offset
     
             for rname in rundirs:
@@ -107,23 +116,23 @@ def stn_validate(snow):
                 ncyvec  = ncf.variables['y'][:]                     # get y vec                      
                 ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
                 # ll      = utm.from_latlon(37.641922,-119.055443)
-                # ll      = utm.from_latlon(37.655201,-119.060783)
     
                 xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
                 yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
-                # print(xind,yind)
                 swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)  # pull out closest model pixel data
          
                 try:
                     swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values  
+                    # swe_mod_pix.loc[iswe:(iswe + len(swe.values)),'%s,%s'%(n,m)] = swe.values
                 except:
                     sv = swe_mod[stn].values
                     lx = len(sv[iswe::])
                     swe_mod.loc[iswe:(iswe + lx),stn] = swe.values[0:lx]
+                    # swe_mod_pix.loc[iswe:(iswe + lx),'%s,%s'%(n,m)] = swe.values[0:lx]
                     
                 ncf.close()   
                 iswe = iswe + len(swe.values)
-                
+
             z = snow.dem[yind,xind]    
            
             axs[iters].plot(swe_meas[stn],'k',label='measured')
@@ -138,7 +147,12 @@ def stn_validate(snow):
             for tick in axs[iters].get_xticklabels():
                 tick.set_rotation(30) 
         else:
-            axs[iters].set_xticklabels('')         
+            axs[iters].set_xticklabels('')  
+            
+        # swe_mod_pix = swe_mod_pix.astype(float).round(decimals=1)
+        # swe_mod_pix.to_csv('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2018_swe_mm_%s.csv'%(stn))
+        print('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2017_swe_mm_%s.csv'%(stn))
+                           
          
     # Plot
     maxm = np.nanmax(swe_meas)
