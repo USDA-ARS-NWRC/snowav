@@ -14,66 +14,276 @@ import snowav.methods.wyhr_to_datetime as wy
 
 class SNOWAV(object):
 
-    def __init__(self,config_file):
+    def __init__(self,config_file = None,myawsm = None):
         '''
         Notes:
 
         '''
+        if config_file != None:
 
-        try:
-            if not os.path.isfile(config_file):
-                print('Config file does not exist!')
-                self.error = True
-                return
+            try:
+                if not os.path.isfile(config_file):
+                    print('Config file does not exist!')
+                    self.error = True
+                    return
 
-            print('Reading the config file...')
-            cfg = cfp.ConfigParser()
-            cfg.read(config_file)
+                print('Reading the config file...')
+                cfg = cfp.ConfigParser()
+                cfg.read(config_file)
+
+                ####################################################
+                #             Basin section                        #
+                ####################################################
+                self.basin = cfg.get('Basin','basin')
+                self.save_path = cfg.get('Basin','save_path')
+                self.name_append = cfg.get('Basin','name_append')
+                self.wy = int(cfg.get('Basin','wy'))
+                self.units = cfg.get('Basin','units')
+
+                ####################################################
+                #           Outputs section                        #
+                ####################################################
+                # Default for snow.0000 file is 2 (SWE)
+                if (cfg.has_option('Outputs','snowband')):
+                    self.snowband = int(cfg.get('Outputs','snowband'))
+                else:
+                    self.snowband = 2
+
+                # Default for em.0000 is 8 (SWI)
+                if (cfg.has_option('Outputs','emband')):
+                    self.snowband = int(cfg.get('Outputs','emband'))
+                else:
+                    self.emband = 8
+
+                # Default rounding decimals for volume and depth
+                if (cfg.has_option('Outputs','decimals')):
+                    self.dplcs = int(cfg.get('Outputs','decimals'))
+                else:
+                    self.dplcs = 1
+
+                # If psnowFile and csnowFile are specified, use those,
+                # otherwise they will get defined as the first and last
+                # snow.XXXX file once [Runs] has been compiled
+                if (cfg.has_option('Outputs','psnowFile') and
+                    cfg.has_option('Outputs','csnowFile')):
+                    self.psnowFile = cfg.get('Outputs','psnowFile')
+                    self.csnowFile = cfg.get('Outputs','csnowFile')
+                    self.cemFile = self.csnowFile.replace('snow.','em.')
+
+                ####################################################
+                #           Runs                                   #
+                ####################################################
+                # Collect all the run directories
+                self.run_dirs = list(cfg.items('Runs'))
+
+                # If no psnowFile and csnowFile specified, use first and last
+                if not cfg.has_option('Outputs','csnowFile'):
+                    print('Using first and last outputs as start and end times.')
+                    self.psnowFile = self.snow_files[0]
+                    self.csnowFile = self.snow_files[len(self.snow_files)-1]
+                    self.cemFile = self.em_files[len(self.em_files)-1]
+
+                # Check to see if they exist
+                if not (os.path.isfile(self.psnowFile)):
+                    print('psnowFile %s does not exist!'%(self.psnowFile))
+                    self.error = True
+                    return
+
+                if not (os.path.isfile(self.csnowFile)):
+                    print('csnowFile does not exist!')
+                    self.error = True
+                    return
+
+                ####################################################
+                #           Validate                               #
+                ####################################################
+                if (cfg.has_option('Validate','stations')
+                    and (cfg.has_option('Validate','labels'))
+                    and (cfg.has_option('Validate','client'))
+                    ):
+                    self.val_stns = cfg.get('Validate','stations').split(',')
+                    self.val_lbls = cfg.get('Validate','labels').split(',')
+                    self.val_client = cfg.get('Validate','client')
+                    self.valid_flag = True
+                else:
+                    self.valid_flag = False
+                    print('No validation stations listed, will not generate figure')
+
+                # This is being used to combine 2017 HRRR data
+                if cfg.has_option('Validate','offset'):
+                    self.offset = int(cfg.get('Validate','offset'))
+                else:
+                    self.offset = 0
+                ####################################################
+                #           Accumulated                            #
+                ####################################################
+                # Right now we aren't using these because matplotlib and multiple
+                # colormaps don't get along well with clims...
+                # self.acc_clmin = cfg.get('Accumulated','clmin')
+                # self.acc_clmax = cfg.get('Accumulated','clmax')
+                if (cfg.has_option('Accumulated','ymin')
+                    and cfg.has_option('Accumulated','ymax')):
+
+                    self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
+                                      int(cfg.get('Accumulated','ymax')))
+
+                if cfg.has_option('Accumulated','save_fig'):
+                    self.acc_flag = cfg.get('Accumulated','save_fig')
+                else:
+                    self.acc_flag = True
+
+                if cfg.has_option('Accumulated','min_swi'):
+                    self.min_swi = cfg.get('Accumulated','min_swi')
+
+
+                ####################################################
+                #           Elevation                              #
+                ####################################################
+                if (cfg.has_option('Elevation','ymin')
+                    and cfg.has_option('Elevation','ymax')):
+                    self.elv_ylims = (int(cfg.get('Elevation','ymin')),
+                                     int(cfg.get('Elevation','ymax')))
+
+                if cfg.has_option('Elevation','save_fig'):
+                    self.elv_flag = cfg.get('Elevation','save_fig')
+                else:
+                    self.elv_flag = True
+
+                ####################################################
+                #           Changes                                #
+                ####################################################
+                if ((cfg.has_option('Changes','clmin'))
+                    and (cfg.has_option('Changes','clmax'))):
+                    self.ch_clmin = cfg.get('Changes','clmin')
+                    self.ch_clmax = cfg.get('Changes','clmax')
+                else:
+                    self.ch_clmin = 0.01
+                    self.ch_clmax = 99.9
+
+                if (cfg.has_option('Changes','clminabs')
+                    and cfg.has_option('Changes','clmaxabs')):
+                    self.ch_clminabs = int(cfg.get('Changes','clminabs'))
+                    self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
+                if (cfg.has_option('Changes','ymin')
+                    and cfg.has_option('Changes','ymax')):
+                    self.ch_ylims = (int(cfg.get('Changes','ymin')),
+                                     int(cfg.get('Changes','ymax')))
+
+                ####################################################
+                #           Results                                #
+                ####################################################
+                if ((cfg.has_option('Results','clmin'))
+                    and (cfg.has_option('Results','clmax'))):
+                    self.ch_clmin = cfg.get('Results','clmin')
+                    self.ch_clmax = cfg.get('Results','clmax')
+                else:
+                    self.ch_clmin = 0.01
+                    self.ch_clmax = 99.9
+
+                ####################################################
+                #           Basin Total                            #
+                ####################################################
+
+
+                if cfg.has_option('Basin Total','summary_swe'):
+                    self.summary_swe = cfg.get('Basin Total','summary_swe')
+                    self.summary_swi = cfg.get('Basin Total','summary_swi')
+                    if not (os.path.isfile(self.summary_swe) and
+                            os.path.isfile(self.summary_swi) ):
+                        print('Failed reading in Basin Total section!')
+                        self.error = True
+                        return
+
+                #
+                if cfg.has_option('Basin Total','netcdf'):
+                    self.ncvars = cfg.get('Basin Total','netcdf').split(',')
+                    self.nc_flag = True
+                else:
+                    self.nc_flag = False
+
+                ####################################################
+                #           DEM                                    #
+                ####################################################
+                self.demPath = cfg.get('DEM','demPath')
+                self.total = cfg.get('DEM','total')
+
+                ####################################################
+                #          Plots                                   #
+                ####################################################
+                self.figsize = (int(cfg.get('Plots','fig_length')),
+                                int(cfg.get('Plots','fig_height')))
+                self.dpi = int(cfg.get('Plots','dpi'))
+                self.barcolors = ['xkcd:true green','palegreen',
+                                  'xkcd:dusty green','xkcd:vibrant green','red']
+
+                ####################################################
+                #          Report                                  #
+                ####################################################
+                self.report_flag = cfg.getboolean('Report','report')
+                self.env_path = cfg.get('Report','env_path')
+                self.tex_file = cfg.get('Report','tex_file')
+                self.rep_path = cfg.get('Report','rep_path')
+                self.templ_path = cfg.get('Report','templ_path')
+
+                if cfg.has_option('Report','orig_date'):
+                    self.orig_date = cfg.get('Report','orig_date')
+                if cfg.has_option('Report','report_name_append'):
+                    self.rep_append = cfg.get('Report','report_name_append')
+
+                # These will later get appended with self.dateTo
+                self.report_name = cfg.get('Report','report_name')
+                self.rep_title = cfg.get('Report','report_title')
+
+                if not (os.path.isfile(self.templ_path + self.tex_file)):
+                    print('Error reading in Reports section!')
+                    self.error = True
+                    return
+
+                # Strings for the report
+                if self.units == 'KAF':
+                    self.reportunits = 'KAF'
+                if self.units == 'SI':
+                    self.reportunits = 'km^3'
+
+                ####################################################
+                # History forecast
+                ####################################################
+                if cfg.has_option('Hx Forecast','adj_hours'):
+                    self.adj_hours = int(cfg.get('Hx Forecast','adj_hours'))
+
+            except:
+                print('Error reading config file.')
 
             ####################################################
-            #             Basin section                        #
-            ####################################################
-            self.basin = cfg.get('Basin','basin')
-            self.save_path = cfg.get('Basin','save_path')
-            self.name_append = cfg.get('Basin','name_append')
-            self.wy = int(cfg.get('Basin','wy'))
-            self.units = cfg.get('Basin','units')
+            # This stuff needs doing for either config_file or myawsm
+
+            self.subbasin1 = cfg.get('DEM','subbasin1')
+            self.subbasin2 = cfg.get('DEM','subbasin2')
+            self.subbasin3 = cfg.get('DEM','subbasin3')
+            self.total_lbl = cfg.get('DEM','total_lbl')
+            self.sub1_lbl = cfg.get('DEM','sub1_lbl')
+            self.sub2_lbl = cfg.get('DEM','sub2_lbl')
+            self.sub3_lbl = cfg.get('DEM','sub3_lbl')
+
+            self.plotorder = [self.total_lbl, self.sub1_lbl,
+                                 self.sub2_lbl, self.sub3_lbl]
+            self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]
+            maskpaths = [self.total, self.subbasin1,
+                            self.subbasin2,self.subbasin3 ]
+
+            # Add if necessary - need to generalize all this and change
+            # in the config file!
+            if cfg.has_option('DEM','sub4_lbl'):
+                self.sub4_lbl = cfg.get('DEM','sub4_lbl')
+                self.subbasin4 = cfg.get('DEM','subbasin4')
+                self.plotorder = self.plotorder + [self.sub4_lbl]
+                self.suborder = self.suborder + [self.sub4_lbl]
+                maskpaths = maskpaths + [self.subbasin4]
 
             ####################################################
-            #           Outputs section                        #
-            ####################################################
-            # Default for snow.0000 file is 2 (SWE)
-            if (cfg.has_option('Outputs','snowband')):
-                self.snowband = int(cfg.get('Outputs','snowband'))
-            else:
-                self.snowband = 2
+            # Stuff that doesn't need reading in
 
-            # Default for em.0000 is 8 (SWI)
-            if (cfg.has_option('Outputs','emband')):
-                self.snowband = int(cfg.get('Outputs','emband'))
-            else:
-                self.emband = 8
-
-            # Default rounding decimals for volume and depth
-            if (cfg.has_option('Outputs','decimals')):
-                self.dplcs = int(cfg.get('Outputs','decimals'))
-            else:
-                self.dplcs = 1
-
-            # If psnowFile and csnowFile are specified, use those,
-            # otherwise they will get defined as the first and last
-            # snow.XXXX file once [Runs] has been compiled
-            if (cfg.has_option('Outputs','psnowFile') and
-                cfg.has_option('Outputs','csnowFile')):
-                self.psnowFile = cfg.get('Outputs','psnowFile')
-                self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = self.csnowFile.replace('snow.','em.')
-
-            ####################################################
-            #           Runs                                   #
-            ####################################################
-            # Collect all the run directories
-            self.run_dirs = list(cfg.items('Runs'))
+            # Collect the run directories
             self.snow_files = []
             self.em_files = []
 
@@ -93,183 +303,6 @@ class SNOWAV(object):
 
             while '*em.nc' in self.em_files:
                 self.em_files.remove('*em.nc')
-
-            # If no psnowFile and csnowFile specified, use first and last
-            if not cfg.has_option('Outputs','csnowFile'):
-                print('Using first and last outputs as start and end times.')
-                self.psnowFile = self.snow_files[0]
-                self.csnowFile = self.snow_files[len(self.snow_files)-1]
-                self.cemFile = self.em_files[len(self.em_files)-1]
-
-            # Check to see if they exist
-            if not (os.path.isfile(self.psnowFile)):
-                print('psnowFile %s does not exist!'%(self.psnowFile))
-                self.error = True
-                return
-
-            if not (os.path.isfile(self.csnowFile)):
-                print('csnowFile does not exist!')
-                self.error = True
-                return
-
-            ####################################################
-            #           Validate                               #
-            ####################################################
-            if (cfg.has_option('Validate','stations')
-                and (cfg.has_option('Validate','labels'))
-                and (cfg.has_option('Validate','client'))
-                ):
-                self.val_stns = cfg.get('Validate','stations').split(',')
-                self.val_lbls = cfg.get('Validate','labels').split(',')
-                self.val_client = cfg.get('Validate','client')
-                self.valid_flag = True
-            else:
-                self.valid_flag = False
-                print('No validation stations listed, will not generate figure')
-
-            # This is being used to combine 2017 HRRR data
-            if cfg.has_option('Validate','offset'):
-                self.offset = int(cfg.get('Validate','offset'))
-            else:
-                self.offset = 0
-            ####################################################
-            #           Accumulated                            #
-            ####################################################
-            # Right now we aren't using these because matplotlib and multiple
-            # colormaps don't get along well with clims...
-            # self.acc_clmin = cfg.get('Accumulated','clmin')
-            # self.acc_clmax = cfg.get('Accumulated','clmax')
-            if (cfg.has_option('Accumulated','ymin')
-                and cfg.has_option('Accumulated','ymax')):
-
-                self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
-                                  int(cfg.get('Accumulated','ymax')))
-
-            if cfg.has_option('Accumulated','save_fig'):
-                self.acc_flag = cfg.get('Accumulated','save_fig')
-            else:
-                self.acc_flag = True
-
-            if cfg.has_option('Accumulated','min_swi'):
-                self.min_swi = cfg.get('Accumulated','min_swi')
-
-
-            ####################################################
-            #           Elevation                              #
-            ####################################################
-            if (cfg.has_option('Elevation','ymin')
-                and cfg.has_option('Elevation','ymax')):
-                self.elv_ylims = (int(cfg.get('Elevation','ymin')),
-                                 int(cfg.get('Elevation','ymax')))
-
-            if cfg.has_option('Elevation','save_fig'):
-                self.elv_flag = cfg.get('Elevation','save_fig')
-            else:
-                self.elv_flag = True
-
-            ####################################################
-            #           Changes                                #
-            ####################################################
-            if ((cfg.has_option('Changes','clmin'))
-                and (cfg.has_option('Changes','clmax'))):
-                self.ch_clmin = cfg.get('Changes','clmin')
-                self.ch_clmax = cfg.get('Changes','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            if (cfg.has_option('Changes','clminabs')
-                and cfg.has_option('Changes','clmaxabs')):
-                self.ch_clminabs = int(cfg.get('Changes','clminabs'))
-                self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
-            if (cfg.has_option('Changes','ymin')
-                and cfg.has_option('Changes','ymax')):
-                self.ch_ylims = (int(cfg.get('Changes','ymin')),
-                                 int(cfg.get('Changes','ymax')))
-
-            ####################################################
-            #           Results                                #
-            ####################################################
-            if ((cfg.has_option('Results','clmin'))
-                and (cfg.has_option('Results','clmax'))):
-                self.ch_clmin = cfg.get('Results','clmin')
-                self.ch_clmax = cfg.get('Results','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            ####################################################
-            #           Basin Total                            #
-            ####################################################
-
-
-            if cfg.has_option('Basin Total','summary_swe'):
-                self.summary_swe = cfg.get('Basin Total','summary_swe')
-                self.summary_swi = cfg.get('Basin Total','summary_swi')
-                if not (os.path.isfile(self.summary_swe) and
-                        os.path.isfile(self.summary_swi) ):
-                    print('Failed reading in Basin Total section!')
-                    self.error = True
-                    return
-
-            #
-            if cfg.has_option('Basin Total','netcdf'):
-                self.ncvars = cfg.get('Basin Total','netcdf').split(',')
-                self.nc_flag = True
-            else:
-                self.nc_flag = False
-
-            ####################################################
-            #           DEM                                    #
-            ####################################################
-            self.demPath = cfg.get('DEM','demPath')
-            self.total = cfg.get('DEM','total')
-
-            ####################################################
-            #          Plots                                   #
-            ####################################################
-            self.figsize = (int(cfg.get('Plots','fig_length')),
-                            int(cfg.get('Plots','fig_height')))
-            self.dpi = int(cfg.get('Plots','dpi'))
-            self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']
-
-            ####################################################
-            #          Report                                  #
-            ####################################################
-            self.report_flag = cfg.getboolean('Report','report')
-            self.env_path = cfg.get('Report','env_path')
-            self.tex_file = cfg.get('Report','tex_file')
-            self.rep_path = cfg.get('Report','rep_path')
-            self.templ_path = cfg.get('Report','templ_path')
-
-            if cfg.has_option('Report','orig_date'):
-                self.orig_date = cfg.get('Report','orig_date')
-            if cfg.has_option('Report','report_name_append'):
-                self.rep_append = cfg.get('Report','report_name_append')
-
-            # These will later get appended with self.dateTo
-            self.report_name = cfg.get('Report','report_name')
-            self.rep_title = cfg.get('Report','report_title')
-
-            if not (os.path.isfile(self.templ_path + self.tex_file)):
-                print('Error reading in Reports section!')
-                self.error = True
-                return
-
-            # Strings for the report
-            if self.units == 'KAF':
-                self.reportunits = 'KAF'
-            if self.units == 'SI':
-                self.reportunits = 'km^3'
-
-            ####################################################
-            # History forecast
-            ####################################################
-            if cfg.has_option('Hx Forecast','adj_hours'):
-                self.adj_hours = int(cfg.get('Hx Forecast','adj_hours'))
-
-            ####################################################
 
             # Get the DEM
             # There are different formats, this will get fixed once we
@@ -348,29 +381,6 @@ class SNOWAV(object):
             self.xlims = (0,len(self.edges))
 
             try:
-                self.subbasin1 = cfg.get('DEM','subbasin1')
-                self.subbasin2 = cfg.get('DEM','subbasin2')
-                self.subbasin3 = cfg.get('DEM','subbasin3')
-                self.total_lbl = cfg.get('DEM','total_lbl')
-                self.sub1_lbl = cfg.get('DEM','sub1_lbl')
-                self.sub2_lbl = cfg.get('DEM','sub2_lbl')
-                self.sub3_lbl = cfg.get('DEM','sub3_lbl')
-
-                self.plotorder = [self.total_lbl, self.sub1_lbl,
-                                  self.sub2_lbl, self.sub3_lbl]
-                self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]
-                maskpaths = [self.total, self.subbasin1,
-                             self.subbasin2,self.subbasin3 ]
-
-                # Add if necessary - need to generalize all this and change
-                # in the config file!
-                if cfg.has_option('DEM','sub4_lbl'):
-                    self.sub4_lbl = cfg.get('DEM','sub4_lbl')
-                    self.subbasin4 = cfg.get('DEM','subbasin4')
-                    self.plotorder = self.plotorder + [self.sub4_lbl]
-                    self.suborder = self.suborder + [self.sub4_lbl]
-                    maskpaths = maskpaths + [self.subbasin4]
-
                 # Compile the masks
                 # HACK FOR SJ SUB4!
                 self.masks = dict()
@@ -434,9 +444,6 @@ class SNOWAV(object):
             # If it doesn't already exist, make it
             if not os.path.isfile(self.config_copy):
                 copyfile(config_file,self.config_copy)
-
-        except:
-            print('Error reading config file.')
 
     def process(self,*args):
         '''
