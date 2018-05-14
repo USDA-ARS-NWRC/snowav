@@ -190,8 +190,13 @@ class SNOWAV(object):
             ####################################################
             #           Results                                #
             ####################################################
-            self.r_clmin = cfg.get('Results','clmin')
-            self.r_clmax = cfg.get('Results','clmax')
+            if ((cfg.has_option('Results','clmin'))
+                and (cfg.has_option('Results','clmax'))):
+                self.ch_clmin = cfg.get('Results','clmin')
+                self.ch_clmax = cfg.get('Results','clmax')
+            else:
+                self.ch_clmin = 0.01
+                self.ch_clmax = 99.9
 
             ####################################################
             #           Basin Total                            #
