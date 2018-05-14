@@ -170,8 +170,13 @@ class SNOWAV(object):
             ####################################################
             #           Changes                                #
             ####################################################
-            self.ch_clmin = cfg.get('Changes','clmin')
-            self.ch_clmax = cfg.get('Changes','clmax')
+            if ((cfg.has_option('Changes','clmin'))
+                and (cfg.has_option('Changes','clmax'))):
+                self.ch_clmin = cfg.get('Changes','clmin')
+                self.ch_clmax = cfg.get('Changes','clmax')
+            else:
+                self.ch_clmin = 0.01
+                self.ch_clmax = 99.9
 
             if (cfg.has_option('Changes','clminabs')
                 and cfg.has_option('Changes','clmaxabs')):
@@ -746,7 +751,7 @@ class SNOWAV(object):
         self.delta_state_byelev = np.multiply(delta_state_byelev,
                                               self.conversion_factor)
         self.delta_swe_byelev = np.multiply(delta_swe_byelev,
-                                              self.depth_factor)                                         
+                                              self.depth_factor)
 
         # At first time step, spatial
         self.pstate = np.multiply(pstate,self.conversion_factor)
