@@ -256,6 +256,7 @@ class SNOWAV(object):
 
             ####################################################
             # This stuff needs doing for either config_file or myawsm
+            # self.run_dirs = list(cfg.items('Runs'))
 
             self.subbasin1 = cfg.get('DEM','subbasin1')
             self.subbasin2 = cfg.get('DEM','subbasin2')
@@ -280,170 +281,178 @@ class SNOWAV(object):
                 self.suborder = self.suborder + [self.sub4_lbl]
                 maskpaths = maskpaths + [self.subbasin4]
 
-            ####################################################
-            # Stuff that doesn't need reading in
+        ####################################################
+        # Stuff that doesn't need reading in
+        self.run_dirs = []
+        for n in myawsm.config['runs']:
+            self.run_dirs = self.run_dirs + [myawsm.config['runs'][n]]
 
-            # Collect the run directories
-            self.snow_files = []
-            self.em_files = []
+        # Collect the run directories
+        self.snow_files = []
+        self.em_files = []
+        for rdir in self.run_dirs:
 
-            for rdir in self.run_dirs:
-
+            # different formats
+            if config_file != None:
                 run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
 
-                self.snow_files = (self.snow_files
-                                   + [value for value in run_files
-                                   if ( ('snow.' in value) and not ('.nc' in value))])
-                self.em_files = (self.em_files
-                                 + [value for value in run_files
-                                 if ( ('em.' in value) and not ('.nc' in value))])
+            else:
+                run_files = [rdir + s for s in sorted(os.listdir(rdir))]
 
-            while '*snow.nc' in self.snow_files:
-                self.snow_files.remove('*snow.nc')
+            self.snow_files = (self.snow_files
+                               + [value for value in run_files
+                               if ( ('snow.' in value) and not ('.nc' in value))])
+            self.em_files = (self.em_files
+                             + [value for value in run_files
+                             if ( ('em.' in value) and not ('.nc' in value))])
 
-            while '*em.nc' in self.em_files:
-                self.em_files.remove('*em.nc')
+        while '*snow.nc' in self.snow_files:
+            self.snow_files.remove('*snow.nc')
 
-            # Get the DEM
-            # There are different formats, this will get fixed once we
-            # start using netcdf
-            try:
-                self.dem = np.genfromtxt(self.demPath)
-            except:
-                self.dem = np.genfromtxt(self.demPath,skip_header = 6)
+        while '*em.nc' in self.em_files:
+            self.em_files.remove('*em.nc')
 
-            self.nrows = len(self.dem[:,0])
-            self.ncols = len(self.dem[0,:])
-            blank = np.zeros((self.nrows,self.ncols))
+        print(self.snow_files)
+        # Get the DEM
+        # There are different formats, this will get fixed once we
+        # start using netcdf
+        try:
+            self.dem = np.genfromtxt(self.demPath)
+        except:
+            self.dem = np.genfromtxt(self.demPath,skip_header = 6)
 
-            # Assign some basin-specific things
-            if self.basin == 'BRB':
-                self.pixel = 100
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500
-                    emax = 10500
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 800
-                    emax = 3200
-                    self.step = 250
-            if self.basin == 'TUOL':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 3000      # [ft]
-                    emax = 12000
-                    self.step   = 1000
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 3600
-                    self.step   = 500
-            if self.basin == 'SJ':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 1000      # [ft]
-                    emax  = 13000
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 300       # [m]
-                    emax = 4000
-                    self.step = 500
-            if self.basin == 'LAKES':
-                self.pixel = 50
-                sr = 0
-                self.imgx = (1200,1375)
-                self.imgy = (425,225)
-                if self.units == 'KAF':
-                    emin = 8000      # [ft]
-                    emax = 12500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 2400       # [m]
-                    emax = 3800
-                    self.step = 200
-            if self.basin == 'RCEW':
-                self.pixel = 50
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500      # [ft]
-                    emax = 7500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 2500
-                    self.step = 500
+        self.nrows = len(self.dem[:,0])
+        self.ncols = len(self.dem[0,:])
+        blank = np.zeros((self.nrows,self.ncols))
 
-            # This is for creating the elevation bins
-            self.edges = np.arange(emin,emax+self.step,self.step)
-            # Right now this is a placeholder, could edit by basin...
-            self.xlims = (0,len(self.edges))
-
-            try:
-                # Compile the masks
-                # HACK FOR SJ SUB4!
-                self.masks = dict()
-                for lbl,mask in zip(self.plotorder,maskpaths):
-                    if (self.basin == 'SJ' and lbl == self.sub4_lbl):
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=0),
-                                           'label': lbl}
-                    # hack
-                    else:
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=sr),
-                                           'label': lbl}
-            except:
-                print('Error creating mask dicts!')
-                self.error = True
-                return
-
-            # Do unit-specific things
+        # Assign some basin-specific things
+        if self.basin == 'BRB':
+            self.pixel = 100
+            sr = 0
             if self.units == 'KAF':
-                self.conversion_factor = ((self.pixel**2)
-                                         * 0.000000810713194*0.001) # [KAF]
-                self.depth_factor = 0.03937 # [inches]
-                self.dem = self.dem * 3.28 # [ft]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'in'
-                self.vollbl = 'KAF'
-                self.elevlbl = 'ft'
-
+                emin = 2500
+                emax = 10500
+                self.step = 1000
             if self.units == 'SI':
-                # [km^3]
-                self.conversion_factor = ((self.pixel**2)
-                                          * 0.000000810713194*1233.48/1e9)
-                self.depth_factor = 1 # [m]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'mm'
-                self.vollbl = '$km^3$'
-                self.elevlbl = 'm'
+                emin = 800
+                emax = 3200
+                self.step = 250
+        if self.basin == 'TUOL':
+            self.pixel = 50
+            sr = 6
+            if self.units == 'KAF':
+                emin = 3000      # [ft]
+                emax = 12000
+                self.step   = 1000
+            if self.units == 'SI':
+                emin = 800       # [m]
+                emax = 3600
+                self.step   = 500
+        if self.basin == 'SJ':
+            self.pixel = 50
+            sr = 6
+            if self.units == 'KAF':
+                emin = 1000      # [ft]
+                emax  = 13000
+                self.step = 1000
+            if self.units == 'SI':
+                emin = 300       # [m]
+                emax = 4000
+                self.step = 500
+        if self.basin == 'LAKES':
+            self.pixel = 50
+            sr = 0
+            self.imgx = (1200,1375)
+            self.imgy = (425,225)
+            if self.units == 'KAF':
+                emin = 8000      # [ft]
+                emax = 12500
+                self.step = 500
+            if self.units == 'SI':
+                emin = 2400       # [m]
+                emax = 3800
+                self.step = 200
+        if self.basin == 'RCEW':
+            self.pixel = 50
+            sr = 0
+            if self.units == 'KAF':
+                emin = 2500      # [ft]
+                emax = 7500
+                self.step = 500
+            if self.units == 'SI':
+                emin = 800       # [m]
+                emax = 2500
+                self.step = 500
 
-            # Copy the config file where figs will be saved
-            extf = os.path.splitext(os.path.split(config_file)[1])
-            path_shr = os.path.split(self.psnowFile)
-            path_ehr = os.path.split(self.csnowFile)
-            ext_shr = os.path.splitext(path_shr[1])
-            ext_ehr = os.path.splitext(path_ehr[1])
-            self.figs_path = (self.save_path
-                             + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+        # This is for creating the elevation bins
+        self.edges = np.arange(emin,emax+self.step,self.step)
+        # Right now this is a placeholder, could edit by basin...
+        self.xlims = (0,len(self.edges))
 
-            # Check run dates, and make a new folder if necessary
-            if not os.path.exists(self.figs_path):
-                os.makedirs(self.figs_path)
+        try:
+            # Compile the masks
+            # HACK FOR SJ SUB4!
+            self.masks = dict()
+            for lbl,mask in zip(self.plotorder,maskpaths):
+                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
+                    self.masks[lbl] = {'border': blank,
+                                       'mask': np.genfromtxt(mask,skip_header=0),
+                                       'label': lbl}
+                # hack
+                else:
+                    self.masks[lbl] = {'border': blank,
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'label': lbl}
+        except:
+            print('Error creating mask dicts!')
+            self.error = True
+            return
 
-            # Only need to store this name if we decide to
-            # write more to the copied config file...
-            self.config_copy = (self.figs_path
-                                + extf[0]
-                                + self.name_append
-                                + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
-                                + extf[1])
+        # Do unit-specific things
+        if self.units == 'KAF':
+            self.conversion_factor = ((self.pixel**2)
+                                     * 0.000000810713194*0.001) # [KAF]
+            self.depth_factor = 0.03937 # [inches]
+            self.dem = self.dem * 3.28 # [ft]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'in'
+            self.vollbl = 'KAF'
+            self.elevlbl = 'ft'
 
-            # If it doesn't already exist, make it
-            if not os.path.isfile(self.config_copy):
-                copyfile(config_file,self.config_copy)
+        if self.units == 'SI':
+            # [km^3]
+            self.conversion_factor = ((self.pixel**2)
+                                      * 0.000000810713194*1233.48/1e9)
+            self.depth_factor = 1 # [m]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'mm'
+            self.vollbl = '$km^3$'
+            self.elevlbl = 'm'
+
+        # Copy the config file where figs will be saved
+        extf = os.path.splitext(os.path.split(config_file)[1])
+        path_shr = os.path.split(self.psnowFile)
+        path_ehr = os.path.split(self.csnowFile)
+        ext_shr = os.path.splitext(path_shr[1])
+        ext_ehr = os.path.splitext(path_ehr[1])
+        self.figs_path = (self.save_path
+                         + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+
+        # Check run dates, and make a new folder if necessary
+        if not os.path.exists(self.figs_path):
+            os.makedirs(self.figs_path)
+
+        # Only need to store this name if we decide to
+        # write more to the copied config file...
+        self.config_copy = (self.figs_path
+                            + extf[0]
+                            + self.name_append
+                            + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
+                            + extf[1])
+
+        # If it doesn't already exist, make it
+        if not os.path.isfile(self.config_copy):
+            copyfile(config_file,self.config_copy)
 
     def process(self,*args):
         '''
