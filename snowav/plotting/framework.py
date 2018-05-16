@@ -283,9 +283,10 @@ class SNOWAV(object):
 
         ####################################################
         # Stuff that doesn't need reading in
-        self.run_dirs = []
-        for n in myawsm.config['runs']:
-            self.run_dirs = self.run_dirs + [myawsm.config['runs'][n]]
+        if myawsm != None:
+            self.run_dirs = []
+            for n in myawsm.config['runs']:
+                self.run_dirs = self.run_dirs + [myawsm.config['runs'][n]]
 
         # Collect the run directories
         self.snow_files = []
@@ -312,11 +313,13 @@ class SNOWAV(object):
         while '*em.nc' in self.em_files:
             self.em_files.remove('*em.nc')
 
-        print(self.snow_files)
+    def preprocess(self):
+        print('preprocess',self)
         # Get the DEM
         # There are different formats, this will get fixed once we
         # start using netcdf
         try:
+            print(self.demPath)
             self.dem = np.genfromtxt(self.demPath)
         except:
             self.dem = np.genfromtxt(self.demPath,skip_header = 6)
