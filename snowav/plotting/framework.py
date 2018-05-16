@@ -16,8 +16,7 @@ class SNOWAV(object):
 
     def __init__(self,config_file = None):
         '''
-        Notes:
-
+        Initializing reporting object, and read in configuration file.
         '''
 
         try:
@@ -118,8 +117,6 @@ class SNOWAV(object):
             ####################################################
             # Right now we aren't using these because matplotlib and multiple
             # colormaps don't get along well with clims...
-            # self.acc_clmin = cfg.get('Accumulated','clmin')
-            # self.acc_clmax = cfg.get('Accumulated','clmax')
             if (cfg.has_option('Accumulated','ymin')
                 and cfg.has_option('Accumulated','ymax')):
 
@@ -133,7 +130,6 @@ class SNOWAV(object):
 
             if cfg.has_option('Accumulated','min_swi'):
                 self.min_swi = cfg.get('Accumulated','min_swi')
-
 
             ####################################################
             #           Elevation                              #
@@ -182,8 +178,6 @@ class SNOWAV(object):
             ####################################################
             #           Basin Total                            #
             ####################################################
-
-
             if cfg.has_option('Basin Total','summary_swe'):
                 self.summary_swe = cfg.get('Basin Total','summary_swe')
                 self.summary_swi = cfg.get('Basin Total','summary_swi')
@@ -193,7 +187,6 @@ class SNOWAV(object):
                     self.error = True
                     return
 
-            #
             if cfg.has_option('Basin Total','netcdf'):
                 self.ncvars = cfg.get('Basin Total','netcdf').split(',')
                 self.nc_flag = True
@@ -245,201 +238,199 @@ class SNOWAV(object):
                 self.reportunits = 'km^3'
 
             ####################################################
-            # History forecast
+            #           History forecast
             ####################################################
             if cfg.has_option('Hx Forecast','adj_hours'):
                 self.adj_hours = int(cfg.get('Hx Forecast','adj_hours'))
 
+            ####################################################
+            #           Masks
+            ####################################################
+            self.subbasin1 = cfg.get('Masks','subbasin1')
+            self.subbasin2 = cfg.get('Masks','subbasin2')
+            self.subbasin3 = cfg.get('Masks','subbasin3')
+            self.total_lbl = cfg.get('Masks','total_lbl')
+            self.sub1_lbl = cfg.get('Masks','sub1_lbl')
+            self.sub2_lbl = cfg.get('Masks','sub2_lbl')
+            self.sub3_lbl = cfg.get('Masks','sub3_lbl')
+
+            self.plotorder = [self.total_lbl, self.sub1_lbl,
+                                 self.sub2_lbl, self.sub3_lbl]
+
+            self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]
+            maskpaths = [self.total, self.subbasin1,
+                            self.subbasin2,self.subbasin3 ]
+
+            # Add if necessary - need to generalize all this and change
+            # in the config file!
+            if cfg.has_option('Masks','sub4_lbl'):
+                self.sub4_lbl = cfg.get('Masks','sub4_lbl')
+                self.subbasin4 = cfg.get('Masks','subbasin4')
+                self.plotorder = self.plotorder + [self.sub4_lbl]
+                self.suborder = self.suborder + [self.sub4_lbl]
+                maskpaths = maskpaths + [self.subbasin4]
+
+            # Collect the run directories
+            self.snow_files = []
+            self.em_files = []
+            for rdir in self.run_dirs:
+                run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
+
+                self.snow_files = (self.snow_files
+                                   + [value for value in run_files
+                                   if ( ('snow.' in value) and not ('.nc' in value))])
+                self.em_files = (self.em_files
+                                 + [value for value in run_files
+                                 if ( ('em.' in value) and not ('.nc' in value))])
+
+            while '*snow.nc' in self.snow_files:
+                self.snow_files.remove('*snow.nc')
+
+            while '*em.nc' in self.em_files:
+                self.em_files.remove('*em.nc')
+
+            # Get the DEM
+            # There are different formats, this will get fixed once we
+            # start using netcdf
+            try:
+                self.dem = np.genfromtxt(self.dempath)
+            except:
+                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+
+            self.nrows = len(self.dem[:,0])
+            self.ncols = len(self.dem[0,:])
+            blank = np.zeros((self.nrows,self.ncols))
+
+            # Assign some basin-specific things, also needs to be generalized
+            if self.basin == 'BRB':
+                self.pixel = 100
+                sr = 0
+                if self.units == 'KAF':
+                    emin = 2500
+                    emax = 10500
+                    self.step = 1000
+                if self.units == 'SI':
+                    emin = 800
+                    emax = 3200
+                    self.step = 250
+            if self.basin == 'TUOL':
+                self.pixel = 50
+                sr = 6
+                if self.units == 'KAF':
+                    emin = 3000      # [ft]
+                    emax = 12000
+                    self.step   = 1000
+                if self.units == 'SI':
+                    emin = 800       # [m]
+                    emax = 3600
+                    self.step   = 500
+            if self.basin == 'SJ':
+                self.pixel = 50
+                sr = 6
+                if self.units == 'KAF':
+                    emin = 1000      # [ft]
+                    emax  = 13000
+                    self.step = 1000
+                if self.units == 'SI':
+                    emin = 300       # [m]
+                    emax = 4000
+                    self.step = 500
+            if self.basin == 'LAKES':
+                self.pixel = 50
+                sr = 0
+                self.imgx = (1200,1375)
+                self.imgy = (425,225)
+                if self.units == 'KAF':
+                    emin = 8000      # [ft]
+                    emax = 12500
+                    self.step = 500
+                if self.units == 'SI':
+                    emin = 2400       # [m]
+                    emax = 3800
+                    self.step = 200
+            if self.basin == 'RCEW':
+                self.pixel = 50
+                sr = 0
+                if self.units == 'KAF':
+                    emin = 2500      # [ft]
+                    emax = 7500
+                    self.step = 500
+                if self.units == 'SI':
+                    emin = 800       # [m]
+                    emax = 2500
+                    self.step = 500
+
+            # This is for creating the elevation bins
+            self.edges = np.arange(emin,emax+self.step,self.step)
+            # Right now this is a placeholder, could edit by basin...
+            self.xlims = (0,len(self.edges))
+
+            try:
+                # Compile the masks
+                # HACK FOR SJ SUB4!
+                self.masks = dict()
+                for lbl,mask in zip(self.plotorder,maskpaths):
+                    if (self.basin == 'SJ' and lbl == self.sub4_lbl):
+                        self.masks[lbl] = {'border': blank,
+                                           'mask': np.genfromtxt(mask,skip_header=0),
+                                           'label': lbl}
+                    # hack
+                    else:
+                        self.masks[lbl] = {'border': blank,
+                                           'mask': np.genfromtxt(mask,skip_header=sr),
+                                           'label': lbl}
+            except:
+                print('Error creating mask dicts!')
+                self.error = True
+                return
+
+            # Do unit-specific things
+            if self.units == 'KAF':
+                self.conversion_factor = ((self.pixel**2)
+                                         * 0.000000810713194*0.001) # [KAF]
+                self.depth_factor = 0.03937 # [inches]
+                self.dem = self.dem * 3.28 # [ft]
+                self.ixd = np.digitize(self.dem,self.edges)
+                self.depthlbl = 'in'
+                self.vollbl = 'KAF'
+                self.elevlbl = 'ft'
+
+            if self.units == 'SI':
+                self.conversion_factor = ((self.pixel**2)
+                                          * 0.000000810713194*1233.48/1e9)
+                self.depth_factor = 1 # [m]
+                self.ixd = np.digitize(self.dem,self.edges)
+                self.depthlbl = 'mm'
+                self.vollbl = '$km^3$'
+                self.elevlbl = 'm'
+
+            # Copy the config file where figs will be saved
+            extf = os.path.splitext(os.path.split(config_file)[1])
+            path_shr = os.path.split(self.psnowFile)
+            path_ehr = os.path.split(self.csnowFile)
+            ext_shr = os.path.splitext(path_shr[1])
+            ext_ehr = os.path.splitext(path_ehr[1])
+            self.figs_path = (self.save_path
+                             + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+
+            # Check run dates, and make a new folder if necessary
+            if not os.path.exists(self.figs_path):
+                os.makedirs(self.figs_path)
+
+            # Only need to store this name if we decide to
+            # write more to the copied config file...
+            self.config_copy = (self.figs_path
+                                + extf[0]
+                                + self.name_append
+                                + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
+                                + extf[1])
+
+            # If it doesn't already exist, make it
+            if not os.path.isfile(self.config_copy):
+                copyfile(config_file,self.config_copy)
+
         except:
-            print('Error reading config file.')
-
-        ####################################################
-        # This stuff needs doing for either config_file or myawsm
-        # self.run_dirs = list(cfg.items('Runs'))
-
-        self.subbasin1 = cfg.get('Masks','subbasin1')
-        self.subbasin2 = cfg.get('Masks','subbasin2')
-        self.subbasin3 = cfg.get('Masks','subbasin3')
-        self.total_lbl = cfg.get('Masks','total_lbl')
-        self.sub1_lbl = cfg.get('Masks','sub1_lbl')
-        self.sub2_lbl = cfg.get('Masks','sub2_lbl')
-        self.sub3_lbl = cfg.get('Masks','sub3_lbl')
-
-        self.plotorder = [self.total_lbl, self.sub1_lbl,
-                             self.sub2_lbl, self.sub3_lbl]
-        self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]
-        maskpaths = [self.total, self.subbasin1,
-                        self.subbasin2,self.subbasin3 ]
-
-        # Add if necessary - need to generalize all this and change
-        # in the config file!
-        if cfg.has_option('Masks','sub4_lbl'):
-            self.sub4_lbl = cfg.get('Masks','sub4_lbl')
-            self.subbasin4 = cfg.get('Masks','subbasin4')
-            self.plotorder = self.plotorder + [self.sub4_lbl]
-            self.suborder = self.suborder + [self.sub4_lbl]
-            maskpaths = maskpaths + [self.subbasin4]
-
-        # Collect the run directories
-        self.snow_files = []
-        self.em_files = []
-        for rdir in self.run_dirs:
-            run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
-
-            self.snow_files = (self.snow_files
-                               + [value for value in run_files
-                               if ( ('snow.' in value) and not ('.nc' in value))])
-            self.em_files = (self.em_files
-                             + [value for value in run_files
-                             if ( ('em.' in value) and not ('.nc' in value))])
-
-        while '*snow.nc' in self.snow_files:
-            self.snow_files.remove('*snow.nc')
-
-        while '*em.nc' in self.em_files:
-            self.em_files.remove('*em.nc')
-
-        # Get the DEM
-        # There are different formats, this will get fixed once we
-        # start using netcdf
-        try:
-            print(self.dempath,self.basin)
-            self.dem = np.genfromtxt(self.dempath)
-        except:
-            self.dem = np.genfromtxt(self.dempath,skip_header = 6)
-
-        self.nrows = len(self.dem[:,0])
-        self.ncols = len(self.dem[0,:])
-        blank = np.zeros((self.nrows,self.ncols))
-
-        # Assign some basin-specific things
-        if self.basin == 'BRB':
-            self.pixel = 100
-            sr = 0
-            if self.units == 'KAF':
-                emin = 2500
-                emax = 10500
-                self.step = 1000
-            if self.units == 'SI':
-                emin = 800
-                emax = 3200
-                self.step = 250
-        if self.basin == 'TUOL':
-            self.pixel = 50
-            sr = 6
-            if self.units == 'KAF':
-                emin = 3000      # [ft]
-                emax = 12000
-                self.step   = 1000
-            if self.units == 'SI':
-                emin = 800       # [m]
-                emax = 3600
-                self.step   = 500
-        if self.basin == 'SJ':
-            self.pixel = 50
-            sr = 6
-            if self.units == 'KAF':
-                emin = 1000      # [ft]
-                emax  = 13000
-                self.step = 1000
-            if self.units == 'SI':
-                emin = 300       # [m]
-                emax = 4000
-                self.step = 500
-        if self.basin == 'LAKES':
-            self.pixel = 50
-            sr = 0
-            self.imgx = (1200,1375)
-            self.imgy = (425,225)
-            if self.units == 'KAF':
-                emin = 8000      # [ft]
-                emax = 12500
-                self.step = 500
-            if self.units == 'SI':
-                emin = 2400       # [m]
-                emax = 3800
-                self.step = 200
-        if self.basin == 'RCEW':
-            self.pixel = 50
-            sr = 0
-            if self.units == 'KAF':
-                emin = 2500      # [ft]
-                emax = 7500
-                self.step = 500
-            if self.units == 'SI':
-                emin = 800       # [m]
-                emax = 2500
-                self.step = 500
-
-        # This is for creating the elevation bins
-        self.edges = np.arange(emin,emax+self.step,self.step)
-        # Right now this is a placeholder, could edit by basin...
-        self.xlims = (0,len(self.edges))
-
-        try:
-            # Compile the masks
-            # HACK FOR SJ SUB4!
-            self.masks = dict()
-            for lbl,mask in zip(self.plotorder,maskpaths):
-                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
-                    self.masks[lbl] = {'border': blank,
-                                       'mask': np.genfromtxt(mask,skip_header=0),
-                                       'label': lbl}
-                # hack
-                else:
-                    self.masks[lbl] = {'border': blank,
-                                       'mask': np.genfromtxt(mask,skip_header=sr),
-                                       'label': lbl}
-        except:
-            print('Error creating mask dicts!')
-            self.error = True
-            return
-
-        # Do unit-specific things
-        if self.units == 'KAF':
-            self.conversion_factor = ((self.pixel**2)
-                                     * 0.000000810713194*0.001) # [KAF]
-            self.depth_factor = 0.03937 # [inches]
-            self.dem = self.dem * 3.28 # [ft]
-            self.ixd = np.digitize(self.dem,self.edges)
-            self.depthlbl = 'in'
-            self.vollbl = 'KAF'
-            self.elevlbl = 'ft'
-
-        if self.units == 'SI':
-            # [km^3]
-            self.conversion_factor = ((self.pixel**2)
-                                      * 0.000000810713194*1233.48/1e9)
-            self.depth_factor = 1 # [m]
-            self.ixd = np.digitize(self.dem,self.edges)
-            self.depthlbl = 'mm'
-            self.vollbl = '$km^3$'
-            self.elevlbl = 'm'
-
-        # Copy the config file where figs will be saved
-        extf = os.path.splitext(os.path.split(config_file)[1])
-        path_shr = os.path.split(self.psnowFile)
-        path_ehr = os.path.split(self.csnowFile)
-        ext_shr = os.path.splitext(path_shr[1])
-        ext_ehr = os.path.splitext(path_ehr[1])
-        self.figs_path = (self.save_path
-                         + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
-
-        # Check run dates, and make a new folder if necessary
-        if not os.path.exists(self.figs_path):
-            os.makedirs(self.figs_path)
-
-        # Only need to store this name if we decide to
-        # write more to the copied config file...
-        self.config_copy = (self.figs_path
-                            + extf[0]
-                            + self.name_append
-                            + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
-                            + extf[1])
-
-        # If it doesn't already exist, make it
-        if not os.path.isfile(self.config_copy):
-            copyfile(config_file,self.config_copy)
+            print('Error reading SNOWAV config file.')
 
     def process(self,*args):
         '''
@@ -449,7 +440,7 @@ class SNOWAV(object):
 
         '''
 
-        print('Processing iSnobal outputs...')
+        print('SNOWAV processing iSnobal outputs...')
 
         # If we add pre and current snow files for flights, force those
         # and add a few new things to calculate
@@ -513,14 +504,12 @@ class SNOWAV(object):
             # iters = iters + 1
             # em_name = self.em_files[iters]
             # snow_name = self.snow_files[iters]
-
             date = wy.wyhr_to_datetime(self.wy,
                                        int(snow_name.split('.')[-1])
                                        + adj)
 
-            # It's nice to see where we are...
-            print(snow_name, int(snow_name.split('.')[-1]) - t )
-            print(date)
+            # starting empty string for debug statement
+            pf = ''
 
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
@@ -569,7 +558,7 @@ class SNOWAV(object):
 
             # Load 'em in
             if pFlag:
-                print('adding precip for %s'%(snow_name))
+                # print('adding precip for %s'%(snow_name))
                 for pfile in ppt_files:
                     ppt = ipw.IPW(pfile)
                     pre = ppt.bands[0].data
@@ -579,6 +568,10 @@ class SNOWAV(object):
 
             rain_bg = rain_bg + rain_hrly
             precip = precip + precip_hrly
+            if pFlag:
+                pfs = ', precip added'
+            else:
+                pfs = ''
 
             # Currently this is grabbing the second to last
             # Being used for flight difference
@@ -619,13 +612,22 @@ class SNOWAV(object):
 
             # When it is the first snow file, copy
             if snow_name == self.psnowFile:
-                print('psnowfile is %s'%(snow_name))
+                # print('psnowfile is %s'%(snow_name))
+                pf = ', psnowFile'
                 accum_sub_flag = True
                 pstate = copy.deepcopy(tmpstate)
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
-                print('csnowfile is %s'%(snow_name))
+                # print('csnowfile is %s'%(snow_name))
+
+                # Run debug statement before ending the process
+                pf = ', csnowFile'
+                debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                    snow_name.split('runs')[1],
+                                    str(int(snow_name.split('.')[-1]) - t),
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+                print(debug)
 
                 # Turn off, but last one will still have been added
                 accum_sub_flag  = False
@@ -638,6 +640,13 @@ class SNOWAV(object):
 
                 # No need to compile more files after csnowFile
                 break
+
+            # It's nice to see where we are...
+            debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                snow_name.split('runs')[1],
+                                str(int(snow_name.split('.')[-1]) - t),
+                                date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+            print(debug)
 
             t = int(snow_name.split('.')[-1])
 
