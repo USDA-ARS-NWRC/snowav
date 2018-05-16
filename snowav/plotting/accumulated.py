@@ -41,9 +41,11 @@ def accumulated(snow):
     mymap.set_bad('white',1.)
 
     # Now set SWI-free to some color
-
-    ixf = accum < 0.1
-    accum[ixf] = -1
+    r = ~np.isnan(accum)
+    r[r] &= accum[r] < 0.1
+    accum[r] = -1
+    # ixf = accum < 0.1
+    # accum[ixf] = -1
     mymap.set_under('grey',1.)
 
     plt.close(0)
@@ -168,7 +170,7 @@ def accumulated(snow):
                  transform=ax1.transAxes,fontsize = 10)
 
     # Make SWI-free legend if we need one
-    if sum(sum(ixf)) > 1000:
+    if sum(sum(r)) > 1000:
         patches = [mpatches.Patch(color='grey', label='no SWI')]
         if snow.basin == 'SJ':
             ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
