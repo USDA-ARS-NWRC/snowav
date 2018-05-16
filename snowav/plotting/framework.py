@@ -792,11 +792,11 @@ class SNOWAV(object):
         self.nonmelt = np.multiply(nonmelt,self.conversion_factor)
         self.cold = np.multiply(self.cold,0.000001)
 
-        # Let's print some summary info...
-        mask        = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
-        msum        = sum(mask)
-        print('%s entries in dataframe index with gaps larger than 24h '%(msum))
-        print('done.')
+        # Print some summary info...
+        mask = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
+        msum = sum(mask)
+        if int(msum) >= 1:
+            print('%s entries in dataframe index with gaps larger than 24h '%(msum))
 
     def basin_detail(self):
         import math
@@ -804,9 +804,9 @@ class SNOWAV(object):
         import numpy as np
 
         demcopy = copy.copy(self.dem)
-        pmask           = self.masks[self.total_lbl]['mask']
-        ixo             = pmask == 0
-        demcopy[ixo]      = np.nan
+        pmask = self.masks[self.total_lbl]['mask']
+        ixo = pmask == 0
+        demcopy[ixo] = np.nan
 
         emin        = int(math.ceil(np.nanmin(demcopy)/10.0))*10
         emax        = int(math.ceil(np.nanmax(demcopy)/10.0))*10
