@@ -648,6 +648,7 @@ class SNOWAV(object):
                                 date.date().strftime("%Y-%-m-%-d"),pfs,pf)
             print(debug)
 
+            # Step this along so that we can see how many hours between outputs
             t = int(snow_name.split('.')[-1])
 
         self.dateFrom = wy.wyhr_to_datetime(self.wy,
@@ -663,7 +664,7 @@ class SNOWAV(object):
                            + '.' + parts[1] )
 
         # Difference in state (SWE)
-        delta_state         = state - pstate
+        delta_state = state - pstate
 
         # Mask by subbasin and elevation band
         for name in self.masks:
