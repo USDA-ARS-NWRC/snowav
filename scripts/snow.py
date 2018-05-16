@@ -9,6 +9,7 @@ def run(config_file):
     # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_devel.txt'
     # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018.txt'
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
+    snow.preprocess()
 
     if not hasattr(snow,'error'):
 
