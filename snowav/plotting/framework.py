@@ -432,7 +432,7 @@ class SNOWAV(object):
         except:
             print('Error reading SNOWAV config file.')
 
-    def process(self,*args):
+    def process(self):
         '''
         This function calculates everything we will need for the plots.
 
@@ -441,16 +441,6 @@ class SNOWAV(object):
         '''
 
         print('SNOWAV processing iSnobal outputs...')
-
-        # If we add pre and current snow files for flights, force those
-        # and add a few new things to calculate
-        if len(args) != 0:
-            self.psnowFile = args[0]
-            self.csnowFile = args[1]
-            self.cemFile = args[1].replace('snow','em')
-            self.snow_files = [self.psnowFile, self.csnowFile]
-            self.em_files = [self.psnowFile.replace('snow','em'),
-                             self.csnowFile.replace('snow','em')]
 
         cclimit = -5*1000*1000  # based on an average of 60 W/m2 from TL paper
         # ccM = cc./1000./1000; % cold content in MJ
