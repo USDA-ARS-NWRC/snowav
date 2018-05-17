@@ -5,7 +5,7 @@ import snowav
 
 def run(config_file):
 
-    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018.txt'
+    # Initialize snowav, read in config file
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
 
     if not hasattr(snow,'error'):
