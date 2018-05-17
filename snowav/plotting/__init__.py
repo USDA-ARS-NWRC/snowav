@@ -11,3 +11,4 @@ from . import pixel_swe
 from . import framework
 from . import state_by_elev
 from . import stn_validate
+from . import basin_detail

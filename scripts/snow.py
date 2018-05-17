@@ -28,6 +28,7 @@ def run(config_file):
         snowav.plotting.density.density(snow)
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
+        # snowav.plotting.basin_detail.basin_detail(snow)
         snow.write_summary('accum_summary')
         snow.write_summary('state_summary')
 
