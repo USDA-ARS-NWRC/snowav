@@ -216,6 +216,9 @@ class SNOWAV(object):
             self.tex_file = cfg.get('Report','tex_file')
             self.rep_path = cfg.get('Report','rep_path')
             self.templ_path = cfg.get('Report','templ_path')
+            self.summary_file = cfg.get('Report','summary_file')
+            self.include_figs = cfg.get('Report','include_figs')
+            self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
 
             if cfg.has_option('Report','orig_date'):
                 self.orig_date = cfg.get('Report','orig_date')

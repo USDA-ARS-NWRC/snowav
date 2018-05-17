@@ -156,49 +156,30 @@ def report(obj):
             variables[name] = tmp
 
     # Load in summary.txt files, and replace variables with values
-    if obj.basin == 'BRB':
-        summary = '%sbrb_summary.txt'%(obj.env_path)
-        results_summary = '%sbrb_results_summary.txt'%(obj.env_path)
+    # summary = obj.summary_file
 
-    if obj.basin == 'TUOL':
-        if obj.tex_file == 'tuol_report_flt.tex':
-            summary = '%stuol_summary_flt.txt'%(obj.env_path)
-        else:
-            summary = '%stuol_summary.txt'%(obj.env_path)
-        results_summary = '%stuol_results_summary.txt'%(obj.env_path)
-
-    if obj.basin == 'SJ':
-
-        if obj.tex_file == 'sj_report_hrrr.tex':
-            summary = '%ssj_summary_hrrr.txt'%(obj.env_path)
-        else:
-            summary = '%ssj_summary.txt'%(obj.env_path)
-
-        results_summary = '%ssj_results_summary.txt'%(obj.env_path)
-
-    if obj.basin == 'LAKES':
-        summary = '%slakes_summary.txt'%(obj.env_path)
-        results_summary = '%slakes_results_summary.txt'%(obj.env_path)
-    if obj.basin == 'RCEW':
-        summary = '%srcew_summary.txt'%(obj.env_path)
-        results_summary = '%srcew_results_summary.txt'%(obj.env_path)
-
-    # Read in both section summaries and then replace variables
-    fid = open(summary,'r')
-    fid1 = open(results_summary,'r')
-    summary = fid.read()
-    results_summary = fid1.read()
-    fid.close()
-    fid1.close()
-
-    for name in variables:
-        summary = summary.replace(name,variables[name])
-        results_summary = results_summary.replace(name,variables[name])
-
-    # Add the section text variables to what we'll pass to the document
-    variables['SUMMARY'] = summary
-    variables['RESULTS_SUMMARY'] = results_summary
-
+    # Start with the things we will always include, and then add on
+    section_dict = {'SUMMARY':obj.summary_file}
+    
+    # Will eventually need to include all figs in section_dict here first
+    
+    # Go through all the sections/figs that we want to replace  
+    for rep in section_dict.keys():
+        fid = open(section_dict[rep],'r')
+        var = fid.read()
+        fid.close()
+        
+        for name in variables:
+            var = var.replace(name,variables[name])
+        variables[rep] = var    
+    
+    # This needs to be include above
+    # variables['X_FIG'] = '/mnt/volumes/wkspace/config/snowav/template/figs/'
+    if hasattr(obj,'exclude_figs'):
+        for name in obj.exclude_figs:
+            variables[name] = ' '
+     
+        
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl = env.get_template(obj.tex_file)
