@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.88\textwidth]{FIG_PATHSWI_FIG}
+	\caption{Current Surface Water Inputs (SWI) for the reporting period, as a depth (left) and as a function of elevation band (right).}
+\end{centering}
+\end{figure}

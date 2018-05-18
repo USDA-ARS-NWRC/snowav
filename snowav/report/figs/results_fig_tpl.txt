@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.88\textwidth]{FIG_PATHRESULTS_FIG}
+	\caption{Current SWE and cold content.}
+\end{centering}
+\end{figure}

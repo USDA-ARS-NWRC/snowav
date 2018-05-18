@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.75\textwidth]{FIG_PATHVALID_FIG}
+	\caption{Model validation with measured SWE at select locations in the domain. The black line is SWE measured by the pillow, and blue lines are model results for the surrounding pixels.}
+\end{centering}
+\end{figure}

@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.88\textwidth]{FIG_PATHTOTALS_FIG}
+	\caption{Water year total SWE (left), SWI (right) volumes.}
+\end{centering}
+\end{figure}

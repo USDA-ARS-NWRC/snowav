@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.88\textwidth]{FIG_PATHMEAN_FIG}
+	\caption{Mean sub-basin depth (left) and SWE (right) as a function of elevation band.}
+\end{centering}
+\end{figure}
