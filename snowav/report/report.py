@@ -87,6 +87,7 @@ def report(obj):
     swi_fig = 'swi%s.png'%(obj.name_append)
     results_fig = 'results%s.png'%(obj.name_append)
     changes_fig = 'swe_change%s.png'%(obj.name_append)
+    flt_changes_fig = 'flt_swe_change%s.png'%(obj.name_append)
     changes_dep_fig = 'swe_change_depth%s.png'%(obj.name_append)
     elev_fig = 'swe_elev%s.png'%(obj.name_append)
     totals_fig = 'basin_total%s.png'%(obj.name_append)
@@ -98,12 +99,6 @@ def report(obj):
     density_fig = 'density%s.png'%(obj.name_append)
     density_sub_fig = 'density_sub%s.png'%(obj.name_append)
     density_swe_fig = 'density_swe%s.png'%(obj.name_append)
-
-    if obj.tex_file == 'tuol_report_flt.tex':
-        changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
-        pre_swe = obj.pre_swe
-        pre_pm = obj.pre_pm
-        diff_pm = variables['TOTAL_PM'] - pre_pm
 
     if obj.units == 'SI':
         unitlbl = '$km^3$'
@@ -127,6 +122,7 @@ def report(obj):
     variables['SWI_FIG'] = swi_fig
     variables['RESULTS_FIG'] = results_fig
     variables['CHANGES_FIG'] = changes_fig
+    variables['FLT_CHANGES_FIG'] = flt_changes_fig
     variables['CHANGES_DEP_FIG'] = changes_dep_fig
     variables['ELEV_FIG'] = elev_fig
     variables['TOTALS_FIG'] = totals_fig
@@ -157,7 +153,8 @@ def report(obj):
                     'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
-                    'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt'
+                    'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
+                    'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
                     }
        
     for rep in section_dict.keys():

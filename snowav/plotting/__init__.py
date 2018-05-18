@@ -6,6 +6,7 @@ from . import basin_total
 from . import current_image
 from . import density
 from . import image_change
+from . import flt_image_change
 from . import swe_change
 from . import pixel_swe
 from . import framework
