@@ -35,3 +35,6 @@ pip-delete-this-directory.txt
 # misc
 *.py~
 *.swp
+
+# data folder
+./snowav/data/*

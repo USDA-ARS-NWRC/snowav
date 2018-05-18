@@ -212,26 +212,120 @@ class SNOWAV(object):
             #          Report                                  #
             ####################################################
             try:
-                self.report_flag = cfg.getboolean('Report','report')
-                self.env_path = cfg.get('Report','env_path')
-                self.tex_file = cfg.get('Report','tex_file')
-                self.rep_path = cfg.get('Report','rep_path')
-                self.templ_path = cfg.get('Report','templ_path')
-                self.summary_file = cfg.get('Report','summary_file')
-                
-                if cfg.has_option('Report','exclude_figs'):
-                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
-                
-                self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
-    
+                # Report defaults to True
+                if cfg.has_option('Report','report'):
+                    self.report_flag = cfg.getboolean('Report','report')
+                else:
+                    self.report_flag = True
+                    
+                # Add date if necessary
                 if cfg.has_option('Report','orig_date'):
                     self.orig_date = cfg.get('Report','orig_date')
-                if cfg.has_option('Report','report_name_append'):
-                    self.rep_append = cfg.get('Report','report_name_append')
-    
+                    
+                if cfg.has_option('Report','exclude_figs'):
+                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',') 
+                    options = ['CHANGES','SWI','RESULTS','ELEV','TOTALS',
+                               'MEAN','VALID']
+                    for name in self.exclude_figs:
+                        if name not in options:
+                            print('[Report] exclude_fig options are: %s'%(options))
+                            self.error = True
+                            return
+                    
                 # These will later get appended with self.dateTo
-                self.report_name = cfg.get('Report','report_name')
-                self.rep_title = cfg.get('Report','report_title')
+                if cfg.has_option('Report','report_name'):
+                    self.report_name = cfg.get('Report','report_name')
+                else:
+                    self.report_name = 'SnowpackSummary.pdf'
+                
+                if cfg.has_option('Report','report_title'):
+                    self.rep_title = cfg.get('Report','report_title')     
+                else: 
+                    self.rep_title = 'Snowpack Summary'                                                                    
+                                      
+                if cfg.has_option('Report','rep_path'):    
+                    self.rep_path = cfg.get('Report','rep_path')
+                else:
+                    if os.path.exists('./snowav/data/'):
+                        print('No save path for report given in config file,'
+                              + ' using ./snowav/data/')
+                        self.rep_path = './snowav/data/'
+                    else:
+                        print('No save path for report given in config file,'
+                              + ' either list in [Report] rep_path or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return
+                
+                if cfg.has_option('Report','env_path'):    
+                    self.env_path = cfg.get('Report','env_path')
+                else:
+                    if os.path.exists('./snowav/report/template/section_text/'):
+                        print('No environment path for report given in config '
+                              + 'file, using ./snowav/report/template/section_text/')
+                        self.env_path = './snowav/report/template/section_text/'
+                    else:
+                        print('No environment path for report given in config file,'
+                              + ' either list in [Report] env_path or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return  
+                                  
+                if cfg.has_option('Report','templ_path'):    
+                    self.templ_path = cfg.get('Report','templ_path')
+                else:
+                    if os.path.exists('./snowav/report/template/'):
+                        print('No environment path for report given in config '
+                              + 'file, using ./snowav/report/template/')
+                        self.templ_path = './snowav/report/template/'
+                    else:
+                        print('No environment path for report given in config file,'
+                              + ' either list in [Report] templ_path or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return  
+
+                if cfg.has_option('Report','tex_file'):    
+                    self.tex_file = cfg.get('Report','tex_file')
+                else:
+                    if os.path.isfile('./snowav/report/template/snowav_report.tex'):
+                        print('No LaTeX file for report given in config '
+                              + 'file, using ./snowav/report/template/snowav_report.tex')
+                        self.tex_file = 'snowav_report.tex'
+                    else:
+                        print('No LaTeX file for report given in config file,'
+                              + ' either list in [Report] tex_file or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return  
+
+                if cfg.has_option('Report','summary_file'):    
+                    self.summary_file = cfg.get('Report','summary_file')
+                else:
+                    if os.path.isfile('./snowav/report/template/section_text/report_summary.txt'):
+                        print('No summary file for report given in config '
+                              + 'file, using ./snowav/report/template/section_text/report_summary.txt')
+                        self.summary_file = './snowav/report/template/section_text/report_summary.txt'
+                    else:
+                        print('No LaTeX file for report given in config file,'
+                              + ' either list in [Report] summary_file or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return  
+                
+                if cfg.has_option('Report','figs_tpl_path'):    
+                    self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
+                else:
+                    if os.path.exists('./snowav/report/figs/'):
+                        print('No figs template path for report given in config '
+                              + 'file, using ./snowav/report/figs/')
+                        self.figs_tpl_path = './snowav/report/figs/'
+                    else:
+                        print('No figs template path for report given in config file,'
+                              + ' either list in [Report] figs_tpl_path or run'
+                              + ' in /SNOWAV')
+                        self.error = True
+                        return                      
            
             except:
                 print('Error reading in Reports section!')

@@ -172,7 +172,6 @@ def report(obj):
     # If figs are listed in exclude, replace with empty string in latex file
     if hasattr(obj,'exclude_figs'):
         for name in obj.exclude_figs:
-            print(name + '_FIG_TPL')
             variables[name + '_FIG_TPL'] = ' '
              
     # Make the report
