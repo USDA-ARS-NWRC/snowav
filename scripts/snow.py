@@ -31,7 +31,7 @@ def run(config_file):
         snowav.plotting.stn_validate.stn_validate(snow)
         
         # If options exist in config file
-        if snow.flt_flag == True:
+        if hasattr(snow,'flt_flag'):
             snowav.plotting.flt_image_change.flt_image_change(snow)
         
         # snowav.plotting.basin_detail.basin_detail(snow)

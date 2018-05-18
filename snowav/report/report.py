@@ -157,6 +157,10 @@ def report(obj):
                     'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
                     }
        
+    # Remove if no flight options
+    if not hasattr(obj,'flt_flag'):
+        del section_dict['FLT_CHANGES_FIG_TPL']
+    
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()

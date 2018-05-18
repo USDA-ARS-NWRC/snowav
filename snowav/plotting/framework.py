@@ -757,11 +757,11 @@ class SNOWAV(object):
                 pstate = copy.deepcopy(tmpstate)
                 
             # When it is the first flt snow file, copy
-            if ((self.flt_flag == True) and (snow_name == self.fltpsnowFile)):
+            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltpsnowFile)):
                 fltpstate = copy.deepcopy(tmpstate)   
             
             # When it is the second flt snow file, copy
-            if ((self.flt_flag == True) and (snow_name == self.fltcsnowFile)):
+            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltcsnowFile)):
                 fltcstate = copy.deepcopy(tmpstate) 
                 flt_delta_state = fltpstate - fltcstate                               
 
@@ -828,7 +828,8 @@ class SNOWAV(object):
             snowmelt_mask_sub = np.multiply(snowmelt_sub,mask)
             state_mask = np.multiply(state,mask)
             delta_state_byelev_mask = np.multiply(delta_state,mask)
-            flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
+            if hasattr(self,'flt_flag'):
+                flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
             state_byelev_mask = np.multiply(state,mask)
             state_mswe_byelev_mask = np.multiply(state,mask)
             density_m_byelev_mask = np.multiply(density,mask)
@@ -872,7 +873,8 @@ class SNOWAV(object):
                                                 depth_mdep_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
-                    flt_delta_state_byelev.loc[b,name] = np.nansum(
+                    if hasattr(self,'flt_flag'):
+                        flt_delta_state_byelev.loc[b,name] = np.nansum(
                                                 flt_delta_state_byelev_mask[ind])                    
                     delta_swe_byelev.loc[b,name] = np.nanmean(
                                                 delta_state_byelev_mask[ind])
@@ -880,7 +882,8 @@ class SNOWAV(object):
                     state_mswe_byelev.loc[b,name] = np.nan
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
-                    flt_delta_state_byelev.loc[b,name] = np.nan
+                    if hasattr(self,'flt_flag'):
+                        flt_delta_state_byelev.loc[b,name] = np.nan
                     delta_swe_byelev.loc[b,name] = np.nan
 
             self.masks[name]['SWE'] = ( (melt[name].sum() + nonmelt[name].sum())
@@ -899,7 +902,8 @@ class SNOWAV(object):
         self.state = np.multiply(state,self.depth_factor)
         self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
         self.delta_state = np.multiply(delta_state,self.depth_factor)
-        self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
+        if hasattr(self,'flt_flag'):
+            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
 
         # Sum, by elevation
         self.accum_byelev = np.multiply(accum_byelev,self.conversion_factor)
