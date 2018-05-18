@@ -202,11 +202,17 @@ class SNOWAV(object):
             ####################################################
             #          Plots                                   #
             ####################################################
-            self.figsize = (int(cfg.get('Plots','fig_length')),
-                            int(cfg.get('Plots','fig_height')))
-            self.dpi = int(cfg.get('Plots','dpi'))
-            self.barcolors = ['xkcd:true green','palegreen',
+            if cfg.has_option('Plots','fig_length'):
+                self.figsize = (int(cfg.get('Plots','fig_length')),
+                                int(cfg.get('Plots','fig_height')))
+                self.dpi = int(cfg.get('Plots','dpi'))
+                self.barcolors = ['xkcd:true green','palegreen',
                               'xkcd:dusty green','xkcd:vibrant green','red']
+            else:
+                self.figsize = (10,5)
+                self.dpi = 200
+                self.barcolors = ['xkcd:true green','palegreen',
+                              'xkcd:dusty green','xkcd:vibrant green','red']                
 
             ####################################################
             #          Report                                  #
