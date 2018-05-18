@@ -33,7 +33,15 @@ class SNOWAV(object):
             #             Basin section                        #
             ####################################################
             self.basin = cfg.get('Basin','basin')
-            self.save_path = cfg.get('Basin','save_path')
+            if (cfg.has_option('Basin','save_path') and
+                os.path.exists(cfg.get('Basin','save_path'))):
+                self.save_path = cfg.get('Basin','save_path')
+            else:
+                print('Figures save_path either not specified in config file'
+                      ' or does not exist, using ./snowav/data/'
+                      + '\nFigures will be saved but report will fail')
+                self.save_path = './snowav/data/'
+                
             self.name_append = cfg.get('Basin','name_append')
             self.wy = int(cfg.get('Basin','wy'))
             self.units = cfg.get('Basin','units')
@@ -221,6 +229,11 @@ class SNOWAV(object):
                 # Report defaults to True
                 if cfg.has_option('Report','report'):
                     self.report_flag = cfg.getboolean('Report','report')
+                                
+                if self.save_path == './snowav/data/': 
+                    self.report_flag = False
+                    print('Report flag being set to false becaues of relative'
+                          + ' figure path ./snowav/data/')
                 else:
                     self.report_flag = True
                     
