@@ -211,29 +211,30 @@ class SNOWAV(object):
             ####################################################
             #          Report                                  #
             ####################################################
-            self.report_flag = cfg.getboolean('Report','report')
-            self.env_path = cfg.get('Report','env_path')
-            self.tex_file = cfg.get('Report','tex_file')
-            self.rep_path = cfg.get('Report','rep_path')
-            self.templ_path = cfg.get('Report','templ_path')
-            self.summary_file = cfg.get('Report','summary_file')
-            self.include_figs = cfg.get('Report','include_figs')
-            self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
-
-            if cfg.has_option('Report','orig_date'):
-                self.orig_date = cfg.get('Report','orig_date')
-            if cfg.has_option('Report','report_name_append'):
-                self.rep_append = cfg.get('Report','report_name_append')
-
-            # These will later get appended with self.dateTo
-            self.report_name = cfg.get('Report','report_name')
-            self.rep_title = cfg.get('Report','report_title')
-
-            if not (os.path.isfile(self.templ_path + self.tex_file)):
+            try:
+                self.report_flag = cfg.getboolean('Report','report')
+                self.env_path = cfg.get('Report','env_path')
+                self.tex_file = cfg.get('Report','tex_file')
+                self.rep_path = cfg.get('Report','rep_path')
+                self.templ_path = cfg.get('Report','templ_path')
+                self.summary_file = cfg.get('Report','summary_file')
+                self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
+                self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
+    
+                if cfg.has_option('Report','orig_date'):
+                    self.orig_date = cfg.get('Report','orig_date')
+                if cfg.has_option('Report','report_name_append'):
+                    self.rep_append = cfg.get('Report','report_name_append')
+    
+                # These will later get appended with self.dateTo
+                self.report_name = cfg.get('Report','report_name')
+                self.rep_title = cfg.get('Report','report_title')
+           
+            except:
                 print('Error reading in Reports section!')
                 self.error = True
                 return
-
+            
             # Strings for the report
             if self.units == 'KAF':
                 self.reportunits = 'KAF'

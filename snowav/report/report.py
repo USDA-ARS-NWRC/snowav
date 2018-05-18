@@ -139,13 +139,6 @@ def report(obj):
     variables['DENSITY_SWE_FIG'] = density_swe_fig
     variables['VALID_FIG'] = valid_fig
 
-    if obj.basin == 'TUOL' and obj.tex_file == 'tuol_report_flt.tex':
-        variables['CHANGES_FLT_FIG'] = changes_flt_fig
-        variables['PRE_SWE'] = pre_swe
-        variables['PRE_PM'] = pre_pm
-        variables['DIFF_PM'] = diff_pm
-        variables['FLT_SWEDEL'] = variables['TOTAL_SWE'] - pre_swe
-
     # Convert floats to strings
     for name in variables:
         if isinstance(variables[name], float):
@@ -155,15 +148,12 @@ def report(obj):
                 tmp = str(round(variables[name],obj.dplcs))
             variables[name] = tmp
 
-    # Load in summary.txt files, and replace variables with values
-    # summary = obj.summary_file
-
-    # Start with the things we will always include, and then add on
-    section_dict = {'SUMMARY':obj.summary_file}
-    
-    # Will eventually need to include all figs in section_dict here first
-    
-    # Go through all the sections/figs that we want to replace  
+    # Summary sections and fig template have variable strings 
+    # (e.g. CHANGES_FIG) that need to be replaced
+    section_dict = {'SUMMARY':obj.summary_file,
+                    'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt'
+                    }
+       
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()
@@ -173,18 +163,17 @@ def report(obj):
             var = var.replace(name,variables[name])
         variables[rep] = var    
     
-    # This needs to be include above
-    # variables['X_FIG'] = '/mnt/volumes/wkspace/config/snowav/template/figs/'
+    # If figs are listed in exclude, replace with empty string in latex file
     if hasattr(obj,'exclude_figs'):
         for name in obj.exclude_figs:
-            variables[name] = ' '
-     
-        
+            print(name + '_FIG_TPL')
+            variables[name + '_FIG_TPL'] = ' '
+             
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl = env.get_template(obj.tex_file)
     pdf = build_pdf(tpl.render(variables))
-    # To see what the latex version >>> print(tpl.render(variables))
+    # To see what's in latex  >>> print(tpl.render(variables))
 
     # Save in reports and with figs
     print('Saving report to %s%s'%(obj.rep_path,obj.report_name))
