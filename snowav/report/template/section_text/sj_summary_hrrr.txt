@@ -1,5 +1,0 @@
-This is the San Joaquin River Basin Summary for the period between START_DATE and END_DATE, based on iSnobal model simulation. \\
-
-Model inputs were created with a hybrid approach. It was determined in mid-February, 2018, that station data inputs within the San Joaquin modeling domain, particularly precipitation measurements, no longer met minimum quality requirements necessary to adequately force model input. This report includes station data model inputs from October 1 - November 19, and an hybrid input approach that uses NOAA's High-Resolution Rapid Refresh (HRRR) atmospheric model from November 20 forward. This approach with HRRR inputs is also being evaluated in the Tuolumne and Boise River Basins. \\ 
-
-The reporting domain covers the San Joaquin River Basin, and includes the Main San Joaquin, Jose Creek, Willow Creek and South Fork sub-basins. The total amount of water stored in the snowpack as of END_DATE is estimated to be \textbf{TOTAL_SWE UNITS}, which represents a change of \textbf{TOTAL_SWEDEL UNITS} of snow storage during the reporting period.

@@ -1,4 +1,0 @@
-This is the Tuolumne River Basin Snowpack Summary for the period between START_DATE and END_DATE, based on iSnobal model simulation. The reporting domain covers the Tuolumne River basin upstream of Hetch Hetchy reservoir, the Cherry Creek basin upstream of Cherry Lake and Eleanor basin upstream of Lake Eleanor. Extended Tuolumne refers to the total of all three basins. The total amount of water stored in the snowpack as of END_DATE is estimated to be \textbf{TOTAL_SWE UNITS}, which represents a change of \textbf{TOTAL_SWEDEL UNITS} of snow storage during the reporting period. \\
-
-\textbf{We suspect that the current model state may be underreporting the total storage volume.} We have reduced the number of precipitation measurements that we are using as model inputs within the domain in order to maintain high quality input data. This may be contributing to a loss of proper modelled precipitation distribution, particularly in the northern portions of each sub-basin.
-
