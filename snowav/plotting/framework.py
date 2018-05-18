@@ -54,7 +54,7 @@ class SNOWAV(object):
                 self.units = cfg.get('Basin','units')
             else:
                 self.units = 'KAF'
-
+                
             ####################################################
             #           Outputs section                        #
             ####################################################
@@ -81,13 +81,14 @@ class SNOWAV(object):
             # snow.XXXX file once [Runs] has been compiled
             if (cfg.has_option('Outputs','psnowFile') and
                 cfg.has_option('Outputs','csnowFile')):
+                
                 # Check to see if they exist
-                if not (os.path.isfile(self.psnowFile)):
-                    print('psnowFile %s does not exist!'%(self.psnowFile))
+                if not (os.path.isfile(cfg.get('Outputs','psnowFile'))):
+                    print('psnowFile does not exist!')
                     self.error = True
                     return
 
-                if not (os.path.isfile(self.csnowFile)):
+                if not (os.path.isfile(cfg.get('Outputs','csnowFile'))):
                     print('csnowFile does not exist!')
                     self.error = True
                     return                  
