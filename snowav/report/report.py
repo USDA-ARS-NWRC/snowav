@@ -151,7 +151,13 @@ def report(obj):
     # Summary sections and fig template have variable strings 
     # (e.g. CHANGES_FIG) that need to be replaced
     section_dict = {'SUMMARY':obj.summary_file,
-                    'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt'
+                    'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt',
+                    'SWI_FIG_TPL':obj.figs_tpl_path + 'swi_fig_tpl.txt',
+                    'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
+                    'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
+                    'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
+                    'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
+                    'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt'
                     }
        
     for rep in section_dict.keys():

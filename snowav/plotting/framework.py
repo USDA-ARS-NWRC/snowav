@@ -218,7 +218,10 @@ class SNOWAV(object):
                 self.rep_path = cfg.get('Report','rep_path')
                 self.templ_path = cfg.get('Report','templ_path')
                 self.summary_file = cfg.get('Report','summary_file')
-                self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
+                
+                if cfg.has_option('Report','exclude_figs'):
+                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
+                
                 self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
     
                 if cfg.has_option('Report','orig_date'):
