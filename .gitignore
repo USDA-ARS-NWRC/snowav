@@ -37,4 +37,4 @@ pip-delete-this-directory.txt
 *.swp
 
 # data folder
-./snowav/data/*
+/snowav/data/*
