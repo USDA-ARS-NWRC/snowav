@@ -10,6 +10,7 @@ import copy
 import pandas as pd
 import ConfigParser as cfp
 import snowav.methods.wyhr_to_datetime as wy
+import datetime
 
 
 class SNOWAV(object):
@@ -42,9 +43,17 @@ class SNOWAV(object):
                       + '\nFigures will be saved but report will fail')
                 self.save_path = './snowav/data/'
                 
-            self.name_append = cfg.get('Basin','name_append')
+            if cfg.has_option('Basin','name_append'):
+                self.name_append = cfg.get('Basin','name_append')
+            else:
+                self.name_append = '_gen_' + datetime.datetime.now().strftime("%Y-%-m-%-d")
+            
             self.wy = int(cfg.get('Basin','wy'))
-            self.units = cfg.get('Basin','units')
+            
+            if cfg.has_option('Basin','units'):
+                self.units = cfg.get('Basin','units')
+            else:
+                self.units = 'KAF'
 
             ####################################################
             #           Outputs section                        #
