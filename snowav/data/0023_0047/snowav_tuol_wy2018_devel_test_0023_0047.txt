@@ -1,0 +1,61 @@
+[Basin]
+# save_path = /mnt/volumes/wkspace/results/tuol/wy18/devel/
+name_append = _test
+basin = TUOL
+units = KAF
+wy = 2018
+
+[Outputs]
+psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20171001_20180206/output/snow.0023
+csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20171001_20180206/output/snow.0047
+
+# psnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180423_20180501/output/snow.5087
+# csnowFile = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180501_20180508/output/snow.5255
+
+[Runs]
+run_dir1 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20171001_20180206/output/
+run_dir2 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180206_20180215/output/
+run_dir3 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180215_20180301/output/
+run_dir4 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180301_20180315/output/
+run_dir5 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180315_20180318/output/
+run_dir6 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180318_20180321/output/
+run_dir7 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180321_20180322/output/
+run_dir8 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180322_20180402/output/
+run_dir9 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180402_20180405/output/
+run_dir10 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180405_20180410/output/
+run_dir11 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180410_20180417/output/
+run_dir12 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180417_20180423/output/
+run_dir13 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180423_20180501/output/
+run_dir14 = /mnt/data/blizzard/tuolumne/ops/wy2018/ops/runs/run20180501_20180508/output/
+
+[Validate]
+stations = DDM,LELC1,LVTC1,TIOC1,TUM,VGAC1
+labels = DDM,LELC1,LVTC1,TIOC1,TUM,VGAC1
+client = TUOL_2017
+offset = 0
+
+[Plots]
+
+[Masks]
+dempath = /mnt/data/blizzard/tuolumne/common_data/topo/tuolx_dem_50m_int.asc
+total = /mnt/data/blizzard/tuolumne/common_data/topo/tuolx_mask_50m.asc
+subbasin1 = /mnt/data/blizzard/tuolumne/common_data/topo/tuolx_hetchy_mask_50m.asc
+subbasin2 = /mnt/data/blizzard/tuolumne/common_data/topo/tuolx_cherry_mask_50m.asc
+subbasin3 = /mnt/data/blizzard/tuolumne/common_data/topo/tuolx_eleanor_mask_50m.asc
+
+total_lbl = Extended Tuolumne
+sub1_lbl = Tuolumne
+sub2_lbl = Cherry
+sub3_lbl = Eleanor
+
+[Report]
+# report = false
+# report_name = TuolumneRiverBasin_SnowpackSummary_TEST.pdf
+# report_title = Tuolumne River Basin Snowpack Summary
+# rep_path = /mnt/volumes/wkspace/reports/tuol/wy18/devel/
+# env_path =  /mnt/volumes/wkspace/config/snowav/template/section_text/
+# templ_path =  /mnt/volumes/wkspace/code/SNOWAV/snowav/report/template/
+# figs_tpl_path = /mnt/volumes/wkspace/config/snowav/template/figs/
+# tex_file = snowav_report.tex
+# summary_file = /mnt/volumes/wkspace/config/snowav/template/section_text/tuol_summary.txt
+# exclude_figs = CHANGES,SWI,RESULTS,ELEV,TOTALS,MEAN,VALID
