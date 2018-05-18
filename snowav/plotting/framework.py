@@ -81,33 +81,26 @@ class SNOWAV(object):
             # snow.XXXX file once [Runs] has been compiled
             if (cfg.has_option('Outputs','psnowFile') and
                 cfg.has_option('Outputs','csnowFile')):
+                # Check to see if they exist
+                if not (os.path.isfile(self.psnowFile)):
+                    print('psnowFile %s does not exist!'%(self.psnowFile))
+                    self.error = True
+                    return
+
+                if not (os.path.isfile(self.csnowFile)):
+                    print('csnowFile does not exist!')
+                    self.error = True
+                    return                  
+                
                 self.psnowFile = cfg.get('Outputs','psnowFile')
                 self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = self.csnowFile.replace('snow.','em.')
+                self.cemFile = self.csnowFile.replace('snow.','em.')             
 
             ####################################################
             #           Runs                                   #
             ####################################################
             # Collect all the run directories
             self.run_dirs = list(cfg.items('Runs'))
-
-            # If no psnowFile and csnowFile specified, use first and last
-            if not cfg.has_option('Outputs','csnowFile'):
-                print('Using first and last outputs as start and end times.')
-                self.psnowFile = self.snow_files[0]
-                self.csnowFile = self.snow_files[len(self.snow_files)-1]
-                self.cemFile = self.em_files[len(self.em_files)-1]
-
-            # Check to see if they exist
-            if not (os.path.isfile(self.psnowFile)):
-                print('psnowFile %s does not exist!'%(self.psnowFile))
-                self.error = True
-                return
-
-            if not (os.path.isfile(self.csnowFile)):
-                print('csnowFile does not exist!')
-                self.error = True
-                return
 
             ####################################################
             #           Validate                               #
@@ -417,6 +410,14 @@ class SNOWAV(object):
 
             while '*em.nc' in self.em_files:
                 self.em_files.remove('*em.nc')
+              
+            # If no psnowFile and csnowFile specified, use first and last
+            if not hasattr(self,'csnowFile'):
+                self.psnowFile = self.snow_files[0]
+                self.csnowFile = self.snow_files[-1]
+                self.cemFile = self.em_files[-1] 
+                print('psnowFile and/or csnowFile not specified, using:' 
+                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))             
 
             # Get the DEM
             # There are different formats, this will get fixed once we
