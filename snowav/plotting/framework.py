@@ -894,6 +894,7 @@ class SNOWAV(object):
         # Sum over all time steps, spatial
         self.precip = np.multiply(precip,self.depth_factor)
         self.accum = np.multiply(accum,self.depth_factor)
+        self.evap = np.multiply(evap,self.depth_factor)
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)
 
         # At last time step
