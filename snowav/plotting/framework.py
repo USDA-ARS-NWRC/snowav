@@ -54,6 +54,12 @@ class SNOWAV(object):
                 self.units = cfg.get('Basin','units')
             else:
                 self.units = 'KAF'
+            
+            if cfg.has_option('Basin','filetype'):
+                self.filetype = cfg.get('Basin','filetype')
+            else:
+                self.filetype = 'ipw'
+             
                 
             ####################################################
             #           Outputs section                        #
