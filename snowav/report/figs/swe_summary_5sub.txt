@@ -1,0 +1,17 @@
+\begin{table}[h!]
+	\caption*{\textbf{Snow Storage and Surface Water Inputs}}
+	\centering
+	\begin{tabular}{l c c c c c c }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [UNITS] & [UNITS] & [DEPLBL] & [UNITS] & [UNITS]\\
+		
+		\midrule
+		TOT_LBL			& TOTAL_SWE 	& TOTAL_SWE_AV & TOTAL_PM 	& TOTAL_SWEDEL & TOTAL_SWI  \\
+		SUB1_LBL	    	& SUB1_SWE	& SUB1_SWE_AV  & SUB1_PM 	& SUB1_SWEDEL & SUB1_SWI	\\
+		SUB2_LBL	   	& SUB2_SWE	& SUB2_SWE_AV  & SUB2_PM 	& SUB2_SWEDEL & SUB2_SWI 	\\
+		SUB3_LBL	        & SUB3_SWE	& SUB3_SWE_AV  & SUB3_PM 	& SUB3_SWEDEL & SUB3_SWI	 \\
+		SUB4_LBL	        & SUB4_SWE	& SUB4_SWE_AV  & SUB4_PM 	& SUB4_SWEDEL & SUB4_SWI	 \\
+		\bottomrule
+	\end{tabular}
+\end{table}

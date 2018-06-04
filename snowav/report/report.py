@@ -16,8 +16,8 @@ def report(obj):
     variables = {}
     variables['TOTAL_SWI'] = obj.accum_byelev[obj.total_lbl].sum()
     variables['TOTAL_SWE'] = obj.state_byelev[obj.total_lbl].sum()
-    variables['TOTAL_SWE_AV'] = obj.melt[obj.total_lbl].sum()
-    variables['TOTAL_SWEDEL'] = obj.delta_state_byelev[obj.total_lbl].sum()
+    variables['TOTAL_SAV'] = obj.melt[obj.total_lbl].sum()
+    variables['TOTAL_SDEL'] = obj.delta_state_byelev[obj.total_lbl].sum()
     variables['TOTAL_PM'] = (np.nansum(
                             np.multiply(obj.state
                             * obj.masks[obj.total_lbl]['mask'],1))
@@ -43,8 +43,8 @@ def report(obj):
     for n,sub in zip(numsubs,obj.suborder):
         SWIIND = 'SUB' + str(n) + '_SWI'
         SWEIND = 'SUB' + str(n) + '_SWE'
-        AVSWEIND = 'SUB' + str(n) + '_SWE_AV'
-        SWEDEL = 'SUB' + str(n) + '_SWEDEL'
+        AVSWEIND = 'SUB' + str(n) + '_SAV'
+        SWEDEL = 'SUB' + str(n) + '_SDEL'
         PM = 'SUB' + str(n) + '_PM'
         PREPM = 'SUB' + str(n) + 'PRE_PM'
         RAIN = 'SUB' + str(n) + 'RAI'
@@ -145,6 +145,8 @@ def report(obj):
     # Define and load summary tables depending on number of subbasins
     section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path 
                                           + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
+    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path 
+                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )    
       
        
     # Remove if no flight options
