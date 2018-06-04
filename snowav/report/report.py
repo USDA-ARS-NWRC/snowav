@@ -109,7 +109,17 @@ def report(obj):
     variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
-
+    
+    variables['TOT_LBL'] = obj.total_lbl
+    if hasattr(obj,'sub1_lbl'):
+        variables['SUB1_LBL'] = obj.sub1_lbl
+    if hasattr(obj,'sub2_lbl'):
+        variables['SUB2_LBL'] = obj.sub2_lbl
+    if hasattr(obj,'sub3_lbl'):
+        variables['SUB3_LBL'] = obj.sub3_lbl
+    if hasattr(obj,'sub4_lbl'):
+        variables['SUB4_LBL'] = obj.sub4_lbl
+                                
     # Convert floats to strings
     for name in variables:
         if isinstance(variables[name], float):
@@ -131,6 +141,11 @@ def report(obj):
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
                     }
+    
+    # Define and load summary tables depending on number of subbasins
+    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path 
+                                          + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
+      
        
     # Remove if no flight options
     if not hasattr(obj,'flt_flag'):
