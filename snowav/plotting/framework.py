@@ -115,6 +115,11 @@ class SNOWAV(object):
                 self.fltcsnowFile = cfg.get('Outputs','fltcsnowFile')
                 self.flt_flag = True                   
 
+            if cfg.has_option('Outputs','summary'):
+                self.summary = cfg.get('Outputs','summary').split(',')
+            else:
+                self.summary = ['accum','state','precip']
+            
             ####################################################
             #           Runs                                   #
             ####################################################
