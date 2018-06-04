@@ -16,7 +16,7 @@ else:
     import ConfigParser as cfp
 import snowav.methods.wyhr_to_datetime as wy
 import datetime
-
+from snowav.utils.OutputReader import iSnobalReader
 
 class SNOWAV(object):
 
@@ -124,7 +124,7 @@ class SNOWAV(object):
                 self.summary = cfg.get('Outputs','summary').split(',')
             else:
                 self.summary = ['accum','state','precip']
-            
+
             ####################################################
             #           Runs                                   #
             ####################################################
