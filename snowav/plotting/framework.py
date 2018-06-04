@@ -8,7 +8,12 @@ from shutil import copyfile
 import os
 import copy
 import pandas as pd
-import ConfigParser as cfp
+import sys
+# hack for install with either version 2 or version 3 python
+if sys.version_info[0] >= 3:
+    import configparser as cfp
+else:
+    import ConfigParser as cfp
 import snowav.methods.wyhr_to_datetime as wy
 import datetime
 
@@ -42,19 +47,19 @@ class SNOWAV(object):
                       ' or does not exist, using ./snowav/data/'
                       + '\nFigures will be saved but report will fail')
                 self.save_path = './snowav/data/'
-                
+
             if cfg.has_option('Basin','name_append'):
                 self.name_append = cfg.get('Basin','name_append')
             else:
                 self.name_append = '_gen_' + datetime.datetime.now().strftime("%Y-%-m-%-d")
-            
+
             self.wy = int(cfg.get('Basin','wy'))
-            
+
             if cfg.has_option('Basin','units'):
                 self.units = cfg.get('Basin','units')
             else:
                 self.units = 'KAF'
-                
+
             ####################################################
             #           Outputs section                        #
             ####################################################
@@ -81,7 +86,7 @@ class SNOWAV(object):
             # snow.XXXX file once [Runs] has been compiled
             if (cfg.has_option('Outputs','psnowFile') and
                 cfg.has_option('Outputs','csnowFile')):
-                
+
                 # Check to see if they exist
                 if not (os.path.isfile(cfg.get('Outputs','psnowFile'))):
                     print('psnowFile does not exist!')
@@ -91,15 +96,15 @@ class SNOWAV(object):
                 if not (os.path.isfile(cfg.get('Outputs','csnowFile'))):
                     print('csnowFile does not exist!')
                     self.error = True
-                    return                  
-                
+                    return
+
                 self.psnowFile = cfg.get('Outputs','psnowFile')
                 self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = self.csnowFile.replace('snow.','em.')    
-                
+                self.cemFile = self.csnowFile.replace('snow.','em.')
+
             # Flights
             if (cfg.has_option('Outputs','fltpsnowFile') and
-                cfg.has_option('Outputs','fltcsnowFile')): 
+                cfg.has_option('Outputs','fltcsnowFile')):
                                                         # Check to see if they exist
                 if not (os.path.isfile(cfg.get('Outputs','fltpsnowFile'))):
                     print('fltpsnowFile does not exist!')
@@ -109,12 +114,17 @@ class SNOWAV(object):
                 if not (os.path.isfile(cfg.get('Outputs','fltcsnowFile'))):
                     print('fltcsnowFile does not exist!')
                     self.error = True
-                    return 
-                
+                    return
+
                 self.fltpsnowFile = cfg.get('Outputs','fltpsnowFile')
                 self.fltcsnowFile = cfg.get('Outputs','fltcsnowFile')
-                self.flt_flag = True                   
+                self.flt_flag = True
 
+            if cfg.has_option('Outputs','summary'):
+                self.summary = cfg.get('Outputs','summary').split(',')
+            else:
+                self.summary = ['accum','state','precip']
+            
             ####################################################
             #           Runs                                   #
             ####################################################
@@ -241,7 +251,7 @@ class SNOWAV(object):
                 self.figsize = (10,5)
                 self.dpi = 200
                 self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']                
+                              'xkcd:dusty green','xkcd:vibrant green','red']
 
             ####################################################
             #          Report                                  #
@@ -250,20 +260,20 @@ class SNOWAV(object):
                 # Report defaults to True
                 if cfg.has_option('Report','report'):
                     self.report_flag = cfg.getboolean('Report','report')
-                                
-                if self.save_path == './snowav/data/': 
+
+                if self.save_path == './snowav/data/':
                     self.report_flag = False
                     print('Report flag being set to false becaues of relative'
                           + ' figure path ./snowav/data/')
                 else:
                     self.report_flag = True
-                    
+
                 # Add date if necessary
                 if cfg.has_option('Report','orig_date'):
                     self.orig_date = cfg.get('Report','orig_date')
-                    
+
                 if cfg.has_option('Report','exclude_figs'):
-                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',') 
+                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
                     options = ['CHANGES','SWI','RESULTS','ELEV','TOTALS',
                                'MEAN','VALID']
                     for name in self.exclude_figs:
@@ -271,19 +281,19 @@ class SNOWAV(object):
                             print('[Report] exclude_fig options are: %s'%(options))
                             self.error = True
                             return
-                    
+
                 # These will later get appended with self.dateTo
                 if cfg.has_option('Report','report_name'):
                     self.report_name = cfg.get('Report','report_name')
                 else:
                     self.report_name = 'SnowpackSummary.pdf'
-                
+
                 if cfg.has_option('Report','report_title'):
-                    self.rep_title = cfg.get('Report','report_title')     
-                else: 
-                    self.rep_title = 'Snowpack Summary'                                                                    
-                                      
-                if cfg.has_option('Report','rep_path'):    
+                    self.rep_title = cfg.get('Report','report_title')
+                else:
+                    self.rep_title = 'Snowpack Summary'
+
+                if cfg.has_option('Report','rep_path'):
                     self.rep_path = cfg.get('Report','rep_path')
                 else:
                     if os.path.exists('./snowav/data/'):
@@ -296,8 +306,8 @@ class SNOWAV(object):
                               + ' in /SNOWAV')
                         self.error = True
                         return
-                
-                if cfg.has_option('Report','env_path'):    
+
+                if cfg.has_option('Report','env_path'):
                     self.env_path = cfg.get('Report','env_path')
                 else:
                     if os.path.exists('./snowav/report/template/section_text/'):
@@ -309,9 +319,9 @@ class SNOWAV(object):
                               + ' either list in [Report] env_path or run'
                               + ' in /SNOWAV')
                         self.error = True
-                        return  
-                                  
-                if cfg.has_option('Report','templ_path'):    
+                        return
+
+                if cfg.has_option('Report','templ_path'):
                     self.templ_path = cfg.get('Report','templ_path')
                 else:
                     if os.path.exists('./snowav/report/template/'):
@@ -323,9 +333,9 @@ class SNOWAV(object):
                               + ' either list in [Report] templ_path or run'
                               + ' in /SNOWAV')
                         self.error = True
-                        return  
+                        return
 
-                if cfg.has_option('Report','tex_file'):    
+                if cfg.has_option('Report','tex_file'):
                     self.tex_file = cfg.get('Report','tex_file')
                 else:
                     if os.path.isfile('./snowav/report/template/snowav_report.tex'):
@@ -337,9 +347,9 @@ class SNOWAV(object):
                               + ' either list in [Report] tex_file or run'
                               + ' in /SNOWAV')
                         self.error = True
-                        return  
+                        return
 
-                if cfg.has_option('Report','summary_file'):    
+                if cfg.has_option('Report','summary_file'):
                     self.summary_file = cfg.get('Report','summary_file')
                 else:
                     if os.path.isfile('./snowav/report/template/section_text/report_summary.txt'):
@@ -351,9 +361,9 @@ class SNOWAV(object):
                               + ' either list in [Report] summary_file or run'
                               + ' in /SNOWAV')
                         self.error = True
-                        return  
-                
-                if cfg.has_option('Report','figs_tpl_path'):    
+                        return
+
+                if cfg.has_option('Report','figs_tpl_path'):
                     self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
                 else:
                     if os.path.exists('./snowav/report/figs/'):
@@ -365,13 +375,13 @@ class SNOWAV(object):
                               + ' either list in [Report] figs_tpl_path or run'
                               + ' in /SNOWAV')
                         self.error = True
-                        return                      
-           
+                        return
+
             except:
                 print('Error reading in Reports section!')
                 self.error = True
                 return
-            
+
             # Strings for the report
             if self.units == 'KAF':
                 self.reportunits = 'KAF'
@@ -429,14 +439,14 @@ class SNOWAV(object):
 
             while '*em.nc' in self.em_files:
                 self.em_files.remove('*em.nc')
-              
+
             # If no psnowFile and csnowFile specified, use first and last
             if not hasattr(self,'csnowFile'):
                 self.psnowFile = self.snow_files[0]
                 self.csnowFile = self.snow_files[-1]
-                self.cemFile = self.em_files[-1] 
-                print('psnowFile and/or csnowFile not specified, using:' 
-                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))             
+                self.cemFile = self.em_files[-1]
+                print('psnowFile and/or csnowFile not specified, using:'
+                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
 
             # Get the DEM
             # There are different formats, this will get fixed once we
@@ -755,15 +765,15 @@ class SNOWAV(object):
                 pf = ', psnowFile'
                 accum_sub_flag = True
                 pstate = copy.deepcopy(tmpstate)
-                
+
             # When it is the first flt snow file, copy
             if ((hasattr(self,'flt_flag')) and (snow_name == self.fltpsnowFile)):
-                fltpstate = copy.deepcopy(tmpstate)   
-            
+                fltpstate = copy.deepcopy(tmpstate)
+
             # When it is the second flt snow file, copy
             if ((hasattr(self,'flt_flag')) and (snow_name == self.fltcsnowFile)):
-                fltcstate = copy.deepcopy(tmpstate) 
-                flt_delta_state = fltpstate - fltcstate                               
+                fltcstate = copy.deepcopy(tmpstate)
+                flt_delta_state = fltpstate - fltcstate
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
@@ -875,7 +885,7 @@ class SNOWAV(object):
                                                 delta_state_byelev_mask[ind])
                     if hasattr(self,'flt_flag'):
                         flt_delta_state_byelev.loc[b,name] = np.nansum(
-                                                flt_delta_state_byelev_mask[ind])                    
+                                                flt_delta_state_byelev_mask[ind])
                     delta_swe_byelev.loc[b,name] = np.nanmean(
                                                 delta_state_byelev_mask[ind])
                 else:
@@ -894,6 +904,7 @@ class SNOWAV(object):
         # Sum over all time steps, spatial
         self.precip = np.multiply(precip,self.depth_factor)
         self.accum = np.multiply(accum,self.depth_factor)
+        self.evap = np.multiply(evap,self.depth_factor)
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)
 
         # At last time step
@@ -926,7 +937,7 @@ class SNOWAV(object):
         self.delta_state_byelev = np.multiply(delta_state_byelev,
                                               self.conversion_factor)
         self.flt_delta_state_byelev = np.multiply(flt_delta_state_byelev,
-                                              self.conversion_factor)        
+                                              self.conversion_factor)
         self.delta_swe_byelev = np.multiply(delta_swe_byelev,
                                               self.depth_factor)
 
