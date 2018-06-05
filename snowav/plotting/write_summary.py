@@ -1,16 +1,16 @@
 
-import pandas as pd
+# import pandas as pd
 
 def write_summary(snow,df):
 
-    dataframes  = ['accum_summary','state_summary']
-
-    if df not in dataframes:
-        print('df needs to be one of: %s'%(dataframes))
-
-    print('Writing summary file to %s%s%s.csv'%(snow.figs_path,df,snow.name_append))
-
-    if df == 'state_summary':
-        snow.state_summary.to_csv('%s%s%s.csv'%(snow.figs_path,df,snow.name_append))
-    if df == 'accum_summary':
-        snow.accum_summary.to_csv('%s%s%s.csv'%(snow.figs_path,df,snow.name_append))
+    try:
+        if df == 'state':
+            snow.state_summary.to_csv('%s%s_summary%s.csv'%(snow.figs_path,df,snow.name_append))
+        if df == 'accum':
+            snow.accum_summary.to_csv('%s%s_summary%s.csv'%(snow.figs_path,df,snow.name_append))
+        if df == 'precip':
+            snow.precip_summary.to_csv('%s%s_summary%s.csv'%(snow.figs_path,df,snow.name_append))
+        if df not in ['accum','state','precip']:
+            print('Unable to write %s, maybe check yo config file'%(df))    
+    except:    
+        print('Could not write %s dataframe...'%(df))

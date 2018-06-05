@@ -1,0 +1,16 @@
+\begin{table}[h!]
+	\caption*{\textbf{Water Year Precipitation Inputs}}
+	\centering
+	\begin{tabular}{l c c  }
+		\toprule
+		
+		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [DEPLBL] & [$\%$] \\
+		
+		\midrule
+		TOT_LBL		& TOTALPRE_PM 	& $\sim$TOTAL_RAT \\
+		SUB1_LBL	& SUB1PRE_PM    & $\sim$SUB1_RAT  \\
+		SUB2_LBL	& SUB2PRE_PM	& $\sim$SUB2_RAT  \\
+		SUB3_LBL 	& SUB3PRE_PM	& $\sim$SUB3_RAT  \\
+		\bottomrule
+	\end{tabular}
+\end{table}

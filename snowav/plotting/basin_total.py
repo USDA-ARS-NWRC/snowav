@@ -14,6 +14,11 @@ from matplotlib.dates import DateFormatter
 
 
 def basin_total(snow):
+    
+    if snow.basin_total_flag == False:
+        print('No basin total summary files specified in config file, '
+              + 'skipping...')
+        return
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")

@@ -6,6 +6,7 @@ import snowav
 def run(config_file):
 
     # Initialize snowav, read in config file
+    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_sj_wy2018_devel.txt'
     # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018_devel.txt'
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
 
@@ -34,9 +35,9 @@ def run(config_file):
         if hasattr(snow,'flt_flag'):
             snowav.plotting.flt_image_change.flt_image_change(snow)
         
-        # snowav.plotting.basin_detail.basin_detail(snow)
-        snowav.plotting.write_summary.write_summary(snow,'accum_summary')
-        snowav.plotting.write_summary.write_summary(snow,'state_summary')
+        # Write out summary dataframes
+        for name in snow.summary:
+            snowav.plotting.write_summary.write_summary(snow,name)
 
         # Generate report if desired
         if snow.report_flag == True:
