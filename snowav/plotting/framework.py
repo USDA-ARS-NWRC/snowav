@@ -225,6 +225,8 @@ class SNOWAV(object):
                     print('Failed reading in Basin Total section!')
                     self.error = True
                     return
+            else:
+                self.basin_total_flag = False
 
             if cfg.has_option('Basin Total','netcdf'):
                 self.ncvars = cfg.get('Basin Total','netcdf').split(',')
