@@ -31,7 +31,8 @@ setup(
     packages=['snowav',
                 'snowav.plotting',
                 'snowav.report',
-                'snowav.methods'
+                'snowav.methods',
+                'snowav.utils'
 			  ],
 
 

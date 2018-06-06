@@ -18,6 +18,7 @@ import snowav.methods.wyhr_to_datetime as wy
 import datetime
 from snowav.utils.OutputReader import iSnobalReader
 
+
 class SNOWAV(object):
 
     def __init__(self,config_file = None):
@@ -25,362 +26,362 @@ class SNOWAV(object):
         Initializing reporting object, and read in configuration file.
         '''
 
+        # try:
+        if not os.path.isfile(config_file):
+            print('SNOWAV config file does not exist!')
+            self.error = True
+            return
+
+        print('Reading SNOWAV config file...')
+        cfg = cfp.ConfigParser()
+        cfg.read(config_file)
+
+        ####################################################
+        #             Basin section                        #
+        ####################################################
+        self.basin = cfg.get('Basin','basin')
+        if (cfg.has_option('Basin','save_path') and
+            os.path.exists(cfg.get('Basin','save_path'))):
+            self.save_path = cfg.get('Basin','save_path')
+        else:
+            print('Figures save_path either not specified in config file'
+                  ' or does not exist, using ./snowav/data/'
+                  + '\nFigures will be saved but report will fail')
+            self.save_path = './snowav/data/'
+
+        if cfg.has_option('Basin','name_append'):
+            self.name_append = cfg.get('Basin','name_append')
+        else:
+            self.name_append = '_gen_' + datetime.datetime.now().strftime("%Y-%-m-%-d")
+
+        self.wy = int(cfg.get('Basin','wy'))
+
+        if cfg.has_option('Basin','units'):
+            self.units = cfg.get('Basin','units')
+        else:
+            self.units = 'KAF'
+
+        ####################################################
+        #           Outputs section                        #
+        ####################################################
+        # Default for snow.0000 file is 2 (SWE)
+        if (cfg.has_option('Outputs','snowband')):
+            self.snowband = int(cfg.get('Outputs','snowband'))
+        else:
+            self.snowband = 2
+
+        # Default for em.0000 is 8 (SWI)
+        if (cfg.has_option('Outputs','emband')):
+            self.snowband = int(cfg.get('Outputs','emband'))
+        else:
+            self.emband = 8
+
+        # Default rounding decimals for volume and depth
+        if (cfg.has_option('Outputs','decimals')):
+            self.dplcs = int(cfg.get('Outputs','decimals'))
+        else:
+            self.dplcs = 1
+
+        # If psnowFile and csnowFile are specified, use those,
+        # otherwise they will get defined as the first and last
+        # snow.XXXX file once [Runs] has been compiled
+        if (cfg.has_option('Outputs','psnowFile') and
+            cfg.has_option('Outputs','csnowFile')):
+
+            # Check to see if they exist
+            if not (os.path.isfile(cfg.get('Outputs','psnowFile'))):
+                print('psnowFile does not exist!')
+                self.error = True
+                return
+
+            if not (os.path.isfile(cfg.get('Outputs','csnowFile'))):
+                print('csnowFile does not exist!')
+                self.error = True
+                return
+
+            self.psnowFile = cfg.get('Outputs','psnowFile')
+            self.csnowFile = cfg.get('Outputs','csnowFile')
+            self.cemFile = self.csnowFile.replace('snow.','em.')
+
+        # Flights
+        if (cfg.has_option('Outputs','fltpsnowFile') and
+            cfg.has_option('Outputs','fltcsnowFile')):
+                                                    # Check to see if they exist
+            if not (os.path.isfile(cfg.get('Outputs','fltpsnowFile'))):
+                print('fltpsnowFile does not exist!')
+                self.error = True
+                return
+
+            if not (os.path.isfile(cfg.get('Outputs','fltcsnowFile'))):
+                print('fltcsnowFile does not exist!')
+                self.error = True
+                return
+
+            self.fltpsnowFile = cfg.get('Outputs','fltpsnowFile')
+            self.fltcsnowFile = cfg.get('Outputs','fltcsnowFile')
+            self.flt_flag = True
+
+        if cfg.has_option('Outputs','summary'):
+            self.summary = cfg.get('Outputs','summary').split(',')
+        else:
+            self.summary = ['accum','state','precip']
+
+        ####################################################
+        #           Runs                                   #
+        ####################################################
+        # Collect all the run directories
+        self.run_dirs = list(cfg.items('Runs'))
+
+        ####################################################
+        #           Validate                               #
+        ####################################################
+        if (cfg.has_option('Validate','stations')
+            and (cfg.has_option('Validate','labels'))
+            and (cfg.has_option('Validate','client'))
+            ):
+            self.val_stns = cfg.get('Validate','stations').split(',')
+            self.val_lbls = cfg.get('Validate','labels').split(',')
+            self.val_client = cfg.get('Validate','client')
+            self.valid_flag = True
+        else:
+            self.valid_flag = False
+            print('No validation stations listed, will not generate figure')
+
+        # This is being used to combine 2017 HRRR data
+        if cfg.has_option('Validate','offset'):
+            self.offset = int(cfg.get('Validate','offset'))
+        else:
+            self.offset = 0
+        ####################################################
+        #           Accumulated                            #
+        ####################################################
+        # Right now we aren't using these because matplotlib and multiple
+        # colormaps don't get along well with clims...
+        if (cfg.has_option('Accumulated','ymin')
+            and cfg.has_option('Accumulated','ymax')):
+
+            self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
+                              int(cfg.get('Accumulated','ymax')))
+
+        if cfg.has_option('Accumulated','save_fig'):
+            self.acc_flag = cfg.get('Accumulated','save_fig')
+        else:
+            self.acc_flag = True
+
+        if cfg.has_option('Accumulated','min_swi'):
+            self.min_swi = cfg.get('Accumulated','min_swi')
+
+        ####################################################
+        #           Elevation                              #
+        ####################################################
+        if (cfg.has_option('Elevation','ymin')
+            and cfg.has_option('Elevation','ymax')):
+            self.elv_ylims = (int(cfg.get('Elevation','ymin')),
+                             int(cfg.get('Elevation','ymax')))
+
+        if cfg.has_option('Elevation','save_fig'):
+            self.elv_flag = cfg.get('Elevation','save_fig')
+        else:
+            self.elv_flag = True
+
+        ####################################################
+        #           Changes                                #
+        ####################################################
+        if ((cfg.has_option('Changes','clmin'))
+            and (cfg.has_option('Changes','clmax'))):
+            self.ch_clmin = cfg.get('Changes','clmin')
+            self.ch_clmax = cfg.get('Changes','clmax')
+        else:
+            self.ch_clmin = 0.01
+            self.ch_clmax = 99.9
+
+        if (cfg.has_option('Changes','clminabs')
+            and cfg.has_option('Changes','clmaxabs')):
+            self.ch_clminabs = int(cfg.get('Changes','clminabs'))
+            self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
+        if (cfg.has_option('Changes','ymin')
+            and cfg.has_option('Changes','ymax')):
+            self.ch_ylims = (int(cfg.get('Changes','ymin')),
+                             int(cfg.get('Changes','ymax')))
+
+        ####################################################
+        #           Results                                #
+        ####################################################
+        if ((cfg.has_option('Results','clmin'))
+            and (cfg.has_option('Results','clmax'))):
+            self.ch_clmin = cfg.get('Results','clmin')
+            self.ch_clmax = cfg.get('Results','clmax')
+        else:
+            self.ch_clmin = 0.01
+            self.ch_clmax = 99.9
+
+        ####################################################
+        #           Basin Total                            #
+        ####################################################
+        if cfg.has_option('Basin Total','summary_swe'):
+            self.summary_swe = cfg.get('Basin Total','summary_swe')
+            self.summary_swi = cfg.get('Basin Total','summary_swi')
+            if not (os.path.isfile(self.summary_swe) and
+                    os.path.isfile(self.summary_swi) ):
+                print('Failed reading in Basin Total section!')
+                self.error = True
+                return
+
+        if cfg.has_option('Basin Total','netcdf'):
+            self.ncvars = cfg.get('Basin Total','netcdf').split(',')
+            self.nc_flag = True
+        else:
+            self.nc_flag = False
+
+        ####################################################
+        #           DEM                                    #
+        ####################################################
+        self.dempath = cfg.get('Masks','dempath')
+        self.total = cfg.get('Masks','total')
+
+        ####################################################
+        #          Plots                                   #
+        ####################################################
+        if cfg.has_option('Plots','fig_length'):
+            self.figsize = (int(cfg.get('Plots','fig_length')),
+                            int(cfg.get('Plots','fig_height')))
+            self.dpi = int(cfg.get('Plots','dpi'))
+            self.barcolors = ['xkcd:true green','palegreen',
+                          'xkcd:dusty green','xkcd:vibrant green','red']
+        else:
+            self.figsize = (10,5)
+            self.dpi = 200
+            self.barcolors = ['xkcd:true green','palegreen',
+                          'xkcd:dusty green','xkcd:vibrant green','red']
+
+        ####################################################
+        #          Report                                  #
+        ####################################################
         try:
-            if not os.path.isfile(config_file):
-                print('SNOWAV config file does not exist!')
-                self.error = True
-                return
+            # Report defaults to True
+            if cfg.has_option('Report','report'):
+                self.report_flag = cfg.getboolean('Report','report')
 
-            print('Reading SNOWAV config file...')
-            cfg = cfp.ConfigParser()
-            cfg.read(config_file)
-
-            ####################################################
-            #             Basin section                        #
-            ####################################################
-            self.basin = cfg.get('Basin','basin')
-            if (cfg.has_option('Basin','save_path') and
-                os.path.exists(cfg.get('Basin','save_path'))):
-                self.save_path = cfg.get('Basin','save_path')
+            if self.save_path == './snowav/data/':
+                self.report_flag = False
+                print('Report flag being set to false becaues of relative'
+                      + ' figure path ./snowav/data/')
             else:
-                print('Figures save_path either not specified in config file'
-                      ' or does not exist, using ./snowav/data/'
-                      + '\nFigures will be saved but report will fail')
-                self.save_path = './snowav/data/'
+                self.report_flag = True
 
-            if cfg.has_option('Basin','name_append'):
-                self.name_append = cfg.get('Basin','name_append')
+            # Add date if necessary
+            if cfg.has_option('Report','orig_date'):
+                self.orig_date = cfg.get('Report','orig_date')
+
+            if cfg.has_option('Report','exclude_figs'):
+                self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
+                options = ['CHANGES','SWI','RESULTS','ELEV','TOTALS',
+                           'MEAN','VALID']
+                for name in self.exclude_figs:
+                    if name not in options:
+                        print('[Report] exclude_fig options are: %s'%(options))
+                        self.error = True
+                        return
+
+            # These will later get appended with self.dateTo
+            if cfg.has_option('Report','report_name'):
+                self.report_name = cfg.get('Report','report_name')
             else:
-                self.name_append = '_gen_' + datetime.datetime.now().strftime("%Y-%-m-%-d")
+                self.report_name = 'SnowpackSummary.pdf'
 
-            self.wy = int(cfg.get('Basin','wy'))
-
-            if cfg.has_option('Basin','units'):
-                self.units = cfg.get('Basin','units')
+            if cfg.has_option('Report','report_title'):
+                self.rep_title = cfg.get('Report','report_title')
             else:
-                self.units = 'KAF'
+                self.rep_title = 'Snowpack Summary'
 
-            ####################################################
-            #           Outputs section                        #
-            ####################################################
-            # Default for snow.0000 file is 2 (SWE)
-            if (cfg.has_option('Outputs','snowband')):
-                self.snowband = int(cfg.get('Outputs','snowband'))
+            if cfg.has_option('Report','rep_path'):
+                self.rep_path = cfg.get('Report','rep_path')
             else:
-                self.snowband = 2
-
-            # Default for em.0000 is 8 (SWI)
-            if (cfg.has_option('Outputs','emband')):
-                self.snowband = int(cfg.get('Outputs','emband'))
-            else:
-                self.emband = 8
-
-            # Default rounding decimals for volume and depth
-            if (cfg.has_option('Outputs','decimals')):
-                self.dplcs = int(cfg.get('Outputs','decimals'))
-            else:
-                self.dplcs = 1
-
-            # If psnowFile and csnowFile are specified, use those,
-            # otherwise they will get defined as the first and last
-            # snow.XXXX file once [Runs] has been compiled
-            if (cfg.has_option('Outputs','psnowFile') and
-                cfg.has_option('Outputs','csnowFile')):
-
-                # Check to see if they exist
-                if not (os.path.isfile(cfg.get('Outputs','psnowFile'))):
-                    print('psnowFile does not exist!')
+                if os.path.exists('./snowav/data/'):
+                    print('No save path for report given in config file,'
+                          + ' using ./snowav/data/')
+                    self.rep_path = './snowav/data/'
+                else:
+                    print('No save path for report given in config file,'
+                          + ' either list in [Report] rep_path or run'
+                          + ' in /SNOWAV')
                     self.error = True
                     return
 
-                if not (os.path.isfile(cfg.get('Outputs','csnowFile'))):
-                    print('csnowFile does not exist!')
+            if cfg.has_option('Report','env_path'):
+                self.env_path = cfg.get('Report','env_path')
+            else:
+                if os.path.exists('./snowav/report/template/section_text/'):
+                    print('No environment path for report given in config '
+                          + 'file, using ./snowav/report/template/section_text/')
+                    self.env_path = './snowav/report/template/section_text/'
+                else:
+                    print('No environment path for report given in config file,'
+                          + ' either list in [Report] env_path or run'
+                          + ' in /SNOWAV')
                     self.error = True
                     return
 
-                self.psnowFile = cfg.get('Outputs','psnowFile')
-                self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = self.csnowFile.replace('snow.','em.')
-
-            # Flights
-            if (cfg.has_option('Outputs','fltpsnowFile') and
-                cfg.has_option('Outputs','fltcsnowFile')):
-                                                        # Check to see if they exist
-                if not (os.path.isfile(cfg.get('Outputs','fltpsnowFile'))):
-                    print('fltpsnowFile does not exist!')
+            if cfg.has_option('Report','templ_path'):
+                self.templ_path = cfg.get('Report','templ_path')
+            else:
+                if os.path.exists('./snowav/report/template/'):
+                    print('No environment path for report given in config '
+                          + 'file, using ./snowav/report/template/')
+                    self.templ_path = './snowav/report/template/'
+                else:
+                    print('No environment path for report given in config file,'
+                          + ' either list in [Report] templ_path or run'
+                          + ' in /SNOWAV')
                     self.error = True
                     return
 
-                if not (os.path.isfile(cfg.get('Outputs','fltcsnowFile'))):
-                    print('fltcsnowFile does not exist!')
+            if cfg.has_option('Report','tex_file'):
+                self.tex_file = cfg.get('Report','tex_file')
+            else:
+                if os.path.isfile('./snowav/report/template/snowav_report.tex'):
+                    print('No LaTeX file for report given in config '
+                          + 'file, using ./snowav/report/template/snowav_report.tex')
+                    self.tex_file = 'snowav_report.tex'
+                else:
+                    print('No LaTeX file for report given in config file,'
+                          + ' either list in [Report] tex_file or run'
+                          + ' in /SNOWAV')
                     self.error = True
                     return
 
-                self.fltpsnowFile = cfg.get('Outputs','fltpsnowFile')
-                self.fltcsnowFile = cfg.get('Outputs','fltcsnowFile')
-                self.flt_flag = True
-
-            if cfg.has_option('Outputs','summary'):
-                self.summary = cfg.get('Outputs','summary').split(',')
+            if cfg.has_option('Report','summary_file'):
+                self.summary_file = cfg.get('Report','summary_file')
             else:
-                self.summary = ['accum','state','precip']
-
-            ####################################################
-            #           Runs                                   #
-            ####################################################
-            # Collect all the run directories
-            self.run_dirs = list(cfg.items('Runs'))
-
-            ####################################################
-            #           Validate                               #
-            ####################################################
-            if (cfg.has_option('Validate','stations')
-                and (cfg.has_option('Validate','labels'))
-                and (cfg.has_option('Validate','client'))
-                ):
-                self.val_stns = cfg.get('Validate','stations').split(',')
-                self.val_lbls = cfg.get('Validate','labels').split(',')
-                self.val_client = cfg.get('Validate','client')
-                self.valid_flag = True
-            else:
-                self.valid_flag = False
-                print('No validation stations listed, will not generate figure')
-
-            # This is being used to combine 2017 HRRR data
-            if cfg.has_option('Validate','offset'):
-                self.offset = int(cfg.get('Validate','offset'))
-            else:
-                self.offset = 0
-            ####################################################
-            #           Accumulated                            #
-            ####################################################
-            # Right now we aren't using these because matplotlib and multiple
-            # colormaps don't get along well with clims...
-            if (cfg.has_option('Accumulated','ymin')
-                and cfg.has_option('Accumulated','ymax')):
-
-                self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
-                                  int(cfg.get('Accumulated','ymax')))
-
-            if cfg.has_option('Accumulated','save_fig'):
-                self.acc_flag = cfg.get('Accumulated','save_fig')
-            else:
-                self.acc_flag = True
-
-            if cfg.has_option('Accumulated','min_swi'):
-                self.min_swi = cfg.get('Accumulated','min_swi')
-
-            ####################################################
-            #           Elevation                              #
-            ####################################################
-            if (cfg.has_option('Elevation','ymin')
-                and cfg.has_option('Elevation','ymax')):
-                self.elv_ylims = (int(cfg.get('Elevation','ymin')),
-                                 int(cfg.get('Elevation','ymax')))
-
-            if cfg.has_option('Elevation','save_fig'):
-                self.elv_flag = cfg.get('Elevation','save_fig')
-            else:
-                self.elv_flag = True
-
-            ####################################################
-            #           Changes                                #
-            ####################################################
-            if ((cfg.has_option('Changes','clmin'))
-                and (cfg.has_option('Changes','clmax'))):
-                self.ch_clmin = cfg.get('Changes','clmin')
-                self.ch_clmax = cfg.get('Changes','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            if (cfg.has_option('Changes','clminabs')
-                and cfg.has_option('Changes','clmaxabs')):
-                self.ch_clminabs = int(cfg.get('Changes','clminabs'))
-                self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
-            if (cfg.has_option('Changes','ymin')
-                and cfg.has_option('Changes','ymax')):
-                self.ch_ylims = (int(cfg.get('Changes','ymin')),
-                                 int(cfg.get('Changes','ymax')))
-
-            ####################################################
-            #           Results                                #
-            ####################################################
-            if ((cfg.has_option('Results','clmin'))
-                and (cfg.has_option('Results','clmax'))):
-                self.ch_clmin = cfg.get('Results','clmin')
-                self.ch_clmax = cfg.get('Results','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            ####################################################
-            #           Basin Total                            #
-            ####################################################
-            if cfg.has_option('Basin Total','summary_swe'):
-                self.summary_swe = cfg.get('Basin Total','summary_swe')
-                self.summary_swi = cfg.get('Basin Total','summary_swi')
-                if not (os.path.isfile(self.summary_swe) and
-                        os.path.isfile(self.summary_swi) ):
-                    print('Failed reading in Basin Total section!')
+                if os.path.isfile('./snowav/report/template/section_text/report_summary.txt'):
+                    print('No summary file for report given in config '
+                          + 'file, using ./snowav/report/template/section_text/report_summary.txt')
+                    self.summary_file = './snowav/report/template/section_text/report_summary.txt'
+                else:
+                    print('No LaTeX file for report given in config file,'
+                          + ' either list in [Report] summary_file or run'
+                          + ' in /SNOWAV')
                     self.error = True
                     return
 
-            if cfg.has_option('Basin Total','netcdf'):
-                self.ncvars = cfg.get('Basin Total','netcdf').split(',')
-                self.nc_flag = True
+            if cfg.has_option('Report','figs_tpl_path'):
+                self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
             else:
-                self.nc_flag = False
-
-            ####################################################
-            #           DEM                                    #
-            ####################################################
-            self.dempath = cfg.get('Masks','dempath')
-            self.total = cfg.get('Masks','total')
-
-            ####################################################
-            #          Plots                                   #
-            ####################################################
-            if cfg.has_option('Plots','fig_length'):
-                self.figsize = (int(cfg.get('Plots','fig_length')),
-                                int(cfg.get('Plots','fig_height')))
-                self.dpi = int(cfg.get('Plots','dpi'))
-                self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']
-            else:
-                self.figsize = (10,5)
-                self.dpi = 200
-                self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']
-
-            ####################################################
-            #          Report                                  #
-            ####################################################
-            try:
-                # Report defaults to True
-                if cfg.has_option('Report','report'):
-                    self.report_flag = cfg.getboolean('Report','report')
-
-                if self.save_path == './snowav/data/':
-                    self.report_flag = False
-                    print('Report flag being set to false becaues of relative'
-                          + ' figure path ./snowav/data/')
+                if os.path.exists('./snowav/report/figs/'):
+                    print('No figs template path for report given in config '
+                          + 'file, using ./snowav/report/figs/')
+                    self.figs_tpl_path = './snowav/report/figs/'
                 else:
-                    self.report_flag = True
+                    print('No figs template path for report given in config file,'
+                          + ' either list in [Report] figs_tpl_path or run'
+                          + ' in /SNOWAV')
+                    self.error = True
+                    return
 
-                # Add date if necessary
-                if cfg.has_option('Report','orig_date'):
-                    self.orig_date = cfg.get('Report','orig_date')
-
-                if cfg.has_option('Report','exclude_figs'):
-                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
-                    options = ['CHANGES','SWI','RESULTS','ELEV','TOTALS',
-                               'MEAN','VALID']
-                    for name in self.exclude_figs:
-                        if name not in options:
-                            print('[Report] exclude_fig options are: %s'%(options))
-                            self.error = True
-                            return
-
-                # These will later get appended with self.dateTo
-                if cfg.has_option('Report','report_name'):
-                    self.report_name = cfg.get('Report','report_name')
-                else:
-                    self.report_name = 'SnowpackSummary.pdf'
-
-                if cfg.has_option('Report','report_title'):
-                    self.rep_title = cfg.get('Report','report_title')
-                else:
-                    self.rep_title = 'Snowpack Summary'
-
-                if cfg.has_option('Report','rep_path'):
-                    self.rep_path = cfg.get('Report','rep_path')
-                else:
-                    if os.path.exists('./snowav/data/'):
-                        print('No save path for report given in config file,'
-                              + ' using ./snowav/data/')
-                        self.rep_path = './snowav/data/'
-                    else:
-                        print('No save path for report given in config file,'
-                              + ' either list in [Report] rep_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','env_path'):
-                    self.env_path = cfg.get('Report','env_path')
-                else:
-                    if os.path.exists('./snowav/report/template/section_text/'):
-                        print('No environment path for report given in config '
-                              + 'file, using ./snowav/report/template/section_text/')
-                        self.env_path = './snowav/report/template/section_text/'
-                    else:
-                        print('No environment path for report given in config file,'
-                              + ' either list in [Report] env_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','templ_path'):
-                    self.templ_path = cfg.get('Report','templ_path')
-                else:
-                    if os.path.exists('./snowav/report/template/'):
-                        print('No environment path for report given in config '
-                              + 'file, using ./snowav/report/template/')
-                        self.templ_path = './snowav/report/template/'
-                    else:
-                        print('No environment path for report given in config file,'
-                              + ' either list in [Report] templ_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','tex_file'):
-                    self.tex_file = cfg.get('Report','tex_file')
-                else:
-                    if os.path.isfile('./snowav/report/template/snowav_report.tex'):
-                        print('No LaTeX file for report given in config '
-                              + 'file, using ./snowav/report/template/snowav_report.tex')
-                        self.tex_file = 'snowav_report.tex'
-                    else:
-                        print('No LaTeX file for report given in config file,'
-                              + ' either list in [Report] tex_file or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','summary_file'):
-                    self.summary_file = cfg.get('Report','summary_file')
-                else:
-                    if os.path.isfile('./snowav/report/template/section_text/report_summary.txt'):
-                        print('No summary file for report given in config '
-                              + 'file, using ./snowav/report/template/section_text/report_summary.txt')
-                        self.summary_file = './snowav/report/template/section_text/report_summary.txt'
-                    else:
-                        print('No LaTeX file for report given in config file,'
-                              + ' either list in [Report] summary_file or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','figs_tpl_path'):
-                    self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
-                else:
-                    if os.path.exists('./snowav/report/figs/'):
-                        print('No figs template path for report given in config '
-                              + 'file, using ./snowav/report/figs/')
-                        self.figs_tpl_path = './snowav/report/figs/'
-                    else:
-                        print('No figs template path for report given in config file,'
-                              + ' either list in [Report] figs_tpl_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-            except:
-                print('Error reading in Reports section!')
-                self.error = True
-                return
+            #except:
+                # print('Error reading in Reports section!')
+                # self.error = True
+                # return
 
             # Strings for the report
             if self.units == 'KAF':
@@ -569,8 +570,10 @@ class SNOWAV(object):
             path_ehr = os.path.split(self.csnowFile)
             ext_shr = os.path.splitext(path_shr[1])
             ext_ehr = os.path.splitext(path_ehr[1])
-            self.figs_path = (self.save_path
-                             + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+            # self.figs_path = (self.save_path
+            #                  + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+            self.figs_path = os.path.join(self.save_path,
+                                          '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
 
             # Check run dates, and make a new folder if necessary
             if not os.path.exists(self.figs_path):
@@ -583,6 +586,11 @@ class SNOWAV(object):
                                 + self.name_append
                                 + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
                                 + extf[1])
+            self.config_copy = os.path.join(self.figs_path,
+                                            extf[0],
+                                            self.name_append,
+                                            '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5]),
+                                            extf[1])
 
             # If it doesn't already exist, make it
             if not os.path.isfile(self.config_copy):
