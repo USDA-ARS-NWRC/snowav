@@ -497,11 +497,12 @@ class SNOWAV(object):
                           + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
             
             if self.filetype == 'netcdf':
-                em = []
-                ev = []
-                sn = []
-                dates = []
-                time = []
+                print('nc')
+                self.swi = []
+                self.evap = []
+                self.swe = []
+                self.dates = []
+                self.time = []
                 
                 for rd in self.run_dirs:
                     # rd = self.run_dirs[0]
@@ -509,13 +510,13 @@ class SNOWAV(object):
                                            'netcdf',
                                            snowbands = [2],
                                            embands = [7,8])
-                    dates = np.append(dates,output.dates)
-                    time = np.append(time,output.time)
+                    self.dates = np.append(self.dates,output.dates)
+                    self.time = np.append(self.time,output.time)
                     
                     for n in range(0,len(output.em_data[8])):
-                        em.append(output.em_data[8][n,:,:])
-                        ev.append(output.em_data[7][n,:,:])
-                        sn.append(output.snow_data[2][n,:,:])
+                        self.swi.append(output.em_data[8][n,:,:])
+                        self.evap.append(output.em_data[7][n,:,:])
+                        self.swe.append(output.snow_data[2][n,:,:])
 
             # Assign some basin-specific things, also needs to be generalized
             if self.basin == 'BRB':
