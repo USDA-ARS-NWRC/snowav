@@ -240,7 +240,7 @@ class iSnobalReader():
         snow_data = {}
         em_data = {}
 
-        print('Processing datasets')
+        # print('Processing datasets')
         # parse user input timesteps or use all
         if self.timesteps == None and self.time_start == None and self.time_end == None:
             timesteps = time

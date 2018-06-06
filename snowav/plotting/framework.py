@@ -428,7 +428,20 @@ class SNOWAV(object):
                 self.suborder = self.suborder + [self.sub4_lbl]
                 maskpaths = maskpaths + [self.subbasin4]
 
+            # Get the DEM
+            # There are different formats, this will get fixed once we
+            # start using netcdf
+            try:
+                self.dem = np.genfromtxt(self.dempath)
+            except:
+                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+
+            self.nrows = len(self.dem[:,0])
+            self.ncols = len(self.dem[0,:])
+            blank = np.zeros((self.nrows,self.ncols))
+                        
             if self.filetype == 'ipw':
+                # self.outputs = iSnobalReader(dir, 'ipw')
                 # Collect the run directories
                 self.snow_files = []
                 self.em_files = []
@@ -456,48 +469,53 @@ class SNOWAV(object):
                     print('psnowFile and/or csnowFile not specified, using:'
                           + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
 
-            if self.filetype == 'nc':
-                print('This depends on what Prime has up his sleeve, and now'
-                + ' Im stepping away to other things...')
-
-            # Collect the run directories
-            self.snow_files = []
-            self.em_files = []
-            for rdir in self.run_dirs:
-                run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
-
-                self.snow_files = (self.snow_files
-                                   + [value for value in run_files
-                                   if ( ('snow.' in value) and not ('.nc' in value))])
-                self.em_files = (self.em_files
-                                 + [value for value in run_files
-                                 if ( ('em.' in value) and not ('.nc' in value))])
-
-            while '*snow.nc' in self.snow_files:
-                self.snow_files.remove('*snow.nc')
-
-            while '*em.nc' in self.em_files:
-                self.em_files.remove('*em.nc')
-
-            # If no psnowFile and csnowFile specified, use first and last
-            if not hasattr(self,'csnowFile'):
-                self.psnowFile = self.snow_files[0]
-                self.csnowFile = self.snow_files[-1]
-                self.cemFile = self.em_files[-1]
-                print('psnowFile and/or csnowFile not specified, using:'
-                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
-
-            # Get the DEM
-            # There are different formats, this will get fixed once we
-            # start using netcdf
-            try:
-                self.dem = np.genfromtxt(self.dempath)
-            except:
-                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
-
-            self.nrows = len(self.dem[:,0])
-            self.ncols = len(self.dem[0,:])
-            blank = np.zeros((self.nrows,self.ncols))
+                # Collect the run directories
+                self.snow_files = []
+                self.em_files = []
+                for rdir in self.run_dirs:
+                    run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
+    
+                    self.snow_files = (self.snow_files
+                                       + [value for value in run_files
+                                       if ( ('snow.' in value) and not ('.nc' in value))])
+                    self.em_files = (self.em_files
+                                     + [value for value in run_files
+                                     if ( ('em.' in value) and not ('.nc' in value))])
+    
+                while '*snow.nc' in self.snow_files:
+                    self.snow_files.remove('*snow.nc')
+    
+                while '*em.nc' in self.em_files:
+                    self.em_files.remove('*em.nc')
+    
+                # If no psnowFile and csnowFile specified, use first and last
+                if not hasattr(self,'csnowFile'):
+                    self.psnowFile = self.snow_files[0]
+                    self.csnowFile = self.snow_files[-1]
+                    self.cemFile = self.em_files[-1]
+                    print('psnowFile and/or csnowFile not specified, using:'
+                          + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
+            
+            if self.filetype == 'netcdf':
+                em = []
+                ev = []
+                sn = []
+                dates = []
+                time = []
+                
+                for rd in self.run_dirs:
+                    # rd = self.run_dirs[0]
+                    output = iSnobalReader(rd[1].split('output')[0],
+                                           'netcdf',
+                                           snowbands = [2],
+                                           embands = [7,8])
+                    dates = np.append(dates,output.dates)
+                    time = np.append(time,output.time)
+                    
+                    for n in range(0,len(output.em_data[8])):
+                        em.append(output.em_data[8][n,:,:])
+                        ev.append(output.em_data[7][n,:,:])
+                        sn.append(output.snow_data[2][n,:,:])
 
             # Assign some basin-specific things, also needs to be generalized
             if self.basin == 'BRB':
