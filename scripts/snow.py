@@ -6,8 +6,9 @@ import snowav
 def run(config_file):
 
     # Initialize snowav, read in config file
+    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_devel.ini'
+    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018_devel.ini'
     # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_sj_wy2018_devel.txt'
-    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018_devel.txt'
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
 
     if not hasattr(snow,'error'):
