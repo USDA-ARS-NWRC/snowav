@@ -37,7 +37,7 @@ setup(
 
 
     include_package_data=True,
-    package_data={'snowav':['./config/CoreConfig.ini']},
+    package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
     scripts=['./scripts/snow.py'],
     install_requires=requirements,
     license="GPL-3.0",

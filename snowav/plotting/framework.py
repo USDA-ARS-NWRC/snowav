@@ -175,29 +175,20 @@ class SNOWAV(object):
             ####################################################
             #           Masks
             ####################################################
-            self.subbasin1 = ucfg.cfg['Masks']['subbasin1']
-            self.subbasin2 = ucfg.cfg['Masks']['subbasin2']
-            self.subbasin3 = ucfg.cfg['Masks']['subbasin3']
-            self.total_lbl = ucfg.cfg['Masks']['total_lbl']
-            self.sub1_lbl = ucfg.cfg['Masks']['sub1_lbl']
-            self.sub2_lbl = ucfg.cfg['Masks']['sub2_lbl']
-            self.sub3_lbl = ucfg.cfg['Masks']['sub3_lbl']
 
-            self.plotorder = [self.total_lbl, self.sub1_lbl, self.sub2_lbl,
-                              self.sub3_lbl]
+            # Make sure it is a list
+            for item in ['basin_masks', 'mask_labels']:
+                if type(ucfg.cfg['Masks'][item]) != list:
+                    ucfg.cfg['Masks'][item] = [ucfg.cfg['Masks'][item]]
 
-            self.suborder = [self.sub1_lbl, self.sub2_lbl, self.sub3_lbl]
-            maskpaths = [self.total, self.subbasin1, self.subbasin2,
-                         self.subbasin3]
+            self.plotorder = []
+            maskpaths = []
 
-            # Add if necessary - need to generalize all this and change
-            # in the config file!
-            if ucfg.cfg['Masks']['sub4_lbl']:
-                self.sub4_lbl = ucfg.cfg['Masks']['sub4_lbl']
-                self.subbasin4 = ucfg.cfg['Masks']['subbasin4']
-                self.plotorder = self.plotorder + [self.sub4_lbl]
-                self.suborder = self.suborder + [self.sub4_lbl]
-                maskpaths = maskpaths + [self.subbasin4]
+            # List of paths to masks. The first should always be the total basin
+            masks = ucfg.cfg['Masks']['basin_masks']
+            for idx, m in enumerate(masks):
+                maskpaths.append(m)
+                self.plotorder.append(ucfg.cfg['Masks']['mask_labels'][idx])
 
             # Collect the run directories
             self.snow_files = []
@@ -302,24 +293,18 @@ class SNOWAV(object):
             # Right now this is a placeholder, could edit by basin...
             self.xlims = (0,len(self.edges))
 
-            try:
-                # Compile the masks
-                # HACK FOR SJ SUB4!
-                self.masks = dict()
-                for lbl,mask in zip(self.plotorder,maskpaths):
-                    if (self.basin == 'SJ' and lbl == self.sub4_lbl):
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=0),
-                                           'label': lbl}
-                    # hack
-                    else:
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=sr),
-                                           'label': lbl}
-            except:
-                print('Error creating mask dicts!')
-                self.error = True
-                return
+            # Compile the masks
+            self.masks = dict()
+            for lbl,mask in zip(self.plotorder,maskpaths):
+                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
+                    self.masks[lbl] = {'border': blank,
+                                       'mask': np.genfromtxt(mask,skip_header=0),
+                                       'label': lbl}
+                # hack
+                else:
+                    self.masks[lbl] = {'border': blank,
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'label': lbl}
 
             # Do unit-specific things
             if self.units == 'KAF':
