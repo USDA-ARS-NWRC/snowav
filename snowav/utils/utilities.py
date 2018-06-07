@@ -1,14 +1,14 @@
 from .gitinfo import __gitVersion__, __gitPath__
-from awsm import __version__
+from snowav import __version__
 
 
 def getgitinfo():
-    """gitignored file that contains specific AWSM version and path
+    """gitignored file that contains specific SNOWAV version and path
 
     Input:
         - none
     Output:
-        - path to base AWSM directory
+        - path to base SNOWAV directory
         - git version from 'git describe'
     """
     # return git describe if in git tracked SMRF

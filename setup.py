@@ -2,6 +2,7 @@ from setuptools import setup, find_packages
 from codecs import open
 from os import path
 import os
+from subprocess import check_output
 #Grab and write the gitVersion from 'git describe'.
 gitVersion = ''
 gitPath = ''
