@@ -509,7 +509,7 @@ class SNOWAV(object):
                     # rd = self.run_dirs[0]
                     output = iSnobalReader(rd[1].split('output')[0],
                                            'netcdf',
-                                           snowbands = [0,2],
+                                           snowbands = [0,1,2],
                                            embands = [7,8])
                     self.dates = np.append(self.dates,output.dates)
                     self.time = np.append(self.time,output.time)
