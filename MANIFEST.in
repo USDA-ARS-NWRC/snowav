@@ -5,6 +5,7 @@ include LICENSE
 include README.rst
 
 snowav/config/CoreConfig.ini
+snowav/config/recipes.ini
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

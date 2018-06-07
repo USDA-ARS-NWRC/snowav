@@ -1,6 +1,44 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+import os
+from subprocess import check_output
+#Grab and write the gitVersion from 'git describe'.
+gitVersion = ''
+gitPath = ''
+
+# get git describe if in git repository
+print('Fetching most recent git tags')
+if os.path.exists('./.git'):
+	try:
+		# if we are in a git repo, fetch most recent tags
+		check_output(["git fetch --tags"], shell=True)
+	except Exception as e:
+		print(e)
+		print('Unable to fetch most recent tags')
+
+	try:
+		ls_proc = check_output(["git describe --tags"], shell=True, universal_newlines=True)
+		gitVersion = ls_proc
+		print('Checking most recent version')
+	except Exception as e:
+		print('Unable to get git tag and hash')
+# if not in git repo
+else:
+	print('Not in git repository')
+	gitVersion = ''
+
+# get current working directory to define git path
+gitPath = os.getcwd()
+
+# git untracked file to store version and path
+fname = os.path.abspath(os.path.expanduser('./snowav/utils/gitinfo.py'))
+
+with open(fname,'w') as f:
+	nchars = len(gitVersion) - 1
+	f.write("__gitPath__='{0}'\n".format(gitPath))
+	f.write("__gitVersion__='{0}'\n".format(gitVersion[:nchars]))
+	f.close()
 
 with open('README.rst') as readme_file:
     readme = readme_file.read()
@@ -32,12 +70,12 @@ setup(
                 'snowav.plotting',
                 'snowav.report',
                 'snowav.methods',
-		'snowav.utils'
+                'snowav.utils'
 			  ],
 
 
     include_package_data=True,
-    package_data={'snowav':['./config/CoreConfig.ini']},
+    package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
     scripts=['./scripts/snow.py'],
     install_requires=requirements,
     license="GPL-3.0",
