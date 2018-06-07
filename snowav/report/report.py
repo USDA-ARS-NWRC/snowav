@@ -110,6 +110,27 @@ def report(obj):
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
     
+    # Put the by-elevation tables together
+    # Eventually put this in framework? But _o is beating it to hell right now
+    obj.state_mswe_byelev.index.name = 'Elevation'
+    obj.state_mswe_byelev = obj.state_mswe_byelev.astype('float64')
+    obj.state_mswe_byelev = obj.state_mswe_byelev.fillna(0).round(1)
+    variables['SWE_BYELEV'] = (
+                                r'\textbf{Mean SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.dateTo.date().strftime("%Y-%-m-%-d")) 
+                                + obj.state_mswe_byelev[obj.plotorder].to_latex()
+                                )
+    
+    obj.delta_swe_byelev.index.name = 'Elevation'
+    obj.delta_swe_byelev = obj.delta_swe_byelev.astype('float64')
+    obj.delta_swe_byelev = obj.delta_swe_byelev.fillna(0).round(1)
+    variables['DSWE_BYELEV'] = (
+                                r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.dateFrom.date().strftime("%Y-%-m-%-d"),
+                                  obj.dateTo.date().strftime("%Y-%-m-%-d")) 
+                                + obj.delta_swe_byelev[obj.plotorder].to_latex()
+                                )
+    
     variables['TOT_LBL'] = obj.total_lbl
     if hasattr(obj,'sub1_lbl'):
         variables['SUB1_LBL'] = obj.sub1_lbl

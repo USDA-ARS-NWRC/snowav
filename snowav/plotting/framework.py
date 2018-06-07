@@ -156,6 +156,8 @@ class SNOWAV(object):
                     print('[Report] exclude_fig options are: %s'%(options))
                     self.error = True
                     return
+            else:
+                self.basin_total_flag = False
 
             # These will later get appended with self.dateTo
             self.report_name = ucfg.cfg['Report']['report_name']

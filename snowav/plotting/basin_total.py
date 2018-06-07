@@ -78,6 +78,11 @@ def basin_total(snow):
     ########################################
 
     # This needs to be improved...
+    
+    if snow.basin_total_flag == False:
+        print('No basin total summary files specified in config file, '
+              + 'skipping...')
+        return    
 
     if snow.basin == 'BRB':
         accum_summary = snow.accum_summary
