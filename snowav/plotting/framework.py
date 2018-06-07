@@ -497,18 +497,19 @@ class SNOWAV(object):
                           + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
             
             if self.filetype == 'netcdf':
-                print('nc')
                 self.swi = []
                 self.evap = []
                 self.swe = []
+                self.depth = []
                 self.dates = []
                 self.time = []
+                self.rho = []
                 
                 for rd in self.run_dirs:
                     # rd = self.run_dirs[0]
                     output = iSnobalReader(rd[1].split('output')[0],
                                            'netcdf',
-                                           snowbands = [2],
+                                           snowbands = [0,2],
                                            embands = [7,8])
                     self.dates = np.append(self.dates,output.dates)
                     self.time = np.append(self.time,output.time)
@@ -517,6 +518,8 @@ class SNOWAV(object):
                         self.swi.append(output.em_data[8][n,:,:])
                         self.evap.append(output.em_data[7][n,:,:])
                         self.swe.append(output.snow_data[2][n,:,:])
+                        self.depth.append(output.snow_data[0][n,:,:])
+                        self.rho.append(output.snow_data[1][n,:,:])
 
             # Assign some basin-specific things, also needs to be generalized
             if self.basin == 'BRB':
