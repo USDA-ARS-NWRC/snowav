@@ -1,4 +1,5 @@
-import .gitinfo import __gitVersion__, __gitPath__
+from .gitinfo import __gitVersion__, __gitPath__
+from awsm import __version__
 
 
 def getgitinfo():
