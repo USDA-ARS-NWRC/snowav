@@ -13,6 +13,8 @@ import datetime
 from snowav.utils.OutputReader import iSnobalReader
 
 from inicheck.tools import get_user_config
+from inicheck.output import generate_config
+
 
 class SNOWAV(object):
 
@@ -358,7 +360,7 @@ class SNOWAV(object):
 
             # If it doesn't already exist, make it
             if not os.path.isfile(self.config_copy):
-                copyfile(config_file,self.config_copy)
+                generate_config(ucfg,self.config_copy)
 
         except:
             print('Error reading SNOWAV config file.')
