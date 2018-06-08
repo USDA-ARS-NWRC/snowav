@@ -10,6 +10,7 @@ import copy
 import pandas as pd
 import sys
 import datetime
+import snowav.methods.wyhr_to_datetime as wy
 from snowav.utils.OutputReader import iSnobalReader
 from inicheck.tools import get_user_config
 from inicheck.output import generate_config
@@ -421,7 +422,6 @@ class SNOWAV(object):
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,
                                                        self.snow_files)):
             # iters = 0
-            # iters = iters + 1
             # em_name = self.em_files[iters]
             # snow_name = self.snow_files[iters]
             date = wy.wyhr_to_datetime(self.wy,
@@ -433,7 +433,7 @@ class SNOWAV(object):
 
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
-                if hasattr(self,"adj_hours"):
+                if self.adj_hours != None:
                     print('Hacking adj_hours...')
                     adj = self.adj_hours
 
@@ -476,9 +476,7 @@ class SNOWAV(object):
             rain_hrly = np.zeros((self.nrows,self.ncols))
             precip_hrly = np.zeros((self.nrows,self.ncols))
 
-            # Load 'em in
             if pFlag:
-                # print('adding precip for %s'%(snow_name))
                 for pfile in ppt_files:
                     ppt = ipw.IPW(pfile)
                     pre = ppt.bands[0].data
@@ -500,12 +498,12 @@ class SNOWAV(object):
                 # Mean pixel depth [mm] on psnowFile
                 self.pre_pm = (
                                np.nansum(tmpstate
-                               * self.masks[self.total_lbl]['mask'])
-                               / self.masks[self.total_lbl]['mask'].sum()
+                               * self.masks[self.plotorder[0]]['mask'])
+                               / self.masks[self.plotorder[0]]['mask'].sum()
                                )
                 self.pre_swe = (
                                 np.nansum(tmpstate
-                                * self.masks[self.total_lbl]['mask'])
+                                * self.masks[self.plotorder[0]]['mask'])
                                 * self.conversion_factor )
 
             # Store daily sub-basin totals
@@ -547,7 +545,6 @@ class SNOWAV(object):
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
-                # print('csnowfile is %s'%(snow_name))
 
                 # Run debug statement before ending the process
                 pf = ', csnowFile'
@@ -669,33 +666,37 @@ class SNOWAV(object):
             self.masks[name]['SWE'] = ( (melt[name].sum() + nonmelt[name].sum())
                                        * self.conversion_factor )
 
-        # Convert to desired units
 
-        # Sum over all time steps, spatial
+        # First time step, volume
+        self.pstate = np.multiply(pstate,self.conversion_factor)    
+        
+        # At last time step, volume
+        self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
+        # self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
+        
+        # Sum over all time steps, depth
         self.precip = np.multiply(precip,self.depth_factor)
         self.accum = np.multiply(accum,self.depth_factor)
         self.evap = np.multiply(evap,self.depth_factor)
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)
-
-        # At last time step
-        self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
-        self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
-        self.state = np.multiply(state,self.depth_factor)
-        self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
-        self.delta_state = np.multiply(delta_state,self.depth_factor)
-        if hasattr(self,'flt_flag'):
-            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
-
-        # Sum, by elevation
+        
+        # Sum over all time steps, volume
         self.accum_byelev = np.multiply(accum_byelev,self.conversion_factor)
         self.evap_byelev = np.multiply(evap_byelev,self.conversion_factor)
         self.precip_byelev = np.multiply(precip_byelev,self.conversion_factor)
         self.rain_bg_byelev = np.multiply(rain_bg_byelev,
                                           self.conversion_factor)
         self.snowmelt_byelev = np.multiply(snowmelt_byelev,
-                                           self.conversion_factor)
+                                           self.conversion_factor)        
 
-        # Sub-set of time defined by psnowfile and csnowfile, sum, by elevation
+        # At last time step, depth
+        self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
+        self.state = np.multiply(state,self.depth_factor)
+        self.delta_state = np.multiply(delta_state,self.depth_factor)
+        if hasattr(self,'flt_flag'):
+            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)        
+
+        # Sub-set of time defined by psnowfile and csnowfile
         self.snowmelt_byelev_sub = np.multiply(snowmelt_byelev_sub,
                                                self.conversion_factor)
         self.accum_byelev_sub = np.multiply(accum_byelev_sub,
@@ -703,7 +704,7 @@ class SNOWAV(object):
         self.precip_byelev_sub = np.multiply(precip_byelev_sub,
                                              self.conversion_factor)
 
-        # Change, by elevation
+        # Change
         self.delta_state_byelev = np.multiply(delta_state_byelev,
                                               self.conversion_factor)
         self.flt_delta_state_byelev = np.multiply(flt_delta_state_byelev,
@@ -711,23 +712,21 @@ class SNOWAV(object):
         self.delta_swe_byelev = np.multiply(delta_swe_byelev,
                                               self.depth_factor)
 
-        # At first time step, spatial
-        self.pstate = np.multiply(pstate,self.conversion_factor)
-
         # Daily
         self.state_summary = np.multiply(state_summary,self.conversion_factor)
         self.accum_summary = np.multiply(accum_summary,self.conversion_factor)
         self.precip_summary = np.multiply(precip_summary,self.conversion_factor)
         self.evap_summary = np.multiply(evap_summary,self.conversion_factor)
-        self.state_byday = np.multiply(state_byday,self.depth_factor)
+        # self.state_byday = np.multiply(state_byday,self.depth_factor)
 
         # Mean
         self.state_mswe_byelev = np.multiply(state_mswe_byelev,
                                              self.depth_factor)
-        self.depth_mdep_byelev = np.multiply(np.multiply(depth_mdep_byelev,1000)
-                                             ,self.depth_factor)
+        self.depth_mdep_byelev = np.multiply(np.multiply(depth_mdep_byelev,1000),
+                                             self.depth_factor)
         self.density_m_byelev = density_m_byelev
 
+        # odds and ends
         self.melt = np.multiply(melt,self.conversion_factor)
         self.nonmelt = np.multiply(nonmelt,self.conversion_factor)
         self.cold = np.multiply(self.cold,0.000001)
