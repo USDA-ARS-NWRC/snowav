@@ -11,7 +11,6 @@ import pandas as pd
 import sys
 import datetime
 from snowav.utils.OutputReader import iSnobalReader
-
 from inicheck.tools import get_user_config
 from inicheck.output import generate_config
 
@@ -20,86 +19,82 @@ class SNOWAV(object):
 
     def __init__(self,config_file = None):
         '''
-        Initializing reporting object, and read in configuration file.
+        Initialize snowav object and read in configuration file.
         '''
 
-        # try:
         if not os.path.isfile(config_file):
             print('SNOWAV config file does not exist!')
             self.error = True
             return
 
         print('Reading SNOWAV config file...')
-        ucfg = get_user_config(config_file)
-
+        ucfg = get_user_config(config_file, modules = 'snowav')
+    
         ####################################################
-        #             Basin section                        #
+        #             basin                                #
         ####################################################
-        self.basin = ucfg.cfg['Basin']['basin']
-        self.save_path = ucfg.cfg['Basin']['save_path']
+        self.basin = ucfg.cfg['basin']['basin']
+        self.save_path = ucfg.cfg['basin']['save_path']
 
-        if ucfg.cfg['Basin']['name_append'] != None:
-            self.name_append = ucfg.cfg['Basin']['name_append']
+        if ucfg.cfg['basin']['name_append'] != None:
+            self.name_append = ucfg.cfg['basin']['name_append']
         else:
             self.name_append = '_gen_' + \
                                datetime.datetime.now().strftime("%Y-%-m-%-d")
 
-        self.wy = ucfg.cfg['Basin']['wy']
+        self.wy = ucfg.cfg['basin']['wy']
 
-        self.units = ucfg.cfg['Basin']['units']
+        self.units = ucfg.cfg['basin']['units']
+        self.filetype = ucfg.cfg['basin']['filetype']
 
         ####################################################
-        #           Outputs section                        #
+        #           outputs                                #
         ####################################################
-        self.snowband = ucfg.cfg['Outputs']['snowband']
-        self.emband = ucfg.cfg['Outputs']['emband']
+        self.snowband = ucfg.cfg['outputs']['snowband']
+        self.emband = ucfg.cfg['outputs']['emband']
 
         # Rounding decimals for volume and depth
-        self.dplcs = ucfg.cfg['Outputs']['decimals']
+        self.dplcs = ucfg.cfg['outputs']['decimals']
 
         # If previous snowFile and current snowFile are specified, use those,
         # otherwise they will get defined as the first and last
         # snow.XXXX file once [Runs] has been compiled
-        if (ucfg.cfg['Outputs']['psnowFile'] != None and
-            ucfg.cfg['Outputs']['csnowFile'] != None):
+        if (ucfg.cfg['outputs']['psnowfile'] != None and
+            ucfg.cfg['outputs']['csnowfile'] != None):
 
-            self.psnowFile = ucfg.cfg['Outputs']['psnowFile']
-            self.csnowFile = ucfg.cfg['Outputs']['csnowFile']
+            self.psnowFile = ucfg.cfg['outputs']['psnowfile']
+            self.csnowFile = ucfg.cfg['outputs']['csnowfile']
             self.cemFile = self.csnowFile.replace('snow.','em.')
 
-        # Check for flights
-        if (ucfg.cfg['Outputs']['fltpsnowFile'] != None and
-            ucfg.cfg['Outputs']['fltcsnowFile'] != None):
+        # Check for forced flight comparison images
+        if (ucfg.cfg['outputs']['fltpsnowfile'] != None and
+            ucfg.cfg['outputs']['fltcsnowfile'] != None):
 
-            self.fltpsnowFile = ucfg.cfg['Outputs']['fltpsnowFile']
-            self.fltcsnowFile = ucfg.cfg['Outputs']['fltcsnowFile']
+            self.fltpsnowFile = ucfg.cfg['outputs']['fltpsnowFile']
+            self.fltcsnowFile = ucfg.cfg['outputs']['fltcsnowFile']
             self.flt_flag = True
 
-        # Handle the desired outputs
-        self.summary = ucfg.cfg['Outputs']['summary']
+        self.summary = ucfg.cfg['outputs']['summary']
         if type(self.summary) != list:
             self.summary = [self.summary]
 
         ####################################################
-        #           Runs                                   #
+        #           runs                                   #
         ####################################################
-        # Collect all the run directories
-        self.run_dirs = ucfg.cfg['Runs']['run_dirs']
+        self.run_dirs = ucfg.cfg['runs']['run_dirs']
         if type(self.run_dirs) != list:
             self.run_dirs = [self.run_dirs]
 
         ####################################################
-        #           Validate                               #
+        #           validate                               #
         ####################################################
+        if (ucfg.cfg['validate']['stations'] != None and
+            ucfg.cfg['validate']['labels'] != None and
+            ucfg.cfg['validate']['client'] != None):
 
-        # Check for validation info, skip if not provided
-        if (ucfg.cfg['Validate']['stations'] != None and
-            ucfg.cfg['Validate']['labels'] != None and
-            ucfg.cfg['Validate']['client'] != None):
-
-            self.val_stns = ucfg.cfg['Validate']['stations']
-            self.val_lbls = ucfg.cfg['Validate']['labels']
-            self.val_client = ucfg.cfg['Validate']['client']
+            self.val_stns = ucfg.cfg['validate']['stations']
+            self.val_lbls = ucfg.cfg['validate']['labels']
+            self.val_client = ucfg.cfg['validate']['client']
             self.valid_flag = True
 
         else:
@@ -107,317 +102,264 @@ class SNOWAV(object):
             print('No validation stations listed, will not generate figure')
 
         # This is being used to combine 2017 HRRR data
-        self.offset = int(ucfg.cfg['Validate','offset'])
+        self.offset = int(ucfg.cfg['validate']['offset'])
 
         ####################################################
-        #           Basin Total                            #
+        #           basin total                            #
         ####################################################
-        if ucfg.cfg['Basin Total']['summary_swe']:
-            self.summary_swe = ucfg.cfg['Basin Total']['summary_swe']
-            self.summary_swi = ucfg.cfg['Basin Total']['summary_swi']
-            if not (os.path.isfile(self.summary_swe) and
-                    os.path.isfile(self.summary_swi) ):
-                print('Failed reading in Basin Total section!')
-                self.error = True
-                return
+        if ucfg.cfg['basin total']['summary_swe'] != None:
+            self.summary_swe = ucfg.cfg['basin total']['summary_swe']
+            self.summary_swi = ucfg.cfg['basin total']['summary_swi']
+        else:
+            self.basin_total_flag = False
 
-        if ucfg.cfg['Basin Total']['netcdf']:
+        if ucfg.cfg['basin total']['netcdf']:
             self.ncvars = ucfg.cfg['Basin Total']['netcdf'].split(',')
             self.nc_flag = True
         else:
             self.nc_flag = False
 
         ####################################################
-        #           MASKS                                    #
+        #           masks                                  #
         ####################################################
-        self.dempath = ucfg.cfg['Masks']['dempath']
-        self.total = ucfg.cfg['Masks']['total']
+        self.dempath = ucfg.cfg['masks']['dempath']
+        self.total = ucfg.cfg['masks']['basin_masks'][0]
 
         ####################################################
-        #          Plots                                   #
+        #          plots                                   #
         ####################################################
-        self.figsize = (ucfg.cfg['Plots']['fig_length'],
-                        ucfg.cfg['Plots']['fig_height'])
-        self.dpi = ucfg.cfg['Plots']['dpi']
+        self.figsize = (ucfg.cfg['plots']['fig_length'],
+                        ucfg.cfg['plots']['fig_height'])
+        self.dpi = ucfg.cfg['plots']['dpi']
         self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
                           'xkcd:vibrant green','red']
 
         ####################################################
-        #          Report                                  #
+        #          report                                  #
         ####################################################
+        self.report_flag = ucfg.cfg['report']['report']
+
+        self.exclude_figs = ucfg.cfg['report']['exclude_figs']
+        if type(self.exclude_figs) != list and self.exclude_figs != None:
+            self.exclude_figs = [self.exclude_figs]
+
+        self.report_name = ucfg.cfg['report']['report_name']
+        self.rep_title = ucfg.cfg['report']['report_title']
+        self.rep_path = ucfg.cfg['report']['rep_path']
+        self.env_path = ucfg.cfg['report']['env_path']
+        self.templ_path = ucfg.cfg['report']['templ_path']
+        self.tex_file = ucfg.cfg['report']['tex_file']
+        self.summary_file = ucfg.cfg['report']['summary_file']
+        self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
+
+        ####################################################
+        #           hx forecast
+        ####################################################
+        self.adj_hours = ucfg.cfg['hx forecast']['adj_hours']
+
+        ####################################################
+        #           masks
+        ####################################################
+        for item in ['basin_masks', 'mask_labels']:
+            if type(ucfg.cfg['masks'][item]) != list:
+                ucfg.cfg['masks'][item] = [ucfg.cfg['Masks'][item]]
+
+        self.plotorder = []
+        maskpaths = []
+
+        # List of paths to masks. The first should always be the total basin
+        masks = ucfg.cfg['masks']['basin_masks']
+        for idx, m in enumerate(masks):
+            maskpaths.append(m)
+            self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
+
+        # Get the DEM
+        # There are different formats, this will get fixed once we
+        # start using netcdf
         try:
-            # Report defaults to True
-            self.report_flag = ucfg.cfg['Report']['report']
+            self.dem = np.genfromtxt(self.dempath)
+        except:
+            self.dem = np.genfromtxt(self.dempath,skip_header = 6)
 
-            self.exclude_figs = ucfg.cfg['Report']['exclude_figs']
-            if type(self.exclude_figs) != list:
-                self.exclude_figs = [self.exclude_figs]
+        self.nrows = len(self.dem[:,0])
+        self.ncols = len(self.dem[0,:])
+        blank = np.zeros((self.nrows,self.ncols))
 
-            for name in self.exclude_figs:
-                if name not in options:
-                    print('[Report] exclude_fig options are: %s'%(options))
-                    self.error = True
-                    return
-            else:
-                self.basin_total_flag = False
+        if self.filetype == 'ipw':
+            self.snow_files = []
+            self.em_files = []
+            for rdir in self.run_dirs:
+                run_files = [rdir + s for s in sorted(os.listdir(rdir))]
 
-            # These will later get appended with self.dateTo
-            self.report_name = ucfg.cfg['Report']['report_name']
-            self.rep_title = ucfg.cfg['Report']['report_title']
-            self.rep_path = ucfg.cfg['Report']['rep_path']
-            self.env_path = ucfg.cfg['Report']['env_path']
-            self.templ_path = ucfg.cfg['Report']['templ_path']
-            self.tex_file = ucfg.cfg['Report']['tex_file']
-            self.summary_file = ucfg.cfg['Report']['summary_file']
-            self.figs_tpl_path = ucfg.cfg['Report']['figs_tpl_path']
+                self.snow_files = (self.snow_files
+                                   + [value for value in run_files
+                                   if ( ('snow.' in value) and not ('.nc' in value))])
+                self.em_files = (self.em_files
+                                 + [value for value in run_files
+                                 if ( ('em.' in value) and not ('.nc' in value))])
 
-            ####################################################
-            #           History forecast
-            ####################################################
-            self.adj_hours = ucfg.cfg['Hx Forecast']['adj_hours']
+            while '*snow.nc' in self.snow_files:
+                self.snow_files.remove('*snow.nc')
 
-            ####################################################
-            #           Masks
-            ####################################################
+            while '*em.nc' in self.em_files:
+                self.em_files.remove('*em.nc')
 
-            # Make sure it is a list
-            for item in ['basin_masks', 'mask_labels']:
-                if type(ucfg.cfg['Masks'][item]) != list:
-                    ucfg.cfg['Masks'][item] = [ucfg.cfg['Masks'][item]]
+            # If no psnowFile and csnowFile specified, use first and last
+            if not hasattr(self,'csnowFile'):
+                self.psnowFile = self.snow_files[0]
+                self.csnowFile = self.snow_files[-1]
+                self.cemFile = self.em_files[-1]
+                print('psnowfile and/or csnowfile not specified, using:'
+                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
 
-            self.plotorder = []
-            maskpaths = []
+        # Currently this is a dead end, and process() will fail
+        if self.filetype == 'netcdf':
+            self.swi = []
+            self.evap = []
+            self.swe = []
+            self.depth = []
+            self.dates = []
+            self.time = []
+            self.rho = []
 
-            # List of paths to masks. The first should always be the total basin
-            masks = ucfg.cfg['Masks']['basin_masks']
-            for idx, m in enumerate(masks):
-                maskpaths.append(m)
-                self.plotorder.append(ucfg.cfg['Masks']['mask_labels'][idx])
+            for rd in self.run_dirs:
+                output = iSnobalReader(rd.split('output')[0],
+                                       'netcdf',
+                                       snowbands = [0,1,2],
+                                       embands = [7,8])
+                self.dates = np.append(self.dates,output.dates)
+                self.time = np.append(self.time,output.time)
 
-            # Get the DEM
-            # There are different formats, this will get fixed once we
-            # start using netcdf
-            try:
-                self.dem = np.genfromtxt(self.dempath)
-            except:
-                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+                for n in range(0,len(output.em_data[8])):
+                    self.swi.append(output.em_data[8][n,:,:])
+                    self.evap.append(output.em_data[7][n,:,:])
+                    self.swe.append(output.snow_data[2][n,:,:])
+                    self.depth.append(output.snow_data[0][n,:,:])
+                    self.rho.append(output.snow_data[1][n,:,:])
 
-            self.nrows = len(self.dem[:,0])
-            self.ncols = len(self.dem[0,:])
-            blank = np.zeros((self.nrows,self.ncols))
+        # Assign some basin-specific things, also needs to be generalized
+        if self.basin == 'BRB':
+            self.pixel = 100
+            sr = 0
+            if self.units == 'KAF':
+                emin = 2000
+                emax = 11000
+                self.step = 1000
+            if self.units == 'SI':
+                emin = 800
+                emax = 3200
+                self.step = 250
+        if self.basin == 'TUOL':
+            self.pixel = 50
+            sr = 6
+            if self.units == 'KAF':
+                emin = 3000      
+                emax = 12000
+                self.step   = 1000
+            if self.units == 'SI':
+                emin = 800       
+                emax = 3600
+                self.step   = 500
+        if self.basin == 'SJ':
+            self.pixel = 50
+            sr = 6
+            if self.units == 'KAF':
+                emin = 1000      
+                emax  = 13000
+                self.step = 1000
+            if self.units == 'SI':
+                emin = 300       
+                emax = 4000
+                self.step = 500
+        if self.basin == 'LAKES':
+            self.pixel = 50
+            sr = 0
+            self.imgx = (1200,1375)
+            self.imgy = (425,225)
+            if self.units == 'KAF':
+                emin = 8000     
+                emax = 12500
+                self.step = 500
+            if self.units == 'SI':
+                emin = 2400       
+                emax = 3800
+                self.step = 200
+        if self.basin == 'RCEW':
+            self.pixel = 50
+            sr = 0
+            if self.units == 'KAF':
+                emin = 2500     
+                emax = 7500
+                self.step = 500
+            if self.units == 'SI':
+                emin = 800      
+                emax = 2500
+                self.step = 500
 
-            if self.filetype == 'ipw':
-                # self.outputs = iSnobalReader(dir, 'ipw')
-                # Collect the run directories
-                self.snow_files = []
-                self.em_files = []
-                for rdir in self.run_dirs:
-                    run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
+        # Create the elevation bins
+        self.edges = np.arange(emin,emax+self.step,self.step)
+        # Right now this is a placeholder, could edit by basin...
+        self.xlims = (0,len(self.edges))
 
-                    self.snow_files = (self.snow_files
-                                       + [value for value in run_files
-                                       if ( ('snow.' in value) and not ('.nc' in value))])
-                    self.em_files = (self.em_files
-                                     + [value for value in run_files
-                                     if ( ('em.' in value) and not ('.nc' in value))])
-
-                while '*snow.nc' in self.snow_files:
-                    self.snow_files.remove('*snow.nc')
-
-                while '*em.nc' in self.em_files:
-                    self.em_files.remove('*em.nc')
-
-                # If no psnowFile and csnowFile specified, use first and last
-                if not hasattr(self,'csnowFile'):
-                    self.psnowFile = self.snow_files[0]
-                    self.csnowFile = self.snow_files[-1]
-                    self.cemFile = self.em_files[-1]
-                    print('psnowFile and/or csnowFile not specified, using:'
-                          + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
-
-                # Collect the run directories
-                self.snow_files = []
-                self.em_files = []
-                for rdir in self.run_dirs:
-                    run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
-
-                    self.snow_files = (self.snow_files
-                                       + [value for value in run_files
-                                       if ( ('snow.' in value) and not ('.nc' in value))])
-                    self.em_files = (self.em_files
-                                     + [value for value in run_files
-                                     if ( ('em.' in value) and not ('.nc' in value))])
-
-                while '*snow.nc' in self.snow_files:
-                    self.snow_files.remove('*snow.nc')
-
-                while '*em.nc' in self.em_files:
-                    self.em_files.remove('*em.nc')
-
-                # If no psnowFile and csnowFile specified, use first and last
-                if not hasattr(self,'csnowFile'):
-                    self.psnowFile = self.snow_files[0]
-                    self.csnowFile = self.snow_files[-1]
-                    self.cemFile = self.em_files[-1]
-                    print('psnowFile and/or csnowFile not specified, using:'
-                          + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
-
-            if self.filetype == 'netcdf':
-                self.swi = []
-                self.evap = []
-                self.swe = []
-                self.depth = []
-                self.dates = []
-                self.time = []
-                self.rho = []
-
-                for rd in self.run_dirs:
-                    # rd = self.run_dirs[0]
-                    output = iSnobalReader(rd[1].split('output')[0],
-                                           'netcdf',
-                                           snowbands = [0,1,2],
-                                           embands = [7,8])
-                    self.dates = np.append(self.dates,output.dates)
-                    self.time = np.append(self.time,output.time)
-
-                    for n in range(0,len(output.em_data[8])):
-                        self.swi.append(output.em_data[8][n,:,:])
-                        self.evap.append(output.em_data[7][n,:,:])
-                        self.swe.append(output.snow_data[2][n,:,:])
-                        self.depth.append(output.snow_data[0][n,:,:])
-                        self.rho.append(output.snow_data[1][n,:,:])
-
-            # Assign some basin-specific things, also needs to be generalized
-            if self.basin == 'BRB':
-                self.pixel = 100
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500
-                    emax = 10500
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 800
-                    emax = 3200
-                    self.step = 250
-            if self.basin == 'TUOL':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 3000      # [ft]
-                    emax = 12000
-                    self.step   = 1000
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 3600
-                    self.step   = 500
-            if self.basin == 'SJ':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 1000      # [ft]
-                    emax  = 13000
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 300       # [m]
-                    emax = 4000
-                    self.step = 500
-            if self.basin == 'LAKES':
-                self.pixel = 50
-                sr = 0
-                self.imgx = (1200,1375)
-                self.imgy = (425,225)
-                if self.units == 'KAF':
-                    emin = 8000      # [ft]
-                    emax = 12500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 2400       # [m]
-                    emax = 3800
-                    self.step = 200
-            if self.basin == 'RCEW':
-                self.pixel = 50
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500      # [ft]
-                    emax = 7500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 2500
-                    self.step = 500
-
-            # This is for creating the elevation bins
-            self.edges = np.arange(emin,emax+self.step,self.step)
-            # Right now this is a placeholder, could edit by basin...
-            self.xlims = (0,len(self.edges))
-
-            # Compile the masks
+        # Compile the masks, need to streamline handling for Willow Creek
+        try:
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                if (self.basin == 'SJ' and lbl == self.sub4_lbl):
+                if (self.basin == 'SJ' and lbl == 'Willow Creek'):
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=0),
                                        'label': lbl}
-                # hack
                 else:
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=sr),
                                        'label': lbl}
-
-            # Do unit-specific things
-            if self.units == 'KAF':
-                self.conversion_factor = ((self.pixel**2)
-                                         * 0.000000810713194*0.001) # [KAF]
-                self.depth_factor = 0.03937 # [inches]
-                self.dem = self.dem * 3.28 # [ft]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'in'
-                self.vollbl = 'KAF'
-                self.elevlbl = 'ft'
-
-            if self.units == 'SI':
-                self.conversion_factor = ((self.pixel**2)
-                                          * 0.000000810713194*1233.48/1e9)
-                self.depth_factor = 1 # [m]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'mm'
-                self.vollbl = '$km^3$'
-                self.elevlbl = 'm'
-
-            # Copy the config file where figs will be saved
-            extf = os.path.splitext(os.path.split(config_file)[1])
-            path_shr = os.path.split(self.psnowFile)
-            path_ehr = os.path.split(self.csnowFile)
-            ext_shr = os.path.splitext(path_shr[1])
-            ext_ehr = os.path.splitext(path_ehr[1])
-            # self.figs_path = (self.save_path
-            #                  + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
-            self.figs_path = os.path.join(self.save_path,
-                                          '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
-
-            # Check run dates, and make a new folder if necessary
-            if not os.path.exists(self.figs_path):
-                os.makedirs(self.figs_path)
-
-            # Only need to store this name if we decide to
-            # write more to the copied config file...
-            self.config_copy = (self.figs_path
-                                + extf[0]
-                                + self.name_append
-                                + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
-                                + extf[1])
-            self.config_copy = os.path.join(self.figs_path,
-                                            extf[0],
-                                            self.name_append,
-                                            '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5]),
-                                            extf[1])
-
-            # If it doesn't already exist, make it
-            if not os.path.isfile(self.config_copy):
-                generate_config(ucfg,self.config_copy)
-
         except:
-            print('Error reading SNOWAV config file.')
+            print('Failed creating mask dicts..')
+            self.error = True
+            return
+
+        # Assign unit-specific things
+        if self.units == 'KAF':
+            self.conversion_factor = ((self.pixel**2)
+                                     * 0.000000810713194*0.001) # [KAF]
+            self.depth_factor = 0.03937 # [inches]
+            self.dem = self.dem * 3.28 # [ft]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'in'
+            self.vollbl = 'KAF'
+            self.elevlbl = 'ft'
+
+        if self.units == 'SI':
+            self.conversion_factor = ((self.pixel**2)
+                                      * 0.000000810713194*1233.48/1e9)
+            self.depth_factor = 1 # [m]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'mm'
+            self.vollbl = '$km^3$'
+            self.elevlbl = 'm'
+
+        # Copy the config file where figs will be saved
+        extf = os.path.splitext(os.path.split(config_file)[1])
+        path_shr = os.path.split(self.psnowFile)
+        path_ehr = os.path.split(self.csnowFile)
+        ext_shr = os.path.splitext(path_shr[1])
+        ext_ehr = os.path.splitext(path_ehr[1])
+        self.figs_path = os.path.join(self.save_path,
+                                      '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
+
+        if not os.path.exists(self.figs_path):
+            os.makedirs(self.figs_path)
+
+        # Only need to store this name if we decide to
+        # write more to the copied config file...
+        self.config_copy = (self.figs_path
+                            + extf[0]
+                            + self.name_append
+                            + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
+                            + extf[1])
+
+        if not os.path.isfile(self.config_copy):
+            generate_config(ucfg,self.config_copy)
 
     def process(self):
         '''
