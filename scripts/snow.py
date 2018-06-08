@@ -1,26 +1,19 @@
 
-
 import sys
 import snowav
 
 def run(config_file):
 
-    # Initialize snowav, read in config file
-    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_brb_wy2018_devel.ini'
-    # config_file = '/mnt/volumes/wkspace/config/snowav/snowav_tuol_wy2018_devel.ini'
     # config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/snowav/config/snowav_tuol_wy2018_devel.ini'
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
 
     if not hasattr(snow,'error'):
 
-        # Make all the calculations
         snow.process()
 
-        # Save processed variables to netcdf if desired
         if snow.nc_flag == True:
             snowav.methods.output_nc.output_nc(snow)
 
-        # Plots
         snowav.plotting.accumulated.accumulated(snow)
         snowav.plotting.current_image.current_image(snow)
         snowav.plotting.state_by_elev.state_by_elev(snow)
@@ -32,15 +25,12 @@ def run(config_file):
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
         
-        # If options exist in config file
         if hasattr(snow,'flt_flag'):
             snowav.plotting.flt_image_change.flt_image_change(snow)
         
-        # Write out summary dataframes
         for name in snow.summary:
             snowav.plotting.write_summary.write_summary(snow,name)
 
-        # Generate report if desired
         if snow.report_flag == True:
             snowav.report.report.report(snow)
 

@@ -30,7 +30,7 @@ def swe_change(snow):
 
     ixf = delta_state == 0
     delta_state[ixf] = -100000 # set snow-free
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_state[ixo] = np.nan
     cmap = copy.copy(mymap)

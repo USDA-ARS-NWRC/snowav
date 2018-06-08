@@ -327,7 +327,7 @@ class SNOWAV(object):
             self.dem = self.dem * 3.28 # [ft]
             self.ixd = np.digitize(self.dem,self.edges)
             self.depthlbl = 'in'
-            self.vollbl = 'KAF'
+            self.vollbl = self.units
             self.elevlbl = 'ft'
 
         if self.units == 'SI':

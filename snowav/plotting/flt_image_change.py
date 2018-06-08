@@ -29,7 +29,7 @@ def flt_image_change(snow):
 
     ixf = delta_state == 0
     delta_state[ixf] = -100000 # set snow-free  
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_state[ixo] = np.nan
     cmap = copy.copy(mymap)
@@ -130,21 +130,18 @@ def flt_image_change(snow):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30) 
          
-    if hasattr(snow,"ch_ylims"):
-        ax1.set_ylim(snow.ch_ylims)
-    else:
-        ylims = ax1.get_ylim()
-        if ylims[0] < 0 and ylims[1] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-        if ylims[0] < 0 and ylims[1] > 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))  
-            if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
-                    
-        if ylims[1] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
-        if ylims[0] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))               
+    ylims = ax1.get_ylim()
+    if ylims[0] < 0 and ylims[1] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+    if ylims[0] < 0 and ylims[1] > 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))  
+        if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
+            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+                
+    if ylims[1] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
+    if ylims[0] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))               
                      
     if snow.units == 'KAF':
         ax1.set_ylabel('KAF - per elevation band')

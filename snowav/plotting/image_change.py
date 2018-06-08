@@ -12,25 +12,14 @@ def image_change(snow):
     '''
     This plots snow.delta_state
     
-    Should add in more functionality for plotting differences between various images/runs
-    
     '''  
     
-    # if len(args) != 0:
-    #     snow.name_append = snow.name_append + args[0]
-          
-    # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(snow.delta_state)
     qMin,qMax = np.percentile(delta_state,[1,99.5])
     
     ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
     delta_state[ix] = qMin + qMin*0.2
     vMin,vMax = np.percentile(delta_state,[1,99])
-    # clims = (qMin,qMax )
-       
-    # Override if absolute limits are provide in the config
-    if hasattr(snow,'ch_clminabs') and hasattr(snow,'ch_clmaxabs'):
-        clims       = (snow.ch_clminabs,snow.ch_clmaxabs)
  
     colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))           
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -40,7 +29,7 @@ def image_change(snow):
 
     ixf = delta_state == 0
     delta_state[ixf] = -100000 # set snow-free  
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_state[ixo] = np.nan
     cmap = copy.copy(mymap)

@@ -14,7 +14,7 @@ def state_by_elev(snow):
     
     '''
         
-    lim = np.max(snow.melt[snow.total_lbl]) + np.max(snow.nonmelt[snow.total_lbl])
+    lim = np.max(snow.melt[snow.plotorder[0]]) + np.max(snow.nonmelt[snow.plotorder[0]])
     ylim = np.max(lim) + np.max(lim)*0.3 
     colors = ['xkcd:rose red','xkcd:cool blue']
     fs = list(snow.figsize)
@@ -225,7 +225,6 @@ def state_by_elev(snow):
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle('SWE, %s'%snow.dateTo.date().strftime("%Y-%-m-%-d"))
           
-    if snow.elv_flag:
-        print('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))   
-        plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append)) 
+    print('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))   
+    plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append)) 
          

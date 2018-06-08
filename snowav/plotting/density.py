@@ -16,7 +16,7 @@ def density(snow):
     '''
 
     value = copy.deepcopy(snow.density_m_byelev)
-    lim = np.max(value[snow.total_lbl])
+    lim = np.max(value[snow.plotorder[0]])
     ylim = (0,600)
     color = 'xkcd:windows blue'
 
@@ -110,7 +110,7 @@ def density(snow):
     sns.set_context("notebook")
 
     # This is to get the background white
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     cvalue[ixo] = np.nan
     mymap.set_bad('white',1.)
@@ -150,7 +150,7 @@ def density(snow):
 
     h.axes.set_title('Density\n%s'%(snow.dateTo.date().strftime("%Y-%-m-%-d")))
 
-    ax1.bar(range(0,len(snow.edges)),value[snow.total_lbl],
+    ax1.bar(range(0,len(snow.edges)),value[snow.plotorder[0]],
             color = 'g', edgecolor = 'k')
 
     plt.rcParams['hatch.linewidth'] = 1

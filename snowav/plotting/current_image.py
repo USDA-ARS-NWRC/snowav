@@ -14,7 +14,6 @@ def current_image(snow):
     edits: make flexible input arguments for depth, density, etc
 
     '''
-    # Make a copy so we can edit for plots
 
     state = copy.deepcopy(snow.state)
     cold = copy.deepcopy(snow.cold)
@@ -24,7 +23,7 @@ def current_image(snow):
     clims2 = (-5,0)
 
     # Areas outside basin
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
 
     # Prepare no-snow and outside of the basin for the colormaps
