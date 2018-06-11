@@ -86,7 +86,7 @@ def current_image(snow):
         cbar.set_label('[in]')
     if snow.units == 'SI':
         cbar.set_label('[mm]')
-         
+
     # Do pretty stuff for the right plot
     h1.axes.get_xaxis().set_ticks([])
     h1.axes.get_yaxis().set_ticks([])
@@ -112,5 +112,5 @@ def current_image(snow):
     if snow.basin == 'RCEW':
         ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )
 
-    print('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sresults%s.png'%(snow.figs_path,snow.name_append))

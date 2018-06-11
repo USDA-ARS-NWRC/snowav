@@ -105,7 +105,7 @@ def report(obj):
     variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
-    
+
     # Put the by-elevation tables together
     # Eventually put this in framework? But _o is beating it to hell right now
     obj.state_mswe_byelev.index.name = 'Elevation'
@@ -113,20 +113,20 @@ def report(obj):
     obj.state_mswe_byelev = obj.state_mswe_byelev.fillna(0).round(1)
     variables['SWE_BYELEV'] = (
                                 r'\textbf{Mean SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.dateTo.date().strftime("%Y-%-m-%-d")) 
+                                %(obj.depthlbl,obj.dateTo.date().strftime("%Y-%-m-%-d"))
                                 + obj.state_mswe_byelev[obj.plotorder].to_latex()
                                 )
-    
+
     obj.delta_swe_byelev.index.name = 'Elevation'
     obj.delta_swe_byelev = obj.delta_swe_byelev.astype('float64')
     obj.delta_swe_byelev = obj.delta_swe_byelev.fillna(0).round(1)
     variables['DSWE_BYELEV'] = (
                                 r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.dateFrom.date().strftime("%Y-%-m-%-d"),
-                                  obj.dateTo.date().strftime("%Y-%-m-%-d")) 
+                                  obj.dateTo.date().strftime("%Y-%-m-%-d"))
                                 + obj.delta_swe_byelev[obj.plotorder].to_latex()
                                 )
-    
+
     variables['TOT_LBL'] = obj.plotorder[0]
     if len(obj.plotorder) >= 2:
         variables['SUB1_LBL'] = obj.plotorder[1]
@@ -136,7 +136,7 @@ def report(obj):
         variables['SUB3_LBL'] = obj.plotorder[3]
     if len(obj.plotorder) >= 5:
         variables['SUB4_LBL'] = obj.plotorder[4]
-                                
+
     # Convert floats to strings
     for name in variables:
         if isinstance(variables[name], float):
@@ -146,7 +146,7 @@ def report(obj):
                 tmp = str(round(variables[name],obj.dplcs))
             variables[name] = tmp
 
-    # Summary sections and fig template have variable strings 
+    # Summary sections and fig template have variable strings
     # (e.g. CHANGES_FIG) that need to be replaced
     section_dict = {'SUMMARY':obj.summary_file,
                     'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt',
@@ -158,32 +158,32 @@ def report(obj):
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
                     }
-    
+
     # Define and load summary tables depending on number of subbasins
-    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path 
+    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path
                                           + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
-    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path 
-                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )    
-      
-       
+    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path
+                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )
+
+
     # Remove if no flight options
     if not hasattr(obj,'flt_flag'):
         del section_dict['FLT_CHANGES_FIG_TPL']
-    
+
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()
         fid.close()
-        
+
         for name in variables:
             var = var.replace(name,variables[name])
-        variables[rep] = var    
-    
+        variables[rep] = var
+
     # If figs are listed in exclude, replace with empty string in latex file
     if obj.exclude_figs != None:
         for name in obj.exclude_figs:
             variables[name + '_FIG_TPL'] = ' '
-             
+
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl = env.get_template(obj.tex_file)
@@ -191,6 +191,6 @@ def report(obj):
     # To see what's in latex  >>> print(tpl.render(variables))
 
     # Save in reports and with figs
-    print('Saving report to %s%s and \n%s%s'%(obj.rep_path,obj.report_name,obj.rep_path,obj.report_name))
+    obj._logger.info('Saving report to %s%s and \n%s%s'%(obj.rep_path,obj.report_name,obj.rep_path,obj.report_name))
     pdf.save_to('%s%s'%(obj.rep_path,obj.report_name))
     pdf.save_to('%s%s'%(obj.figs_path,obj.report_name))

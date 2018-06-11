@@ -69,7 +69,7 @@ def basin_total(snow):
     # plt.tight_layout()
     del snow.barcolors[0]
 
-    print('saving figure to %sbasin_total%s.png'%(snow.figs_path,
+    snow._logger.info('saving figure to %sbasin_total%s.png'%(snow.figs_path,
                                                   snow.name_append))
     plt.savefig('%sbasin_total%s.png'%(snow.figs_path,snow.name_append))
 
@@ -78,11 +78,11 @@ def basin_total(snow):
     ########################################
 
     # This needs to be improved...
-    
+
     if snow.basin_total_flag == False:
-        print('No basin total summary files specified in config file, '
+        snow._logger.info('No basin total summary files specified in config file, '
               + 'skipping...')
-        return    
+        return
 
     if snow.basin == 'BRB':
         accum_summary = snow.accum_summary
@@ -154,5 +154,5 @@ def basin_total(snow):
         ax.set_ylim((0,ax1.get_ylim()[1]))
         plt.tight_layout()
 
-        print('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
+        snow._logger.info('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
         plt.savefig('%sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))

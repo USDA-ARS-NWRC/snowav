@@ -92,7 +92,7 @@ def density(snow):
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle(r'Density, %s'%(snow.dateTo.date().strftime("%Y-%-m-%-d")) )
 
-    print('saving figure to %sdensity_subs%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sdensity_subs%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity_subs%s.png'%(snow.figs_path,snow.name_append))
 
     ###############################
@@ -184,7 +184,7 @@ def density(snow):
         else:
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
 
-    print('saving figure to %sdensity%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sdensity%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity%s.png'%(snow.figs_path,snow.name_append))
 
 
@@ -229,5 +229,5 @@ def density(snow):
     cbar.set_label('elevation [ft]')
     plt.tight_layout()
 
-    print('saving figure to %sdensity_swe%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sdensity_swe%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity_swe%s.png'%(snow.figs_path,snow.name_append))

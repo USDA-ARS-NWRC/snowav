@@ -36,7 +36,7 @@ def basin_detail(self):
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        print(name,smin,smax)
+        snow._logger.info(name,smin,smax)
 
     # filter out high and low hyp
     map     = plt.cm.terrain
@@ -114,5 +114,5 @@ def basin_detail(self):
         ax.text(0.2,0.84,'Cherry',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
         ax.text(0.14,0.35,'Eleanor',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
 
-    print('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
+    snow._logger.info('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
     plt.savefig('%shypsometry%s.png'%(self.figs_path,self.name_append))

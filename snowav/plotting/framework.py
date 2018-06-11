@@ -18,7 +18,7 @@ from inicheck.output import generate_config
 
 class SNOWAV(object):
 
-    def __init__(self,config_file = None):
+    def __init__(self,config_file = None, external_logger=None):
         '''
         Initialize snowav object and read in configuration file.
         '''
@@ -30,7 +30,7 @@ class SNOWAV(object):
 
         print('Reading SNOWAV config file...')
         ucfg = get_user_config(config_file, modules = 'snowav')
-    
+
         ####################################################
         #             basin                                #
         ####################################################
@@ -254,22 +254,22 @@ class SNOWAV(object):
             self.pixel = 50
             sr = 6
             if self.units == 'KAF':
-                emin = 3000      
+                emin = 3000
                 emax = 12000
                 self.step   = 1000
             if self.units == 'SI':
-                emin = 800       
+                emin = 800
                 emax = 3600
                 self.step   = 500
         if self.basin == 'SJ':
             self.pixel = 50
             sr = 6
             if self.units == 'KAF':
-                emin = 1000      
+                emin = 1000
                 emax  = 13000
                 self.step = 1000
             if self.units == 'SI':
-                emin = 300       
+                emin = 300
                 emax = 4000
                 self.step = 500
         if self.basin == 'LAKES':
@@ -278,22 +278,22 @@ class SNOWAV(object):
             self.imgx = (1200,1375)
             self.imgy = (425,225)
             if self.units == 'KAF':
-                emin = 8000     
+                emin = 8000
                 emax = 12500
                 self.step = 500
             if self.units == 'SI':
-                emin = 2400       
+                emin = 2400
                 emax = 3800
                 self.step = 200
         if self.basin == 'RCEW':
             self.pixel = 50
             sr = 0
             if self.units == 'KAF':
-                emin = 2500     
+                emin = 2500
                 emax = 7500
                 self.step = 500
             if self.units == 'SI':
-                emin = 800      
+                emin = 800
                 emax = 2500
                 self.step = 500
 
@@ -351,6 +351,14 @@ class SNOWAV(object):
         if not os.path.exists(self.figs_path):
             os.makedirs(self.figs_path)
 
+        ####################################################
+        #             log file                             #
+        ####################################################
+        if external_logger == None:
+            self.createLog()
+        else:
+            self._logger = external_logger
+
         # Only need to store this name if we decide to
         # write more to the copied config file...
         self.config_copy = (self.figs_path
@@ -370,7 +378,7 @@ class SNOWAV(object):
 
         '''
 
-        print('SNOWAV processing iSnobal outputs...')
+        self._logger.info('SNOWAV processing iSnobal outputs...')
 
         cclimit = -5*1000*1000  # based on an average of 60 W/m2 from TL paper
         # ccM = cc./1000./1000; % cold content in MJ
@@ -434,7 +442,7 @@ class SNOWAV(object):
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
                 if self.adj_hours != None:
-                    print('Hacking adj_hours...')
+                    self._logger.debug('Hacking adj_hours...')
                     adj = self.adj_hours
 
             em_file = ipw.IPW(em_name)
@@ -552,7 +560,7 @@ class SNOWAV(object):
                                     snow_name.split('runs')[1],
                                     str(int(snow_name.split('.')[-1]) - t),
                                     date.date().strftime("%Y-%-m-%-d"),pfs,pf)
-                print(debug)
+                self._logger.debug(debug)
 
                 # Turn off, but last one will still have been added
                 accum_sub_flag  = False
@@ -571,7 +579,7 @@ class SNOWAV(object):
                                 snow_name.split('runs')[1],
                                 str(int(snow_name.split('.')[-1]) - t),
                                 date.date().strftime("%Y-%-m-%-d"),pfs,pf)
-            print(debug)
+            self._logger.debug(debug)
 
             # Step this along so that we can see how many hours between outputs
             t = int(snow_name.split('.')[-1])
@@ -668,18 +676,18 @@ class SNOWAV(object):
 
 
         # First time step, volume
-        self.pstate = np.multiply(pstate,self.conversion_factor)    
-        
+        self.pstate = np.multiply(pstate,self.conversion_factor)
+
         # At last time step, volume
         self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
         # self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
-        
+
         # Sum over all time steps, depth
         self.precip = np.multiply(precip,self.depth_factor)
         self.accum = np.multiply(accum,self.depth_factor)
         self.evap = np.multiply(evap,self.depth_factor)
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)
-        
+
         # Sum over all time steps, volume
         self.accum_byelev = np.multiply(accum_byelev,self.conversion_factor)
         self.evap_byelev = np.multiply(evap_byelev,self.conversion_factor)
@@ -687,14 +695,14 @@ class SNOWAV(object):
         self.rain_bg_byelev = np.multiply(rain_bg_byelev,
                                           self.conversion_factor)
         self.snowmelt_byelev = np.multiply(snowmelt_byelev,
-                                           self.conversion_factor)        
+                                           self.conversion_factor)
 
         # At last time step, depth
         self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
         self.state = np.multiply(state,self.depth_factor)
         self.delta_state = np.multiply(delta_state,self.depth_factor)
         if hasattr(self,'flt_flag'):
-            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)        
+            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
 
         # Sub-set of time defined by psnowfile and csnowfile
         self.snowmelt_byelev_sub = np.multiply(snowmelt_byelev_sub,
@@ -735,4 +743,74 @@ class SNOWAV(object):
         mask = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
         msum = sum(mask)
         if int(msum) >= 1:
-            print('%s entries in dataframe index with gaps larger than 24h '%(msum))
+            self._logger.debug('%s entries in dataframe index with gaps larger than 24h '%(msum))
+
+    def createLog(self):
+        '''
+        Now that the directory structure is done, create log file and print out
+        saved logging statements.
+        '''
+
+        level_styles = {'info': {'color': 'white'},
+                        'notice': {'color': 'magenta'},
+                        'verbose': {'color': 'blue'},
+                        'success': {'color': 'green', 'bold': True},
+                        'spam': {'color': 'green', 'faint': True},
+                        'critical': {'color': 'red', 'bold': True},
+                        'error': {'color': 'red'},
+                        'debug': {'color': 'green'},
+                        'warning': {'color': 'yellow'}}
+
+        field_styles =  {'hostname': {'color': 'magenta'},
+                         'programname': {'color': 'cyan'},
+                         'name': {'color': 'white'},
+                         'levelname': {'color': 'white', 'bold': True},
+                         'asctime': {'color': 'green'}}
+
+        # start logging
+        loglevel = self.config['snowav system']['log_level'].upper()
+
+        numeric_level = getattr(logging, loglevel, None)
+        if not isinstance(numeric_level, int):
+            raise ValueError('Invalid log level: %s' % loglevel)
+
+        # setup the logging
+        logfile = None
+        if self.config['snowav system']['log_to_file']:
+            logfile = os.path.join(self.figs_path, 'log_snowav.out')
+            # let user know
+            print('Logging to file: {}'.format(logfile))
+
+        fmt = '%(levelname)s:%(name)s:%(message)s'
+        if logfile is not None:
+            logging.basicConfig(filename=logfile,
+                                filemode='w',
+                                level=numeric_level,
+                                format=fmt)
+        else:
+            logging.basicConfig(level=numeric_level)
+            coloredlogs.install(level=numeric_level,
+                                fmt=fmt,
+                                level_styles=level_styles,
+                                field_styles=field_styles)
+
+        self._loglevel = numeric_level
+
+        self._logger = logging.getLogger(__name__)
+
+        # print title and mountains
+        title, mountain = self.title()
+        for line in mountain:
+            self._logger.info(line)
+        for line in title:
+            self._logger.info(line)
+        # dump saved logs
+        if len(self.tmp_log) > 0:
+            for l in self.tmp_log:
+                self._logger.info(l)
+        if len(self.tmp_warn) > 0:
+            for l in self.tmp_warn:
+                self._logger.warning(l)
+        if len(self.tmp_err) > 0:
+            for l in self.tmp_err:
+                self._logger.error(l)

@@ -170,5 +170,5 @@ def accumulated(snow):
                       loc=2, borderaxespad=0. )
 
 
-    print('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))

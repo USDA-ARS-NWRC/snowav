@@ -13,7 +13,7 @@ from datetime import datetime
 def stn_validate(snow):
 
     if snow.valid_flag == False:
-        print('No stations listed in config file for validation figure!')
+        snow._logger.debug('No stations listed in config file for validation figure!')
         return
 
     rundirs = snow.run_dirs
@@ -107,17 +107,17 @@ def stn_validate(snow):
                 # rname = rundirs[1]
 
                 ncpath  = rname.split('output')[0]
-                ncf     = nc.Dataset(ncpath + 'snow.nc', 'r') 
+                ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')
                 nctvec  = ncf.variables['time'][:]
                 vswe    = ncf.variables['specific_mass']
-                ncxvec  = ncf.variables['x'][:]                     
-                ncyvec  = ncf.variables['y'][:]                     
-                ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) 
+                ncxvec  = ncf.variables['x'][:]
+                ncyvec  = ncf.variables['y'][:]
+                ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
                 # ll      = utm.from_latlon(37.641922,-119.055443)
 
                 xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
                 yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
-                swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec) 
+                swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)
 
                 try:
                     swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values
@@ -173,5 +173,5 @@ def stn_validate(snow):
     snow.swe_meas = swe_meas
     snow.swe_mod = swe_mod
 
-    print('saving figure to %svalidation%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %svalidation%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%svalidation%s.png'%(snow.figs_path,snow.name_append))
