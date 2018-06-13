@@ -76,23 +76,38 @@ class SNOWAV(object):
         # Rounding decimals for volume and depth
         self.dplcs = ucfg.cfg['outputs']['decimals']
 
-        # If previous snowFile and current snowFile are specified, use those,
-        # otherwise they will get defined as the first and last
-        # snow.XXXX file once [Runs] has been compiled
-        if (ucfg.cfg['outputs']['psnowfile'] != None and
-            ucfg.cfg['outputs']['csnowfile'] != None):
-
-            self.psnowFile = ucfg.cfg['outputs']['psnowfile']
-            self.csnowFile = ucfg.cfg['outputs']['csnowfile']
-            self.cemFile = self.csnowFile.replace('snow.','em.')
-
-        # Check for forced flight comparison images
-        if (ucfg.cfg['outputs']['fltpsnowfile'] != None and
-            ucfg.cfg['outputs']['fltcsnowfile'] != None):
-
-            self.fltpsnowFile = ucfg.cfg['outputs']['fltpsnowFile']
-            self.fltcsnowFile = ucfg.cfg['outputs']['fltcsnowFile']
-            self.flt_flag = True
+        # If previous snowFile and current snowFile are specified those will
+        # used for the reporting period, otherwise it will be first and last
+        if self.filetype == 'ipw':
+            if (ucfg.cfg['outputs']['psnowfile'] != None and
+                ucfg.cfg['outputs']['csnowfile'] != None):
+    
+                self.psnowFile = ucfg.cfg['outputs']['psnowfile']
+                self.csnowFile = ucfg.cfg['outputs']['csnowfile']
+                self.cemFile = self.csnowFile.replace('snow.','em.')
+            
+            # Check for forced flight comparison images
+            if (ucfg.cfg['outputs']['fltpsnowfile'] != None and
+                ucfg.cfg['outputs']['fltcsnowfile'] != None):
+    
+                self.fltpsnowFile = ucfg.cfg['outputs']['fltpsnowFile']
+                self.fltcsnowFile = ucfg.cfg['outputs']['fltcsnowFile']
+                self.flt_flag = True               
+        
+        if self.filetype == 'netcdf':
+            if (ucfg.cfg['outputs']['phour'] != None and
+                ucfg.cfg['outputs']['chour'] != None):
+    
+                self.phour = ucfg.cfg['outputs']['phour']
+                self.chour = ucfg.cfg['outputs']['chour']   
+            
+            # Check for forced flight comparison images
+            if (ucfg.cfg['outputs']['fltphour'] != None and
+                ucfg.cfg['outputs']['fltchour'] != None):
+    
+                self.fltphour = ucfg.cfg['outputs']['fltphour']
+                self.fltchour = ucfg.cfg['outputs']['fltchour']
+                self.flt_flag = True                         
 
         self.summary = ucfg.cfg['outputs']['summary']
         if type(self.summary) != list:
@@ -236,26 +251,44 @@ class SNOWAV(object):
         if self.filetype == 'netcdf':
             self.swi = []
             self.evap = []
+            self.snowmelt = []
             self.swe = []
             self.depth = []
             self.dates = []
             self.time = []
             self.rho = []
+            self.rundirs_dict = {}
 
             for rd in self.run_dirs:
                 output = iSnobalReader(rd.split('output')[0],
                                        'netcdf',
                                        snowbands = [0,1,2],
-                                       embands = [7,8])
+                                       embands = [6,7,8])
                 self.dates = np.append(self.dates,output.dates)
                 self.time = np.append(self.time,output.time)
+                
+                # Make a dict for wyhr-rundir lookup
+                for t in output.time:
+                    self.rundirs_dict[t] = rd
 
                 for n in range(0,len(output.em_data[8])):
                     self.swi.append(output.em_data[8][n,:,:])
-                    self.evap.append(output.em_data[7][n,:,:])
+                    self.snowmelt.append(output.em_data[7][n,:,:])
+                    self.evap.append(output.em_data[6][n,:,:])
                     self.swe.append(output.snow_data[2][n,:,:])
                     self.depth.append(output.snow_data[0][n,:,:])
-                    self.rho.append(output.snow_data[1][n,:,:])
+                    self.rho.append(output.snow_data[1][n,:,:])          
+            
+            # This is not a clean way to integrate...
+            self.em_files = self.time.astype('int').tolist()
+            self.snow_files = self.time.astype('int').tolist()
+            
+            # If no psnowFile and csnowFile specified, use first and last
+            if not hasattr(self,'chour'):
+                self.psnowFile = self.snow_files[0]
+                self.csnowFile = self.snow_files[-1]
+                print('phour and/or chour not specified, using:'
+                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))              
 
         # Assign some basin-specific things, also needs to be generalized
         if self.basin == 'BRB':
@@ -441,8 +474,6 @@ class SNOWAV(object):
         evap_summary = pd.DataFrame(columns = self.masks.keys())
 
         # Loop through output files
-        # Currently we need to load in each em.XXXX file to 'accumulate',
-        # but only the first and last snow.XXXX file for changes
         accum_sub_flag = False
         adj = 0 # this is a hack for Hx-repeats-itself forecasting
         t = 0
@@ -451,9 +482,12 @@ class SNOWAV(object):
             # iters = 0
             # em_name = self.em_files[iters]
             # snow_name = self.snow_files[iters]
-            date = wy.wyhr_to_datetime(self.wy,
-                                       int(snow_name.split('.')[-1])
-                                       + adj)
+            if self.filetype == 'ipw':
+                date = wy.wyhr_to_datetime(self.wy,
+                                           int(snow_name.split('.')[-1])
+                                           + adj)
+            if self.filetype == 'netcdf':
+                date = self.dates[iters]
 
             # starting empty string for debug statement
             pf = ''
@@ -464,19 +498,31 @@ class SNOWAV(object):
                     self._logger.debug('Hacking adj_hours...')
                     adj = self.adj_hours
 
-            em_file = ipw.IPW(em_name)
-            band = em_file.bands[self.emband].data
-            accum = accum + band
-            snowmelt = snowmelt + em_file.bands[7].data
-            evap = evap + em_file.bands[6].data
-
-            # load and calculate sub-basin total
-            snow_file = ipw.IPW(snow_name)
-            tmpstate = snow_file.bands[self.snowband].data
+            if self.filetype == 'ipw':
+                em_file = ipw.IPW(em_name)
+                band = em_file.bands[self.emband].data
+                accum = accum + band
+                snowmelt = snowmelt + em_file.bands[7].data
+                evap = evap + em_file.bands[6].data
+                snow_file = ipw.IPW(snow_name)
+                tmpstate = snow_file.bands[self.snowband].data
+            
+            if self.filetype == 'netcdf':
+                accum = accum + self.swi[iters,:,:]
+                snowmelt = snowmelt + self.snowmelt[iters,:,:]
+                evap = evap + self.evap[iters,:,:]
+                tmpstate = self.swe[iters,:,:]
+                            
             state_byday[:,:,iters] = tmpstate
 
             # Get rain from input data
-            sf = em_name.replace('runs','data')
+            if self.filetype == 'ipw':
+                sf = em_name.replace('runs','data')
+            if self.filetype == 'netcdf':
+                sf = self.rundirs_dict[snow_name].replace('runs','data')
+            
+            # right here in logic with nc functionality...
+                
             sf = sf.replace('run','data')
             sf = sf.replace('output','ppt_4b')
             ppt_path = sf.split('em')[0]
