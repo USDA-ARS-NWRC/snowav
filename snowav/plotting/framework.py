@@ -12,8 +12,11 @@ import sys
 import datetime
 import snowav.methods.wyhr_to_datetime as wy
 from snowav.utils.OutputReader import iSnobalReader
-from inicheck.tools import get_user_config
-from inicheck.output import generate_config
+from inicheck.tools import get_user_config, check_config
+from inicheck.output import generate_config, print_config_report
+from inicheck.config import MasterConfig
+import logging
+import coloredlogs
 
 
 class SNOWAV(object):
@@ -30,6 +33,22 @@ class SNOWAV(object):
 
         print('Reading SNOWAV config file...')
         ucfg = get_user_config(config_file, modules = 'snowav')
+        
+        # create blank log and error log because logger is not initialized yet
+        self.tmp_log = []
+        self.tmp_err = []
+        self.tmp_warn = []
+
+        # Check the user config file for errors and report issues if any
+        self.tmp_log.append("Checking config file for issues...")
+        warnings, errors = check_config(ucfg)
+        # print_config_report(warnings, errors)        
+        
+        ####################################################
+        #             snowav master                        #
+        ####################################################     
+        self.loglevel = ucfg.cfg['snowav system']['log_level'].upper()  
+        self.log_to_file = ucfg.cfg['snowav system']['log_to_file']      
 
         ####################################################
         #             basin                                #
@@ -768,7 +787,7 @@ class SNOWAV(object):
                          'asctime': {'color': 'green'}}
 
         # start logging
-        loglevel = self.config['snowav system']['log_level'].upper()
+        loglevel = self.loglevel
 
         numeric_level = getattr(logging, loglevel, None)
         if not isinstance(numeric_level, int):
@@ -776,7 +795,7 @@ class SNOWAV(object):
 
         # setup the logging
         logfile = None
-        if self.config['snowav system']['log_to_file']:
+        if self.log_to_file:
             logfile = os.path.join(self.figs_path, 'log_snowav.out')
             # let user know
             print('Logging to file: {}'.format(logfile))
@@ -799,11 +818,11 @@ class SNOWAV(object):
         self._logger = logging.getLogger(__name__)
 
         # print title and mountains
-        title, mountain = self.title()
-        for line in mountain:
-            self._logger.info(line)
-        for line in title:
-            self._logger.info(line)
+        # title, mountain = self.title()
+        # for line in mountain:
+        #     self._logger.info(line)
+        # for line in title:
+        #     self._logger.info(line)
         # dump saved logs
         if len(self.tmp_log) > 0:
             for l in self.tmp_log:
