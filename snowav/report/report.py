@@ -14,11 +14,10 @@ def report(obj):
 
     # Initialize all the variables to pass to latex file
     variables = {}
-
     variables['TOTAL_SWI'] = obj.accum_byelev[obj.total_lbl].sum()
     variables['TOTAL_SWE'] = obj.state_byelev[obj.total_lbl].sum()
-    variables['TOTAL_SWE_AV'] = obj.melt[obj.total_lbl].sum()
-    variables['TOTAL_SWEDEL'] = obj.delta_state_byelev[obj.total_lbl].sum()
+    variables['TOTAL_SAV'] = obj.melt[obj.total_lbl].sum()
+    variables['TOTAL_SDEL'] = obj.delta_state_byelev[obj.total_lbl].sum()
     variables['TOTAL_PM'] = (np.nansum(
                             np.multiply(obj.state
                             * obj.masks[obj.total_lbl]['mask'],1))
@@ -44,8 +43,8 @@ def report(obj):
     for n,sub in zip(numsubs,obj.suborder):
         SWIIND = 'SUB' + str(n) + '_SWI'
         SWEIND = 'SUB' + str(n) + '_SWE'
-        AVSWEIND = 'SUB' + str(n) + '_SWE_AV'
-        SWEDEL = 'SUB' + str(n) + '_SWEDEL'
+        AVSWEIND = 'SUB' + str(n) + '_SAV'
+        SWEDEL = 'SUB' + str(n) + '_SDEL'
         PM = 'SUB' + str(n) + '_PM'
         PREPM = 'SUB' + str(n) + 'PRE_PM'
         RAIN = 'SUB' + str(n) + 'RAI'
@@ -75,70 +74,52 @@ def report(obj):
     # Assign some more variables
     start_date = obj.dateFrom.date().strftime("%B %-d")
     end_date = obj.dateTo.date().strftime("%B %-d")
-
-    report_title = obj.rep_title
     fore_date = ' '
-    swe_in = obj.state_byelev[obj.total_lbl].sum()
-    swi_in = obj.accum_byelev[obj.total_lbl].sum()
-    vollbl = obj.vollbl
-    deplbl = obj.depthlbl
-
-    fig_path = obj.figs_path
-    swi_fig = 'swi%s.png'%(obj.name_append)
-    results_fig = 'results%s.png'%(obj.name_append)
-    changes_fig = 'swe_change%s.png'%(obj.name_append)
-    changes_dep_fig = 'swe_change_depth%s.png'%(obj.name_append)
-    elev_fig = 'swe_elev%s.png'%(obj.name_append)
-    totals_fig = 'basin_total%s.png'%(obj.name_append)
-    totalsmy_fig = 'basin_total_multiyr%s.png'%(obj.name_append)
-    valid_fig = 'validation%s.png'%(obj.name_append)
-    hyp_fig  = 'hypsometry%s.png'%(obj.name_append)
-    mean_fig = 'mean_swe_depth%s.png'%(obj.name_append)
-    detail_fig = 'mean_detail%s.png'%(obj.name_append)
-    density_fig = 'density%s.png'%(obj.name_append)
-    density_sub_fig = 'density_sub%s.png'%(obj.name_append)
-    density_swe_fig = 'density_swe%s.png'%(obj.name_append)
-
-    if obj.tex_file == 'tuol_report_flt.tex':
-        changes_flt_fig = 'swe_change_flt%s.png'%(obj.name_append)
-        pre_swe = obj.pre_swe
-        pre_pm = obj.pre_pm
-        diff_pm = variables['TOTAL_PM'] - pre_pm
-
     if obj.units == 'SI':
         unitlbl = '$km^3$'
     else:
-        unitlbl = vollbl
+        unitlbl = obj.vollbl
 
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
-    variables['REPORT_TITLE'] = report_title
+    variables['REPORT_TITLE'] = obj.rep_title
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(obj.wy)
     variables['UNITS'] = unitlbl
-    variables['VOLLBL'] = vollbl
-    variables['DEPLBL'] = deplbl
+    variables['VOLLBL'] = obj.vollbl
+    variables['DEPLBL'] = obj.depthlbl
     variables['START_DATE'] = start_date
     variables['END_DATE'] = end_date
     variables['FORE_DATE'] = fore_date
-    variables['SWE_IN'] = swe_in
-    variables['SWI_IN'] = swi_in
-    variables['FIG_PATH'] = fig_path
-    variables['SWI_FIG'] = swi_fig
-    variables['RESULTS_FIG'] = results_fig
-    variables['CHANGES_FIG'] = changes_fig
-    variables['CHANGES_DEP_FIG'] = changes_dep_fig
-    variables['ELEV_FIG'] = elev_fig
-    variables['TOTALS_FIG'] = totals_fig
-    variables['TOTALSMY_FIG'] = totalsmy_fig
-    variables['HYP_FIG'] = hyp_fig
-    variables['MEAN_FIG'] = mean_fig
-    variables['DETAIL_FIG'] = detail_fig
-    variables['DENSITY_FIG'] = density_fig
-    variables['DENSITY_SUB_FIG'] = density_sub_fig
-    variables['DENSITY_SWE_FIG'] = density_swe_fig
-    variables['VALID_FIG'] = valid_fig
-
+    variables['SWE_IN'] = obj.state_byelev[obj.total_lbl].sum()
+    variables['SWI_IN'] = obj.accum_byelev[obj.total_lbl].sum()
+    variables['FIG_PATH'] = obj.figs_path
+    variables['SWI_FIG'] = 'swi%s.png'%(obj.name_append)
+    variables['RESULTS_FIG'] = 'results%s.png'%(obj.name_append)
+    variables['CHANGES_FIG'] = 'swe_change%s.png'%(obj.name_append)
+    variables['FLT_CHANGES_FIG'] = 'flt_swe_change%s.png'%(obj.name_append)
+    variables['CHANGES_DEP_FIG'] = 'swe_change_depth%s.png'%(obj.name_append)
+    variables['ELEV_FIG'] = 'swe_elev%s.png'%(obj.name_append)
+    variables['TOTALS_FIG'] = 'basin_total%s.png'%(obj.name_append)
+    variables['TOTALSMY_FIG'] = 'basin_total_multiyr%s.png'%(obj.name_append)
+    variables['HYP_FIG'] = 'hypsometry%s.png'%(obj.name_append)
+    variables['MEAN_FIG'] = 'mean_swe_depth%s.png'%(obj.name_append)
+    variables['DETAIL_FIG'] = 'mean_detail%s.png'%(obj.name_append)
+    variables['DENSITY_FIG'] = 'density%s.png'%(obj.name_append)
+    variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
+    variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
+    variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
+    
+    variables['TOT_LBL'] = obj.total_lbl
+    if hasattr(obj,'sub1_lbl'):
+        variables['SUB1_LBL'] = obj.sub1_lbl
+    if hasattr(obj,'sub2_lbl'):
+        variables['SUB2_LBL'] = obj.sub2_lbl
+    if hasattr(obj,'sub3_lbl'):
+        variables['SUB3_LBL'] = obj.sub3_lbl
+    if hasattr(obj,'sub4_lbl'):
+        variables['SUB4_LBL'] = obj.sub4_lbl
+                                
     # Convert floats to strings
     for name in variables:
         if isinstance(variables[name], float):
@@ -157,9 +138,21 @@ def report(obj):
                     'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
-                    'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt'
+                    'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
+                    'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
                     }
+    
+    # Define and load summary tables depending on number of subbasins
+    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path 
+                                          + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
+    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path 
+                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )    
+      
        
+    # Remove if no flight options
+    if not hasattr(obj,'flt_flag'):
+        del section_dict['FLT_CHANGES_FIG_TPL']
+    
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()
