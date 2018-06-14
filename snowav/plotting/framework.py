@@ -247,7 +247,6 @@ class SNOWAV(object):
                 print('psnowfile and/or csnowfile not specified, using:'
                       + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
 
-        # Currently this is a dead end, and process() will fail
         if self.filetype == 'netcdf':
             self.swi = []
             self.evap = []
@@ -257,13 +256,14 @@ class SNOWAV(object):
             self.dates = []
             self.time = []
             self.rho = []
+            self.cold = []
             self.rundirs_dict = {}
 
             for rd in self.run_dirs:
                 output = iSnobalReader(rd.split('output')[0],
                                        'netcdf',
                                        snowbands = [0,1,2],
-                                       embands = [6,7,8])
+                                       embands = [6,7,8,9])
                 self.dates = np.append(self.dates,output.dates)
                 self.time = np.append(self.time,output.time)
                 
@@ -275,20 +275,26 @@ class SNOWAV(object):
                     self.swi.append(output.em_data[8][n,:,:])
                     self.snowmelt.append(output.em_data[7][n,:,:])
                     self.evap.append(output.em_data[6][n,:,:])
+                    self.cold.append(output.em_data[9][n,:,:])
                     self.swe.append(output.snow_data[2][n,:,:])
                     self.depth.append(output.snow_data[0][n,:,:])
                     self.rho.append(output.snow_data[1][n,:,:])          
             
-            # This is not a clean way to integrate...
-            self.em_files = self.time.astype('int').tolist()
-            self.snow_files = self.time.astype('int').tolist()
+            # This is not the cleanest way to integrate...
+            self.em_files = np.ndarray.tolist(self.time.astype('int'))
+            self.snow_files = np.ndarray.tolist(self.time.astype('int'))
             
             # If no psnowFile and csnowFile specified, use first and last
             if not hasattr(self,'chour'):
+                self.phour = self.snow_files[0]
+                self.chour = self.snow_files[-1]
                 self.psnowFile = self.snow_files[0]
                 self.csnowFile = self.snow_files[-1]
                 print('phour and/or chour not specified, using:'
-                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))              
+                      + ' %s and %s'%(self.psnowFile,self.csnowFile))  
+            else:
+                self.psnowFile = self.phour
+                self.csnowFile = self.chour                    
 
         # Assign some basin-specific things, also needs to be generalized
         if self.basin == 'BRB':
@@ -393,13 +399,19 @@ class SNOWAV(object):
 
         # Copy the config file where figs will be saved
         extf = os.path.splitext(os.path.split(config_file)[1])
-        path_shr = os.path.split(self.psnowFile)
-        path_ehr = os.path.split(self.csnowFile)
-        ext_shr = os.path.splitext(path_shr[1])
-        ext_ehr = os.path.splitext(path_ehr[1])
-        self.figs_path = os.path.join(self.save_path,
-                                      '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
-
+        if self.filetype == 'ipw':
+            path_shr = os.path.split(self.psnowFile)
+            path_ehr = os.path.split(self.csnowFile)
+            ext_shr = os.path.splitext(path_shr[1])
+            ext_ehr = os.path.splitext(path_ehr[1])       
+            self.figs_path = os.path.join(self.save_path,
+                                      '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))                 
+        if self.filetype == 'netcdf':
+            ext_shr = str(self.phour)
+            ext_ehr = str(self.chour)            
+            self.figs_path = os.path.join(self.save_path,
+                                      '%s_%s/'%(str(self.phour),str(self.chour)))      
+        
         if not os.path.exists(self.figs_path):
             os.makedirs(self.figs_path)
 
@@ -433,7 +445,6 @@ class SNOWAV(object):
         self._logger.info('SNOWAV processing iSnobal outputs...')
 
         cclimit = -5*1000*1000  # based on an average of 60 W/m2 from TL paper
-        # ccM = cc./1000./1000; % cold content in MJ
 
         accum = np.zeros((self.nrows,self.ncols))
         evap = copy.deepcopy(accum)
@@ -494,6 +505,8 @@ class SNOWAV(object):
 
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
+                if self.filetype == 'netcdf':
+                    self.dateFrom = self.dates[iters]
                 if self.adj_hours != None:
                     self._logger.debug('Hacking adj_hours...')
                     adj = self.adj_hours
@@ -502,16 +515,19 @@ class SNOWAV(object):
                 em_file = ipw.IPW(em_name)
                 band = em_file.bands[self.emband].data
                 accum = accum + band
-                snowmelt = snowmelt + em_file.bands[7].data
+                daily_snowmelt = em_file.bands[7].data
+                snowmelt = snowmelt + daily_snowmelt
                 evap = evap + em_file.bands[6].data
                 snow_file = ipw.IPW(snow_name)
                 tmpstate = snow_file.bands[self.snowband].data
             
             if self.filetype == 'netcdf':
-                accum = accum + self.swi[iters,:,:]
-                snowmelt = snowmelt + self.snowmelt[iters,:,:]
-                evap = evap + self.evap[iters,:,:]
-                tmpstate = self.swe[iters,:,:]
+                band = self.swi[iters]
+                accum = accum + self.swi[iters]
+                daily_snowmelt = self.snowmelt[iters]
+                snowmelt = snowmelt + daily_snowmelt
+                evap = evap + self.evap[iters]
+                tmpstate = self.swe[iters]
                             
             state_byday[:,:,iters] = tmpstate
 
@@ -520,14 +536,16 @@ class SNOWAV(object):
                 sf = em_name.replace('runs','data')
             if self.filetype == 'netcdf':
                 sf = self.rundirs_dict[snow_name].replace('runs','data')
-            
-            # right here in logic with nc functionality...
                 
             sf = sf.replace('run','data')
             sf = sf.replace('output','ppt_4b')
             ppt_path = sf.split('em')[0]
 
-            out_hr = snow_name.split('.')[-1]
+            if self.filetype == 'ipw':
+                out_hr = snow_name.split('.')[-1]
+            if self.filetype == 'netcdf':
+                out_hr = snow_name
+                
             hrs = range(int(out_hr) - 23,int(out_hr) + 1)
 
             pFlag = False
@@ -598,7 +616,7 @@ class SNOWAV(object):
             if accum_sub_flag:
                 accum_sub = accum_sub + copy.deepcopy(band)
                 snowmelt_sub = ( snowmelt_sub
-                                + copy.deepcopy(em_file.bands[7].data) )
+                                + copy.deepcopy(daily_snowmelt) )
                 precip_sub = precip_sub + precip_hrly
 
             # When it is the first snow file, copy
@@ -618,42 +636,70 @@ class SNOWAV(object):
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
+                if self.filetype == 'netcdf':
+                    self.dateTo = self.dates[iters]
 
                 # Run debug statement before ending the process
                 pf = ', csnowFile'
-                debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                    snow_name.split('runs')[1],
-                                    str(int(snow_name.split('.')[-1]) - t),
-                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+                
+                if self.filetype == 'ipw':
+                    debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                        snow_name.split('runs')[1],
+                                        str(int(snow_name.split('.')[-1]) - t),
+                                        date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+                
+                if self.filetype == 'netcdf':
+                    debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                        self.rundirs_dict[int(snow_name)],
+                                        str(int(snow_name) - t),
+                                        date.date().strftime("%Y-%-m-%-d"),pfs,pf)                    
                 self._logger.debug(debug)
 
                 # Turn off, but last one will still have been added
                 accum_sub_flag  = False
 
                 state = copy.deepcopy(tmpstate)
-                depth = snow_file.bands[0].data
-                density = snow_file.bands[1].data
-                self.density = copy.deepcopy(density)
-                self.cold = em_file.bands[9].data
+                if self.filetype == 'ipw':
+                    depth = snow_file.bands[0].data
+                    density = snow_file.bands[1].data
+                    self.density = copy.deepcopy(density)
+                    self.cold = em_file.bands[9].data                    
+                
+                if self.filetype == 'netcdf':
+                    depth = self.depth[iters]          
+                    self.density = copy.deepcopy(self.rho[iters])
+                    self.cold = self.cold[iters]
 
                 # No need to compile more files after csnowFile
                 break
 
             # It's nice to see where we are...
-            debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                snow_name.split('runs')[1],
-                                str(int(snow_name.split('.')[-1]) - t),
-                                date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+            if self.filetype == 'ipw':
+                debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                    snow_name.split('runs')[1],
+                                    str(int(snow_name.split('.')[-1]) - t),
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+            
+            if self.filetype == 'netcdf':
+                debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+                                    self.rundirs_dict[int(snow_name)],
+                                    str(int(snow_name) - t),
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)              
+            
             self._logger.debug(debug)
 
             # Step this along so that we can see how many hours between outputs
-            t = int(snow_name.split('.')[-1])
+            if self.filetype == 'ipw':
+                t = int(snow_name.split('.')[-1])
+            if self.filetype == 'netcdf':
+                t = int(snow_name)
 
-        self.dateFrom = wy.wyhr_to_datetime(self.wy,
-                                            int(self.psnowFile.split('.')[-1]))
-        self.dateTo = wy.wyhr_to_datetime(self.wy,
-                                          int(self.csnowFile.split('.')[-1])
-                                          + adj)
+        if self.filetype == 'ipw':    
+            self.dateFrom = wy.wyhr_to_datetime(self.wy,
+                                                int(self.psnowFile.split('.')[-1]))
+            self.dateTo = wy.wyhr_to_datetime(self.wy,
+                                              int(self.csnowFile.split('.')[-1])
+                                              + adj)
 
         # Append date to report name
         parts = self.report_name.split('.')
@@ -682,7 +728,7 @@ class SNOWAV(object):
                 flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
             state_byelev_mask = np.multiply(state,mask)
             state_mswe_byelev_mask = np.multiply(state,mask)
-            density_m_byelev_mask = np.multiply(density,mask)
+            density_m_byelev_mask = np.multiply(self.density,mask)
 
             ix = density_m_byelev_mask == 0
             density_m_byelev_mask[ix] = np.nan
