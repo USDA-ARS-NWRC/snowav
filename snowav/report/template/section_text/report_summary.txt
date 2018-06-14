@@ -2,6 +2,6 @@ This is the default Snowpack Summary for the period between START_DATE and END_D
 
 Consider making your own reportsummary.txt and referencing it in the config file, because CatBus can only do so much. \\ 
 
-The total amount of water stored in the snowpack as of END_DATE is estimated to be \textbf{TOTAL_SWE UNITS}, which represents a change of \textbf{TOTAL_SWEDEL UNITS} of snow storage during the reporting period. \\
+The total amount of water stored in the snowpack as of END_DATE is estimated to be \textbf{TOTAL_SWE UNITS}, which represents a change of \textbf{TOTAL_SDEL UNITS} of snow storage during the reporting period. \\
 
 
