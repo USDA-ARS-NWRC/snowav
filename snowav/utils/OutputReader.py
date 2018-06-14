@@ -11,7 +11,8 @@ import netCDF4 as nc
 
 class iSnobalReader():
     def __init__(self, outputdir, filetype='netcdf', timesteps=None, embands=None,
-                snowbands=None, mask=None, time_start=None, time_end=None):
+                snowbands=None, mask=None, time_start=None, time_end=None,
+                wy=None):
         """
         Inputs:
         outputdir - abosulte path to location of outputs
@@ -21,6 +22,7 @@ class iSnobalReader():
         snowbands - list of bands numbers to grab, default all
         time_start - water year hour to start grabbing files
         time_end - water year hour to end grabbing files
+        wy - water year for finding dates from ipw file wyhrs
         """
 
         # parse innputs
@@ -30,6 +32,7 @@ class iSnobalReader():
         self.mask = mask
         self.time_start = time_start
         self.time_end = time_end
+        self.wy = wy
 
         # list of band numbers possible
         emnums = range(10)
@@ -83,6 +86,11 @@ class iSnobalReader():
 
         # if we're dealing with ipw outputs
         if self.filetype == 'ipw':
+            if self.wy == None:
+                raise IOError('WY not included in iSnobalReader call with type ipw')
+            # set start date for wyhrs from ipw files to allow datetime conversion
+            self.start_ipw = pd.to_datetime('10-01-{} 00:00'.format(wy-1))
+            # get the data
             snow_data, em_data = self.read_isnobal_ipw()
 
         # if we're dealing with netcdf output files
@@ -153,9 +161,10 @@ class iSnobalReader():
             snow_data[sbd] = np.zeros((len(timesteps), size_var[0], size_var[1]))
 
         # assign numpy array of timesteps
-        #snow_data['time'] = np.array(timesteps)
-        #em_data['time'] = np.array(timesteps)
         self.time = np.array(timesteps)
+        # get dates for wyhr from ipw files
+        ipw_dates = [self.start_ipw + pd.to_timedelta(dts, unit='h') for dts in self.time]
+        self.dates = np.array(ipw_dates)
 
         print('Reading in ipw images')
         for idt, ts in enumerate(timesteps):
