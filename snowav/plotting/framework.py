@@ -47,40 +47,28 @@ class SNOWAV(object):
         # print_config_report(warnings, errors)        
         
         ####################################################
-        #             snowav master                        #
+        #             snowav system                        #
         ####################################################     
         self.loglevel = ucfg.cfg['snowav system']['log_level'].upper()  
         self.log_to_file = ucfg.cfg['snowav system']['log_to_file']      
-
-        ####################################################
-        #             basin                                #
-        ####################################################
-        self.basin = ucfg.cfg['basin']['basin']
-        self.save_path = ucfg.cfg['basin']['save_path']
-
-        if ucfg.cfg['basin']['name_append'] != None:
-            self.name_append = ucfg.cfg['basin']['name_append']
+        self.basin = ucfg.cfg['snowav system']['basin']
+        self.save_path = ucfg.cfg['snowav system']['save_path']
+        self.wy = ucfg.cfg['snowav system']['wy']
+        self.units = ucfg.cfg['snowav system']['units']
+        self.filetype = ucfg.cfg['snowav system']['filetype']
+        self.elev_bins = ucfg.cfg['snowav system']['elev_bins']
+        if ucfg.cfg['snowav system']['name_append'] != None:
+            self.name_append = ucfg.cfg['snowav system']['name_append']
         else:
             self.name_append = '_gen_' + \
-                               datetime.datetime.now().strftime("%Y-%-m-%-d")
-
-        self.wy = ucfg.cfg['basin']['wy']
-
-        self.units = ucfg.cfg['basin']['units']
-        self.filetype = ucfg.cfg['basin']['filetype']
-        self.elev_bins = ucfg.cfg['basin']['elev_bins']
+                               datetime.datetime.now().strftime("%Y-%-m-%-d")        
 
         ####################################################
         #           outputs                                #
         ####################################################
         self.snowband = ucfg.cfg['outputs']['snowband']
         self.emband = ucfg.cfg['outputs']['emband']
-
-        # Rounding decimals for volume and depth
         self.dplcs = ucfg.cfg['outputs']['decimals']
-
-        # If previous snowFile and current snowFile are specified those will
-        # used for the reporting period, otherwise it will be first and last
         self.phour = ucfg.cfg['outputs']['phour']
         self.chour = ucfg.cfg['outputs']['chour']  
         
@@ -194,15 +182,11 @@ class SNOWAV(object):
         self.plotorder = []
         maskpaths = []
 
-        # List of paths to masks. The first should always be the total basin
         masks = ucfg.cfg['masks']['basin_masks']
         for idx, m in enumerate(masks):
             maskpaths.append(m)
             self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
 
-        # Get the DEM
-        # There are different formats, this will get fixed once we
-        # start using netcdf
         try:
             self.dem = np.genfromtxt(self.dempath)
         except:
@@ -246,7 +230,6 @@ class SNOWAV(object):
                 self.depth.append(output.snow_data[0][n,:,:])
                 self.rho.append(output.snow_data[1][n,:,:])          
         
-        # This is not the cleanest way to integrate...
         self.em_files = np.ndarray.tolist(self.time.astype('int'))
         self.snow_files = np.ndarray.tolist(self.time.astype('int'))
         
@@ -272,18 +255,14 @@ class SNOWAV(object):
                                self.elev_bins[2])
 
         # A few remaining basin-specific things
-        if self.basin == 'BRB':
+        if self.basin == 'TUOL' or self.basin == 'SJ':
+            sr = 6
+        else:
             sr = 0
-        if self.basin == 'TUOL':
-            sr = 6
-        if self.basin == 'SJ':
-            sr = 6
+        
         if self.basin == 'LAKES':
-            sr = 0
             self.imgx = (1200,1375)
             self.imgy = (425,225)
-        if self.basin == 'RCEW':
-            sr = 0
 
         # Right now this is a placeholder, could edit by basin...
         self.xlims = (0,len(self.edges))
