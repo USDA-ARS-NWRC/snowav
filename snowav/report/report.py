@@ -106,6 +106,7 @@ def report(obj):
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ars_logo.png'
+    variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
     # Put the by-elevation tables together
     # Eventually put this in framework? But _o is beating it to hell right now
