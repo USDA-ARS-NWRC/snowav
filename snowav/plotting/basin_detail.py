@@ -69,7 +69,7 @@ def basin_detail(self):
     ax1.set_xlim((102,-2))
     ax1.set_ylim((-1,len(hypsom)))
 
-    ax1.set_ylabel('elevation [m]')
+    ax1.set_ylabel('elevation [%s]'%(self.elevlbl))
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position("right")
 
