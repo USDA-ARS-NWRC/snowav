@@ -13,7 +13,7 @@ import pandas as pd
 def basin_detail(self):
 
     demcopy = copy.copy(self.dem)
-    pmask = self.masks[self.total_lbl]['mask']
+    pmask = self.masks[self.plotorder[0]]['mask']
     ixo = pmask == 0
     demcopy[ixo] = np.nan
 
@@ -36,7 +36,7 @@ def basin_detail(self):
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        snow._logger.info(name,smin,smax)
+        snow._logger.info(name,str(int(smin),str(int(smax)))
 
     # filter out high and low hyp
     map     = plt.cm.terrain
@@ -62,8 +62,6 @@ def basin_detail(self):
         hyp[imin] = np.nan
         imax = hyp > 99.9
         hyp[imax] = np.nan
-
-        # ax1.plot(hypsom[name].cumsum()[::-1]-hypsom[name].iloc[0],range(0,len(edges)),color = clrs[iters],label = name)
         ax1.plot(hyp,range(0,len(edges)),color = clrs[iters],label = name)
 
     ax1.invert_xaxis()
