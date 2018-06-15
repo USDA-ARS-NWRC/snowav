@@ -10,6 +10,7 @@ import matplotlib.patches as mpatches
 
 def flt_image_change(snow):
     '''
+    This plots a second image_change fig, intended for flight updates
 
     '''
 
@@ -21,7 +22,7 @@ def flt_image_change(snow):
     delta_state[ix] = qMin + qMin*0.2
     vMin,vMax = np.percentile(delta_state,[1,99])
 
-    colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))
+    colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
     colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
     colors = np.vstack((colorsbad,colors1, colors2))
@@ -180,7 +181,7 @@ def flt_image_change(snow):
                  transform=ax1.transAxes,fontsize = 10)
 
     if snow.basin == 'TUOL' or snow.basin == 'SJ':
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()

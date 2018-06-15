@@ -508,11 +508,11 @@ class SNOWAV(object):
                 pstate = copy.deepcopy(tmpstate)
 
             # When it is the first flt snow file, copy
-            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltpsnowFile)):
+            if (self.flt_flag == True) and (snow_name == self.fltphour):
                 fltpstate = copy.deepcopy(tmpstate)
 
             # When it is the second flt snow file, copy
-            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltcsnowFile)):
+            if (self.flt_flag == True) and (snow_name == self.fltchour):
                 fltcstate = copy.deepcopy(tmpstate)
                 flt_delta_state = fltpstate - fltcstate
 
