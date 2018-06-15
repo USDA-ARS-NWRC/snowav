@@ -57,11 +57,11 @@ def water_balance(snow):
     iters = 0
     name = snow.plotorder[iters]
 
-    ax1.plot(snow.precip_summary[name],label = 'precipitation')
+    ax1.plot(snow.precip_summary[name],label = 'precipitation',color = 'b')
     
     ax1.plot(snow.accum_summary[name]
-             + snow.state_summary[name]
-             - snow.evap_summary[name],label = 'SWI + SWE - evap')
+             + snow.state_summary[name] - snow.state_summary[name][0]
+             + snow.evap_summary[name],label = 'SWI + SWE + evap',color = 'g')
 
     ax1.legend()
 
