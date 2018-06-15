@@ -178,14 +178,14 @@ def image_change(snow):
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
         elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.76))
+            ax1.legend(loc= (0.01,0.745))
 
     if snow.basin == 'BRB':
         ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     if snow.basin == 'TUOL' or snow.basin == 'SJ':
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.15,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()
