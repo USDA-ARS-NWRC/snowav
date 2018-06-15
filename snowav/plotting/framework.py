@@ -78,11 +78,12 @@ class SNOWAV(object):
         self.phour = ucfg.cfg['outputs']['phour']
         self.chour = ucfg.cfg['outputs']['chour']
 
-        if self.phour >= self.chour:
-            self._logger.info('phour > chour, needs to be fixed in config file,'
-                              + ' exiting...')
-            print('phour > chour, needs to be fixed in config file, exiting...')
-            return
+        if (self.phour is not None and self.chour is not None):
+            if self.phour >= self.chour:
+                self._logger.info('phour > chour, needs to be fixed in config file,'
+                                  + ' exiting...')
+                print('phour > chour, needs to be fixed in config file, exiting...')
+                return
 
         # Check for forced flight comparison images
         self.fltphour = ucfg.cfg['outputs']['fltphour']
