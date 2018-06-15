@@ -36,10 +36,10 @@ def basin_detail(self):
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        snow._logger.info(name,str(int(smin),str(int(smax)))
+        snow._logger.info(name,str(int(smin),str(int(smax))))
 
     # filter out high and low hyp
-    map     = plt.cm.terrain
+    map = plt.cm.terrain
     map.set_bad('white')
 
     sns.set_style('darkgrid')
