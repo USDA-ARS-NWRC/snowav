@@ -11,12 +11,14 @@ import pandas as pd
 import sys
 import datetime
 import snowav.methods.wyhr_to_datetime as wy
+import snowav.utils.get_topo_stats as ts
 from snowav.utils.OutputReader import iSnobalReader
 from inicheck.tools import get_user_config, check_config
 from inicheck.output import generate_config, print_config_report
 from inicheck.config import MasterConfig
 import logging
 import coloredlogs
+import math
 
 
 class SNOWAV(object):
@@ -250,6 +252,15 @@ class SNOWAV(object):
                   + ' %s and %s'%(self.psnowFile,self.csnowFile))  
 
         # Assign some basin-specific things, also needs to be generalized
+        dmin = np.min(np.min(self.dem))
+        dmax = np.max(np.max(self.dem))
+
+        fp = self.run_dirs[0].replace('output/','snow.nc')
+        topo = ts.get_topo_stats(fp,filetype = 'netcdf')
+        self.pixel = int(topo['dv'])
+        
+        emax = int(np.max(np.max(np.round(self.dem,-3))))
+        
         if self.basin == 'BRB':
             self.pixel = 100
             sr = 0
