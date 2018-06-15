@@ -156,7 +156,7 @@ def accumulated(snow):
         ax1.text(0.26,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
     else:
-        ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     # Make SWI-free legend if we need one
