@@ -68,6 +68,7 @@ class SNOWAV(object):
 
         self.units = ucfg.cfg['basin']['units']
         self.filetype = ucfg.cfg['basin']['filetype']
+        self.elev_bins = ucfg.cfg['basin']['elev_bins']
 
         ####################################################
         #           outputs                                #
@@ -251,76 +252,28 @@ class SNOWAV(object):
             print('phour and/or chour not specified, using:'
                   + ' %s and %s'%(self.psnowFile,self.csnowFile))  
 
-        # Assign some basin-specific things, also needs to be generalized
-        dmin = np.min(np.min(self.dem))
-        dmax = np.max(np.max(self.dem))
-
+        # Pixel size and elevation bins
         fp = self.run_dirs[0].replace('output/','snow.nc')
         topo = ts.get_topo_stats(fp,filetype = 'netcdf')
         self.pixel = int(topo['dv'])
-        
-        emax = int(np.max(np.max(np.round(self.dem,-3))))
-        
+        self.edges = np.arange(self.elev_bins[0],
+                               self.elev_bins[1]+self.elev_bins[2],
+                               self.elev_bins[2])
+
+        # A few remaining basin-specific things
         if self.basin == 'BRB':
-            self.pixel = 100
             sr = 0
-            if self.units == 'KAF':
-                emin = 2000
-                emax = 11000
-                self.step = 1000
-            if self.units == 'SI':
-                emin = 800
-                emax = 3200
-                self.step = 250
         if self.basin == 'TUOL':
-            self.pixel = 50
             sr = 6
-            if self.units == 'KAF':
-                emin = 3000
-                emax = 12000
-                self.step   = 1000
-            if self.units == 'SI':
-                emin = 800
-                emax = 3600
-                self.step   = 500
         if self.basin == 'SJ':
-            self.pixel = 50
             sr = 6
-            if self.units == 'KAF':
-                emin = 1000
-                emax  = 13000
-                self.step = 1000
-            if self.units == 'SI':
-                emin = 300
-                emax = 4000
-                self.step = 500
         if self.basin == 'LAKES':
-            self.pixel = 50
             sr = 0
             self.imgx = (1200,1375)
             self.imgy = (425,225)
-            if self.units == 'KAF':
-                emin = 8000
-                emax = 12500
-                self.step = 500
-            if self.units == 'SI':
-                emin = 2400
-                emax = 3800
-                self.step = 200
         if self.basin == 'RCEW':
-            self.pixel = 50
             sr = 0
-            if self.units == 'KAF':
-                emin = 2500
-                emax = 7500
-                self.step = 500
-            if self.units == 'SI':
-                emin = 800
-                emax = 2500
-                self.step = 500
 
-        # Create the elevation bins
-        self.edges = np.arange(emin,emax+self.step,self.step)
         # Right now this is a placeholder, could edit by basin...
         self.xlims = (0,len(self.edges))
 
