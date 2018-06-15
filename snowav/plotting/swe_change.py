@@ -63,7 +63,7 @@ def swe_change(snow):
     cbar = plt.colorbar(h, cax = cax)
     # cbar.ax.tick_params()
 
-    cbar.set_label(r'$\Delta$ SWE [%s]'%(self.depthlbl))
+    cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
