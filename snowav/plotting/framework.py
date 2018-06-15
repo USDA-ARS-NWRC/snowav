@@ -82,13 +82,24 @@ class SNOWAV(object):
         # If previous snowFile and current snowFile are specified those will
         # used for the reporting period, otherwise it will be first and last
         self.phour = ucfg.cfg['outputs']['phour']
-        self.chour = ucfg.cfg['outputs']['chour']   
+        self.chour = ucfg.cfg['outputs']['chour']  
+        
+        if self.phour >= self.chour:
+            self._logger.info('phour > chour, needs to be fixed in config file,'
+                              + ' exiting...')
+            print('phour > chour, needs to be fixed in config file, exiting...')
+            return 
         
         # Check for forced flight comparison images
         self.fltphour = ucfg.cfg['outputs']['fltphour']
         self.fltchour = ucfg.cfg['outputs']['fltchour']
         if self.fltchour is not None:
-            self.flt_flag = True                         
+            self.flt_flag = True    
+            if self.fltphour >= self.fltchour:
+                self._logger.info('fltphour > fltchour, fix in config file,'
+                              + ' exiting...')
+                print('fltphour > fltchour, fix in config file, exiting...')
+                return 
 
         self.summary = ucfg.cfg['outputs']['summary']
         if type(self.summary) != list:

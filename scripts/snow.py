@@ -25,7 +25,7 @@ def run(config_file):
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
         
-        if hasattr(snow,'flt_flag'):
+        if snow.flt_flag == True:
             snowav.plotting.flt_image_change.flt_image_change(snow)
         
         for name in snow.summary:
