@@ -562,6 +562,7 @@ class SNOWAV(object):
 
         # Mask by subbasin and elevation band
         for name in self.masks:
+            # name = self.plotorder[0]
             mask = copy.deepcopy(self.masks[name]['mask'])
 
             accum_mask = np.multiply(accum,mask)
@@ -588,6 +589,7 @@ class SNOWAV(object):
 
             # Do it by elevation band
             for n in np.arange(0,len(self.edges)):
+                # n = 0
                 ind = elevbin == n
                 state_bin = state_mask[ind]
                 b = self.edges[n]
@@ -610,13 +612,13 @@ class SNOWAV(object):
                 snowmelt_byelev_sub.loc[b,name] = np.nansum(
                                                 snowmelt_mask_sub[ind])
 
-
                 # Calculate mean if there is snow
                 if state_mswe_byelev_mask[ind].size:
                     state_mswe_byelev.loc[b,name] = np.nanmean(
                                                 state_mswe_byelev_mask[ind])
                     depth_mdep_byelev.loc[b,name] = np.nanmean(
                                                 depth_mdep_byelev_mask[ind])
+                    density_m_byelev.loc[b,name] = np.nanmean(density_m_byelev_mask[ind])                    
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
                     if hasattr(self,'flt_flag'):
@@ -628,6 +630,7 @@ class SNOWAV(object):
                     state_mswe_byelev.loc[b,name] = np.nan
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
+                    density_m_byelev.loc[b,name] = np.nan
                     if hasattr(self,'flt_flag'):
                         flt_delta_state_byelev.loc[b,name] = np.nan
                     delta_swe_byelev.loc[b,name] = np.nan
