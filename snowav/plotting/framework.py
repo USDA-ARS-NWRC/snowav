@@ -12,6 +12,7 @@ import sys
 import datetime
 import snowav.methods.wyhr_to_datetime as wy
 import snowav.utils.get_topo_stats as ts
+from snowav.utils.utilities import get_snowav_path
 from snowav.utils.OutputReader import iSnobalReader
 from inicheck.tools import get_user_config, check_config
 from inicheck.output import generate_config, print_config_report
@@ -35,7 +36,10 @@ class SNOWAV(object):
 
         print('Reading SNOWAV config file...')
         ucfg = get_user_config(config_file, modules = 'snowav')
-        
+
+        # find path to snowav code directory
+        self.snowav_path = get_snowav_path()
+
         # create blank log and error log because logger is not initialized yet
         self.tmp_log = []
         self.tmp_err = []
@@ -44,15 +48,17 @@ class SNOWAV(object):
         # Check the user config file for errors and report issues if any
         self.tmp_log.append("Checking config file for issues...")
         warnings, errors = check_config(ucfg)
-        # print_config_report(warnings, errors)        
-        
+        # print_config_report(warnings, errors)
+
         ####################################################
         #             snowav system                        #
-        ####################################################     
-        self.loglevel = ucfg.cfg['snowav system']['log_level'].upper()  
-        self.log_to_file = ucfg.cfg['snowav system']['log_to_file']      
+        ####################################################
+        self.loglevel = ucfg.cfg['snowav system']['log_level'].upper()
+        self.log_to_file = ucfg.cfg['snowav system']['log_to_file']
         self.basin = ucfg.cfg['snowav system']['basin']
         self.save_path = ucfg.cfg['snowav system']['save_path']
+        if self.save_path is None:
+            self.save_path = os.path.join(self.snowav_path, 'snowav/data/')
         self.wy = ucfg.cfg['snowav system']['wy']
         self.units = ucfg.cfg['snowav system']['units']
         self.filetype = ucfg.cfg['snowav system']['filetype']
@@ -61,7 +67,7 @@ class SNOWAV(object):
             self.name_append = ucfg.cfg['snowav system']['name_append']
         else:
             self.name_append = '_gen_' + \
-                               datetime.datetime.now().strftime("%Y-%-m-%-d")        
+                               datetime.datetime.now().strftime("%Y-%-m-%-d")
 
         ####################################################
         #           outputs                                #
@@ -70,24 +76,24 @@ class SNOWAV(object):
         self.emband = ucfg.cfg['outputs']['emband']
         self.dplcs = ucfg.cfg['outputs']['decimals']
         self.phour = ucfg.cfg['outputs']['phour']
-        self.chour = ucfg.cfg['outputs']['chour']  
-        
+        self.chour = ucfg.cfg['outputs']['chour']
+
         if self.phour >= self.chour:
             self._logger.info('phour > chour, needs to be fixed in config file,'
                               + ' exiting...')
             print('phour > chour, needs to be fixed in config file, exiting...')
-            return 
-        
+            return
+
         # Check for forced flight comparison images
         self.fltphour = ucfg.cfg['outputs']['fltphour']
         self.fltchour = ucfg.cfg['outputs']['fltchour']
         if self.fltchour is not None:
-            self.flt_flag = True    
+            self.flt_flag = True
             if self.fltphour >= self.fltchour:
                 self._logger.info('fltphour > fltchour, fix in config file,'
                               + ' exiting...')
                 print('fltphour > fltchour, fix in config file, exiting...')
-                return 
+                return
 
         self.summary = ucfg.cfg['outputs']['summary']
         if type(self.summary) != list:
@@ -167,6 +173,23 @@ class SNOWAV(object):
         self.summary_file = ucfg.cfg['report']['summary_file']
         self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
 
+        # check paths to see if they need default snowav path
+        if self.rep_path is None:
+            self.rep_path = os.path.join(self.snowav_path,'snowav/data/')
+        if self.env_path is None:
+            self.env_path = os.path.join(self.snowav_path,
+                                         'snowav/report/template/section_text/')
+        if self.templ_path is None:
+            self.templ_path = os.path.join(self.snowav_path,'snowav/report/template/')
+        if self.summary_file is None:
+            self.summary_file = os.path.join(self.snowav_path,
+                                             'snowav/report/template/section_text/report_summary.txt')
+        if self.tex_file is None:
+            self.tex_file = os.path.join(self.snowav_path,
+                                         'snowav/report/template/snowav_report.tex')
+        if self.figs_tpl_path is None:
+            self.figs_tpl_path = os.path.join(self.snowav_path,'snowav/report/figs/')
+
         ####################################################
         #           hx forecast
         ####################################################
@@ -216,7 +239,7 @@ class SNOWAV(object):
                                    wy = self.wy)
             self.dates = np.append(self.dates,output.dates)
             self.time = np.append(self.time,output.time)
-            
+
             # Make a dict for wyhr-rundir lookup
             for t in output.time:
                 self.rundirs_dict[t] = rd
@@ -228,23 +251,23 @@ class SNOWAV(object):
                 self.cold.append(output.em_data[9][n,:,:])
                 self.swe.append(output.snow_data[2][n,:,:])
                 self.depth.append(output.snow_data[0][n,:,:])
-                self.rho.append(output.snow_data[1][n,:,:])          
-        
+                self.rho.append(output.snow_data[1][n,:,:])
+
         self.em_files = np.ndarray.tolist(self.time.astype('int'))
         self.snow_files = np.ndarray.tolist(self.time.astype('int'))
-        
+
         # If no psnowFile and csnowFile specified, use first and last
         if self.chour is not None:
             self.psnowFile = self.phour
             self.csnowFile = self.chour
-            
-        else: 
+
+        else:
             self.phour = self.snow_files[0]
-            self.chour = self.snow_files[-1]            
+            self.chour = self.snow_files[-1]
             self.psnowFile = self.phour
-            self.csnowFile = self.chour   
+            self.csnowFile = self.chour
             print('phour and/or chour not specified, using:'
-                  + ' %s and %s'%(self.psnowFile,self.csnowFile))  
+                  + ' %s and %s'%(self.psnowFile,self.csnowFile))
 
         # Pixel size and elevation bins
         fp = self.run_dirs[0].replace('output/','snow.nc')
@@ -259,7 +282,7 @@ class SNOWAV(object):
             sr = 6
         else:
             sr = 0
-        
+
         if self.basin == 'LAKES':
             self.imgx = (1200,1375)
             self.imgy = (425,225)
@@ -307,10 +330,10 @@ class SNOWAV(object):
         # Copy the config file where figs will be saved
         extf = os.path.splitext(os.path.split(config_file)[1])
         ext_shr = str(self.phour)
-        ext_ehr = str(self.chour)            
+        ext_ehr = str(self.chour)
         self.figs_path = os.path.join(self.save_path,
-                                    '%s_%s/'%(str(self.phour),str(self.chour)))      
-        
+                                    '%s_%s/'%(str(self.phour),str(self.chour)))
+
         if not os.path.exists(self.figs_path):
             os.makedirs(self.figs_path)
 
@@ -409,7 +432,7 @@ class SNOWAV(object):
             daily_snowmelt = self.snowmelt[iters]
             snowmelt = snowmelt + daily_snowmelt
             evap = evap + self.evap[iters]
-            tmpstate = self.swe[iters]               
+            tmpstate = self.swe[iters]
             state_byday[:,:,iters] = tmpstate
 
             # Get rain from input data
@@ -417,7 +440,7 @@ class SNOWAV(object):
             sf = sf.replace('run','data')
             sf = sf.replace('output','ppt_4b')
             ppt_path = sf.split('em')[0]
-            out_hr = snow_name 
+            out_hr = snow_name
             hrs = range(int(out_hr) - 23,int(out_hr) + 1)
 
             pFlag = False
@@ -512,18 +535,18 @@ class SNOWAV(object):
 
                 # Run debug statement before ending the process
                 pf = ', csnowFile'
-                
+
                 debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
                                     self.rundirs_dict[int(snow_name)],
                                     str(int(snow_name) - t),
-                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)                    
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
                 self._logger.debug(debug)
 
                 # Turn off, but last one will still have been added
                 accum_sub_flag  = False
 
                 state = copy.deepcopy(tmpstate)
-                depth = self.depth[iters]          
+                depth = self.depth[iters]
                 self.density = copy.deepcopy(self.rho[iters])
                 self.cold = self.cold[iters]
 
@@ -534,8 +557,8 @@ class SNOWAV(object):
             debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
                                     self.rundirs_dict[int(snow_name)],
                                     str(int(snow_name) - t),
-                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)              
-            
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+
             self._logger.debug(debug)
 
             # Step this along so that we can see how many hours between outputs
@@ -608,7 +631,7 @@ class SNOWAV(object):
                                                 state_mswe_byelev_mask[ind])
                     depth_mdep_byelev.loc[b,name] = np.nanmean(
                                                 depth_mdep_byelev_mask[ind])
-                    density_m_byelev.loc[b,name] = np.nanmean(density_m_byelev_mask[ind])                    
+                    density_m_byelev.loc[b,name] = np.nanmean(density_m_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
                     if hasattr(self,'flt_flag'):
