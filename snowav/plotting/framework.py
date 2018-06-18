@@ -639,7 +639,6 @@ class SNOWAV(object):
                                                 state_mswe_byelev_mask[ind])
                     depth_mdep_byelev.loc[b,name] = np.nanmean(
                                                 depth_mdep_byelev_mask[ind])
-                    density_m_byelev.loc[b,name] = np.nanmean(density_m_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
                     if self.flt_flag is True:
@@ -651,10 +650,16 @@ class SNOWAV(object):
                     state_mswe_byelev.loc[b,name] = np.nan
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
-                    density_m_byelev.loc[b,name] = np.nan
                     if self.flt_flag is True:
                         flt_delta_state_byelev.loc[b,name] = np.nan
                     delta_swe_byelev.loc[b,name] = np.nan
+
+                # There are apparently side cases with density and not swe
+                if np.sum(np.sum(density_m_byelev_mask[ind])) > 0:
+                    density_m_byelev.loc[b,name] = np.nanmean(
+                                                    copy.deepcopy(density_m_byelev_mask[ind]))
+                else:
+                    density_m_byelev.loc[b,name] = np.nan
 
             self.masks[name]['SWE'] = ( (melt[name].sum() + nonmelt[name].sum())
                                        * self.conversion_factor )
