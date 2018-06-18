@@ -144,6 +144,11 @@ class SNOWAV(object):
         else:
             self.nc_flag = False
 
+        if ucfg.cfg['basin total']['flights']:
+            self.flight_dates = ucfg.cfg['basin total']['flights']
+            if type(self.flight_dates) != list:
+                self.flight_dates = [self.flight_dates]
+
         ####################################################
         #           masks                                  #
         ####################################################
@@ -236,7 +241,6 @@ class SNOWAV(object):
         self.rundirs_dict = {}
 
         for rd in self.run_dirs:
-            print(rd)
             output = iSnobalReader(rd.split('output')[0],
                                    'netcdf',
                                    snowbands = [0,1,2],
