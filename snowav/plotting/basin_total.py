@@ -36,8 +36,11 @@ def basin_total(snow):
         ax1.plot(snow.accum_summary[name],
                  color = snow.barcolors[iters], label='_nolegend_')
 
-    ax.axvline(x=datetime(2018,4,23),linestyle = ':',linewidth = 0.75, color = 'k')
-    ax1.axvline(x=datetime(2018,4,23),linestyle = ':',linewidth = 0.75, color = 'k')
+    if snow.flight_dates is not None:
+        for d in snow.flight_dates:
+            ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+            ax1.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+
     ax1.yaxis.set_label_position("right")
     ax1.set_xlim((datetime(snow.wy -1 , 10, 1),snow.dateTo))
     ax.set_xlim((datetime(snow.wy - 1, 10, 1),snow.dateTo))
@@ -87,8 +90,8 @@ def basin_total(snow):
     if snow.basin == 'BRB':
         accum_summary = snow.accum_summary
         main = 'Boise River Basin'
-        multiswe = pd.DataFrame.from_csv(snow.summary_swe)
-        multiswi = pd.DataFrame.from_csv(snow.summary_swi)
+        multiswe = pd.read_csv(snow.summary_swe)
+        multiswi = pd.read_csv(snow.summary_swi)
 
         multiswe.wy17.iloc[304:] = 0
         multiswi.wy17 = np.cumsum(multiswi.wy17)
