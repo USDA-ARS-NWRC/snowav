@@ -11,6 +11,8 @@ import matplotlib.patches as mpatches
 
 def pixel_swe(snow):
 
+    sns.set_style('darkgrid')
+    sns.set_context('notebook')
 
     plt.close(2)
     fig,(ax,ax1) = plt.subplots(num=2, figsize=snow.figsize,
@@ -63,8 +65,8 @@ def pixel_swe(snow):
     ax1.set_ylabel('mean SWE [%s]'%(snow.depthlbl))
     ax1.set_xlabel('elevation [ft]')
     ax.legend(loc='upper left')
-    ax.grid('on')
-    ax1.grid('on')
+    # ax.grid(True)
+    # ax1.grid(True)
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
