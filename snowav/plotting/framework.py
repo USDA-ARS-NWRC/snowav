@@ -233,6 +233,7 @@ class SNOWAV(object):
         self.rundirs_dict = {}
 
         for rd in self.run_dirs:
+            # print(rd.split('output')[0] + 'snow.nc')
             output = iSnobalReader(rd.split('output')[0],
                                    'netcdf',
                                    snowbands = [0,1,2],

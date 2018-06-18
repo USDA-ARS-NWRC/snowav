@@ -211,6 +211,7 @@ class iSnobalReader():
         pathsnow = os.path.join(self.outputdir, name_snow_fp+'.nc')
         pathem = os.path.join(self.outputdir, name_em_fp+'.nc')
         # read datasets
+        # print(pathsnow)
         ds_snow = Dataset(pathsnow, 'r')
         ds_em = Dataset(pathem, 'r')
 
