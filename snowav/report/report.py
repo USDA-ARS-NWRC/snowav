@@ -169,7 +169,7 @@ def report(obj):
 
 
     # Remove if no flight options
-    if not hasattr(obj,'flt_flag'):
+    if obj.flt_flag is False:
         del section_dict['FLT_CHANGES_FIG_TPL']
 
     for rep in section_dict.keys():

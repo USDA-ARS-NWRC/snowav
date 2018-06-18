@@ -11,7 +11,7 @@ def run(config_file):
 
         snow.process()
 
-        if snow.nc_flag == True:
+        if snow.nc_flag is True:
             snowav.methods.output_nc.output_nc(snow)
 
         snowav.plotting.accumulated.accumulated(snow)
@@ -24,14 +24,14 @@ def run(config_file):
         snowav.plotting.density.density(snow)
         snowav.plotting.water_balance.water_balance(snow)
         snowav.plotting.stn_validate.stn_validate(snow)
-        
-        if snow.flt_flag == True:
-            snowav.plotting.flt_image_change.flt_image_change(snow)
-        
+
         for name in snow.summary:
             snowav.plotting.write_summary.write_summary(snow,name)
 
-        if snow.report_flag == True:
+        if snow.flt_flag is True:
+            snowav.plotting.flt_image_change.flt_image_change(snow)
+
+        if snow.report_flag is True:
             snowav.report.report.report(snow)
 
 if __name__ == '__main__':

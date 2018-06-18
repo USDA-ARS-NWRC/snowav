@@ -95,6 +95,8 @@ class SNOWAV(object):
                               + ' exiting...')
                 print('fltphour > fltchour, fix in config file, exiting...')
                 return
+        else:
+            self.flt_flag = False
 
         self.summary = ucfg.cfg['outputs']['summary']
         if type(self.summary) != list:
@@ -132,6 +134,7 @@ class SNOWAV(object):
         if ucfg.cfg['basin total']['summary_swe'] != None:
             self.summary_swe = ucfg.cfg['basin total']['summary_swe']
             self.summary_swi = ucfg.cfg['basin total']['summary_swi']
+            self.basin_total_flag = True
         else:
             self.basin_total_flag = False
 
@@ -233,7 +236,7 @@ class SNOWAV(object):
         self.rundirs_dict = {}
 
         for rd in self.run_dirs:
-            # print(rd.split('output')[0] + 'snow.nc')
+            print(rd)
             output = iSnobalReader(rd.split('output')[0],
                                    'netcdf',
                                    snowbands = [0,1,2],
@@ -272,7 +275,7 @@ class SNOWAV(object):
                   + ' %s and %s'%(self.psnowFile,self.csnowFile))
 
         # Pixel size and elevation bins
-        fp = self.run_dirs[0].replace('output/','snow.nc')
+        fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
         topo = ts.get_topo_stats(fp,filetype = 'netcdf')
         self.pixel = int(topo['dv'])
         self.edges = np.arange(self.elev_bins[0],
@@ -523,11 +526,11 @@ class SNOWAV(object):
                 pstate = copy.deepcopy(tmpstate)
 
             # When it is the first flt snow file, copy
-            if (self.flt_flag == True) and (snow_name == self.fltphour):
+            if (self.flt_flag is True) and (snow_name == self.fltphour):
                 fltpstate = copy.deepcopy(tmpstate)
 
             # When it is the second flt snow file, copy
-            if (self.flt_flag == True) and (snow_name == self.fltchour):
+            if (self.flt_flag is True) and (snow_name == self.fltchour):
                 fltcstate = copy.deepcopy(tmpstate)
                 flt_delta_state = fltpstate - fltcstate
 
@@ -590,7 +593,7 @@ class SNOWAV(object):
             snowmelt_mask_sub = np.multiply(snowmelt_sub,mask)
             state_mask = np.multiply(state,mask)
             delta_state_byelev_mask = np.multiply(delta_state,mask)
-            if hasattr(self,'flt_flag'):
+            if self.flt_flag is True:
                 flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
             state_byelev_mask = np.multiply(state,mask)
             state_mswe_byelev_mask = np.multiply(state,mask)
@@ -636,7 +639,7 @@ class SNOWAV(object):
                     density_m_byelev.loc[b,name] = np.nanmean(density_m_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
-                    if hasattr(self,'flt_flag'):
+                    if self.flt_flag is True:
                         flt_delta_state_byelev.loc[b,name] = np.nansum(
                                                 flt_delta_state_byelev_mask[ind])
                     delta_swe_byelev.loc[b,name] = np.nanmean(
@@ -646,7 +649,7 @@ class SNOWAV(object):
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
                     density_m_byelev.loc[b,name] = np.nan
-                    if hasattr(self,'flt_flag'):
+                    if self.flt_flag is True:
                         flt_delta_state_byelev.loc[b,name] = np.nan
                     delta_swe_byelev.loc[b,name] = np.nan
 
@@ -680,7 +683,7 @@ class SNOWAV(object):
         self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
         self.state = np.multiply(state,self.depth_factor)
         self.delta_state = np.multiply(delta_state,self.depth_factor)
-        if hasattr(self,'flt_flag'):
+        if self.flt_flag is True:
             self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
 
         # Sub-set of time defined by psnowfile and csnowfile
