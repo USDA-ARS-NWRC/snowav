@@ -144,10 +144,9 @@ class SNOWAV(object):
         else:
             self.nc_flag = False
 
-        if ucfg.cfg['basin total']['flights']:
-            self.flight_dates = ucfg.cfg['basin total']['flights']
-            if type(self.flight_dates) != list:
-                self.flight_dates = [self.flight_dates]
+        self.flight_dates = ucfg.cfg['basin total']['flights']
+        if (self.flight_dates is not None) and (type(self.flight_dates) != list):
+            self.flight_dates = [self.flight_dates]
 
         ####################################################
         #           masks                                  #
