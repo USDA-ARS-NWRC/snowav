@@ -1,8 +1,0 @@
-\clearpage
-\section*{Snow Depth Update}
-\begin{figure}[htbp]
-\begin{centering}
-	\includegraphics[width=0.88\textwidth]{FIG_PATH DFLT_FIG}
-	\caption{Change in SWE as a result of the snow depth update, as a depth (left) and as a function of elevation band (right).}
-\end{centering}
-\end{figure}
