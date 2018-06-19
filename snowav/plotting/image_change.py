@@ -185,7 +185,7 @@ def image_change(snow):
                  transform=ax1.transAxes,fontsize = 10)
 
     if snow.basin == 'TUOL' or snow.basin == 'SJ':
-        ax1.text(0.15,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()

@@ -85,12 +85,12 @@ def swe_change(snow):
 
         lbl = '%s = %s %s'%(name,
                             str(np.round(snow.flt_delta_state_byelev[name].sum(),
-                            snow.dplcs)),snow.depthlbl)
-      
-        
+                            2)),snow.depthlbl)
+
+
         ax1.bar(range(0,len(snow.edges))-wid[iters],
                 snow.delta_swe_byelev[name],
-                color = snow.barcolors[iters], width = swid, 
+                color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)
 
