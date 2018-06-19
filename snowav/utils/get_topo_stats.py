@@ -15,7 +15,6 @@ def get_topo_stats(fp, filetype='netcdf'):
     ts = {}
 
     if filetype == 'netcdf':
-        print(fp)
         ds = nc.Dataset(fp, 'r')
         # ts['units'] = ds.variables['y'].units
         y = ds.variables['y'][:]

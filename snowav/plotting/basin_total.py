@@ -104,6 +104,7 @@ def basin_total(snow):
                                             state_summary[main].values)
         multiswi.wy18.iloc[:len(accum_summary[main])] = (
                                             accum_summary[main].values)
+        print(multiswi)
 
         if snow.units == 'SI':
             multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
@@ -132,8 +133,8 @@ def basin_total(snow):
         ax1.xaxis.set_major_formatter(formatter)
 
         ax1.yaxis.set_label_position("right")
-        ax1.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
-        ax.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
+        ax1.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
+        ax.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
         ax1.tick_params(axis='y')
         ax1.yaxis.tick_right()
         ax.legend(loc='upper left')
