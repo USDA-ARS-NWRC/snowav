@@ -93,7 +93,7 @@ def report(obj):
     variables['SWI_FIG'] = 'swi%s.png'%(obj.name_append)
     variables['RESULTS_FIG'] = 'results%s.png'%(obj.name_append)
     variables['CHANGES_FIG'] = 'swe_change%s.png'%(obj.name_append)
-    variables['FLT_CHANGES_FIG'] = 'flt_swe_change%s.png'%(obj.name_append)
+    variables['DFLT_FIG'] = 'dflt_swe_change%s.png'%(obj.name_append)
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth%s.png'%(obj.name_append)
     variables['ELEV_FIG'] = 'swe_elev%s.png'%(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total%s.png'%(obj.name_append)
@@ -158,7 +158,7 @@ def report(obj):
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
-                    'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
+                    'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt'
                     }
 
     # Define and load summary tables depending on number of subbasins
@@ -170,7 +170,7 @@ def report(obj):
 
     # Remove if no flight options
     if obj.flt_flag is False:
-        del section_dict['FLT_CHANGES_FIG_TPL']
+        del section_dict['FLTCHANGES_FIG_TPL']
 
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')

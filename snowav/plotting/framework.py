@@ -547,11 +547,13 @@ class SNOWAV(object):
             # When it is the first flt snow file, copy
             if (self.flt_flag is True) and (snow_name == self.fltphour):
                 fltpstate = copy.deepcopy(tmpstate)
+                self.fltdateFrom = self.dates[iters]
 
             # When it is the second flt snow file, copy
             if (self.flt_flag is True) and (snow_name == self.fltchour):
                 fltcstate = copy.deepcopy(tmpstate)
                 flt_delta_state = fltpstate - fltcstate
+                self.fltdateTo = self.dates[iters]
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:

@@ -73,8 +73,8 @@ def flt_image_change(snow):
         cbar.set_label(r'$\Delta$ SWE [mm]')
 
     h.axes.set_title('Change in SWE from Snow Depth Update\n%s to %s'
-                     %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
-                       snow.dateTo.date().strftime("%Y-%-m-%-d")))
+                     %(snow.fltdateFrom.date().strftime("%Y-%-m-%-d"),
+                       snow.fltdateTo.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
     sumorder  = snow.plotorder[1:]
@@ -187,5 +187,5 @@ def flt_image_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving figure to %sflt_swe_change%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sflt_swe_change%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sdflt_swe_change%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sdflt_swe_change%s.png'%(snow.figs_path,snow.name_append))
