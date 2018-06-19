@@ -34,7 +34,7 @@ class SNOWAV(object):
             self.error = True
             return
 
-        print('Reading SNOWAV config file...')
+        print('Reading SNOWAV config file and loading iSnobal outputs...')
         ucfg = get_user_config(config_file, modules = 'snowav')
 
         # find path to snowav code directory
@@ -46,7 +46,7 @@ class SNOWAV(object):
         self.tmp_warn = []
 
         # Check the user config file for errors and report issues if any
-        self.tmp_log.append("Checking config file for issues...")
+        self.tmp_log.append("Reading config file and loading iSnobal outputs...")
         warnings, errors = check_config(ucfg)
         # print_config_report(warnings, errors)
 
