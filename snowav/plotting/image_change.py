@@ -183,8 +183,10 @@ def image_change(snow):
     if snow.basin == 'BRB':
         ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
-
-    if snow.basin == 'TUOL' or snow.basin == 'SJ':
+    if snow.basin == 'SJ':
+        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)                 
+    if snow.basin == 'TUOL':
         ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
