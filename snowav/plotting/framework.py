@@ -72,8 +72,6 @@ class SNOWAV(object):
         ####################################################
         #           outputs                                #
         ####################################################
-        self.snowband = ucfg.cfg['outputs']['snowband']
-        self.emband = ucfg.cfg['outputs']['emband']
         self.dplcs = ucfg.cfg['outputs']['decimals']
         self.phour = ucfg.cfg['outputs']['phour']
         self.chour = ucfg.cfg['outputs']['chour']
