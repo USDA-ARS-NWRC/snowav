@@ -226,15 +226,11 @@ class SNOWAV(object):
         blank = np.zeros((self.nrows,self.ncols))
 
         # Set up processed information
-        self.swi = []
-        self.evap = []
-        self.snowmelt = []
-        self.swe = []
-        self.depth = []
-        self.dates = []
-        self.time = []
-        self.rho = []
-        self.coldcont = []
+        # Currently we are only using the last time step values in rho and
+        # coldcont...
+        self.outputs = {'swi':[], 'evap':[], 'snowmelt':[], 'swe':[], 'depth':[],
+                    'dates':[], 'time':[], 'rho':[], 'coldcont':[] }
+
         self.rundirs_dict = {}
 
         for rd in self.run_dirs:
@@ -243,24 +239,24 @@ class SNOWAV(object):
                                    snowbands = [0,1,2],
                                    embands = [6,7,8,9],
                                    wy = self.wy)
-            self.dates = np.append(self.dates,output.dates)
-            self.time = np.append(self.time,output.time)
+            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+            self.outputs['time'] = np.append(self.outputs['time'],output.time)
 
             # Make a dict for wyhr-rundir lookup
             for t in output.time:
                 self.rundirs_dict[t] = rd
 
             for n in range(0,len(output.em_data[8])):
-                self.swi.append(output.em_data[8][n,:,:])
-                self.snowmelt.append(output.em_data[7][n,:,:])
-                self.evap.append(output.em_data[6][n,:,:])
-                self.coldcont.append(output.em_data[9][n,:,:])
-                self.swe.append(output.snow_data[2][n,:,:])
-                self.depth.append(output.snow_data[0][n,:,:])
-                self.rho.append(output.snow_data[1][n,:,:])
+                self.outputs['swi'].append(output.em_data[8][n,:,:])
+                self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                self.outputs['evap'].append(output.em_data[6][n,:,:])
+                self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                self.outputs['swe'].append(output.snow_data[2][n,:,:])
+                self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                self.outputs['rho'].append(output.snow_data[1][n,:,:])
 
-        self.em_files = np.ndarray.tolist(self.time.astype('int'))
-        self.snow_files = np.ndarray.tolist(self.time.astype('int'))
+        self.em_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
+        self.snow_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
 
         # If no psnowFile and csnowFile specified, use first and last
         if self.chour is not None:
@@ -312,11 +308,6 @@ class SNOWAV(object):
         try:
             self.masks = dict()
             for lbl,mask in zip(self.plotorder,maskpaths):
-                if (self.basin == 'SJ' and lbl == 'Willow Creek'):
-                    self.masks[lbl] = {'border': blank,
-                                       'mask': np.genfromtxt(mask,skip_header=0),
-                                       'label': lbl}
-                else:
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=sr),
                                        'label': lbl}
@@ -434,27 +425,25 @@ class SNOWAV(object):
         t = 0
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,
                                                        self.snow_files)):
-            # iters = 0
-            # em_name = self.em_files[iters]
-            # snow_name = self.snow_files[iters]
-            date = self.dates[iters]
+
+            date = self.outputs['dates'][iters]
 
             # starting empty string for debug statement
             pf = ''
 
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
-                self.dateFrom = self.dates[iters]
+                self.dateFrom = self.outputs['dates'][iters]
                 if self.adj_hours != None:
                     self._logger.debug('Hacking adj_hours...')
                     adj = self.adj_hours
 
-            band = self.swi[iters]
-            accum = accum + self.swi[iters]
-            daily_snowmelt = self.snowmelt[iters]
+            band = self.outputs['swi'][iters]
+            accum = accum + self.outputs['swi'][iters]
+            daily_snowmelt = self.outputs['snowmelt'][iters]
             snowmelt = snowmelt + daily_snowmelt
-            evap = evap + self.evap[iters]
-            tmpstate = self.swe[iters]
+            evap = evap + self.outputs['evap'][iters]
+            tmpstate = self.outputs['swe'][iters]
             state_byday[:,:,iters] = tmpstate
 
             # Get rain from input data
@@ -545,17 +534,17 @@ class SNOWAV(object):
             # When it is the first flt snow file, copy
             if (self.flt_flag is True) and (snow_name == self.fltphour):
                 fltpstate = copy.deepcopy(tmpstate)
-                self.fltdateFrom = self.dates[iters]
+                self.fltdateFrom = self.outputs['dates'][iters]
 
             # When it is the second flt snow file, copy
             if (self.flt_flag is True) and (snow_name == self.fltchour):
                 fltcstate = copy.deepcopy(tmpstate)
                 flt_delta_state = fltpstate - fltcstate
-                self.fltdateTo = self.dates[iters]
+                self.fltdateTo = self.outputs['dates'][iters]
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
-                self.dateTo = self.dates[iters]
+                self.dateTo = self.outputs['dates'][iters]
 
                 # Run debug statement before ending the process
                 pf = ', csnowFile'
@@ -570,9 +559,9 @@ class SNOWAV(object):
                 accum_sub_flag  = False
 
                 state = copy.deepcopy(tmpstate)
-                depth = self.depth[iters]
-                self.density = copy.deepcopy(self.rho[iters])
-                self.cold = self.coldcont[iters]
+                depth = self.outputs['depth'][iters]
+                self.density = copy.deepcopy(self.outputs['rho'][iters])
+                self.cold = self.outputs['coldcont'][iters]
 
                 # No need to compile more files after csnowFile
                 break
