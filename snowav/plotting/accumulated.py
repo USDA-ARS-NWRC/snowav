@@ -16,10 +16,6 @@ def accumulated(snow):
 
     '''
 
-    if snow.acc_flag == 'False':
-        print('Config option, not creating accumulated() fig')
-        return
-
     # Only report accum by the subsection between
     accum = copy.deepcopy(snow.accum_sub)
     accum_byelev = copy.deepcopy(snow.accum_byelev_sub)
@@ -35,7 +31,7 @@ def accumulated(snow):
     sns.set_context("notebook")
 
     # White background
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     accum[ixo] = np.nan
     mymap.set_bad('white',1.)
@@ -73,12 +69,9 @@ def accumulated(snow):
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax)
-
     cax = divider.append_axes("right", size="4%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    # cbar.ax.tick_params()
     cbar.set_label('[%s]'%(snow.depthlbl))
-
     h.axes.set_title('Accumulated SWI \n %s to %s'
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
                        snow.dateTo.date().strftime("%Y-%-m-%-d")))
@@ -146,11 +139,8 @@ def accumulated(snow):
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
-    if hasattr(snow,'acc_ylims'):
-        ax1.set_ylim((snow.acc_ylims))
-    else:
-        ylims = ax1.get_ylim()
-        ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
+    ylims = ax1.get_ylim()
+    ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
@@ -165,8 +155,11 @@ def accumulated(snow):
     if snow.basin == 'BRB':
         ax1.text(0.26,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
+    elif snow.basin == 'SJ':
+        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
     else:
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     # Make SWI-free legend if we need one
@@ -179,7 +172,6 @@ def accumulated(snow):
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                       loc=2, borderaxespad=0. )
 
-    # Save if true
-    if snow.acc_flag:
-        print('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
-        plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))
+
+    snow._logger.info('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))

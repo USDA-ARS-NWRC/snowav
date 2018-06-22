@@ -12,14 +12,12 @@
 \usepackage{tikz}
 \usepackage{lipsum}
 \usepackage{multirow}
+\usepackage{tikz}
 
 \setlength{\droptitle}{-8em}
-
+\setlength\headheight{26pt} 
 \usepackage{fancyhdr}
 \pagestyle{fancy} % enable fancy page style
-\fancyfoot[R]{ % right
-%    \includegraphics[scale=0.9]{../ARSlogo.png}
-}
 
 \newenvironment{noindlist}
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
@@ -32,15 +30,26 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 }
 
 \author{USDA Agricultural Research Service, Boise, Idaho \\
-	NASA Jet Propulsion Lab, Pasadena, California \\
-	\emph{in cooperation with} NRCS National Water and Climate Center, Portland, Oregon\\
-	\emph{and} U.S. Bureau of Reclamation, Sacramento, California} 
+	\small NASA Jet Propulsion Lab, Pasadena, California \\
+	\small \emph{in cooperation with} NRCS National Water and Climate Center, Portland, Oregon\\
+	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California } 
 \date{}	
 
 \begin{document}
+		
 \maketitle
+{
+	\begin{tikzpicture}[remember picture,overlay] 
+	\node [shift={(-19.5cm,-2.75cm)}] at (current page.north east) {\includegraphics[height=2.5cm]{\VAR{ARSLOGO}}}; 
+	\end{tikzpicture} 
+}	
 
-\vspace{-1cm}
+{
+	\begin{tikzpicture}[remember picture,overlay] 
+	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}}; 
+	\end{tikzpicture} 
+}	
+\vspace{-2cm}
 
 \section*{Summary}
 \VAR{SUMMARY}
@@ -50,8 +59,16 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \VAR{SWE_SUMMARY_TPL}
 
 \clearpage
-
 \section*{Results}
+\vspace{1cm}
+
+\VAR{SWE_BYELEV}
+
+\vspace{2cm}
+
+\VAR{DSWE_BYELEV}
+
+\clearpage
 
 % SWE and cold content
 \VAR{RESULTS_FIG_TPL}
@@ -81,7 +98,7 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \VAR{VALID_FIG_TPL}
 
 % Flight Change 
-\VAR{FLT_CHANGES_FIG_TPL}
+\VAR{FLTCHANGES_FIG_TPL}
 
 \clearpage
 \section*{Glossary}

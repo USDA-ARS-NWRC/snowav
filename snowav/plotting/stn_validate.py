@@ -13,7 +13,7 @@ from datetime import datetime
 def stn_validate(snow):
 
     if snow.valid_flag == False:
-        print('No stations listed in config file for validation figure!')
+        snow._logger.debug('No stations listed in config file for validation figure!')
         return
 
     rundirs = snow.run_dirs
@@ -84,8 +84,6 @@ def stn_validate(snow):
     fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)
     axs = axs.flatten()
 
-    ### sdwitching the loop!###
-
     # First need to combine all nc files...
     px = (1,1,1,0,0,0,-1,-1,-1)
     py = (1,0,-1,1,0,-1,1,0,-1)
@@ -108,18 +106,18 @@ def stn_validate(snow):
             for rname in rundirs:
                 # rname = rundirs[1]
 
-                ncpath  = rname[1].split('output')[0]
-                ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')    # open netcdf file
+                ncpath  = rname.split('output')[0]
+                ncf     = nc.Dataset(ncpath + 'snow.nc', 'r')
                 nctvec  = ncf.variables['time'][:]
-                vswe    = ncf.variables['specific_mass']            # get variable
-                ncxvec  = ncf.variables['x'][:]                     # get x vec
-                ncyvec  = ncf.variables['y'][:]                     # get y vec
-                ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude']) # get utm coords from metadata
+                vswe    = ncf.variables['specific_mass']
+                ncxvec  = ncf.variables['x'][:]
+                ncyvec  = ncf.variables['y'][:]
+                ll      = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
                 # ll      = utm.from_latlon(37.641922,-119.055443)
 
-                xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]  # get closest pixel index to the station
-                yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]  # get closest pixel index to the station
-                swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)  # pull out closest model pixel data
+                xind    = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
+                yind    = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
+                swe     = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)
 
                 try:
                     swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values
@@ -153,7 +151,6 @@ def stn_validate(snow):
         # swe_mod_pix.to_csv('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2018_swe_mm_%s.csv'%(stn))
         # print('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2017_swe_mm_%s.csv'%(stn))
 
-
     # Plot
     maxm = np.nanmax(swe_meas)
     maxi = np.nanmax(swe_mod.max().values)
@@ -166,7 +163,7 @@ def stn_validate(snow):
     for iters in range(0,len(stns)):
         axs[iters].set_ylim((-0.1,maxswe + maxswe*0.05))
 
-    axs[0].legend(['measured','modelled'],loc='upper left')
+    axs[0].legend(['measured','modeled'],loc='upper left')
     axs[0].set_ylabel('SWE [mm]')
 
     plt.suptitle('Validation at Measured Sites')
@@ -176,5 +173,5 @@ def stn_validate(snow):
     snow.swe_meas = swe_meas
     snow.swe_mod = swe_mod
 
-    print('saving figure to %svalidation%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %svalidation%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%svalidation%s.png'%(snow.figs_path,snow.name_append))

@@ -14,7 +14,6 @@ def current_image(snow):
     edits: make flexible input arguments for depth, density, etc
 
     '''
-    # Make a copy so we can edit for plots
 
     state = copy.deepcopy(snow.state)
     cold = copy.deepcopy(snow.cold)
@@ -24,7 +23,7 @@ def current_image(snow):
     clims2 = (-5,0)
 
     # Areas outside basin
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
 
     # Prepare no-snow and outside of the basin for the colormaps
@@ -87,7 +86,7 @@ def current_image(snow):
         cbar.set_label('[in]')
     if snow.units == 'SI':
         cbar.set_label('[mm]')
-         
+
     # Do pretty stuff for the right plot
     h1.axes.get_xaxis().set_ticks([])
     h1.axes.get_yaxis().set_ticks([])
@@ -113,5 +112,5 @@ def current_image(snow):
     if snow.basin == 'RCEW':
         ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )
 
-    print('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sresults%s.png'%(snow.figs_path,snow.name_append))

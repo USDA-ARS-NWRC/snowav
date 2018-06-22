@@ -14,11 +14,6 @@ from matplotlib.dates import DateFormatter
 
 
 def basin_total(snow):
-    
-    if snow.basin_total_flag == False:
-        print('No basin total summary files specified in config file, '
-              + 'skipping...')
-        return
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -41,8 +36,11 @@ def basin_total(snow):
         ax1.plot(snow.accum_summary[name],
                  color = snow.barcolors[iters], label='_nolegend_')
 
-    ax.axvline(x=datetime(2018,4,23),linestyle = ':',linewidth = 0.75, color = 'k')
-    ax1.axvline(x=datetime(2018,4,23),linestyle = ':',linewidth = 0.75, color = 'k')
+    if snow.flight_dates is not None:
+        for d in snow.flight_dates:
+            ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+            ax1.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+
     ax1.yaxis.set_label_position("right")
     ax1.set_xlim((datetime(snow.wy -1 , 10, 1),snow.dateTo))
     ax.set_xlim((datetime(snow.wy - 1, 10, 1),snow.dateTo))
@@ -74,7 +72,7 @@ def basin_total(snow):
     # plt.tight_layout()
     del snow.barcolors[0]
 
-    print('saving figure to %sbasin_total%s.png'%(snow.figs_path,
+    snow._logger.info('saving figure to %sbasin_total%s.png'%(snow.figs_path,
                                                   snow.name_append))
     plt.savefig('%sbasin_total%s.png'%(snow.figs_path,snow.name_append))
 
@@ -84,11 +82,16 @@ def basin_total(snow):
 
     # This needs to be improved...
 
+    if snow.basin_total_flag is False:
+        snow._logger.info('No basin total summary files specified in config file, '
+              + 'skipping...')
+        return
+
     if snow.basin == 'BRB':
         accum_summary = snow.accum_summary
         main = 'Boise River Basin'
-        multiswe = pd.DataFrame.from_csv(snow.summary_swe)
-        multiswi = pd.DataFrame.from_csv(snow.summary_swi)
+        multiswe = pd.read_csv(snow.summary_swe)
+        multiswi = pd.read_csv(snow.summary_swi)
 
         multiswe.wy17.iloc[304:] = 0
         multiswi.wy17 = np.cumsum(multiswi.wy17)
@@ -101,6 +104,7 @@ def basin_total(snow):
                                             state_summary[main].values)
         multiswi.wy18.iloc[:len(accum_summary[main])] = (
                                             accum_summary[main].values)
+        print(multiswi)
 
         if snow.units == 'SI':
             multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
@@ -129,8 +133,8 @@ def basin_total(snow):
         ax1.xaxis.set_major_formatter(formatter)
 
         ax1.yaxis.set_label_position("right")
-        ax1.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
-        ax.set_xlim((datetime(2017, 10, 1),datetime(2018, 8, 1)))
+        ax1.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
+        ax.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
         ax1.tick_params(axis='y')
         ax1.yaxis.tick_right()
         ax.legend(loc='upper left')
@@ -154,5 +158,5 @@ def basin_total(snow):
         ax.set_ylim((0,ax1.get_ylim()[1]))
         plt.tight_layout()
 
-        print('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
+        snow._logger.info('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
         plt.savefig('%sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))

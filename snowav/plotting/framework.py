@@ -9,589 +9,361 @@ import os
 import copy
 import pandas as pd
 import sys
-# hack for install with either version 2 or version 3 python
-if sys.version_info[0] >= 3:
-    import configparser as cfp
-else:
-    import ConfigParser as cfp
-import snowav.methods.wyhr_to_datetime as wy
 import datetime
+import snowav.methods.wyhr_to_datetime as wy
+import snowav.utils.get_topo_stats as ts
+from snowav.utils.utilities import get_snowav_path
 from snowav.utils.OutputReader import iSnobalReader
+from inicheck.tools import get_user_config, check_config
+from inicheck.output import generate_config, print_config_report
+from inicheck.config import MasterConfig
+import logging
+import coloredlogs
+import math
+
 
 class SNOWAV(object):
 
-    def __init__(self,config_file = None):
+    def __init__(self,config_file = None, external_logger=None):
         '''
-        Initializing reporting object, and read in configuration file.
+        Initialize snowav object and read in configuration file.
         '''
+
+        if not os.path.isfile(config_file):
+            print('SNOWAV config file does not exist!')
+            self.error = True
+            return
+
+        print('Reading SNOWAV config file and loading iSnobal outputs...')
+        ucfg = get_user_config(config_file, modules = 'snowav')
+
+        # find path to snowav code directory
+        self.snowav_path = get_snowav_path()
+
+        # create blank log and error log because logger is not initialized yet
+        self.tmp_log = []
+        self.tmp_err = []
+        self.tmp_warn = []
+
+        # Check the user config file for errors and report issues if any
+        self.tmp_log.append("Reading config file and loading iSnobal outputs...")
+        warnings, errors = check_config(ucfg)
+        # print_config_report(warnings, errors)
+
+        ####################################################
+        #             snowav system                        #
+        ####################################################
+        self.loglevel = ucfg.cfg['snowav system']['log_level'].upper()
+        self.log_to_file = ucfg.cfg['snowav system']['log_to_file']
+        self.basin = ucfg.cfg['snowav system']['basin']
+        self.save_path = ucfg.cfg['snowav system']['save_path']
+        if self.save_path is None:
+            self.save_path = os.path.join(self.snowav_path, 'snowav/data/')
+        self.wy = ucfg.cfg['snowav system']['wy']
+        self.units = ucfg.cfg['snowav system']['units']
+        self.filetype = ucfg.cfg['snowav system']['filetype']
+        self.elev_bins = ucfg.cfg['snowav system']['elev_bins']
+        if ucfg.cfg['snowav system']['name_append'] != None:
+            self.name_append = ucfg.cfg['snowav system']['name_append']
+        else:
+            self.name_append = '_gen_' + \
+                               datetime.datetime.now().strftime("%Y-%-m-%-d")
+
+        ####################################################
+        #           outputs                                #
+        ####################################################
+        self.dplcs = ucfg.cfg['outputs']['decimals']
+        self.phour = ucfg.cfg['outputs']['phour']
+        self.chour = ucfg.cfg['outputs']['chour']
+
+        if (self.phour is not None and self.chour is not None):
+            if self.phour >= self.chour:
+                self._logger.info('phour > chour, needs to be fixed in config file,'
+                                  + ' exiting...')
+                print('phour > chour, needs to be fixed in config file, exiting...')
+                return
+
+        # Check for forced flight comparison images
+        self.fltphour = ucfg.cfg['outputs']['fltphour']
+        self.fltchour = ucfg.cfg['outputs']['fltchour']
+        if self.fltchour is not None:
+            self.flt_flag = True
+            if self.fltphour >= self.fltchour:
+                self._logger.info('fltphour > fltchour, fix in config file,'
+                              + ' exiting...')
+                print('fltphour > fltchour, fix in config file, exiting...')
+                return
+        else:
+            self.flt_flag = False
+
+        self.summary = ucfg.cfg['outputs']['summary']
+        if type(self.summary) != list:
+            self.summary = [self.summary]
+
+        ####################################################
+        #           runs                                   #
+        ####################################################
+        self.run_dirs = ucfg.cfg['runs']['run_dirs']
+        if type(self.run_dirs) != list:
+            self.run_dirs = [self.run_dirs]
+
+        ####################################################
+        #           validate                               #
+        ####################################################
+        if (ucfg.cfg['validate']['stations'] != None and
+            ucfg.cfg['validate']['labels'] != None and
+            ucfg.cfg['validate']['client'] != None):
+
+            self.val_stns = ucfg.cfg['validate']['stations']
+            self.val_lbls = ucfg.cfg['validate']['labels']
+            self.val_client = ucfg.cfg['validate']['client']
+            self.valid_flag = True
+
+        else:
+            self.valid_flag = False
+            print('No validation stations listed, will not generate figure')
+
+        # This is being used to combine 2017 HRRR data
+        self.offset = int(ucfg.cfg['validate']['offset'])
+
+        ####################################################
+        #           basin total                            #
+        ####################################################
+        if ucfg.cfg['basin total']['summary_swe'] != None:
+            self.summary_swe = ucfg.cfg['basin total']['summary_swe']
+            self.summary_swi = ucfg.cfg['basin total']['summary_swi']
+            self.basin_total_flag = True
+        else:
+            self.basin_total_flag = False
+
+        if ucfg.cfg['basin total']['netcdf']:
+            self.ncvars = ucfg.cfg['Basin Total']['netcdf'].split(',')
+            self.nc_flag = True
+        else:
+            self.nc_flag = False
+
+        self.flight_dates = ucfg.cfg['basin total']['flights']
+        if (self.flight_dates is not None) and (type(self.flight_dates) != list):
+            self.flight_dates = [self.flight_dates]
+
+        ####################################################
+        #           masks                                  #
+        ####################################################
+        self.dempath = ucfg.cfg['masks']['dempath']
+        self.total = ucfg.cfg['masks']['basin_masks'][0]
+
+        ####################################################
+        #          plots                                   #
+        ####################################################
+        self.figsize = (ucfg.cfg['plots']['fig_length'],
+                        ucfg.cfg['plots']['fig_height'])
+        self.dpi = ucfg.cfg['plots']['dpi']
+        self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
+                          'xkcd:vibrant green','red']
+
+        ####################################################
+        #          report                                  #
+        ####################################################
+        self.report_flag = ucfg.cfg['report']['report']
+
+        self.exclude_figs = ucfg.cfg['report']['exclude_figs']
+        if type(self.exclude_figs) != list and self.exclude_figs != None:
+            self.exclude_figs = [self.exclude_figs]
+
+        self.report_name = ucfg.cfg['report']['report_name']
+        self.rep_title = ucfg.cfg['report']['report_title']
+        self.rep_path = ucfg.cfg['report']['rep_path']
+        self.env_path = ucfg.cfg['report']['env_path']
+        self.templ_path = ucfg.cfg['report']['templ_path']
+        self.tex_file = ucfg.cfg['report']['tex_file']
+        self.summary_file = ucfg.cfg['report']['summary_file']
+        self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
+
+        # check paths to see if they need default snowav path
+        if self.rep_path is None:
+            self.rep_path = os.path.join(self.snowav_path,'snowav/data/')
+        if self.env_path is None:
+            self.env_path = os.path.join(self.snowav_path,
+                                         'snowav/report/template/section_text/')
+        if self.templ_path is None:
+            self.templ_path = os.path.join(self.snowav_path,'snowav/report/template/')
+        if self.summary_file is None:
+            self.summary_file = os.path.join(self.snowav_path,
+                                             'snowav/report/template/section_text/report_summary.txt')
+        if self.tex_file is None:
+            self.tex_file = os.path.join(self.snowav_path,
+                                         'snowav/report/template/snowav_report.tex')
+        if self.figs_tpl_path is None:
+            self.figs_tpl_path = os.path.join(self.snowav_path,'snowav/report/figs/')
+
+        ####################################################
+        #           hx forecast
+        ####################################################
+        self.adj_hours = ucfg.cfg['hx forecast']['adj_hours']
+
+        ####################################################
+        #           masks
+        ####################################################
+        for item in ['basin_masks', 'mask_labels']:
+            if type(ucfg.cfg['masks'][item]) != list:
+                ucfg.cfg['masks'][item] = [ucfg.cfg['Masks'][item]]
+
+        self.plotorder = []
+        maskpaths = []
+
+        masks = ucfg.cfg['masks']['basin_masks']
+        for idx, m in enumerate(masks):
+            maskpaths.append(m)
+            self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
 
         try:
-            if not os.path.isfile(config_file):
-                print('SNOWAV config file does not exist!')
-                self.error = True
-                return
-
-            print('Reading SNOWAV config file...')
-            cfg = cfp.ConfigParser()
-            cfg.read(config_file)
-
-            ####################################################
-            #             Basin section                        #
-            ####################################################
-            self.basin = cfg.get('Basin','basin')
-            if (cfg.has_option('Basin','save_path') and
-                os.path.exists(cfg.get('Basin','save_path'))):
-                self.save_path = cfg.get('Basin','save_path')
-            else:
-                print('Figures save_path either not specified in config file'
-                      ' or does not exist, using ./snowav/data/'
-                      + '\nFigures will be saved but report will fail')
-                self.save_path = './snowav/data/'
-
-            if cfg.has_option('Basin','name_append'):
-                self.name_append = cfg.get('Basin','name_append')
-            else:
-                self.name_append = '_gen_' + datetime.datetime.now().strftime("%Y-%-m-%-d")
-
-            self.wy = int(cfg.get('Basin','wy'))
-
-            if cfg.has_option('Basin','units'):
-                self.units = cfg.get('Basin','units')
-            else:
-                self.units = 'KAF'
-
-            ####################################################
-            #           Outputs section                        #
-            ####################################################
-            # Default for snow.0000 file is 2 (SWE)
-            if (cfg.has_option('Outputs','snowband')):
-                self.snowband = int(cfg.get('Outputs','snowband'))
-            else:
-                self.snowband = 2
-
-            # Default for em.0000 is 8 (SWI)
-            if (cfg.has_option('Outputs','emband')):
-                self.snowband = int(cfg.get('Outputs','emband'))
-            else:
-                self.emband = 8
-
-            # Default rounding decimals for volume and depth
-            if (cfg.has_option('Outputs','decimals')):
-                self.dplcs = int(cfg.get('Outputs','decimals'))
-            else:
-                self.dplcs = 1
-
-            # If psnowFile and csnowFile are specified, use those,
-            # otherwise they will get defined as the first and last
-            # snow.XXXX file once [Runs] has been compiled
-            if (cfg.has_option('Outputs','psnowFile') and
-                cfg.has_option('Outputs','csnowFile')):
-
-                # Check to see if they exist
-                if not (os.path.isfile(cfg.get('Outputs','psnowFile'))):
-                    print('psnowFile does not exist!')
-                    self.error = True
-                    return
-
-                if not (os.path.isfile(cfg.get('Outputs','csnowFile'))):
-                    print('csnowFile does not exist!')
-                    self.error = True
-                    return
-
-                self.psnowFile = cfg.get('Outputs','psnowFile')
-                self.csnowFile = cfg.get('Outputs','csnowFile')
-                self.cemFile = self.csnowFile.replace('snow.','em.')
-
-            # Flights
-            if (cfg.has_option('Outputs','fltpsnowFile') and
-                cfg.has_option('Outputs','fltcsnowFile')):
-                                                        # Check to see if they exist
-                if not (os.path.isfile(cfg.get('Outputs','fltpsnowFile'))):
-                    print('fltpsnowFile does not exist!')
-                    self.error = True
-                    return
-
-                if not (os.path.isfile(cfg.get('Outputs','fltcsnowFile'))):
-                    print('fltcsnowFile does not exist!')
-                    self.error = True
-                    return
-
-                self.fltpsnowFile = cfg.get('Outputs','fltpsnowFile')
-                self.fltcsnowFile = cfg.get('Outputs','fltcsnowFile')
-                self.flt_flag = True
-
-            if cfg.has_option('Outputs','summary'):
-                self.summary = cfg.get('Outputs','summary').split(',')
-            else:
-                self.summary = ['accum','state','precip']
-
-            ####################################################
-            #           Runs                                   #
-            ####################################################
-            # Collect all the run directories
-            self.run_dirs = list(cfg.items('Runs'))
-
-            ####################################################
-            #           Validate                               #
-            ####################################################
-            if (cfg.has_option('Validate','stations')
-                and (cfg.has_option('Validate','labels'))
-                and (cfg.has_option('Validate','client'))
-                ):
-                self.val_stns = cfg.get('Validate','stations').split(',')
-                self.val_lbls = cfg.get('Validate','labels').split(',')
-                self.val_client = cfg.get('Validate','client')
-                self.valid_flag = True
-            else:
-                self.valid_flag = False
-                print('No validation stations listed, will not generate figure')
-
-            # This is being used to combine 2017 HRRR data
-            if cfg.has_option('Validate','offset'):
-                self.offset = int(cfg.get('Validate','offset'))
-            else:
-                self.offset = 0
-            ####################################################
-            #           Accumulated                            #
-            ####################################################
-            # Right now we aren't using these because matplotlib and multiple
-            # colormaps don't get along well with clims...
-            if (cfg.has_option('Accumulated','ymin')
-                and cfg.has_option('Accumulated','ymax')):
-
-                self.acc_ylims = (int(cfg.get('Accumulated','ymin')),
-                                  int(cfg.get('Accumulated','ymax')))
-
-            if cfg.has_option('Accumulated','save_fig'):
-                self.acc_flag = cfg.get('Accumulated','save_fig')
-            else:
-                self.acc_flag = True
-
-            if cfg.has_option('Accumulated','min_swi'):
-                self.min_swi = cfg.get('Accumulated','min_swi')
-
-            ####################################################
-            #           Elevation                              #
-            ####################################################
-            if (cfg.has_option('Elevation','ymin')
-                and cfg.has_option('Elevation','ymax')):
-                self.elv_ylims = (int(cfg.get('Elevation','ymin')),
-                                 int(cfg.get('Elevation','ymax')))
-
-            if cfg.has_option('Elevation','save_fig'):
-                self.elv_flag = cfg.get('Elevation','save_fig')
-            else:
-                self.elv_flag = True
-
-            ####################################################
-            #           Changes                                #
-            ####################################################
-            if ((cfg.has_option('Changes','clmin'))
-                and (cfg.has_option('Changes','clmax'))):
-                self.ch_clmin = cfg.get('Changes','clmin')
-                self.ch_clmax = cfg.get('Changes','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            if (cfg.has_option('Changes','clminabs')
-                and cfg.has_option('Changes','clmaxabs')):
-                self.ch_clminabs = int(cfg.get('Changes','clminabs'))
-                self.ch_clmaxabs = int(cfg.get('Changes','clmaxabs'))
-            if (cfg.has_option('Changes','ymin')
-                and cfg.has_option('Changes','ymax')):
-                self.ch_ylims = (int(cfg.get('Changes','ymin')),
-                                 int(cfg.get('Changes','ymax')))
-
-            ####################################################
-            #           Results                                #
-            ####################################################
-            if ((cfg.has_option('Results','clmin'))
-                and (cfg.has_option('Results','clmax'))):
-                self.ch_clmin = cfg.get('Results','clmin')
-                self.ch_clmax = cfg.get('Results','clmax')
-            else:
-                self.ch_clmin = 0.01
-                self.ch_clmax = 99.9
-
-            ####################################################
-            #           Basin Total                            #
-            ####################################################
-            if cfg.has_option('Basin Total','summary_swe'):
-                self.summary_swe = cfg.get('Basin Total','summary_swe')
-                self.summary_swi = cfg.get('Basin Total','summary_swi')
-                if not (os.path.isfile(self.summary_swe) and
-                        os.path.isfile(self.summary_swi) ):
-                    print('Failed reading in Basin Total section!')
-                    self.error = True
-                    return
-            else:
-                self.basin_total_flag = False
-
-            if cfg.has_option('Basin Total','netcdf'):
-                self.ncvars = cfg.get('Basin Total','netcdf').split(',')
-                self.nc_flag = True
-            else:
-                self.nc_flag = False
-
-            ####################################################
-            #           DEM                                    #
-            ####################################################
-            self.dempath = cfg.get('Masks','dempath')
-            self.total = cfg.get('Masks','total')
-
-            ####################################################
-            #          Plots                                   #
-            ####################################################
-            if cfg.has_option('Plots','fig_length'):
-                self.figsize = (int(cfg.get('Plots','fig_length')),
-                                int(cfg.get('Plots','fig_height')))
-                self.dpi = int(cfg.get('Plots','dpi'))
-                self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']
-            else:
-                self.figsize = (10,5)
-                self.dpi = 200
-                self.barcolors = ['xkcd:true green','palegreen',
-                              'xkcd:dusty green','xkcd:vibrant green','red']
-
-            ####################################################
-            #          Report                                  #
-            ####################################################
-            try:
-                # Report defaults to True
-                if cfg.has_option('Report','report'):
-                    self.report_flag = cfg.getboolean('Report','report')
-
-                if self.save_path == './snowav/data/':
-                    self.report_flag = False
-                    print('Report flag being set to false becaues of relative'
-                          + ' figure path ./snowav/data/')
-                else:
-                    self.report_flag = True
-
-                # Add date if necessary
-                if cfg.has_option('Report','orig_date'):
-                    self.orig_date = cfg.get('Report','orig_date')
-
-                if cfg.has_option('Report','exclude_figs'):
-                    self.exclude_figs = cfg.get('Report','exclude_figs').split(',')
-                    options = ['CHANGES','SWI','RESULTS','ELEV','TOTALS',
-                               'MEAN','VALID']
-                    for name in self.exclude_figs:
-                        if name not in options:
-                            print('[Report] exclude_fig options are: %s'%(options))
-                            self.error = True
-                            return
-
-                # These will later get appended with self.dateTo
-                if cfg.has_option('Report','report_name'):
-                    self.report_name = cfg.get('Report','report_name')
-                else:
-                    self.report_name = 'SnowpackSummary.pdf'
-
-                if cfg.has_option('Report','report_title'):
-                    self.rep_title = cfg.get('Report','report_title')
-                else:
-                    self.rep_title = 'Snowpack Summary'
-
-                if cfg.has_option('Report','rep_path'):
-                    self.rep_path = cfg.get('Report','rep_path')
-                else:
-                    if os.path.exists('./snowav/data/'):
-                        print('No save path for report given in config file,'
-                              + ' using ./snowav/data/')
-                        self.rep_path = './snowav/data/'
-                    else:
-                        print('No save path for report given in config file,'
-                              + ' either list in [Report] rep_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','env_path'):
-                    self.env_path = cfg.get('Report','env_path')
-                else:
-                    if os.path.exists('./snowav/report/template/section_text/'):
-                        print('No environment path for report given in config '
-                              + 'file, using ./snowav/report/template/section_text/')
-                        self.env_path = './snowav/report/template/section_text/'
-                    else:
-                        print('No environment path for report given in config file,'
-                              + ' either list in [Report] env_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','templ_path'):
-                    self.templ_path = cfg.get('Report','templ_path')
-                else:
-                    if os.path.exists('./snowav/report/template/'):
-                        print('No environment path for report given in config '
-                              + 'file, using ./snowav/report/template/')
-                        self.templ_path = './snowav/report/template/'
-                    else:
-                        print('No environment path for report given in config file,'
-                              + ' either list in [Report] templ_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','tex_file'):
-                    self.tex_file = cfg.get('Report','tex_file')
-                else:
-                    if os.path.isfile('./snowav/report/template/snowav_report.tex'):
-                        print('No LaTeX file for report given in config '
-                              + 'file, using ./snowav/report/template/snowav_report.tex')
-                        self.tex_file = 'snowav_report.tex'
-                    else:
-                        print('No LaTeX file for report given in config file,'
-                              + ' either list in [Report] tex_file or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','summary_file'):
-                    self.summary_file = cfg.get('Report','summary_file')
-                else:
-                    if os.path.isfile('./snowav/report/template/section_text/report_summary.txt'):
-                        print('No summary file for report given in config '
-                              + 'file, using ./snowav/report/template/section_text/report_summary.txt')
-                        self.summary_file = './snowav/report/template/section_text/report_summary.txt'
-                    else:
-                        print('No LaTeX file for report given in config file,'
-                              + ' either list in [Report] summary_file or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-                if cfg.has_option('Report','figs_tpl_path'):
-                    self.figs_tpl_path = cfg.get('Report','figs_tpl_path')
-                else:
-                    if os.path.exists('./snowav/report/figs/'):
-                        print('No figs template path for report given in config '
-                              + 'file, using ./snowav/report/figs/')
-                        self.figs_tpl_path = './snowav/report/figs/'
-                    else:
-                        print('No figs template path for report given in config file,'
-                              + ' either list in [Report] figs_tpl_path or run'
-                              + ' in /SNOWAV')
-                        self.error = True
-                        return
-
-            except:
-                print('Error reading in Reports section!')
-                self.error = True
-                return
-
-            # Strings for the report
-            if self.units == 'KAF':
-                self.reportunits = 'KAF'
-            if self.units == 'SI':
-                self.reportunits = 'km^3'
-
-            ####################################################
-            #           History forecast
-            ####################################################
-            if cfg.has_option('Hx Forecast','adj_hours'):
-                self.adj_hours = int(cfg.get('Hx Forecast','adj_hours'))
-
-            ####################################################
-            #           Masks
-            ####################################################
-            self.subbasin1 = cfg.get('Masks','subbasin1')
-            self.subbasin2 = cfg.get('Masks','subbasin2')
-            self.subbasin3 = cfg.get('Masks','subbasin3')
-            self.total_lbl = cfg.get('Masks','total_lbl')
-            self.sub1_lbl = cfg.get('Masks','sub1_lbl')
-            self.sub2_lbl = cfg.get('Masks','sub2_lbl')
-            self.sub3_lbl = cfg.get('Masks','sub3_lbl')
-
-            self.plotorder = [self.total_lbl, self.sub1_lbl,
-                                 self.sub2_lbl, self.sub3_lbl]
-
-            self.suborder = [self.sub1_lbl,self.sub2_lbl,self.sub3_lbl]
-            maskpaths = [self.total, self.subbasin1,
-                            self.subbasin2,self.subbasin3 ]
-
-            # Add if necessary - need to generalize all this and change
-            # in the config file!
-            if cfg.has_option('Masks','sub4_lbl'):
-                self.sub4_lbl = cfg.get('Masks','sub4_lbl')
-                self.subbasin4 = cfg.get('Masks','subbasin4')
-                self.plotorder = self.plotorder + [self.sub4_lbl]
-                self.suborder = self.suborder + [self.sub4_lbl]
-                maskpaths = maskpaths + [self.subbasin4]
-
-            # Collect the run directories
-            self.snow_files = []
-            self.em_files = []
-            for rdir in self.run_dirs:
-                run_files = [rdir[1] + s for s in sorted(os.listdir(rdir[1]))]
-
-                self.snow_files = (self.snow_files
-                                   + [value for value in run_files
-                                   if ( ('snow.' in value) and not ('.nc' in value))])
-                self.em_files = (self.em_files
-                                 + [value for value in run_files
-                                 if ( ('em.' in value) and not ('.nc' in value))])
-
-            while '*snow.nc' in self.snow_files:
-                self.snow_files.remove('*snow.nc')
-
-            while '*em.nc' in self.em_files:
-                self.em_files.remove('*em.nc')
-
-            # If no psnowFile and csnowFile specified, use first and last
-            if not hasattr(self,'csnowFile'):
-                self.psnowFile = self.snow_files[0]
-                self.csnowFile = self.snow_files[-1]
-                self.cemFile = self.em_files[-1]
-                print('psnowFile and/or csnowFile not specified, using:'
-                      + ' \n%s and \n%s'%(self.psnowFile,self.csnowFile))
-
-            # Get the DEM
-            # There are different formats, this will get fixed once we
-            # start using netcdf
-            try:
-                self.dem = np.genfromtxt(self.dempath)
-            except:
-                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
-
-            self.nrows = len(self.dem[:,0])
-            self.ncols = len(self.dem[0,:])
-            blank = np.zeros((self.nrows,self.ncols))
-
-            # Assign some basin-specific things, also needs to be generalized
-            if self.basin == 'BRB':
-                self.pixel = 100
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500
-                    emax = 10500
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 800
-                    emax = 3200
-                    self.step = 250
-            if self.basin == 'TUOL':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 3000      # [ft]
-                    emax = 12000
-                    self.step   = 1000
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 3600
-                    self.step   = 500
-            if self.basin == 'SJ':
-                self.pixel = 50
-                sr = 6
-                if self.units == 'KAF':
-                    emin = 1000      # [ft]
-                    emax  = 13000
-                    self.step = 1000
-                if self.units == 'SI':
-                    emin = 300       # [m]
-                    emax = 4000
-                    self.step = 500
-            if self.basin == 'LAKES':
-                self.pixel = 50
-                sr = 0
-                self.imgx = (1200,1375)
-                self.imgy = (425,225)
-                if self.units == 'KAF':
-                    emin = 8000      # [ft]
-                    emax = 12500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 2400       # [m]
-                    emax = 3800
-                    self.step = 200
-            if self.basin == 'RCEW':
-                self.pixel = 50
-                sr = 0
-                if self.units == 'KAF':
-                    emin = 2500      # [ft]
-                    emax = 7500
-                    self.step = 500
-                if self.units == 'SI':
-                    emin = 800       # [m]
-                    emax = 2500
-                    self.step = 500
-
-            # This is for creating the elevation bins
-            self.edges = np.arange(emin,emax+self.step,self.step)
-            # Right now this is a placeholder, could edit by basin...
-            self.xlims = (0,len(self.edges))
-
-            try:
-                # Compile the masks
-                # HACK FOR SJ SUB4!
-                self.masks = dict()
-                for lbl,mask in zip(self.plotorder,maskpaths):
-                    if (self.basin == 'SJ' and lbl == self.sub4_lbl):
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=0),
-                                           'label': lbl}
-                    # hack
-                    else:
-                        self.masks[lbl] = {'border': blank,
-                                           'mask': np.genfromtxt(mask,skip_header=sr),
-                                           'label': lbl}
-            except:
-                print('Error creating mask dicts!')
-                self.error = True
-                return
-
-            # Do unit-specific things
-            if self.units == 'KAF':
-                self.conversion_factor = ((self.pixel**2)
-                                         * 0.000000810713194*0.001) # [KAF]
-                self.depth_factor = 0.03937 # [inches]
-                self.dem = self.dem * 3.28 # [ft]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'in'
-                self.vollbl = 'KAF'
-                self.elevlbl = 'ft'
-
-            if self.units == 'SI':
-                self.conversion_factor = ((self.pixel**2)
-                                          * 0.000000810713194*1233.48/1e9)
-                self.depth_factor = 1 # [m]
-                self.ixd = np.digitize(self.dem,self.edges)
-                self.depthlbl = 'mm'
-                self.vollbl = '$km^3$'
-                self.elevlbl = 'm'
-
-            # Copy the config file where figs will be saved
-            extf = os.path.splitext(os.path.split(config_file)[1])
-            path_shr = os.path.split(self.psnowFile)
-            path_ehr = os.path.split(self.csnowFile)
-            ext_shr = os.path.splitext(path_shr[1])
-            ext_ehr = os.path.splitext(path_ehr[1])
-            self.figs_path = (self.save_path
-                             + '%s_%s/'%(ext_shr[1][1:5],ext_ehr[1][1:5]))
-
-            # Check run dates, and make a new folder if necessary
-            if not os.path.exists(self.figs_path):
-                os.makedirs(self.figs_path)
-
-            # Only need to store this name if we decide to
-            # write more to the copied config file...
-            self.config_copy = (self.figs_path
-                                + extf[0]
-                                + self.name_append
-                                + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
-                                + extf[1])
-
-            # If it doesn't already exist, make it
-            if not os.path.isfile(self.config_copy):
-                copyfile(config_file,self.config_copy)
-
+            self.dem = np.genfromtxt(self.dempath)
         except:
-            print('Error reading SNOWAV config file.')
+            self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+
+        self.nrows = len(self.dem[:,0])
+        self.ncols = len(self.dem[0,:])
+        blank = np.zeros((self.nrows,self.ncols))
+
+        # Set up processed information
+        # Currently we are only using the last time step values in rho and
+        # coldcont...
+        self.outputs = {'swi':[], 'evap':[], 'snowmelt':[], 'swe':[], 'depth':[],
+                    'dates':[], 'time':[], 'rho':[], 'coldcont':[] }
+
+        self.rundirs_dict = {}
+
+        for rd in self.run_dirs:
+            output = iSnobalReader(rd.split('output')[0],
+                                   'netcdf',
+                                   snowbands = [0,1,2],
+                                   embands = [6,7,8,9],
+                                   wy = self.wy)
+            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+            self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+            # Make a dict for wyhr-rundir lookup
+            for t in output.time:
+                self.rundirs_dict[t] = rd
+
+            for n in range(0,len(output.em_data[8])):
+                self.outputs['swi'].append(output.em_data[8][n,:,:])
+                self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                self.outputs['evap'].append(output.em_data[6][n,:,:])
+                self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                self.outputs['swe'].append(output.snow_data[2][n,:,:])
+                self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                self.outputs['rho'].append(output.snow_data[1][n,:,:])
+
+        self.em_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
+        self.snow_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
+
+        # If no psnowFile and csnowFile specified, use first and last
+        if self.chour is not None:
+            self.psnowFile = self.phour
+            self.csnowFile = self.chour
+
+        else:
+            self.phour = self.snow_files[0]
+            self.chour = self.snow_files[-1]
+            self.psnowFile = self.phour
+            self.csnowFile = self.chour
+            print('phour and/or chour not specified, using:'
+                  + ' %s and %s'%(self.psnowFile,self.csnowFile))
+
+        if (self.phour not in self.snow_files) or (self.chour not in self.snow_files):
+            print('phour and/or chour are not hours in run_dirs, exiting...')
+            self.error = True
+            return
+
+        if self.fltphour is not None:
+            if ( (self.fltphour not in self.snow_files) or
+                 (self.fltchour not in self.snow_files) ):
+                print('fltphour and/or fltchour are not hours in run_dirs, exiting...')
+                self.error = True
+                return
+
+        # Pixel size and elevation bins
+        fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
+        topo = ts.get_topo_stats(fp,filetype = 'netcdf')
+        self.pixel = int(topo['dv'])
+        self.edges = np.arange(self.elev_bins[0],
+                               self.elev_bins[1]+self.elev_bins[2],
+                               self.elev_bins[2])
+
+        # A few remaining basin-specific things
+        if self.basin == 'TUOL' or self.basin == 'SJ':
+            sr = 6
+        else:
+            sr = 0
+
+        if self.basin == 'LAKES':
+            self.imgx = (1200,1375)
+            self.imgy = (425,225)
+
+        # Right now this is a placeholder, could edit by basin...
+        self.xlims = (0,len(self.edges))
+
+        # Compile the masks, need to streamline handling for Willow Creek
+        try:
+            self.masks = dict()
+            for lbl,mask in zip(self.plotorder,maskpaths):
+                    self.masks[lbl] = {'border': blank,
+                                       'mask': np.genfromtxt(mask,skip_header=sr),
+                                       'label': lbl}
+        except:
+            print('Failed creating mask dicts..')
+            self.error = True
+            return
+
+        # Assign unit-specific things
+        if self.units == 'KAF':
+            self.conversion_factor = ((self.pixel**2)
+                                     * 0.000000810713194*0.001) # [KAF]
+            self.depth_factor = 0.03937 # [inches]
+            self.dem = self.dem * 3.28 # [ft]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'in'
+            self.vollbl = self.units
+            self.elevlbl = 'ft'
+
+        if self.units == 'SI':
+            self.conversion_factor = ((self.pixel**2)
+                                      * 0.000000810713194*1233.48/1e9)
+            self.depth_factor = 1 # [m]
+            self.ixd = np.digitize(self.dem,self.edges)
+            self.depthlbl = 'mm'
+            self.vollbl = '$km^3$'
+            self.elevlbl = 'm'
+
+        # Copy the config file where figs will be saved
+        extf = os.path.splitext(os.path.split(config_file)[1])
+        ext_shr = str(self.phour)
+        ext_ehr = str(self.chour)
+        self.figs_path = os.path.join(self.save_path,
+                                    '%s_%s/'%(str(self.phour),str(self.chour)))
+
+        if not os.path.exists(self.figs_path):
+            os.makedirs(self.figs_path)
+
+        ####################################################
+        #             log file                             #
+        ####################################################
+        if external_logger == None:
+            self.createLog()
+        else:
+            self._logger = external_logger
+
+        # Only need to store this name if we decide to
+        # write more to the copied config file...
+        self.config_copy = (self.figs_path
+                            + extf[0]
+                            + self.name_append
+                            + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
+                            + extf[1])
+
+        if not os.path.isfile(self.config_copy):
+            generate_config(ucfg,self.config_copy)
 
     def process(self):
         '''
@@ -601,10 +373,13 @@ class SNOWAV(object):
 
         '''
 
-        print('SNOWAV processing iSnobal outputs...')
+        self._logger.info('SNOWAV processing iSnobal outputs...')
 
-        cclimit = -5*1000*1000  # based on an average of 60 W/m2 from TL paper
-        # ccM = cc./1000./1000; % cold content in MJ
+        # Is this a good idea?
+        pd.options.mode.chained_assignment = None
+
+        # based on an average of 60 W/m2 from TL paper
+        cclimit = -5*1000*1000
 
         accum = np.zeros((self.nrows,self.ncols))
         evap = copy.deepcopy(accum)
@@ -645,48 +420,38 @@ class SNOWAV(object):
         evap_summary = pd.DataFrame(columns = self.masks.keys())
 
         # Loop through output files
-        # Currently we need to load in each em.XXXX file to 'accumulate',
-        # but only the first and last snow.XXXX file for changes
         accum_sub_flag = False
         adj = 0 # this is a hack for Hx-repeats-itself forecasting
         t = 0
         for iters,(em_name,snow_name) in enumerate(zip(self.em_files,
                                                        self.snow_files)):
-            # iters = 0
-            # iters = iters + 1
-            # em_name = self.em_files[iters]
-            # snow_name = self.snow_files[iters]
-            date = wy.wyhr_to_datetime(self.wy,
-                                       int(snow_name.split('.')[-1])
-                                       + adj)
+
+            date = self.outputs['dates'][iters]
 
             # starting empty string for debug statement
             pf = ''
 
             # Hack for Hx-repeats-itself forecasting
             if snow_name == self.psnowFile:
-                if hasattr(self,"adj_hours"):
-                    print('Hacking adj_hours...')
+                self.dateFrom = self.outputs['dates'][iters]
+                if self.adj_hours != None:
+                    self._logger.debug('Hacking adj_hours...')
                     adj = self.adj_hours
 
-            em_file = ipw.IPW(em_name)
-            band = em_file.bands[self.emband].data
-            accum = accum + band
-            snowmelt = snowmelt + em_file.bands[7].data
-            evap = evap + em_file.bands[6].data
-
-            # load and calculate sub-basin total
-            snow_file = ipw.IPW(snow_name)
-            tmpstate = snow_file.bands[self.snowband].data
+            band = self.outputs['swi'][iters]
+            accum = accum + self.outputs['swi'][iters]
+            daily_snowmelt = self.outputs['snowmelt'][iters]
+            snowmelt = snowmelt + daily_snowmelt
+            evap = evap + self.outputs['evap'][iters]
+            tmpstate = self.outputs['swe'][iters]
             state_byday[:,:,iters] = tmpstate
 
             # Get rain from input data
-            sf = em_name.replace('runs','data')
+            sf = self.rundirs_dict[snow_name].replace('runs','data')
             sf = sf.replace('run','data')
             sf = sf.replace('output','ppt_4b')
             ppt_path = sf.split('em')[0]
-
-            out_hr = snow_name.split('.')[-1]
+            out_hr = snow_name
             hrs = range(int(out_hr) - 23,int(out_hr) + 1)
 
             pFlag = False
@@ -708,9 +473,7 @@ class SNOWAV(object):
             rain_hrly = np.zeros((self.nrows,self.ncols))
             precip_hrly = np.zeros((self.nrows,self.ncols))
 
-            # Load 'em in
             if pFlag:
-                # print('adding precip for %s'%(snow_name))
                 for pfile in ppt_files:
                     ppt = ipw.IPW(pfile)
                     pre = ppt.bands[0].data
@@ -724,21 +487,6 @@ class SNOWAV(object):
                 pfs = ', precip added'
             else:
                 pfs = ''
-
-            # Currently this is grabbing the second to last
-            # Being used for flight difference
-            # Definitely a better way to do this...
-            if iters == (len(self.snow_files) - 1):
-                # Mean pixel depth [mm] on psnowFile
-                self.pre_pm = (
-                               np.nansum(tmpstate
-                               * self.masks[self.total_lbl]['mask'])
-                               / self.masks[self.total_lbl]['mask'].sum()
-                               )
-                self.pre_swe = (
-                                np.nansum(tmpstate
-                                * self.masks[self.total_lbl]['mask'])
-                                * self.conversion_factor )
 
             # Store daily sub-basin totals
             for name in self.masks:
@@ -759,7 +507,7 @@ class SNOWAV(object):
             if accum_sub_flag:
                 accum_sub = accum_sub + copy.deepcopy(band)
                 snowmelt_sub = ( snowmelt_sub
-                                + copy.deepcopy(em_file.bands[7].data) )
+                                + copy.deepcopy(daily_snowmelt) )
                 precip_sub = precip_sub + precip_hrly
 
             # When it is the first snow file, copy
@@ -769,53 +517,50 @@ class SNOWAV(object):
                 pstate = copy.deepcopy(tmpstate)
 
             # When it is the first flt snow file, copy
-            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltpsnowFile)):
+            if (self.flt_flag is True) and (snow_name == self.fltphour):
                 fltpstate = copy.deepcopy(tmpstate)
+                self.fltdateFrom = self.outputs['dates'][iters]
 
             # When it is the second flt snow file, copy
-            if ((hasattr(self,'flt_flag')) and (snow_name == self.fltcsnowFile)):
+            if (self.flt_flag is True) and (snow_name == self.fltchour):
                 fltcstate = copy.deepcopy(tmpstate)
                 flt_delta_state = fltpstate - fltcstate
+                self.fltdateTo = self.outputs['dates'][iters]
 
             # When it hits the current snow file, copy
             if snow_name == self.csnowFile:
-                # print('csnowfile is %s'%(snow_name))
+                self.dateTo = self.outputs['dates'][iters]
 
                 # Run debug statement before ending the process
                 pf = ', csnowFile'
+
                 debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                    snow_name.split('runs')[1],
-                                    str(int(snow_name.split('.')[-1]) - t),
+                                    self.rundirs_dict[int(snow_name)],
+                                    str(int(snow_name) - t),
                                     date.date().strftime("%Y-%-m-%-d"),pfs,pf)
-                print(debug)
+                self._logger.debug(debug)
 
                 # Turn off, but last one will still have been added
                 accum_sub_flag  = False
 
                 state = copy.deepcopy(tmpstate)
-                depth = snow_file.bands[0].data
-                density = snow_file.bands[1].data
-                self.density = copy.deepcopy(density)
-                self.cold = em_file.bands[9].data
+                depth = self.outputs['depth'][iters]
+                self.density = copy.deepcopy(self.outputs['rho'][iters])
+                self.cold = self.outputs['coldcont'][iters]
 
                 # No need to compile more files after csnowFile
                 break
 
             # It's nice to see where we are...
             debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                snow_name.split('runs')[1],
-                                str(int(snow_name.split('.')[-1]) - t),
-                                date.date().strftime("%Y-%-m-%-d"),pfs,pf)
-            print(debug)
+                                    self.rundirs_dict[int(snow_name)],
+                                    str(int(snow_name) - t),
+                                    date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+
+            self._logger.debug(debug)
 
             # Step this along so that we can see how many hours between outputs
-            t = int(snow_name.split('.')[-1])
-
-        self.dateFrom = wy.wyhr_to_datetime(self.wy,
-                                            int(self.psnowFile.split('.')[-1]))
-        self.dateTo = wy.wyhr_to_datetime(self.wy,
-                                          int(self.csnowFile.split('.')[-1])
-                                          + adj)
+            t = int(snow_name)
 
         # Append date to report name
         parts = self.report_name.split('.')
@@ -828,6 +573,7 @@ class SNOWAV(object):
 
         # Mask by subbasin and elevation band
         for name in self.masks:
+            # name = self.plotorder[0]
             mask = copy.deepcopy(self.masks[name]['mask'])
 
             accum_mask = np.multiply(accum,mask)
@@ -840,11 +586,11 @@ class SNOWAV(object):
             snowmelt_mask_sub = np.multiply(snowmelt_sub,mask)
             state_mask = np.multiply(state,mask)
             delta_state_byelev_mask = np.multiply(delta_state,mask)
-            if hasattr(self,'flt_flag'):
+            if self.flt_flag is True:
                 flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
             state_byelev_mask = np.multiply(state,mask)
             state_mswe_byelev_mask = np.multiply(state,mask)
-            density_m_byelev_mask = np.multiply(density,mask)
+            density_m_byelev_mask = np.multiply(self.density,mask)
 
             ix = density_m_byelev_mask == 0
             density_m_byelev_mask[ix] = np.nan
@@ -854,6 +600,7 @@ class SNOWAV(object):
 
             # Do it by elevation band
             for n in np.arange(0,len(self.edges)):
+                # n = 0
                 ind = elevbin == n
                 state_bin = state_mask[ind]
                 b = self.edges[n]
@@ -876,7 +623,6 @@ class SNOWAV(object):
                 snowmelt_byelev_sub.loc[b,name] = np.nansum(
                                                 snowmelt_mask_sub[ind])
 
-
                 # Calculate mean if there is snow
                 if state_mswe_byelev_mask[ind].size:
                     state_mswe_byelev.loc[b,name] = np.nanmean(
@@ -885,7 +631,7 @@ class SNOWAV(object):
                                                 depth_mdep_byelev_mask[ind])
                     delta_state_byelev.loc[b,name] = np.nansum(
                                                 delta_state_byelev_mask[ind])
-                    if hasattr(self,'flt_flag'):
+                    if self.flt_flag is True:
                         flt_delta_state_byelev.loc[b,name] = np.nansum(
                                                 flt_delta_state_byelev_mask[ind])
                     delta_swe_byelev.loc[b,name] = np.nanmean(
@@ -894,31 +640,35 @@ class SNOWAV(object):
                     state_mswe_byelev.loc[b,name] = np.nan
                     depth_mdep_byelev.loc[b,name] = np.nan
                     delta_state_byelev.loc[b,name] = np.nan
-                    if hasattr(self,'flt_flag'):
+                    if self.flt_flag is True:
                         flt_delta_state_byelev.loc[b,name] = np.nan
                     delta_swe_byelev.loc[b,name] = np.nan
+
+                # There are apparently side cases with density and not swe
+                if np.sum(np.sum(density_m_byelev_mask[ind])) > 0:
+                    density_m_byelev.loc[b,name] = np.nanmean(
+                                                    copy.deepcopy(density_m_byelev_mask[ind]))
+                else:
+                    density_m_byelev.loc[b,name] = np.nan
 
             self.masks[name]['SWE'] = ( (melt[name].sum() + nonmelt[name].sum())
                                        * self.conversion_factor )
 
-        # Convert to desired units
 
-        # Sum over all time steps, spatial
+        # First time step, volume
+        self.pstate = np.multiply(pstate,self.conversion_factor)
+
+        # At last time step, volume
+        self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
+        # self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
+
+        # Sum over all time steps, depth
         self.precip = np.multiply(precip,self.depth_factor)
         self.accum = np.multiply(accum,self.depth_factor)
         self.evap = np.multiply(evap,self.depth_factor)
         self.accum_sub = np.multiply(accum_sub,self.depth_factor)
 
-        # At last time step
-        self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
-        self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
-        self.state = np.multiply(state,self.depth_factor)
-        self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
-        self.delta_state = np.multiply(delta_state,self.depth_factor)
-        if hasattr(self,'flt_flag'):
-            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
-
-        # Sum, by elevation
+        # Sum over all time steps, volume
         self.accum_byelev = np.multiply(accum_byelev,self.conversion_factor)
         self.evap_byelev = np.multiply(evap_byelev,self.conversion_factor)
         self.precip_byelev = np.multiply(precip_byelev,self.conversion_factor)
@@ -927,7 +677,14 @@ class SNOWAV(object):
         self.snowmelt_byelev = np.multiply(snowmelt_byelev,
                                            self.conversion_factor)
 
-        # Sub-set of time defined by psnowfile and csnowfile, sum, by elevation
+        # At last time step, depth
+        self.depth = np.multiply(np.multiply(depth,1000),self.depth_factor)
+        self.state = np.multiply(state,self.depth_factor)
+        self.delta_state = np.multiply(delta_state,self.depth_factor)
+        if self.flt_flag is True:
+            self.flt_delta_state = np.multiply(flt_delta_state,self.depth_factor)
+
+        # Sub-set of time defined by psnowfile and csnowfile
         self.snowmelt_byelev_sub = np.multiply(snowmelt_byelev_sub,
                                                self.conversion_factor)
         self.accum_byelev_sub = np.multiply(accum_byelev_sub,
@@ -935,7 +692,7 @@ class SNOWAV(object):
         self.precip_byelev_sub = np.multiply(precip_byelev_sub,
                                              self.conversion_factor)
 
-        # Change, by elevation
+        # Change
         self.delta_state_byelev = np.multiply(delta_state_byelev,
                                               self.conversion_factor)
         self.flt_delta_state_byelev = np.multiply(flt_delta_state_byelev,
@@ -943,23 +700,21 @@ class SNOWAV(object):
         self.delta_swe_byelev = np.multiply(delta_swe_byelev,
                                               self.depth_factor)
 
-        # At first time step, spatial
-        self.pstate = np.multiply(pstate,self.conversion_factor)
-
         # Daily
         self.state_summary = np.multiply(state_summary,self.conversion_factor)
         self.accum_summary = np.multiply(accum_summary,self.conversion_factor)
         self.precip_summary = np.multiply(precip_summary,self.conversion_factor)
         self.evap_summary = np.multiply(evap_summary,self.conversion_factor)
-        self.state_byday = np.multiply(state_byday,self.depth_factor)
+        # self.state_byday = np.multiply(state_byday,self.depth_factor)
 
         # Mean
         self.state_mswe_byelev = np.multiply(state_mswe_byelev,
                                              self.depth_factor)
-        self.depth_mdep_byelev = np.multiply(np.multiply(depth_mdep_byelev,1000)
-                                             ,self.depth_factor)
+        self.depth_mdep_byelev = np.multiply(np.multiply(depth_mdep_byelev,1000),
+                                             self.depth_factor)
         self.density_m_byelev = density_m_byelev
 
+        # odds and ends
         self.melt = np.multiply(melt,self.conversion_factor)
         self.nonmelt = np.multiply(nonmelt,self.conversion_factor)
         self.cold = np.multiply(self.cold,0.000001)
@@ -968,4 +723,74 @@ class SNOWAV(object):
         mask = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
         msum = sum(mask)
         if int(msum) >= 1:
-            print('%s entries in dataframe index with gaps larger than 24h '%(msum))
+            self._logger.debug('%s entries in dataframe index with gaps larger than 24h '%(msum))
+
+    def createLog(self):
+        '''
+        Now that the directory structure is done, create log file and print out
+        saved logging statements.
+        '''
+
+        level_styles = {'info': {'color': 'white'},
+                        'notice': {'color': 'magenta'},
+                        'verbose': {'color': 'blue'},
+                        'success': {'color': 'green', 'bold': True},
+                        'spam': {'color': 'green', 'faint': True},
+                        'critical': {'color': 'red', 'bold': True},
+                        'error': {'color': 'red'},
+                        'debug': {'color': 'green'},
+                        'warning': {'color': 'yellow'}}
+
+        field_styles =  {'hostname': {'color': 'magenta'},
+                         'programname': {'color': 'cyan'},
+                         'name': {'color': 'white'},
+                         'levelname': {'color': 'white', 'bold': True},
+                         'asctime': {'color': 'green'}}
+
+        # start logging
+        loglevel = self.loglevel
+
+        numeric_level = getattr(logging, loglevel, None)
+        if not isinstance(numeric_level, int):
+            raise ValueError('Invalid log level: %s' % loglevel)
+
+        # setup the logging
+        logfile = None
+        if self.log_to_file:
+            logfile = os.path.join(self.figs_path, 'log_snowav.out')
+            # let user know
+            print('Logging to file: {}'.format(logfile))
+
+        fmt = '%(levelname)s:%(name)s:%(message)s'
+        if logfile is not None:
+            logging.basicConfig(filename=logfile,
+                                filemode='w',
+                                level=numeric_level,
+                                format=fmt)
+        else:
+            logging.basicConfig(level=numeric_level)
+            coloredlogs.install(level=numeric_level,
+                                fmt=fmt,
+                                level_styles=level_styles,
+                                field_styles=field_styles)
+
+        self._loglevel = numeric_level
+
+        self._logger = logging.getLogger(__name__)
+
+        # print title and mountains
+        # title, mountain = self.title()
+        # for line in mountain:
+        #     self._logger.info(line)
+        # for line in title:
+        #     self._logger.info(line)
+        # dump saved logs
+        if len(self.tmp_log) > 0:
+            for l in self.tmp_log:
+                self._logger.info(l)
+        if len(self.tmp_warn) > 0:
+            for l in self.tmp_warn:
+                self._logger.warning(l)
+        if len(self.tmp_err) > 0:
+            for l in self.tmp_err:
+                self._logger.error(l)

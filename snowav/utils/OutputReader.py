@@ -11,7 +11,8 @@ import netCDF4 as nc
 
 class iSnobalReader():
     def __init__(self, outputdir, filetype='netcdf', timesteps=None, embands=None,
-                snowbands=None, mask=None, time_start=None, time_end=None):
+                snowbands=None, mask=None, time_start=None, time_end=None,
+                wy=None):
         """
         Inputs:
         outputdir - abosulte path to location of outputs
@@ -21,6 +22,7 @@ class iSnobalReader():
         snowbands - list of bands numbers to grab, default all
         time_start - water year hour to start grabbing files
         time_end - water year hour to end grabbing files
+        wy - water year for finding dates from ipw file wyhrs
         """
 
         # parse innputs
@@ -30,6 +32,7 @@ class iSnobalReader():
         self.mask = mask
         self.time_start = time_start
         self.time_end = time_end
+        self.wy = wy
 
         # list of band numbers possible
         emnums = range(10)
@@ -37,9 +40,9 @@ class iSnobalReader():
         self.embands = embands
         self.snowbands = snowbands
         # if no bands specified, get them all
-        if self.embands == None:
+        if self.embands is None:
             self.embands = emnums
-        if self.snowbands == None:
+        if self.snowbands is None:
             self.snowbands = snownums
 
         emnames = ['net_rad', 'sensible_heat', 'latent_heat', 'snow_soil',
@@ -74,15 +77,20 @@ class iSnobalReader():
         """
 
         # check for errors in time inputs
-        if self.timesteps != None and (self.time_start != None or self.time_end != None):
+        if self.timesteps is not None and (self.time_start is not None or self.time_end is not None):
             print('timesteps: {}, time_start: {}, time_end: {}'.format(self.timesteps, self.time_start, self.time_end))
             raise ValueError('Incorrect combination of time inputs for reading IPW files')
-        if (self.time_start == None and self.time_end != None) or (self.time_start == None and self.time_end != None):
+        if (self.time_start is None and self.time_end is not None) or (self.time_start is None and self.time_end is not None):
             print('time_start: {}, time_end: {}'.format(self.time_start, self.time_end))
             raise ValueError('Incorrect combination of time inputs for reading IPW files')
 
         # if we're dealing with ipw outputs
         if self.filetype == 'ipw':
+            if self.wy is None:
+                raise IOError('WY not included in iSnobalReader call with type ipw')
+            # set start date for wyhrs from ipw files to allow datetime conversion
+            self.start_ipw = pd.to_datetime('10-01-{} 00:00'.format(wy-1))
+            # get the data
             snow_data, em_data = self.read_isnobal_ipw()
 
         # if we're dealing with netcdf output files
@@ -120,7 +128,7 @@ class iSnobalReader():
         emfiles.sort(key=lambda f: os.path.basename(f).split('em.')[1])
 
         # create list of timesteps if none given
-        if self.timesteps == None and self.time_start == None and self.time_end == None:
+        if self.timesteps is None and self.time_start is None and self.time_end is None:
             timesteps = []
             for nm in snowfiles:
                 ts = os.path.basename(nm).split('snow.')[1]
@@ -128,7 +136,7 @@ class iSnobalReader():
                 timesteps.append(ts)
 
         # if we are grabbing files between 2 times
-        if self.time_start != None and self.time_end != None and self.timesteps == None:
+        if self.time_start is not None and self.time_end is not None and self.timesteps is None:
             timesteps = []
             for nm in snowfiles:
                 ts = os.path.basename(nm).split('snow.')[1]
@@ -153,9 +161,10 @@ class iSnobalReader():
             snow_data[sbd] = np.zeros((len(timesteps), size_var[0], size_var[1]))
 
         # assign numpy array of timesteps
-        #snow_data['time'] = np.array(timesteps)
-        #em_data['time'] = np.array(timesteps)
         self.time = np.array(timesteps)
+        # get dates for wyhr from ipw files
+        ipw_dates = [self.start_ipw + pd.to_timedelta(dts, unit='h') for dts in self.time]
+        self.dates = np.array(ipw_dates)
 
         print('Reading in ipw images')
         for idt, ts in enumerate(timesteps):
@@ -240,9 +249,9 @@ class iSnobalReader():
         snow_data = {}
         em_data = {}
 
-        print('Processing datasets')
+        # print('Processing datasets')
         # parse user input timesteps or use all
-        if self.timesteps == None and self.time_start == None and self.time_end == None:
+        if self.timesteps is None and self.time_start is None and self.time_end is None:
             timesteps = time
             itd = len(time)
             for ebd in self.embands:
@@ -255,7 +264,7 @@ class iSnobalReader():
                 #snow_data[sbd][snow_data[sbd] <= -75.0] = np.nan
 
         # if given a start and stop time
-        elif self.timesteps == None and self.time_start != None and self.time_end != None:
+        elif self.timesteps is None and self.time_start is not None and self.time_end is not None:
             # only time steps in desired timeframe
             timesteps = time[(time >= self.time_start) & (time <= self.time_end)]
             itd = timesteps
@@ -286,7 +295,7 @@ class iSnobalReader():
                     snow_data[sbd][ids,:] = tmp_snow_data*mask
 
         # if given a list of timesteps
-        elif self.timesteps != None:
+        elif self.timesteps is not None:
             timesteps = np.array(self.timesteps)
             # find indices that have matching times
             itd = []

@@ -16,13 +16,8 @@ def swe_change(snow):
     ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
     delta_state[ix] = qMin + qMin*0.2
     vMin,vMax = np.percentile(delta_state,[1,99])
-    # clims = (qMin,qMax )
 
-    # Override if absolute limits are provide in the config
-    if hasattr(snow,'ch_clminabs') and hasattr(snow,'ch_clmaxabs'):
-        clims       = (snow.ch_clminabs,snow.ch_clmaxabs)
-
-    colorsbad = plt.cm.Accent_r(np.linspace(0., 1, 1))
+    colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
     colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
     colors = np.vstack((colorsbad,colors1, colors2))
@@ -30,7 +25,7 @@ def swe_change(snow):
 
     ixf = delta_state == 0
     delta_state[ixf] = -100000 # set snow-free
-    pmask = snow.masks[snow.total_lbl]['mask']
+    pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_state[ixo] = np.nan
     cmap = copy.copy(mymap)
@@ -68,10 +63,7 @@ def swe_change(snow):
     cbar = plt.colorbar(h, cax = cax)
     # cbar.ax.tick_params()
 
-    if snow.units == 'KAF':
-        cbar.set_label(r'$\Delta$ SWE [in]')
-    if snow.units == 'SI':
-        cbar.set_label(r'$\Delta$ SWE [mm]')
+    cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
@@ -90,9 +82,13 @@ def swe_change(snow):
     for iters,name in enumerate(sumorder):
         # iters = 0
         # name = sumorder[iters]
+
+        lbl = name
         ax1.bar(range(0,len(snow.edges))-wid[iters],
                 snow.delta_swe_byelev[name],
-                color = snow.barcolors[iters], width = swid, edgecolor = 'k',label = name)
+                color = snow.barcolors[iters], width = swid,
+                                                edgecolor = 'k',
+                                                label = lbl)
 
     # ax.set_xlim((0,len(snow.edges)))
     ax1.set_xlim((0,len(snow.edges)))
@@ -126,7 +122,7 @@ def swe_change(snow):
             ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
     if snow.units == 'KAF':
-        ax1.set_ylabel(r'$\Delta$[in] - per elevation band')
+        ax1.set_ylabel(r'$\Delta$ [in] - by elevation band')
         ax1.set_xlabel('elevation [ft]')
         ax1.axes.set_title('Change in SWE')
 
@@ -157,5 +153,5 @@ def swe_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    print('saving figure to %sswe_change_depth%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sswe_change_depth%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sswe_change_depth%s.png'%(snow.figs_path,snow.name_append))

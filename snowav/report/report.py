@@ -14,21 +14,21 @@ def report(obj):
 
     # Initialize all the variables to pass to latex file
     variables = {}
-    variables['TOTAL_SWI'] = obj.accum_byelev[obj.total_lbl].sum()
-    variables['TOTAL_SWE'] = obj.state_byelev[obj.total_lbl].sum()
-    variables['TOTAL_SAV'] = obj.melt[obj.total_lbl].sum()
-    variables['TOTAL_SDEL'] = obj.delta_state_byelev[obj.total_lbl].sum()
+    variables['TOTAL_SWI'] = obj.accum_byelev[obj.plotorder[0]].sum()
+    variables['TOTAL_SWE'] = obj.state_byelev[obj.plotorder[0]].sum()
+    variables['TOTAL_SAV'] = obj.melt[obj.plotorder[0]].sum()
+    variables['TOTAL_SDEL'] = obj.delta_state_byelev[obj.plotorder[0]].sum()
     variables['TOTAL_PM'] = (np.nansum(
                             np.multiply(obj.state
-                            * obj.masks[obj.total_lbl]['mask'],1))
-                            / obj.masks[obj.total_lbl]['mask'].sum())
+                            * obj.masks[obj.plotorder[0]]['mask'],1))
+                            / obj.masks[obj.plotorder[0]]['mask'].sum())
     variables['TOTALPRE_PM'] = (np.nansum(
                                 np.multiply(obj.precip
-                                * obj.masks[obj.total_lbl]['mask'],1))
-                                / obj.masks[obj.total_lbl]['mask'].sum() )
-    total_rai = obj.rain_bg_byelev[obj.total_lbl].sum()
+                                * obj.masks[obj.plotorder[0]]['mask'],1))
+                                / obj.masks[obj.plotorder[0]]['mask'].sum() )
+    total_rai = obj.rain_bg_byelev[obj.plotorder[0]].sum()
     variables['TOTAL_RAT'] = str(int((total_rai
-                                      /obj.accum_byelev[obj.total_lbl].sum())*100))
+                                      /obj.accum_byelev[obj.plotorder[0]].sum())*100))
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
     if hasattr(obj,'orig_date'):
@@ -40,7 +40,7 @@ def report(obj):
 
     numsubs = range(1,len(obj.plotorder))
 
-    for n,sub in zip(numsubs,obj.suborder):
+    for n,sub in zip(numsubs,obj.plotorder[1:]):
         SWIIND = 'SUB' + str(n) + '_SWI'
         SWEIND = 'SUB' + str(n) + '_SWE'
         AVSWEIND = 'SUB' + str(n) + '_SAV'
@@ -75,29 +75,25 @@ def report(obj):
     start_date = obj.dateFrom.date().strftime("%B %-d")
     end_date = obj.dateTo.date().strftime("%B %-d")
     fore_date = ' '
-    if obj.units == 'SI':
-        unitlbl = '$km^3$'
-    else:
-        unitlbl = obj.vollbl
 
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
     variables['REPORT_TITLE'] = obj.rep_title
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(obj.wy)
-    variables['UNITS'] = unitlbl
+    variables['UNITS'] = obj.vollbl
     variables['VOLLBL'] = obj.vollbl
     variables['DEPLBL'] = obj.depthlbl
     variables['START_DATE'] = start_date
     variables['END_DATE'] = end_date
     variables['FORE_DATE'] = fore_date
-    variables['SWE_IN'] = obj.state_byelev[obj.total_lbl].sum()
-    variables['SWI_IN'] = obj.accum_byelev[obj.total_lbl].sum()
+    variables['SWE_IN'] = obj.state_byelev[obj.plotorder[0]].sum()
+    variables['SWI_IN'] = obj.accum_byelev[obj.plotorder[0]].sum()
     variables['FIG_PATH'] = obj.figs_path
     variables['SWI_FIG'] = 'swi%s.png'%(obj.name_append)
     variables['RESULTS_FIG'] = 'results%s.png'%(obj.name_append)
     variables['CHANGES_FIG'] = 'swe_change%s.png'%(obj.name_append)
-    variables['FLT_CHANGES_FIG'] = 'flt_swe_change%s.png'%(obj.name_append)
+    variables['DFLT_FIG'] = 'dflt_swe_change%s.png'%(obj.name_append)
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth%s.png'%(obj.name_append)
     variables['ELEV_FIG'] = 'swe_elev%s.png'%(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total%s.png'%(obj.name_append)
@@ -109,17 +105,40 @@ def report(obj):
     variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
-    
-    variables['TOT_LBL'] = obj.total_lbl
-    if hasattr(obj,'sub1_lbl'):
-        variables['SUB1_LBL'] = obj.sub1_lbl
-    if hasattr(obj,'sub2_lbl'):
-        variables['SUB2_LBL'] = obj.sub2_lbl
-    if hasattr(obj,'sub3_lbl'):
-        variables['SUB3_LBL'] = obj.sub3_lbl
-    if hasattr(obj,'sub4_lbl'):
-        variables['SUB4_LBL'] = obj.sub4_lbl
-                                
+    variables['ARSLOGO'] = obj.figs_tpl_path + 'ars_logo.png'
+    variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
+
+    # Put the by-elevation tables together
+    # Eventually put this in framework? But _o is beating it to hell right now
+    obj.state_mswe_byelev.index.name = 'Elevation'
+    obj.state_mswe_byelev = obj.state_mswe_byelev.astype('float64')
+    obj.state_mswe_byelev = obj.state_mswe_byelev.fillna(0).round(1)
+    variables['SWE_BYELEV'] = (
+                                r'\textbf{Mean SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.dateTo.date().strftime("%Y-%-m-%-d"))
+                                + obj.state_mswe_byelev[obj.plotorder].to_latex()
+                                )
+
+    obj.delta_swe_byelev.index.name = 'Elevation'
+    obj.delta_swe_byelev = obj.delta_swe_byelev.astype('float64')
+    obj.delta_swe_byelev = obj.delta_swe_byelev.fillna(0).round(1)
+    variables['DSWE_BYELEV'] = (
+                                r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.dateFrom.date().strftime("%Y-%-m-%-d"),
+                                  obj.dateTo.date().strftime("%Y-%-m-%-d"))
+                                + obj.delta_swe_byelev[obj.plotorder].to_latex()
+                                )
+
+    variables['TOT_LBL'] = obj.plotorder[0]
+    if len(obj.plotorder) >= 2:
+        variables['SUB1_LBL'] = obj.plotorder[1]
+    if len(obj.plotorder) >= 3:
+        variables['SUB2_LBL'] = obj.plotorder[2]
+    if len(obj.plotorder) >= 4:
+        variables['SUB3_LBL'] = obj.plotorder[3]
+    if len(obj.plotorder) >= 5:
+        variables['SUB4_LBL'] = obj.plotorder[4]
+
     # Convert floats to strings
     for name in variables:
         if isinstance(variables[name], float):
@@ -129,7 +148,7 @@ def report(obj):
                 tmp = str(round(variables[name],obj.dplcs))
             variables[name] = tmp
 
-    # Summary sections and fig template have variable strings 
+    # Summary sections and fig template have variable strings
     # (e.g. CHANGES_FIG) that need to be replaced
     section_dict = {'SUMMARY':obj.summary_file,
                     'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt',
@@ -139,34 +158,34 @@ def report(obj):
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
-                    'FLT_CHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_changes_fig_tpl.txt'
+                    'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt'
                     }
-    
+
     # Define and load summary tables depending on number of subbasins
-    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path 
+    section_dict['PRECIP_SUMMARY_TPL'] = (obj.figs_tpl_path
                                           + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
-    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path 
-                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )    
-      
-       
+    section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path
+                                          + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )
+
+
     # Remove if no flight options
-    if not hasattr(obj,'flt_flag'):
-        del section_dict['FLT_CHANGES_FIG_TPL']
-    
+    if obj.flt_flag is False:
+        del section_dict['FLTCHANGES_FIG_TPL']
+
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()
         fid.close()
-        
+
         for name in variables:
             var = var.replace(name,variables[name])
-        variables[rep] = var    
-    
+        variables[rep] = var
+
     # If figs are listed in exclude, replace with empty string in latex file
-    if hasattr(obj,'exclude_figs'):
+    if obj.exclude_figs != None:
         for name in obj.exclude_figs:
             variables[name + '_FIG_TPL'] = ' '
-             
+
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl = env.get_template(obj.tex_file)
@@ -174,6 +193,6 @@ def report(obj):
     # To see what's in latex  >>> print(tpl.render(variables))
 
     # Save in reports and with figs
-    print('Saving report to %s%s'%(obj.rep_path,obj.report_name))
+    obj._logger.info('Saving report to %s%s and \n%s%s'%(obj.rep_path,obj.report_name,obj.rep_path,obj.report_name))
     pdf.save_to('%s%s'%(obj.rep_path,obj.report_name))
     pdf.save_to('%s%s'%(obj.figs_path,obj.report_name))

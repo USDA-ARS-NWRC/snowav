@@ -13,7 +13,7 @@ import pandas as pd
 def basin_detail(self):
 
     demcopy = copy.copy(self.dem)
-    pmask = self.masks[self.total_lbl]['mask']
+    pmask = self.masks[self.plotorder[0]]['mask']
     ixo = pmask == 0
     demcopy[ixo] = np.nan
 
@@ -36,10 +36,10 @@ def basin_detail(self):
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        print(name,smin,smax)
+        snow._logger.info(name,str(int(smin),str(int(smax))))
 
     # filter out high and low hyp
-    map     = plt.cm.terrain
+    map = plt.cm.terrain
     map.set_bad('white')
 
     sns.set_style('darkgrid')
@@ -62,8 +62,6 @@ def basin_detail(self):
         hyp[imin] = np.nan
         imax = hyp > 99.9
         hyp[imax] = np.nan
-
-        # ax1.plot(hypsom[name].cumsum()[::-1]-hypsom[name].iloc[0],range(0,len(edges)),color = clrs[iters],label = name)
         ax1.plot(hyp,range(0,len(edges)),color = clrs[iters],label = name)
 
     ax1.invert_xaxis()
@@ -71,7 +69,7 @@ def basin_detail(self):
     ax1.set_xlim((102,-2))
     ax1.set_ylim((-1,len(hypsom)))
 
-    ax1.set_ylabel('elevation [m]')
+    ax1.set_ylabel('elevation [%s]'%(self.elevlbl))
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position("right")
 
@@ -114,5 +112,5 @@ def basin_detail(self):
         ax.text(0.2,0.84,'Cherry',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
         ax.text(0.14,0.35,'Eleanor',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
 
-    print('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
+    snow._logger.info('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
     plt.savefig('%shypsometry%s.png'%(self.figs_path,self.name_append))
