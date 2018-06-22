@@ -236,7 +236,7 @@ class SNOWAV(object):
         self.dates = []
         self.time = []
         self.rho = []
-        self.cold = []
+        self.coldcont = []
         self.rundirs_dict = {}
 
         for rd in self.run_dirs:
@@ -256,7 +256,7 @@ class SNOWAV(object):
                 self.swi.append(output.em_data[8][n,:,:])
                 self.snowmelt.append(output.em_data[7][n,:,:])
                 self.evap.append(output.em_data[6][n,:,:])
-                self.cold.append(output.em_data[9][n,:,:])
+                self.coldcont.append(output.em_data[9][n,:,:])
                 self.swe.append(output.snow_data[2][n,:,:])
                 self.depth.append(output.snow_data[0][n,:,:])
                 self.rho.append(output.snow_data[1][n,:,:])
@@ -574,7 +574,7 @@ class SNOWAV(object):
                 state = copy.deepcopy(tmpstate)
                 depth = self.depth[iters]
                 self.density = copy.deepcopy(self.rho[iters])
-                self.cold = self.cold[iters]
+                self.cold = self.coldcont[iters]
 
                 # No need to compile more files after csnowFile
                 break
