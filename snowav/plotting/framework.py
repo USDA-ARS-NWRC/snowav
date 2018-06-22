@@ -488,21 +488,6 @@ class SNOWAV(object):
             else:
                 pfs = ''
 
-            # Currently this is grabbing the second to last
-            # Being used for flight difference
-            # Definitely a better way to do this...
-            if iters == (len(self.snow_files) - 1):
-                # Mean pixel depth [mm] on psnowFile
-                self.pre_pm = (
-                               np.nansum(tmpstate
-                               * self.masks[self.plotorder[0]]['mask'])
-                               / self.masks[self.plotorder[0]]['mask'].sum()
-                               )
-                self.pre_swe = (
-                                np.nansum(tmpstate
-                                * self.masks[self.plotorder[0]]['mask'])
-                                * self.conversion_factor )
-
             # Store daily sub-basin totals
             for name in self.masks:
                 accum_summary.loc[date, name] = (np.nansum(
