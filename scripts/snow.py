@@ -4,15 +4,11 @@ import snowav
 
 def run(config_file):
 
-    # config_file = '/home/markrobertson/mrworkspace/code/SNOWAV/snowav/config/snowav_sj_wy2018.ini'
     snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
 
     if not hasattr(snow,'error'):
 
         snow.process()
-
-        if snow.nc_flag is True:
-            snowav.methods.output_nc.output_nc(snow)
 
         snowav.plotting.accumulated.accumulated(snow)
         snowav.plotting.current_image.current_image(snow)
