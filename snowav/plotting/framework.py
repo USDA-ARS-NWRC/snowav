@@ -459,10 +459,20 @@ class SNOWAV(object):
                     adj = self.adj_hours
 
             band = self.outputs['swi'][iters]
-            accum = accum + self.outputs['swi'][iters]
+            ixn = np.isnan(band)
+            band[ixn] = 0
+            accum = accum + band
+            
             daily_snowmelt = self.outputs['snowmelt'][iters]
+            ixn = np.isnan(daily_snowmelt)
+            daily_snowmelt[ixn] = 0
             snowmelt = snowmelt + daily_snowmelt
-            evap = evap + self.outputs['evap'][iters]
+            
+            daily_evap = self.outputs['evap'][iters]
+            ixn = np.isnan(daily_evap)
+            daily_evap[ixn] = 0    
+            evap = evap + daily_evap
+                   
             tmpstate = self.outputs['swe'][iters]
             state_byday[:,:,iters] = tmpstate
 
