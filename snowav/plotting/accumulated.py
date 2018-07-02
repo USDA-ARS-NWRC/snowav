@@ -158,6 +158,9 @@ def accumulated(snow):
     elif snow.basin == 'SJ':
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
+    elif snow.basin == 'RCEW':
+        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)    
     else:
         ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)

@@ -136,7 +136,7 @@ def swe_change(snow):
         ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
                   loc=2, borderaxespad=0. )
     elif snow.basin == 'RCEW':
-        ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
+        ax.legend(handles=patches, bbox_to_anchor=(-0.3, 0.05),
                   loc=2, borderaxespad=0. )
     else:
         ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),

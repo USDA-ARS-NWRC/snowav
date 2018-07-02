@@ -20,6 +20,7 @@ from inicheck.config import MasterConfig
 import logging
 import coloredlogs
 import math
+import netCDF4 as nc
 
 
 class SNOWAV(object):
@@ -206,20 +207,31 @@ class SNOWAV(object):
         ####################################################
         for item in ['basin_masks', 'mask_labels']:
             if type(ucfg.cfg['masks'][item]) != list:
-                ucfg.cfg['masks'][item] = [ucfg.cfg['Masks'][item]]
+                ucfg.cfg['masks'][item] = [ucfg.cfg['masks'][item]]
 
         self.plotorder = []
         maskpaths = []
-
         masks = ucfg.cfg['masks']['basin_masks']
-        for idx, m in enumerate(masks):
-            maskpaths.append(m)
-            self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
 
-        try:
-            self.dem = np.genfromtxt(self.dempath)
-        except:
-            self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+        # Initial ascii/nc handling...
+        if os.path.splitext(masks[0])[1] == '.txt':
+            
+            for idx, m in enumerate(masks):
+                maskpaths.append(m)
+                self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
+                        
+            try:
+                self.dem = np.genfromtxt(self.dempath)
+            except:
+                self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+                
+        if os.path.splitext(self.dempath)[1] == '.nc':      
+            ncf = nc.Dataset(self.dempath, 'r')
+            self.dem = ncf.variables['dem'][:]   
+            self.mask = ncf.variables['mask'][:]     
+            ncf.close()   
+              
+            self.plotorder = ucfg.cfg['masks']['mask_labels']
 
         self.nrows = len(self.dem[:,0])
         self.ncols = len(self.dem[0,:])
@@ -304,13 +316,21 @@ class SNOWAV(object):
         # Right now this is a placeholder, could edit by basin...
         self.xlims = (0,len(self.edges))
 
-        # Compile the masks, need to streamline handling for Willow Creek
+        # Compile the masks
         try:
             self.masks = dict()
-            for lbl,mask in zip(self.plotorder,maskpaths):
+            
+            if os.path.splitext(self.dempath)[1] == '.txt':
+                for lbl,mask in zip(self.plotorder,maskpaths):
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=sr),
                                        'label': lbl}
+                        
+            if os.path.splitext(self.dempath)[1] == '.nc':
+                self.masks[self.plotorder[0]] = {'border': blank,
+                                   'mask': self.mask,
+                                   'label': self.plotorder[0]}                
+                 
         except:
             print('Failed creating mask dicts..')
             self.error = True
