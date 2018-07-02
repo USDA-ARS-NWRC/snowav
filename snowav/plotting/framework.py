@@ -122,6 +122,7 @@ class SNOWAV(object):
 
         else:
             self.valid_flag = False
+            self.exclude_figs = ['VALID']
             print('No validation stations listed, will not generate figure')
 
         # This is being used to combine 2017 HRRR data
