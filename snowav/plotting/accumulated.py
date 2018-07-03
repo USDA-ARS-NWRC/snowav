@@ -143,14 +143,18 @@ def accumulated(snow):
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
         elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.74))
-
-    if snow.basin is not 'TUOL':
-        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)        
-    else:
+            ax1.legend(loc= (0.01,0.74))     
+    
+    if snow.basin == 'TUOL':
         ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
+    
+    if snow.basin == 'BRB':
+        ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10) 
+    else:
+        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)   
 
     # Make SWI-free legend if we need one
     if sum(sum(r)) > 1000:
