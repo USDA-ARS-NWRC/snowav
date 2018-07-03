@@ -1,3 +1,4 @@
+
 from snowav.methods.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
@@ -61,8 +62,6 @@ def swe_change(snow):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    # cbar.ax.tick_params()
-
     cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
@@ -80,9 +79,6 @@ def swe_change(snow):
     wid = np.linspace(-0.25,0.25,len(sumorder))
 
     for iters,name in enumerate(sumorder):
-        # iters = 0
-        # name = sumorder[iters]
-
         lbl = name
         ax1.bar(range(0,len(snow.edges))-wid[iters],
                 snow.delta_swe_byelev[name],
@@ -90,10 +86,6 @@ def swe_change(snow):
                                                 edgecolor = 'k',
                                                 label = lbl)
 
-    # ax.set_xlim((0,len(snow.edges)))
-    ax1.set_xlim((0,len(snow.edges)))
-
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     plt.tight_layout()
     xts = ax1.get_xticks()
     edges_lbl = []
@@ -103,17 +95,16 @@ def swe_change(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
+        
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
-    if hasattr(snow,"ch_ylims"):
-        ax1.set_ylim(snow.ch_ylims)
-    else:
-        ylims = ax1.get_ylim()
-        if ylims[0] < 0 and ylims[1] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-        if ylims[0] < 0 and ylims[1] > 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
-            if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+    ylims = ax1.get_ylim()
+    if ylims[0] < 0 and ylims[1] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+    if ylims[0] < 0 and ylims[1] > 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
+        if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
+            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
 
         if ylims[1] == 0:
             # ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.5))
@@ -121,10 +112,9 @@ def swe_change(snow):
         if ylims[0] == 0:
             ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
-    if snow.units == 'KAF':
-        ax1.set_ylabel(r'$\Delta$ [in] - by elevation band')
-        ax1.set_xlabel('elevation [ft]')
-        ax1.axes.set_title('Change in SWE')
+    ax1.set_ylabel(r'$\Delta$ [%s] - by elevation band'%(snow.depthlbl))
+    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
     ax1.tick_params(axis='x')
@@ -148,7 +138,6 @@ def swe_change(snow):
             ax1.legend(loc= (0.01,0.68))
         elif len(snow.plotorder) == 4:
             ax1.legend(loc= (0.01,0.76))
-
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)

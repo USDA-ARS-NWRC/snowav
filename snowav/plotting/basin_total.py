@@ -11,8 +11,6 @@ from datetime import datetime
 import pandas as pd
 from matplotlib.dates import DateFormatter
 
-
-
 def basin_total(snow):
 
     sns.set_style('darkgrid')
@@ -115,8 +113,8 @@ def basin_total(snow):
             multiswi.wy15 = np.multiply(multiswi.wy15,0.00123348)
 
         plt.close(8)
-        fig,(ax,ax1)    = plt.subplots(num=8, figsize=snow.figsize,
-                                       dpi=snow.dpi, nrows = 1, ncols = 2)
+        fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
+                                    dpi=snow.dpi, nrows = 1, ncols = 2)
 
         ax.plot(multiswe['wy15'], color = 'g',label = 'wy2015')
         ax.plot(multiswe['wy16'], color = 'r',label = 'wy2016')

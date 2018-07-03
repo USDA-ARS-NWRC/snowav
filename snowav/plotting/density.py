@@ -1,3 +1,4 @@
+
 from snowav.methods.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
@@ -8,7 +9,6 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 import colorcet as cc
-
 
 def density(snow):
     '''
@@ -28,15 +28,20 @@ def density(snow):
     if nf > 1 and nf < 5:
         nr = 2
         nc = 2
-    elif nf < 7:
+    if nf == 6:
         nr = 2
         nc = 3
+    if nf == 1:
+        nr = 1
+        nc = 1
 
     plt.close(3)
     fig,ax  = plt.subplots(num=3, figsize=snow.figsize,
                                 dpi=snow.dpi,
                                 nrows = nr, ncols = nc)
+    ax = np.array(ax)
     axs = ax.ravel()
+       
     if nf == 5:
         fig.delaxes(axs[5])
 
@@ -45,7 +50,6 @@ def density(snow):
         # name = snow.plotorder[iters]
         axs[iters].bar(range(0,len(snow.edges)),value[name], color = color)
 
-        axs[iters].set_xlim(snow.xlims)
         xts = axs[iters].get_xticks()
         if len(xts) < 6:
             dxt = xts[1] - xts[0]
@@ -73,20 +77,23 @@ def density(snow):
         if iters == 1 and nc == 3:
             axs[iters].set_yticklabels([])
 
-        if iters <= nc - 1:
+        if iters <= nc - 1 and nf != 1:
             axs[iters].set_xticklabels([])
 
         axs[iters].set_ylim((ylim))
         for tick in axs[iters].get_xticklabels():
             tick.set_rotation(30)
+            
+        axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
         axs[iters].text(0.5, 0.92, name, horizontalalignment = 'center',
                         transform=axs[iters].transAxes,
                         fontsize = 10)
 
-    for n in range(0,len(axs)):
-        axs[n].set_xticks(xts)
-        axs[n].set_xlim(snow.xlims)
+    # for n in range(0,len(axs)):
+    #     axs[n].set_xticks(xts)
+    #     # axs[n].set_xlim(snow.xlims)
+    #     axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.1)
@@ -155,9 +162,8 @@ def density(snow):
 
     plt.rcParams['hatch.linewidth'] = 1
     plt.rcParams['hatch.color'] = 'k'
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
-    plt.tight_layout()
+    ax1.set_xlim((snow.xlims[0],snow.xlims[1]))
     xts = ax1.get_xticks()
     edges_lbl = []
     for i in xts[0:len(xts)-1]:
@@ -166,6 +172,8 @@ def density(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
+        
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1] + 0.5))
 
     ax1.set_ylabel('density - per elevation band')
     ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
@@ -184,6 +192,7 @@ def density(snow):
         else:
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
 
+    plt.tight_layout()
     snow._logger.info('saving figure to %sdensity%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity%s.png'%(snow.figs_path,snow.name_append))
 

@@ -8,7 +8,6 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 
-
 def pixel_swe(snow):
 
     sns.set_style('darkgrid')
@@ -39,12 +38,9 @@ def pixel_swe(snow):
                 snow.state_mswe_byelev[name],
                 color = snow.barcolors[iters], width = swid, edgecolor = 'k',label = name)
 
-    ax.set_xlim((0,len(snow.edges)))
-    ax1.set_xlim((0,len(snow.edges)))
-
     plt.tight_layout()
-    xts         = ax1.get_xticks()
-    edges_lbl   = []
+    xts = ax1.get_xticks()
+    edges_lbl = []
     for i in xts[0:len(xts)-1]:
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
@@ -53,6 +49,9 @@ def pixel_swe(snow):
     for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
         tick.set_rotation(30)
         tick1.set_rotation(30)
+        
+    ax.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     ylims = ax1.get_ylim()
     ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))
@@ -65,8 +64,6 @@ def pixel_swe(snow):
     ax1.set_ylabel('mean SWE [%s]'%(snow.depthlbl))
     ax1.set_xlabel('elevation [ft]')
     ax.legend(loc='upper left')
-    # ax.grid(True)
-    # ax1.grid(True)
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()

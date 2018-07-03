@@ -17,26 +17,24 @@ def basin_detail(self):
     ixo = pmask == 0
     demcopy[ixo] = np.nan
 
-    emin        = int(math.ceil(np.nanmin(demcopy)/10.0))*10
-    emax        = int(math.ceil(np.nanmax(demcopy)/10.0))*10
-    step        = 50 # 50
-    edges       = np.arange(emin,emax+step,step)
-    ixd         = np.digitize(demcopy,edges)
-    hypsom      = pd.DataFrame(index = edges, columns = self.masks.keys())
+    emin = int(math.ceil(np.nanmin(demcopy)/10.0))*10
+    emax = int(math.ceil(np.nanmax(demcopy)/10.0))*10
+    step = 50 # 50
+    edges = np.arange(emin,emax+step,step)
+    ixd = np.digitize(demcopy,edges)
+    hypsom = pd.DataFrame(index = edges, columns = self.masks.keys())
 
     for name in self.masks:
-        elevbin     = np.multiply(ixd,self.masks[name]['mask'])
+        elevbin = np.multiply(ixd,self.masks[name]['mask'])
 
-        # Do it by elevation band
         for n in np.arange(0,len(edges)):
             ind        = elevbin == n
             hypsom.loc[edges[n],name] = (np.nansum(np.nansum(ind))/np.nansum(np.nansum(self.masks[name]['mask'])))*100
 
-
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        snow._logger.info(name,str(int(smin),str(int(smax))))
+        self._logger.info(name,str(int(smin),str(int(smax))))
 
     # filter out high and low hyp
     map = plt.cm.terrain
@@ -49,8 +47,8 @@ def basin_detail(self):
     clrs.insert(0,'k')
 
     plt.close(10)
-    fig,(ax,ax1)    = plt.subplots(num=10, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
-    h               = ax.imshow(demcopy, cmap=map)
+    fig,(ax,ax1) = plt.subplots(num=10, figsize=self.figsize, dpi=self.dpi, nrows = 1, ncols = 2)
+    h = ax.imshow(demcopy, cmap=map)
 
     # Basin boundaries
     for name in self.masks:
@@ -76,8 +74,8 @@ def basin_detail(self):
     labels = ax1.get_xticklabels()
     ax1.set_xticklabels(labels[::-1])
 
-    xts         = ax1.get_yticks()
-    edges_lbl   = []
+    xts = ax1.get_yticks()
+    edges_lbl = []
     for i in xts[0:len(xts)-1]:
         edges_lbl.append(str(int(edges[int(i)])))
 
@@ -89,8 +87,8 @@ def basin_detail(self):
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax)
-    cax     = divider.append_axes("left", size="5%", pad=0.2)
-    cbar    = plt.colorbar(h, cax = cax)
+    cax = divider.append_axes("left", size="5%", pad=0.2)
+    cbar = plt.colorbar(h, cax = cax)
     cax.yaxis.set_ticks_position('left')
     cax.yaxis.set_label_position('left')
     cax.set_ylabel('elevation [m]')
@@ -112,5 +110,5 @@ def basin_detail(self):
         ax.text(0.2,0.84,'Cherry',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
         ax.text(0.14,0.35,'Eleanor',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
 
-    snow._logger.info('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
+    self._logger.info('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
     plt.savefig('%shypsometry%s.png'%(self.figs_path,self.name_append))

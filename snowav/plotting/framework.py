@@ -215,7 +215,8 @@ class SNOWAV(object):
         masks = ucfg.cfg['masks']['basin_masks']
 
         # Initial ascii/nc handling...
-        if os.path.splitext(masks[0])[1] == '.txt':
+        if ((os.path.splitext(masks[0])[1] == '.txt') or 
+            (os.path.splitext(masks[0])[1] == '.asc') ):
             
             for idx, m in enumerate(masks):
                 maskpaths.append(m)
@@ -305,7 +306,7 @@ class SNOWAV(object):
                                self.elev_bins[2])
 
         # A few remaining basin-specific things
-        if self.basin == 'TUOL' or self.basin == 'SJ':
+        if self.basin == 'TUOL' or self.basin == 'SJ' or self.basin == 'LAKES':
             sr = 6
         else:
             sr = 0
@@ -321,7 +322,8 @@ class SNOWAV(object):
         try:
             self.masks = dict()
             
-            if os.path.splitext(self.dempath)[1] == '.txt':
+            if ( (os.path.splitext(masks[0])[1] == '.txt') or 
+                (os.path.splitext(masks[0])[1] == '.asc') ):
                 for lbl,mask in zip(self.plotorder,maskpaths):
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=sr),

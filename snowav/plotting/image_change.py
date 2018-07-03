@@ -1,3 +1,4 @@
+
 from snowav.methods.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
@@ -65,12 +66,7 @@ def image_change(snow):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    # cbar.ax.tick_params()
-
-    if snow.units == 'KAF':
-        cbar.set_label(r'$\Delta$ SWE [in]')
-    if snow.units == 'SI':
-        cbar.set_label(r'$\Delta$ SWE [mm]')
+    cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
@@ -120,7 +116,6 @@ def image_change(snow):
                     + snow.delta_state_byelev[sumorder[iters-3]],
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     plt.tight_layout()
     xts = ax1.get_xticks()
     edges_lbl = []
@@ -130,32 +125,25 @@ def image_change(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
+        
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))    
 
-    if hasattr(snow,"ch_ylims"):
-        ax1.set_ylim(snow.ch_ylims)
-    else:
-        ylims = ax1.get_ylim()
-        if ylims[0] < 0 and ylims[1] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-        if ylims[0] < 0 and ylims[1] > 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
-            if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-                ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+    ylims = ax1.get_ylim()
+    if ylims[0] < 0 and ylims[1] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+    if ylims[0] < 0 and ylims[1] > 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
+        if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
+            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
 
-        if ylims[1] == 0:
-            # ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.5))
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
-        if ylims[0] == 0:
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+    if ylims[1] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
+    if ylims[0] == 0:
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
-    if snow.units == 'KAF':
-        ax1.set_ylabel('KAF - per elevation band')
-        ax1.set_xlabel('elevation [ft]')
-        ax1.axes.set_title('Change in SWE')
-    if snow.units == 'SI':
-        ax1.set_ylabel(r'$km^3$')
-        ax1.set_xlabel('elevation [m]')
-        ax1.axes.set_title(r'Change in SWE')
+    ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
+    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
     ax1.tick_params(axis='x')
@@ -180,7 +168,7 @@ def image_change(snow):
         elif len(snow.plotorder) == 4:
             ax1.legend(loc= (0.01,0.745))
 
-    if snow.basin == 'BRB':
+    if snow.basin == 'BRB' or snow.basin == 'LAKES':
         ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'SJ':
