@@ -120,7 +120,7 @@ def flt_image_change(snow):
                     + snow.flt_delta_state_byelev[sumorder[iters-3]],
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     plt.tight_layout()
     xts = ax1.get_xticks()
     edges_lbl = []
@@ -144,14 +144,9 @@ def flt_image_change(snow):
     if ylims[0] == 0:
         ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
-    if snow.units == 'KAF':
-        ax1.set_ylabel('KAF - per elevation band')
-        ax1.set_xlabel('elevation [ft]')
-        ax1.axes.set_title('Change in SWE')
-    if snow.units == 'SI':
-        ax1.set_ylabel(r'$km^3$')
-        ax1.set_xlabel('elevation [m]')
-        ax1.axes.set_title(r'Change in SWE')
+    ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
+    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
     ax1.tick_params(axis='x')

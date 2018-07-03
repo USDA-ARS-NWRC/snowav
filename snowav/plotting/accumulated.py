@@ -40,8 +40,6 @@ def accumulated(snow):
     r = ~np.isnan(accum)
     r[r] &= accum[r] < 0.1
     accum[r] = -1
-    # ixf = accum < 0.1
-    # accum[ixf] = -1
     mymap.set_under('grey',1.)
 
     plt.close(0)
@@ -118,14 +116,9 @@ def accumulated(snow):
                     bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]] + accum_byelev[sumorder[iters-3]]),
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-
-        plt.rcParams['hatch.linewidth'] = 1
-        plt.rcParams['hatch.color'] = 'k'
-        ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
-
     plt.tight_layout()
-    xts         = ax1.get_xticks()
-    edges_lbl   = []
+    xts = ax1.get_xticks()
+    edges_lbl = []
     for i in xts[0:len(xts)-1]:
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
@@ -135,7 +128,7 @@ def accumulated(snow):
 
     ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
     ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
-
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
@@ -150,17 +143,18 @@ def accumulated(snow):
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
         elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.74))
-
-    if snow.basin == 'BRB':
-        ax1.text(0.26,0.94,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
-    elif snow.basin == 'SJ':
-        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-    else:
+            ax1.legend(loc= (0.01,0.74))     
+    
+    if snow.basin == 'TUOL':
         ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
+    
+    if snow.basin == 'BRB':
+        ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10) 
+    else:
+        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)   
 
     # Make SWI-free legend if we need one
     if sum(sum(r)) > 1000:
@@ -171,7 +165,6 @@ def accumulated(snow):
         else:
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                       loc=2, borderaxespad=0. )
-
 
     snow._logger.info('saving figure to %sswi%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sswi%s.png'%(snow.figs_path,snow.name_append))

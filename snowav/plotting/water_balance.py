@@ -8,22 +8,18 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 
-
 def water_balance(snow):
 
-    cmap = plt.cm.PuBu
-
     precip = snow.precip
+    cmap = plt.cm.PuBu
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
     plt.close(12)
-    fig,(ax,ax1) = plt.subplots(num=12,
-                                figsize = snow.figsize,
-                                dpi=snow.dpi,
-                                nrows = 1, ncols = 2)
-    h = ax.imshow(precip,cmap = cmap)
+    fig,(ax,ax1) = plt.subplots(num=12, figsize = snow.figsize,
+                                dpi=snow.dpi, nrows = 1, ncols = 2)
+    h = ax.imshow(precip, cmap = cmap)
 
     # Basin boundaries
     for name in snow.masks:
@@ -52,8 +48,6 @@ def water_balance(snow):
                      %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
                        snow.dateTo.date().strftime("%Y-%-m-%-d")))
 
-    # Plot the bars
-    # for iters,name in enumerate(snow.plotorder):
     iters = 0
     name = snow.plotorder[iters]
 
@@ -61,7 +55,7 @@ def water_balance(snow):
     
     ax1.plot(snow.accum_summary[name]
              + snow.state_summary[name] - snow.state_summary[name][0]
-             + snow.evap_summary[name],label = 'SWI + SWE + evap',color = 'g')
+             - snow.evap_summary[name],label = 'SWI + SWE + evap',color = 'g')
 
     ax1.legend()
 

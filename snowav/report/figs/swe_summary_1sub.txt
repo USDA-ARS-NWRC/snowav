@@ -7,7 +7,7 @@
 		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE (mean) & $\Delta$SWE & SWI \\ & [UNITS] & [UNITS] & [DEPLBL] & [UNITS] & [UNITS]\\
 		
 		\midrule
-		TOT_LBL			& TOTAL_SWE 	& TOTAL_SWE_AV & TOTAL_PM 	& TOTAL_SWEDEL & TOTAL_SWI  \\
+		TOT_LBL			& TOTAL_SWE 	& TOTAL_SAV & TOTAL_PM 	& TOTAL_SDEL & TOTAL_SWI  \\
 		\bottomrule
 	\end{tabular}
 \end{table}

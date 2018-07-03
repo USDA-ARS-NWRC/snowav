@@ -21,15 +21,13 @@ def current_image(snow):
     qMin,qMax = np.nanpercentile(state,[0,99.8])
     clims = (qMin,qMax)
     clims2 = (-5,0)
-
-    # Areas outside basin
     pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
 
     # Prepare no-snow and outside of the basin for the colormaps
     ixz = state == 0
     state[ixz] = -1
-    cold[ixz]  = 1
+    cold[ixz] = 1
 
     # Colormap for snow.state
     colorsbad = plt.cm.Set2_r(np.linspace(0., 1, 1))
@@ -39,7 +37,6 @@ def current_image(snow):
 
     state[ixo] = np.nan
     mymap.set_bad('white',1.)
-    # mymap.set_under('lightgrey',1)
 
     mymap1 = plt.cm.Spectral_r
     cold[ixo] = np.nan
@@ -81,11 +78,7 @@ def current_image(snow):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-
-    if snow.units == 'KAF':
-        cbar.set_label('[in]')
-    if snow.units == 'SI':
-        cbar.set_label('[mm]')
+    cbar.set_label('[%s]'%(snow.depthlbl))
 
     # Do pretty stuff for the right plot
     h1.axes.get_xaxis().set_ticks([])
