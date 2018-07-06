@@ -102,7 +102,6 @@ def basin_total(snow):
                                             state_summary[main].values)
         multiswi.wy18.iloc[:len(accum_summary[main])] = (
                                             accum_summary[main].values)
-        print(multiswi)
 
         if snow.units == 'SI':
             multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
@@ -116,11 +115,13 @@ def basin_total(snow):
         fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
                                     dpi=snow.dpi, nrows = 1, ncols = 2)
 
+        ax.plot(multiswe['wy13'], color = 'c',label = 'wy2013')
         ax.plot(multiswe['wy15'], color = 'g',label = 'wy2015')
         ax.plot(multiswe['wy16'], color = 'r',label = 'wy2016')
         ax.plot(multiswe['wy17'], color = 'k',label = 'wy2017')
         ax.plot(multiswe['wy18'], color = 'b', label = 'wy2018')
 
+        ax1.plot(multiswi['wy13'], color = 'c',label = 'wy2013')
         ax1.plot(multiswi['wy15'], color = 'g',label = 'wy2015')
         ax1.plot(multiswi['wy16'], color = 'r',label = 'wy2016')
         ax1.plot(multiswi['wy17'], color = 'k',label = 'wy2017')
@@ -141,17 +142,10 @@ def basin_total(snow):
             tick.set_rotation(30)
             tick1.set_rotation(30)
 
-        if snow.units == 'KAF':
-            ax.set_ylabel('[KAF]')
-            ax1.set_ylabel('[KAF]')
-            ax.axes.set_title('Water Year SWE')
-            ax1.axes.set_title('Accumulated Basin SWI')
-
-        if snow.units == 'SI':
-            ax.set_ylabel(r'[$km^3$]')
-            ax1.set_ylabel(r'[$km^3$]')
-            ax.axes.set_title('Basin SWE [$km^3$]')
-            ax1.axes.set_title('Accumulated Basin SWI [$km^3$]')
+        ax.set_ylabel('[%s]'%(snow.vollbl))
+        ax1.set_ylabel('[%s]'%(snow.vollbl))
+        ax.axes.set_title('Water Year SWE')
+        ax1.axes.set_title('Accumulated Basin SWI')
 
         ax.set_ylim((0,ax1.get_ylim()[1]))
         plt.tight_layout()
