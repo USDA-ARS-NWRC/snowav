@@ -210,29 +210,47 @@ class SNOWAV(object):
             if type(ucfg.cfg['masks'][item]) != list:
                 ucfg.cfg['masks'][item] = [ucfg.cfg['masks'][item]]
 
+        ####################################################
+        #          database
+        ####################################################
+        self.db_user = ucfg.cfg['database']['user']
+        self.db_password = ucfg.cfg['database']['password']
+        self.database = ucfg.cfg['database']['database']
+        self.db_table = ucfg.cfg['database']['data_table']
+        self.db_overwrite_flag = ucfg.cfg['database']['overwrite']
+        self.db_variables = ucfg.cfg['database']['variables']
+
+        if self.db_variables == 'all':
+            self.db_variables = ['swi','snowmelt','precip','swe','depth',
+                                 'density','avail','unavail','evap','cold']
+
+        if type(self.db_variables) != list:
+            self.db_variables = [self.db_variables]
+
+
         self.plotorder = []
         maskpaths = []
         masks = ucfg.cfg['masks']['basin_masks']
 
         # Initial ascii/nc handling...
-        if ((os.path.splitext(masks[0])[1] == '.txt') or 
+        if ((os.path.splitext(masks[0])[1] == '.txt') or
             (os.path.splitext(masks[0])[1] == '.asc') ):
-            
+
             for idx, m in enumerate(masks):
                 maskpaths.append(m)
                 self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
-                        
+
             try:
                 self.dem = np.genfromtxt(self.dempath)
             except:
                 self.dem = np.genfromtxt(self.dempath,skip_header = 6)
-                
-        if os.path.splitext(self.dempath)[1] == '.nc':      
+
+        if os.path.splitext(self.dempath)[1] == '.nc':
             ncf = nc.Dataset(self.dempath, 'r')
-            self.dem = ncf.variables['dem'][:]   
-            self.mask = ncf.variables['mask'][:]     
-            ncf.close()   
-              
+            self.dem = ncf.variables['dem'][:]
+            self.mask = ncf.variables['mask'][:]
+            ncf.close()
+
             self.plotorder = ucfg.cfg['masks']['mask_labels']
 
         self.nrows = len(self.dem[:,0])
@@ -321,19 +339,19 @@ class SNOWAV(object):
         # Compile the masks
         try:
             self.masks = dict()
-            
-            if ( (os.path.splitext(masks[0])[1] == '.txt') or 
+
+            if ( (os.path.splitext(masks[0])[1] == '.txt') or
                 (os.path.splitext(masks[0])[1] == '.asc') ):
                 for lbl,mask in zip(self.plotorder,maskpaths):
                     self.masks[lbl] = {'border': blank,
                                        'mask': np.genfromtxt(mask,skip_header=sr),
                                        'label': lbl}
-                        
+
             if os.path.splitext(self.dempath)[1] == '.nc':
                 self.masks[self.plotorder[0]] = {'border': blank,
                                    'mask': self.mask,
-                                   'label': self.plotorder[0]}                
-                 
+                                   'label': self.plotorder[0]}
+
         except:
             print('Failed creating mask dicts..')
             self.error = True
@@ -465,17 +483,17 @@ class SNOWAV(object):
             ixn = np.isnan(band)
             band[ixn] = 0
             accum = accum + band
-            
+
             daily_snowmelt = self.outputs['snowmelt'][iters]
             ixn = np.isnan(daily_snowmelt)
             daily_snowmelt[ixn] = 0
             snowmelt = snowmelt + daily_snowmelt
-            
+
             daily_evap = self.outputs['evap'][iters]
             ixn = np.isnan(daily_evap)
-            daily_evap[ixn] = 0    
+            daily_evap[ixn] = 0
             evap = evap + daily_evap
-                   
+
             tmpstate = self.outputs['swe'][iters]
             state_byday[:,:,iters] = tmpstate
 
@@ -757,6 +775,14 @@ class SNOWAV(object):
         msum = sum(mask)
         if int(msum) >= 1:
             self._logger.debug('%s entries in dataframe index with gaps larger than 24h '%(msum))
+
+    def save_to_database(self):
+        '''
+        Eventually this should use as many of the same fields as the awsm config
+        section [mysql] as possible
+
+        '''
+
 
     def createLog(self):
         '''
