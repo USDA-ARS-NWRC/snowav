@@ -1,5 +1,5 @@
 import os
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __core_config__ = os.path.abspath(os.path.dirname(__file__) + '/config/CoreConfig.ini')
 __recipes__ = os.path.abspath(os.path.dirname(__file__) + '/config/recipes.ini')
 
