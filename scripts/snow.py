@@ -7,6 +7,12 @@ def run(config_file):
     snow = snowav.framework.framework.SNOWAV(config_file = config_file)
     snow.process()
 
+    # if save to db -> save_to_database(snow)
+    if snow.location == 'database':
+        print('saving to database...')
+        snow.save_to_database()
+    # if save to csv - > need to write this still
+
     snowav.plotting.accumulated.accumulated(snow)
     snowav.plotting.current_image.current_image(snow)
     snowav.plotting.state_by_elev.state_by_elev(snow)

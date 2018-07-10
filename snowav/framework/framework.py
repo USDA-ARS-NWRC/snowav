@@ -21,6 +21,7 @@ import logging
 import coloredlogs
 import math
 import netCDF4 as nc
+import mysql.connector
 
 
 class SNOWAV(object):
@@ -211,14 +212,15 @@ class SNOWAV(object):
                 ucfg.cfg['masks'][item] = [ucfg.cfg['masks'][item]]
 
         ####################################################
-        #          database
+        #         results
         ####################################################
-        self.db_user = ucfg.cfg['database']['user']
-        self.db_password = ucfg.cfg['database']['password']
-        self.database = ucfg.cfg['database']['database']
-        self.db_table = ucfg.cfg['database']['data_table']
-        self.db_overwrite_flag = ucfg.cfg['database']['overwrite']
-        self.db_variables = ucfg.cfg['database']['variables']
+        self.location = ucfg.cfg['results']['location']
+        self.db_user = ucfg.cfg['results']['user']
+        self.db_password = ucfg.cfg['results']['password']
+        self.database = ucfg.cfg['results']['database']
+        self.db_table = ucfg.cfg['results']['data_table']
+        self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
+        self.db_variables = ucfg.cfg['results']['variables']
 
         if self.db_variables == 'all':
             self.db_variables = ['swi','snowmelt','precip','swe','depth',
@@ -782,6 +784,30 @@ class SNOWAV(object):
         section [mysql] as possible
 
         '''
+        # self.db_variables
+
+        # connect to database
+
+        # save to database
+
+        basin = 'Boise River Basin' # self.plotorder
+        var = 'swe' # self.db_variables
+        elev = 'total' # some list of elevations
+        usr = self.db_user
+        pwd = self.db_password
+        db = self.database
+        tbl = self.db_table
+        print(tbl,basin,var,elev)
+
+        # Will need to loop over basin, elev, var
+        qry = (
+                'SELECT * FROM %s WHERE (basin_id = %s)AND (variable = %s) AND (elevation = %s);'%(tbl, basin, var, elev)
+               )
+
+        # cnx = mysql.connector.connect(user = usr, password = pwd, host = '10.200.28.137', database = db)
+        cnx = mysql.connector.connect(user = usr, password = pwd)
+        out = pd.read_sql(qry, cnx)
+        print(out)
 
 
     def createLog(self):
