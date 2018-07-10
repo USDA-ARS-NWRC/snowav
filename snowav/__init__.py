@@ -16,6 +16,7 @@ __config_titles__ = {'basin': 'Overview information for SNOWAV, including'
                       'report': 'Paths for report LaTex template and summary'
                               ' files'
                       }
+from . import framework
 from . import plotting
 from . import methods
 from . import report

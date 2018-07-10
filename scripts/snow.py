@@ -4,7 +4,7 @@ import snowav
 
 def run(config_file):
 
-    snow = snowav.plotting.framework.SNOWAV(config_file = config_file)
+    snow = snowav.framework.framework.SNOWAV(config_file = config_file)
     snow.process()
 
     snowav.plotting.accumulated.accumulated(snow)
