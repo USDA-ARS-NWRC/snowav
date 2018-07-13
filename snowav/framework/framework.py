@@ -797,16 +797,15 @@ class SNOWAV(object):
         pwd = self.db_password
         db = self.database
         tbl = self.db_table
-        print(tbl,basin,var,elev)
-
+        
         # Will need to loop over basin, elev, var
         qry = (
-                'SELECT * FROM %s WHERE (basin_id = %s)AND (variable = %s) AND (elevation = %s);'%(tbl, basin, var, elev)
+                'SELECT * FROM %s WHERE (basin_id = " %s " )  AND (variable = " %s " )  AND (elevation = " %s " ); '%(tbl, basin, var, elev)
                )
 
         # cnx = mysql.connector.connect(user = usr, password = pwd, host = '10.200.28.137', database = db)
-        cnx = mysql.connector.connect(user = usr, password = pwd)
-        out = pd.read_sql(qry, cnx)
+        cnx = mysql.connector.connect(user = usr, password = pwd, database = 'results')
+        out = pd.read_sql(qry, cnx, index_col=bytes((bytearray(b'date_time'))))
         print(out)
 
 
