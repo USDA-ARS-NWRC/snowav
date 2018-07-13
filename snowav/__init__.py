@@ -17,6 +17,7 @@ __config_titles__ = {'basin': 'Overview information for SNOWAV, including'
                               ' files'
                       }
 from . import framework
+from . import database
 from . import plotting
 from . import methods
 from . import report

@@ -68,6 +68,7 @@ setup(
     url='https://github.com/roberton-mark/SNOWAV',
     packages=['snowav',
 				'snowav.framework',
+				'snowav.database',
                 'snowav.plotting',
                 'snowav.report',
                 'snowav.methods',
