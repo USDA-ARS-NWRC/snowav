@@ -5,13 +5,29 @@ import snowav
 def run(config_file):
 
     snow = snowav.framework.framework.SNOWAV(config_file = config_file)
-    snow.process()
+    snowav.framework.framework.read_config(snow)
+    snowav.framework.framework.process(snow)
 
-    # if save to db -> save_to_database(snow)
     if snow.location == 'database':
-        print('saving to database...')
-        snow.save_to_database()
-    # if save to csv - > need to write this still
+        print('Saving to database...')
+        import datetime
+        # values = {'basin_id': 1,
+        #           'date_time': datetime.datetime.now(),
+        #           'proc_time': datetime.datetime.now(),
+        #           'version': '1',
+        #           'variable': 'swe',
+        #           'var_units': 'in',
+        #           'value': 2.0,
+        #           'elevation': 'total',
+        #           'elev_units': 'ft'}
+        # for n in range(1,1000):
+        #     snowav.database.database.insert_results(snow,values)
+
+    start_date = datetime.datetime(2018,1,1)
+    end_date = datetime.datetime(2018,8,1)
+    value = 'swe'
+
+    snowav.database.database.query_basin_value(snow.database,start_date,end_date,value)
 
     snowav.plotting.accumulated.accumulated(snow)
     snowav.plotting.current_image.current_image(snow)
