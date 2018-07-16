@@ -19,7 +19,7 @@ class Basin_Metadata(Base):
     basin_id = Column(Integer, primary_key=True, autoincrement=True)
     basin_name = Column(String(250), nullable=False, unique=True)
     state = Column(String(250), nullable=True)
-    area = Column(types.Float(), nullable=False)
+    area = Column(types.Float(), nullable=True)
 
 class Results(Base):
     __tablename__ = 'Results'
@@ -38,3 +38,21 @@ class Results(Base):
     # This puts Basin_Metadata.results and Results.basin_metadata
     basin_metadata = relationship('Basin_Metadata',
                                 backref=backref('results',lazy='dynamic'))
+
+class Run_Metadata(Base):
+    __tablename__ = 'Run_Metadata'
+
+    run_id = Column(Integer, primary_key=True)
+    basin_id = Column(Integer, ForeignKey('Results.id'))
+    basin_name = Column(String(250), nullable=True)
+    description = Column(String(250), nullable=True)
+    smrf_version = Column(String(250), nullable=True)
+    awsm_version = Column(String(250), nullable=True)
+    snowav_version = Column(String(250), nullable=True)
+    data_type = Column(String(250), nullable=True)
+    data_location = Column(String(250), nullable=True)
+    file_type = Column(String(250), nullable=True)
+    config_file = Column(String(250), nullable=True)
+
+    run_metadata = relationship('Results',
+                                backref=backref('run_metadata',lazy='dynamic'))
