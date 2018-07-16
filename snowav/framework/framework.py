@@ -218,7 +218,7 @@ class SNOWAV(object):
         self.db_user = ucfg.cfg['results']['user']
         self.db_password = ucfg.cfg['results']['password']
         self.database = ucfg.cfg['results']['database']
-        self.db_table = ucfg.cfg['results']['data_table']
+        # self.db_table = ucfg.cfg['results']['data_table']
         self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
         self.db_variables = ucfg.cfg['results']['variables']
 
@@ -797,7 +797,7 @@ class SNOWAV(object):
         pwd = self.db_password
         db = self.database
         tbl = self.db_table
-        
+
         # Will need to loop over basin, elev, var
         qry = (
                 'SELECT * FROM %s WHERE (basin_id = " %s " )  AND (variable = " %s " )  AND (elevation = " %s " ); '%(tbl, basin, var, elev)
