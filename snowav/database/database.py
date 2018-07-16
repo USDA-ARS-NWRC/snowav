@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
 from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata
+from sqlalchemy import and_
 
 # Coming from scripts/snow.py
 # values = {}
@@ -51,3 +52,22 @@ def insert_results(snow,values):
     session.add(val)
     session.commit()
     session.close()
+
+def pull_results(loc, start_date, end_date, value):
+    '''
+
+    '''
+
+    # loc = snow.database
+
+    engine = create_engine('sqlite:///%s'%(loc))
+
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    qry = session.query(Results).filter(and_((Results.date_time > start_date),
+                                          (Results.date_time < end_date),
+                                          (Results.variable == value),
+                                          (Results.basin_id == 1)))
+
+    print(len(qry[:]),qry[0].value)
