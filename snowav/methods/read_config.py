@@ -62,14 +62,13 @@ def read_config(self, external_logger=None):
     #           outputs                                #
     ####################################################
     self.dplcs = ucfg.cfg['outputs']['decimals']
-    self.phour = ucfg.cfg['outputs']['phour']
-    self.chour = ucfg.cfg['outputs']['chour']
+    self.start_date = ucfg.cfg['outputs']['start_date']
+    self.end_date = ucfg.cfg['outputs']['end_date']
 
-    if (self.phour is not None and self.chour is not None):
-        if self.phour >= self.chour:
-            self._logger.info('phour > chour, needs to be fixed in config file,'
+    if (self.start_date is not None and self.end_date is not None):
+        if self.start_date >= self.end_date:
+            self._logger.info('start_date > end_date, needs to be fixed in config file,'
                               + ' exiting...')
-            print('phour > chour, needs to be fixed in config file, exiting...')
             return
 
     # Check for forced flight comparison images
@@ -280,23 +279,22 @@ def read_config(self, external_logger=None):
     self.em_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
     self.snow_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
 
+    print(self.start_date,self.end_date)
     # If no psnowFile and csnowFile specified, use first and last
-    if self.chour is not None:
-        self.psnowFile = self.phour
-        self.csnowFile = self.chour
+    if (self.start_date is not None) and (self.end_date is not None):
+        self.psnowFile = self.start_date
+        self.csnowFile = self.end_date
 
     else:
-        self.phour = self.snow_files[0]
-        self.chour = self.snow_files[-1]
-        self.psnowFile = self.phour
-        self.csnowFile = self.chour
-        print('phour and/or chour not specified, using:'
+        self.psnowFile = self.outputs['dates'][0]
+        self.csnowFile = self.outputs['dates'][-1]
+        print('start_date and/or end_date not specified, using:'
               + ' %s and %s'%(self.psnowFile,self.csnowFile))
 
-    if (self.phour not in self.snow_files) or (self.chour not in self.snow_files):
-        print('phour and/or chour are not hours in run_dirs, exiting...')
-        self.error = True
-        return
+    # if (self.phour not in self.snow_files) or (self.chour not in self.snow_files):
+    #     print('phour and/or chour are not hours in run_dirs, exiting...')
+    #     self.error = True
+    #     return
 
     if self.fltphour is not None:
         if ( (self.fltphour not in self.snow_files) or
@@ -369,10 +367,10 @@ def read_config(self, external_logger=None):
 
     # Copy the config file where figs will be saved
     extf = os.path.splitext(os.path.split(self.config_file)[1])
-    ext_shr = str(self.phour)
-    ext_ehr = str(self.chour)
+    ext_shr = self.start_date.date().strftime("%Y%m%d")
+    ext_ehr = self.end_date.date().strftime("%Y%m%d")
     self.figs_path = os.path.join(self.save_path,
-                                '%s_%s/'%(str(self.phour),str(self.chour)))
+                                '%s_%s/'%(ext_shr,ext_ehr))
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)
@@ -387,11 +385,8 @@ def read_config(self, external_logger=None):
 
     # Only need to store this name if we decide to
     # write more to the copied config file...
-    self.config_copy = (self.figs_path
-                        + extf[0]
-                        + self.name_append
-                        + '_%s_%s'%(ext_shr[1][1:5],ext_ehr[1][1:5])
-                        + extf[1])
+    self.config_copy = (self.figs_path + extf[0] + self.name_append
+                        + '_%s_%s'%(ext_shr,ext_ehr) + extf[1])
 
     if not os.path.isfile(self.config_copy):
         generate_config(ucfg,self.config_copy)
