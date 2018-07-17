@@ -14,7 +14,7 @@ import pandas as pd
 # values = {}
 # snow.db_variables
 
-def insert_results(snow,values):
+def insert_results(loc,values):
     '''
     values = {'basin_id': 1,
               'date_time': datetime.datetime.now(),
@@ -27,8 +27,6 @@ def insert_results(snow,values):
               'elev_units': 'ft'}
 
     '''
-
-    loc = snow.database
 
     engine = create_engine('sqlite:///%s'%(loc))
     DeclarativeBase = declarative_base()

@@ -21,6 +21,9 @@ def process(self):
     '''
     This function processes and summarizes iSnobal outputs.
 
+    to-dos:
+    -round
+
     '''
 
     self._logger.info('SNOWAV processing iSnobal outputs...')

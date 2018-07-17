@@ -40,7 +40,6 @@ class SNOWAV(object):
 
                 # Put into format for Results table on database
                 database.package_results.package_results(self)
-                print(self.values)
 
                 # Insert into database
                 # snowav.database.database.insert_results(self,values)
