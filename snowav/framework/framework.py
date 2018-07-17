@@ -2,6 +2,7 @@
 import os
 import snowav
 from snowav import methods
+from snowav import database
 
 class SNOWAV(object):
 
@@ -23,17 +24,18 @@ class SNOWAV(object):
 
         # Read config file
         methods.read_config.read_config(self)
-        # include check in read_config
 
-        # Check if data already exists on database (regardless of config option)
-        self.database_flag = False
-        if self.database_flag is not True:
-            # Finish pre-processing by loading snow.nc, etc...
+        # Do any values in this date already already exist?
+        flag = database.database.check_fields(self.database, self.start_date,
+                                              self.end_date, 'swe')
+
+        # If data does not exist, process and put it on the database
+        if flag is not True:
 
             # Process
             snowav.methods.process.process(self)
 
-            # Save
+            # Save data
             if self.location == 'database':
                 # Package results into values dict
 
@@ -41,23 +43,25 @@ class SNOWAV(object):
                 print('not done yet')
                 # snowav.database.database.insert_results(self,values)
 
-            elif self.location == 'csv':
+            if self.location == 'csv':
                 print('Make a csv-saver...')
 
-            else:
-                print('not sure what to do here yet')
 
         # If data does already exist on the database
-        if self.database_flag is True:
-            print('Some nice question about should we overwrite?')
+        if (flag is True) and (self.db_overwrite_flag is not True):
+            print('Database values in the date range '
+                  + '%s to %s already exist.\n'%(self.start_date,self.end_date)
+                  + 'Config option [results] -> overwrite is set to False, '
+                  + 'if you wish to overwrite, set to True.')
 
-            # Design some queries to get summary data we need
-            # Should be able to pull these fields from snow, but write them
-            # out explicitly here so that we can call outside of this more easily
-            # later on if necessary
-            # snowav.database.database.query_basin_value(self.database, start_date,
-            #                                            end_date, value)
 
+        if (flag is True) and (self.db_overwrite_flag is True):
+            print('Database values in the date range '
+                  + '%s to %s already exist.\n'%(self.start_date,self.end_date)
+                  + 'WARNING: config option [results] -> overwrite is set to True, '
+                  + 'database values will be overwritten...')
+
+        # Plots
         snowav.plotting.accumulated.accumulated(self)
         snowav.plotting.current_image.current_image(self)
         snowav.plotting.state_by_elev.state_by_elev(self)

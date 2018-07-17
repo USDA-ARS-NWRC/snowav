@@ -279,7 +279,6 @@ def read_config(self, external_logger=None):
     self.em_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
     self.snow_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
 
-    print(self.start_date,self.end_date)
     # If no psnowFile and csnowFile specified, use first and last
     if (self.start_date is not None) and (self.end_date is not None):
         self.psnowFile = self.start_date
