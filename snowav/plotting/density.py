@@ -1,5 +1,5 @@
 
-from snowav.methods.MidpointNormalize import MidpointNormalize
+from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
@@ -41,7 +41,7 @@ def density(snow):
                                 nrows = nr, ncols = nc)
     ax = np.array(ax)
     axs = ax.ravel()
-       
+
     if nf == 5:
         fig.delaxes(axs[5])
 
@@ -83,7 +83,7 @@ def density(snow):
         axs[iters].set_ylim((ylim))
         for tick in axs[iters].get_xticklabels():
             tick.set_rotation(30)
-            
+
         axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
         axs[iters].text(0.5, 0.92, name, horizontalalignment = 'center',
@@ -172,7 +172,7 @@ def density(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
-        
+
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1] + 0.5))
 
     ax1.set_ylabel('density - per elevation band')

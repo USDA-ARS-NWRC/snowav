@@ -1,4 +1,4 @@
-from snowav.methods.MidpointNormalize import MidpointNormalize
+from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors

@@ -1,5 +1,5 @@
 
-from snowav.methods.MidpointNormalize import MidpointNormalize
+from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
@@ -95,7 +95,7 @@ def swe_change(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
-        
+
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     ylims = ax1.get_ylim()

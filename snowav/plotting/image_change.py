@@ -1,5 +1,5 @@
 
-from snowav.methods.MidpointNormalize import MidpointNormalize
+from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
@@ -125,8 +125,8 @@ def image_change(snow):
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
-        
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))    
+
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     ylims = ax1.get_ylim()
     if ylims[0] < 0 and ylims[1] == 0:
@@ -173,7 +173,7 @@ def image_change(snow):
                  transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'SJ':
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)                 
+             transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'TUOL':
         ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
