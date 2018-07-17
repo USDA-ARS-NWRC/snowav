@@ -37,10 +37,12 @@ class SNOWAV(object):
 
             # Save data
             if self.location == 'database':
-                # Package results into values dict
+
+                # Put into format for Results table on database
+                database.package_results.package_results(self)
+                print(self.values)
 
                 # Insert into database
-                print('not done yet')
                 # snowav.database.database.insert_results(self,values)
 
             if self.location == 'csv':

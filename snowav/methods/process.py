@@ -42,7 +42,7 @@ def process(self):
     state = copy.deepcopy(accum)
     depth = copy.deepcopy(accum)
     pstate = copy.deepcopy(accum)
-    state_byday = np.zeros((self.nrows,self.ncols,len(self.snow_files)))
+    state_byday = np.zeros((self.nrows,self.ncols,len(self.outputs['dates'])))
 
     accum_byelev = pd.DataFrame(index = self.edges,
                                 columns = self.masks.keys())
@@ -73,8 +73,7 @@ def process(self):
     accum_sub_flag = False
     adj = 0 # this is a hack for Hx-repeats-itself forecasting
     t = 0
-    for iters,(em_name,snow_name) in enumerate(zip(self.em_files,
-                                                   self.snow_files)):
+    for iters,snow_name in enumerate(self.outputs['dates']):
 
         date = self.outputs['dates'][iters]
 
@@ -107,11 +106,13 @@ def process(self):
         state_byday[:,:,iters] = tmpstate
 
         # Get rain from input data
-        sf = self.rundirs_dict[snow_name].replace('runs','data')
+        hr = int(self.outputs['time'][iters])
+
+        sf = self.rundirs_dict[hr].replace('runs','data')
         sf = sf.replace('run','data')
         sf = sf.replace('output','ppt_4b')
         ppt_path = sf.split('em')[0]
-        out_hr = snow_name
+        out_hr = hr
         hrs = range(int(out_hr) - 23,int(out_hr) + 1)
 
         pFlag = False
@@ -195,8 +196,8 @@ def process(self):
             pf = ', csnowFile'
 
             debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                self.rundirs_dict[int(snow_name)],
-                                str(int(snow_name) - t),
+                                self.rundirs_dict[hr],
+                                str(hr - t),
                                 date.date().strftime("%Y-%-m-%-d"),pfs,pf)
             self._logger.debug(debug)
 
@@ -213,14 +214,14 @@ def process(self):
 
         # It's nice to see where we are...
         debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                self.rundirs_dict[int(snow_name)],
-                                str(int(snow_name) - t),
+                                self.rundirs_dict[hr],
+                                str(hr - t),
                                 date.date().strftime("%Y-%-m-%-d"),pfs,pf)
 
         self._logger.debug(debug)
 
         # Step this along so that we can see how many hours between outputs
-        t = int(snow_name)
+        t = int(hr)
 
     # Append date to report name
     parts = self.report_name.split('.')

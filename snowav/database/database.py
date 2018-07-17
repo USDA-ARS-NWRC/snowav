@@ -72,6 +72,33 @@ def query_basin_value(loc, start_date, end_date, value):
                                           (Results.variable == value),
                                           (Results.basin_id == 1)))
 
-    print(qry.statement)
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
+
+def check_fields(loc, start_date, end_date, value):
+    '''
+    This functions queries the database and returns True if any value exists in
+    the given date range, and False if not.
+
+    '''
+
+    # start_date = datetime.datetime(1901,1,1)
+    # end_date = datetime.datetime(2020,1,1)
+
+    engine = create_engine('sqlite:///%s'%(loc))
+    connection = engine.connect()
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    qry = session.query(Results).filter(and_((Results.date_time > start_date),
+                                          (Results.date_time < end_date),
+                                          (Results.variable == value))).first()
+
+    if qry is not None :
+        flag = True
+    else:
+        flag = False
+
+    session.close()
+
+    return flag

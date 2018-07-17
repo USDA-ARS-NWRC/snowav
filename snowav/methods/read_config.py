@@ -22,6 +22,9 @@ def read_config(self, external_logger=None):
     '''
     Read snowav config file and assign fields.
 
+    To-dos:
+    -make a catch for start/end dates outside of range
+
     '''
     print('Reading SNOWAV config file and loading iSnobal outputs...')
     ucfg = get_user_config(self.config_file, modules = 'snowav')
@@ -265,7 +268,7 @@ def read_config(self, external_logger=None):
 
         # Make a dict for wyhr-rundir lookup
         for t in output.time:
-            self.rundirs_dict[t] = rd
+            self.rundirs_dict[int(t)] = rd
 
         for n in range(0,len(output.em_data[8])):
             self.outputs['swi'].append(output.em_data[8][n,:,:])
@@ -276,8 +279,6 @@ def read_config(self, external_logger=None):
             self.outputs['depth'].append(output.snow_data[0][n,:,:])
             self.outputs['rho'].append(output.snow_data[1][n,:,:])
 
-    self.em_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
-    self.snow_files = np.ndarray.tolist(self.outputs['time'].astype('int'))
 
     # If no psnowFile and csnowFile specified, use first and last
     if (self.start_date is not None) and (self.end_date is not None):
@@ -295,6 +296,7 @@ def read_config(self, external_logger=None):
     #     self.error = True
     #     return
 
+    # Need to change these from hours to times!
     if self.fltphour is not None:
         if ( (self.fltphour not in self.snow_files) or
              (self.fltchour not in self.snow_files) ):
