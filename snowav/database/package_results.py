@@ -18,11 +18,19 @@ def package_results(self):
     # This is not efficient
     basin_id = {'Boise River Basin':1,'Featherville':2,'Twin Springs':3,'Mores Creek':4}
 
+    # This dict should be created in process()
+    dataframes = {'swe':self.swe_volume}
+    k = list(dataframes.keys())
+    # k[0] is 'swe'
+    # var is like 'Boise River Basin'
+    # dataframes[k[0]][var] is self.swe_volume['Boise River Basin']
+
     # By basin
-    for var in self.state_byelev:
+    for var in list(dataframes[k[0]]):
 
         # By elevation band
-        for iters,r in enumerate(self.state_byelev[var].values):
+        for iters,r in enumerate(dataframes[k[0]][var].values):
+
             values = {'basin_id': basin_id[var],
                       'date_time': self.dateTo,
                       'proc_time': datetime.datetime.now(),
@@ -30,7 +38,7 @@ def package_results(self):
                       'variable': 'swe',
                       'var_units': self.vollbl,
                       'value': r,
-                      'elevation': str(self.state_byelev[var].index[iters]),
+                      'elevation': str(dataframes[k[0]][var].index[iters]),
                       'elev_units': self.elevlbl}
 
             snowav.database.database.insert_results(self.database,values)
@@ -42,7 +50,7 @@ def package_results(self):
                   'version': 'snowav'+ snowav.__version__,
                   'variable': 'swe',
                   'var_units': self.vollbl,
-                  'value': sum(self.state_byelev[var].values),
+                  'value': sum(dataframes[k[0]][var].values),
                   'elevation': 'total',
                   'elev_units': self.elevlbl}
 

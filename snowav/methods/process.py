@@ -23,6 +23,7 @@ def process(self):
 
     to-dos:
     -round
+    -dict of dataframes?
 
     '''
 
@@ -47,14 +48,13 @@ def process(self):
     pstate = copy.deepcopy(accum)
     state_byday = np.zeros((self.nrows,self.ncols,len(self.outputs['dates'])))
 
-    accum_byelev = pd.DataFrame(index = self.edges,
-                                columns = self.masks.keys())
+    accum_byelev = pd.DataFrame(index = self.edges,columns = self.masks.keys())
     evap_byelev = copy.deepcopy(accum_byelev)
     rain_bg_byelev = copy.deepcopy(accum_byelev)
     precip_byelev = copy.deepcopy(accum_byelev)
     precip_byelev_sub = copy.deepcopy(accum_byelev)
     accum_byelev_sub = copy.deepcopy(accum_byelev)
-    state_byelev = copy.deepcopy(accum_byelev)
+    swe_volume = copy.deepcopy(accum_byelev)
     density_m_byelev = copy.deepcopy(accum_byelev)
     depth_byelev = copy.deepcopy(accum_byelev)
     state_mswe_byelev = copy.deepcopy(accum_byelev)
@@ -252,7 +252,7 @@ def process(self):
         delta_state_byelev_mask = np.multiply(delta_state,mask)
         if self.flt_flag is True:
             flt_delta_state_byelev_mask = np.multiply(flt_delta_state,mask)
-        state_byelev_mask = np.multiply(state,mask)
+        swe_volume_mask = np.multiply(state,mask)
         state_mswe_byelev_mask = np.multiply(state,mask)
         density_m_byelev_mask = np.multiply(self.density,mask)
 
@@ -280,8 +280,8 @@ def process(self):
             precip_byelev_sub.loc[b,name] = np.nansum(precip_sub_mask[ind])
             accum_byelev_sub.loc[b,name] = np.nansum(accum_mask_sub[ind])
             snowmelt_byelev.loc[b,name] = np.nansum(snowmelt_mask[ind])
-            state_byelev.loc[b,name] = np.nansum(state_byelev_mask[ind])
-            depth_byelev.loc[b,name] = np.nansum(state_byelev_mask[ind])
+            swe_volume.loc[b,name] = np.nansum(swe_volume_mask[ind])
+            depth_byelev.loc[b,name] = np.nansum(swe_volume_mask[ind])
             melt.loc[b,name] = np.nansum(state_bin[cind])
             nonmelt.loc[b,name] = np.nansum(state_bin[~cind])
             snowmelt_byelev_sub.loc[b,name] = np.nansum(
@@ -323,8 +323,7 @@ def process(self):
     self.pstate = np.multiply(pstate,self.conversion_factor)
 
     # At last time step, volume
-    self.state_byelev = np.multiply(state_byelev,self.conversion_factor)
-    # self.depth_byelev = np.multiply(depth_byelev,self.conversion_factor)
+    self.swe_volume = np.multiply(swe_volume,self.conversion_factor)
 
     # Sum over all time steps, depth
     self.precip = np.multiply(precip,self.depth_factor)
