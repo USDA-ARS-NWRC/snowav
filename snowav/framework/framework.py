@@ -30,7 +30,7 @@ class SNOWAV(object):
                                               self.end_date, 'swe')
 
         # If data does not exist, process and put it on the database
-        if flag is not True:
+        if (self.db_overwrite_flag is True) or (flag is not True):
 
             # Process
             snowav.methods.process.process(self)
@@ -39,7 +39,7 @@ class SNOWAV(object):
             if self.location == 'database':
 
                 # Put into format for Results table on database
-                database.package_results.package_results(self)
+                # database.package_results.package_results(self)
                 print('finished onto database')
 
                 # Insert into database

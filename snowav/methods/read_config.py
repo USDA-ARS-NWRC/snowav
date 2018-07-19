@@ -250,10 +250,9 @@ def read_config(self, external_logger=None):
     blank = np.zeros((self.nrows,self.ncols))
 
     # Set up processed information
-    # Currently we are only using the last time step values in rho and
-    # coldcont...
-    self.outputs = {'swi':[], 'evap':[], 'snowmelt':[], 'swe':[], 'depth':[],
-                'dates':[], 'time':[], 'rho':[], 'coldcont':[] }
+    self.outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],
+                    'depth':[], 'dates':[], 'time':[], 'density':[],
+                    'coldcont':[] }
 
     self.rundirs_dict = {}
 
@@ -271,13 +270,13 @@ def read_config(self, external_logger=None):
             self.rundirs_dict[int(t)] = rd
 
         for n in range(0,len(output.em_data[8])):
-            self.outputs['swi'].append(output.em_data[8][n,:,:])
+            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
             self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-            self.outputs['evap'].append(output.em_data[6][n,:,:])
+            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
             self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-            self.outputs['swe'].append(output.snow_data[2][n,:,:])
+            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
             self.outputs['depth'].append(output.snow_data[0][n,:,:])
-            self.outputs['rho'].append(output.snow_data[1][n,:,:])
+            self.outputs['density'].append(output.snow_data[1][n,:,:])
 
 
     # If no psnowFile and csnowFile specified, use first and last

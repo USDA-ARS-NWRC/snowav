@@ -2,7 +2,7 @@
 import datetime
 import snowav
 
-def package_results(self):
+def package_results(self, df, output, dtime):
     '''
     values = {'basin_id': 1,
               'date_time': datetime.datetime.now(),
@@ -18,43 +18,46 @@ def package_results(self):
     # This is not efficient
     basin_id = {'Boise River Basin':1,'Featherville':2,'Twin Springs':3,'Mores Creek':4}
 
-    # This dict should be created in process()
-    dataframes = {'swe':self.swe_volume}
-    k = list(dataframes.keys())
-    # k[0] is 'swe'
-    # var is like 'Boise River Basin'
-    # dataframes[k[0]][var] is self.swe_volume['Boise River Basin']
+    # Make labels
+    if ('z' in output) or ('depth' in output):
+        lbl = self.depthlbl
+
+    if ('vol' in output) or ('avail' in output):
+        lbl = self.vollbl
+
+    if output == 'density':
+        lbl = 'kg/m^3'
+
+    if output == 'coldcont':
+        lbl = 'MJ'
 
     # By basin
-    for var in list(dataframes[k[0]]):
+    for var in df:
 
         # By elevation band
-        for iters,r in enumerate(dataframes[k[0]][var].values):
+        for iters,r in enumerate(df[var].values):
 
             values = {'basin_id': basin_id[var],
-                      'date_time': self.dateTo,
+                      'date_time': dtime,
                       'proc_time': datetime.datetime.now(),
                       'version': 'snowav'+ snowav.__version__,
-                      'variable': 'swe',
-                      'var_units': self.vollbl,
+                      'variable': output,
+                      'var_units': lbl,
                       'value': r,
-                      'elevation': str(dataframes[k[0]][var].index[iters]),
+                      'elevation': str(df[var].index[iters]),
                       'elev_units': self.elevlbl}
 
             snowav.database.database.insert_results(self.database,values)
 
         # All elevations
         values = {'basin_id': basin_id[var],
-                  'date_time': self.dateTo,
+                  'date_time': dtime,
                   'proc_time': datetime.datetime.now(),
                   'version': 'snowav'+ snowav.__version__,
-                  'variable': 'swe',
-                  'var_units': self.vollbl,
-                  'value': sum(dataframes[k[0]][var].values),
+                  'variable': output,
+                  'var_units': lbl,
+                  'value': sum(df[var].values),
                   'elevation': 'total',
                   'elev_units': self.elevlbl}
 
         snowav.database.database.insert_results(self.database,values)
-
-
-    # self.values = values
