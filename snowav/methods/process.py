@@ -17,6 +17,7 @@ import math
 import netCDF4 as nc
 import mysql.connector
 from snowav import database
+import warnings
 
 def process(self):
     '''
@@ -35,7 +36,6 @@ def process(self):
         - finally, that is sent to the database
 
     to-dos:
-    - round
     - Hx-Repeats-Itself forecasting probably no longer works in this format
 
     '''
@@ -44,6 +44,9 @@ def process(self):
 
     # Is this a good idea?
     pd.options.mode.chained_assignment = None
+
+    # This suppresses the "mean of empty slice" warning
+    warnings.filterwarnings('ignore')
 
     # based on an average of 60 W/m2 from TL paper
     cclimit = -5*1000*1000
@@ -266,6 +269,7 @@ def process(self):
             # Send daily results to database
             if self.location == 'database':
                 df = daily_outputs[k].copy()
+                df = df.round(decimals = 3)
                 database.package_results.package_results(self, df, k,
                                                          self.outputs['dates'][iters])
 
