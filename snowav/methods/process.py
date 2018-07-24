@@ -22,17 +22,21 @@ def process(self):
     '''
     This function processes and summarizes iSnobal outputs.
 
-    to-dos:
-    -round
-    - basin total on database for depths isn't correct
+    It loops over each day in the specified directory and:
+        - sums total precip and rain from the ipw ppt ppt files
+        - then loops over each daily_outputs ('swe_z', 'swe_vol', etc)
+        - then loops over sub-basin
+        - then loops over elevation band, and calculates volumes and mean depths
+            (masked where there is SWE greater than 0) for each daily_outputs
+            value in that elevation band
+        - once all elevation bands for each subbasin have been calculated,
+            'total' fields (either mean depth for the subbasin or total volume
+            for the subbasin) are calculated
+        - finally, that is sent to the database
 
-    images:
-    - swi, period summary
-    - cold content, end of period
-    - swe, end of period
-    - swe, change during period
-    - swe, flt change
-    - density, end of period
+    to-dos:
+    - round
+    - Hx-Repeats-Itself forecasting probably no longer works in this format
 
     '''
 
@@ -43,18 +47,15 @@ def process(self):
 
     # based on an average of 60 W/m2 from TL paper
     cclimit = -5*1000*1000
-    # self.cold = np.multiply(self.cold,0.000001)
 
     # Daily, by elevation
     dz = pd.DataFrame(np.nan, index = self.edges, columns = self.masks.keys())
 
-    # These get treated different for basin totals than volumes do
-    mean_fields = ['swe_z','swi_z','precip_z','depth','density','rain_z',
-                   'evap_z','coldcont']
-
     adj = 0
     t = 0
     for iters, out_date in enumerate(self.outputs['dates']):
+
+        # Initialize output dataframes for every day
         daily_outputs = {'swe_vol':dz.copy(),
                          'swe_avail':dz.copy(),
                          'swe_unavail':dz.copy(),
@@ -69,10 +70,6 @@ def process(self):
                          'evap_z':dz.copy(),
                          'coldcont':dz.copy()}
 
-        # starting empty string for debug statement
-        pf = ''
-        pfs = ''
-
         # Hack for Hx-repeats-itself forecasting
         if out_date == self.psnowFile:
             self.dateFrom = self.outputs['dates'][iters]
@@ -80,18 +77,16 @@ def process(self):
                 self._logger.debug('Hacking adj_hours...')
                 adj = self.adj_hours
 
-        self.cold = np.multiply(self.outputs['coldcont'][iters],0.000001)
-
         # Get daily rain from hourly input data
         hr = int(self.outputs['time'][iters])
         sf = self.rundirs_dict[hr].replace('runs','data')
         sf = sf.replace('run','data')
-        sf = sf.replace('output','ppt_4b')
-        ppt_path = sf.split('em')[0]
+        ppt_path = sf.replace('output','ppt_4b')
         hrs = range(hr - 23, hr + 1)
 
         pFlag = False
         ppt_files = []
+        # Get all the ppt_files for that day
         for hr in hrs:
             # Make 0-padded strings
             if hr < 100:
@@ -116,49 +111,13 @@ def process(self):
                 rain = rain + np.multiply(pre,(1-percent_snow))
                 precip = precip + pre
 
-        if pFlag:
-            pfs = ', precip added'
-
-        # When it is the first snow file, copy
-        if out_date == self.psnowFile:
-            pf = ', psnowFile'
-            pstate = copy.deepcopy(self.outputs['swe_z'][iters])
-
-        # When it is the first flt snow file, copy
-        if (self.flt_flag is True) and (out_date == self.fltphour):
-            fltpstate = copy.deepcopy(self.outputs['swe_z'][iters])
-            self.fltdateFrom = self.outputs['dates'][iters]
-
-        # When it is the second flt snow file, copy
-        if (self.flt_flag is True) and (out_date == self.fltchour):
-            fltcstate = copy.deepcopy(self.outputs['swe_z'][iters])
-            flt_delta_state = fltpstate - fltcstate
-            self.fltdateTo = self.outputs['dates'][iters]
-
-        # When it hits the current snow file, copy
-        if out_date == self.csnowFile:
-            self.dateTo = self.outputs['dates'][iters]
-
-            depth = self.outputs['depth'][iters]
-            self.density = copy.deepcopy(self.outputs['density'][iters])
-            self.cold = self.outputs['coldcont'][iters]
-
-            # Run debug statement before ending the process
-            pf = ', csnowFile'
-            debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
-                                self.rundirs_dict[hr],
-                                str(hr - t),
-                                out_date.date().strftime("%Y-%-m-%-d"),pfs,pf)
-            self._logger.debug(debug)
-
         # Get a snow-free mask ready
         swe = copy.deepcopy(self.outputs['swe_z'][iters])
 
-        # Go through each outputs; some are available from self.outputs,
-        # some are calculated
+        # Loop over outputs (depths are copied, volumes are calculated)
         for k in list(daily_outputs.keys()):
-            # Mask by subbasin
 
+            # Mask by subbasin
             for name in self.masks:
 
                 mask = copy.deepcopy(self.masks[name]['mask'])
@@ -173,8 +132,8 @@ def process(self):
                 # make a subbasin, by elevation, snow-free mask
                 swe_mask_sub = np.multiply(copy.deepcopy(swe),mask)
 
-                # only need this for swe and cold content
-                if k in ['swe_z','coldcont','density']:
+                # Need this for coldcontent, swe_avail, swe_unavail
+                if k in ['swe_z','coldcont']:
                     cold = np.multiply(self.outputs[k][iters],mask)
 
                 # Now mask the subbasins by elevation band
@@ -182,17 +141,18 @@ def process(self):
                     ind = elevbin == n
                     b = self.edges[n]
 
-                    # index for pixels with SWE, in subbasin, in elevation band
+                    # index for pixels with SWE, in subbasin, in elevation band,
+                    # needed for mean values
                     ix = swe_mask_sub[ind] > 0
 
                     # Assign values
                     # swe_z and derivatives
                     if k == 'swe_z':
-                        ccb = cold[ind]
+                        ccb = cold[ind][ix]
                         cind = ccb > cclimit
 
                         # masked out by pixels with snow -> [ix]
-                        swe_bin = mask_out[ind]
+                        swe_bin = mask_out[ind][ix]
                         if swe_bin.size:
                             r = np.nansum(swe_bin[cind])
                             ru = np.nansum(swe_bin[~cind])
@@ -209,8 +169,6 @@ def process(self):
                                                     self.conversion_factor) )
 
                     elif k == 'swi_z':
-                        # Not masked out by pixels with snow
-                        r = np.nansum(mask_out[ind])
 
                         daily_outputs['swi_z'].loc[b,name] = (
                                         np.multiply(np.nanmean(mask_out[ind]),
@@ -222,14 +180,13 @@ def process(self):
                         # masked out by pixels with snow -> [ix]
                         r = np.nanmean(mask_out[ind][ix])
 
-                        # Depth is in m (swi/precip/etc are mm)
                         if k == 'depth':
                             daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,self.depth_factor) )
+                                        np.multiply(r,self.depth_factor*1000) )
 
-                        # evap_z
-                        daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,self.depth_factor) )
+                        else:
+                            daily_outputs[k].loc[b,name] = (
+                                            np.multiply(r,self.depth_factor) )
 
                     elif k in ['coldcont','density']:
                         # masked out by pixels with snow -> [ix]
@@ -253,9 +210,7 @@ def process(self):
                         daily_outputs[k].loc[b,name] = (
                                         np.multiply(r,self.depth_factor) )
 
-                # calculate basin total mean/volume
-                # previously was looping over mean_fields...
-                # if k in mean_fields:
+                # Add basin total mean/volume field once all elevations are done
                 ixs = swe_mask_sub > 0
 
                 if k in ['swe_z','evap_z','coldcont']:
@@ -276,7 +231,7 @@ def process(self):
                 if k == 'depth':
                     # Mask by snow-free
                     out = np.multiply(self.outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out[ixs]), self.depth_factor)
+                    total = np.multiply(np.nanmean(out[ixs]), self.depth_factor*1000)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'density':
@@ -307,11 +262,6 @@ def process(self):
                     total = np.multiply(np.nanmean(out), self.depth_factor)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
-                # k is never called for these!
-                # if k in ['swe_vol','swe_avail','swe_unavail','swi_vol','precip_vol']:
-                #     s = np.nansum(daily_outputs[k][name].values)
-                #     daily_outputs[k].loc['total',name] = copy.deepcopy(s)
-
             # Send daily results to database
             if self.location == 'database':
                 df = daily_outputs[k].copy()
@@ -319,10 +269,10 @@ def process(self):
                                                          self.outputs['dates'][iters])
 
         # It's nice to see where we are...
-        debug = 'snow file: %s, hours: %s, date: %s%s%s'%(
+        debug = 'snow file: %s, hours: %s, date: %s'%(
                                 self.rundirs_dict[hr],
                                 str(hr - t),
-                                out_date.date().strftime("%Y-%-m-%-d"),pfs,pf)
+                                out_date.date().strftime("%Y-%-m-%-d"))
 
         self._logger.debug(debug)
 
@@ -334,9 +284,6 @@ def process(self):
     self.report_name = ( parts[0]
                        + self.dateTo.date().strftime("%Y%m%d")
                        + '.' + parts[1] )
-
-    # Difference in state (SWE)
-    delta_state = state - pstate
 
     # Print some summary info...
     mask = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
