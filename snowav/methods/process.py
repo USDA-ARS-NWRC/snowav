@@ -1,21 +1,13 @@
 
 import numpy as np
 from smrf import ipw
-from shutil import copyfile
 import os
 import copy
 import pandas as pd
-import sys
 import datetime
-import snowav.utils.wyhr_to_datetime as wy
-import snowav.utils.get_topo_stats as ts
-from snowav.utils.utilities import get_snowav_path
-from snowav.utils.OutputReader import iSnobalReader
 import logging
 import coloredlogs
-import math
 import netCDF4 as nc
-import mysql.connector
 from snowav import database
 import warnings
 

@@ -12,6 +12,10 @@ class SNOWAV(object):
         run processing, results storage, figures, and reports as specified in
         the config file.
 
+        To-dos:
+        - expand database.database.check_fields functionality for more robust
+            field checking
+
         '''
 
         if os.path.isfile(config_file):
