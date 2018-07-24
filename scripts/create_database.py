@@ -8,8 +8,16 @@ from snowav.database.tables import Base, Basin_Metadata, Results, Run_Metadata
 This script creates a sqlite database with tables defined in
 snowav/database/tables.py
 
-'''
+After creation of the database basin metadata needs to be created, to do so
+add all necessary definitions in snowav/database/tables.py and run
+scripts/create_metadata.py
 
+python scripts/create_database.py <path to database file>
+
+To add subbasin metadata after database already exists:
+python scripts/create_metadata.py
+
+'''
 
 def run(db_location):
 

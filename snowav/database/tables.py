@@ -31,9 +31,9 @@ class Results(Base):
     version = Column(String(250), nullable=True)
     variable = Column(String(250), nullable=False)
     var_units = Column(String(250), nullable=False)
-    value = Column(types.Float(), nullable=False)
-    elevation = Column(String(250), nullable=False)
-    elev_units = Column(String(250), nullable=False)
+    value = Column(types.Float(), nullable=True)
+    elevation = Column(String(250), nullable=True)
+    elev_units = Column(String(250), nullable=True)
 
     # This puts Basin_Metadata.results and Results.basin_metadata
     basin_metadata = relationship('Basin_Metadata',
@@ -56,3 +56,38 @@ class Run_Metadata(Base):
 
     run_metadata = relationship('Results',
                                 backref=backref('run_metadata',lazy='dynamic'))
+
+
+class BASINS(object):
+    '''
+    This class defines the basin metadata for all of the subbasins that are
+    used in the database.
+
+    '''
+    basins = {
+                'Boise River Basin':{'basin_id':1,
+                                     'basin_name':'Boise River Basin',
+                                     'state':'Idaho'},
+                'Featherville':{'basin_id':2,
+                                'basin_name':'Featherville',
+                                'state':'Idaho'},
+                'Twin Springs':{'basin_id':3,
+                                'basin_name':'Twin Springs',
+                                'state':'Idaho'},
+                'Mores Creek':{'basin_id':4,
+                               'basin_name':'Mores Creek',
+                               'state':'Idaho'},
+                'Extended Tuolumne':{'basin_id':5,
+                            'basin_name':'Extended Tuolumne',
+                            'state':'California'},
+                'Tuolumne':{'basin_id':6,
+                            'basin_name':'Tuolumne',
+                            'state':'California'},
+                'Cherry Creek':{'basin_id':7,
+                            'basin_name':'Cherry Creek',
+                            'state':'California'},
+                'Eleanor':{'basin_id':8,
+                            'basin_name':'Eleanor',
+                            'state':'California'}
+
+                }
