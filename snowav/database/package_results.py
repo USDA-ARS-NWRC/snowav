@@ -1,6 +1,7 @@
 
 import datetime
 import snowav
+from snowav.database.tables import BASINS
 
 def package_results(self, df, output, dtime):
     '''
@@ -11,23 +12,7 @@ def package_results(self, df, output, dtime):
         output: output variable ('swe_z')
         dtime: datetime
 
-    values = {'basin_id': 1,
-              'date_time': datetime.datetime.now(),
-              'proc_time': datetime.datetime.now(),
-              'version': '1',
-              'variable': 'swe',
-              'var_units': 'in',
-              'value': 2.0,
-              'elevation': 'total',
-              'elev_units': 'ft'}
-
     '''
-    
-    # This is not efficient
-    basin_id = {'Boise River Basin':1,
-                'Featherville':2,
-                'Twin Springs':3,
-                'Mores Creek':4}
 
     # Make labels
     if ('z' in output) or ('depth' in output):
@@ -44,7 +29,7 @@ def package_results(self, df, output, dtime):
 
         # By elevation band
         for iters,r in enumerate(df[var].values):
-            values = {'basin_id': basin_id[var],
+            values = {'basin_id': BASINS.basins[var]['basin_id'],
                       'date_time': dtime,
                       'proc_time': datetime.datetime.now(),
                       'version': 'snowav'+ snowav.__version__,
