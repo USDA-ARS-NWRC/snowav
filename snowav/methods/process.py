@@ -169,7 +169,8 @@ def process(self):
                                                     self.conversion_factor) )
 
                     elif k == 'swi_z':
-
+                        # Not masked out by pixels with snow
+                        r = np.nansum(mask_out[ind])
                         daily_outputs['swi_z'].loc[b,name] = (
                                         np.multiply(np.nanmean(mask_out[ind]),
                                                     self.depth_factor) )
@@ -282,11 +283,5 @@ def process(self):
     # Append date to report name
     parts = self.report_name.split('.')
     self.report_name = ( parts[0]
-                       + self.dateTo.date().strftime("%Y%m%d")
+                       + self.outputs['dates'][-1].date().strftime("%Y%m%d")
                        + '.' + parts[1] )
-
-    # Print some summary info...
-    mask = self.state_summary.index.to_series().diff() > pd.Timedelta('24:10:00')
-    msum = sum(mask)
-    if int(msum) >= 1:
-        self._logger.debug('%s entries in dataframe index with gaps larger than 24h '%(msum))
