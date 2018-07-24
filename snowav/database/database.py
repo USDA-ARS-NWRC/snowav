@@ -10,21 +10,19 @@ from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata
 from sqlalchemy import and_
 import pandas as pd
 
-# Coming from scripts/snow.py
-# values = {}
-# snow.db_variables
-
 def insert_results(loc,values):
     '''
-    values = {'basin_id': 1,
-              'date_time': datetime.datetime.now(),
-              'proc_time': datetime.datetime.now(),
-              'version': '1',
-              'variable': 'swe',
-              'var_units': 'in',
-              'value': 2.0,
-              'elevation': 'total',
-              'elev_units': 'ft'}
+    Inserts results in the following format to the database:
+
+        values = {'basin_id': 1,
+                  'date_time': datetime.datetime.now(),
+                  'proc_time': datetime.datetime.now(),
+                  'version': '1',
+                  'variable': 'swe',
+                  'var_units': 'in',
+                  'value': 2.0,
+                  'elevation': 'total',
+                  'elev_units': 'ft'}
 
     '''
 
@@ -57,8 +55,6 @@ def query_basin_value(loc, start_date, end_date, value):
 
     '''
 
-    # loc = snow.database
-
     engine = create_engine('sqlite:///%s'%(loc))
     connection = engine.connect()
 
@@ -80,9 +76,6 @@ def check_fields(loc, start_date, end_date, value):
 
     '''
 
-    # start_date = datetime.datetime(1901,1,1)
-    # end_date = datetime.datetime(2020,1,1)
-
     engine = create_engine('sqlite:///%s'%(loc))
     connection = engine.connect()
     DBSession = sessionmaker(bind=engine)
@@ -92,7 +85,7 @@ def check_fields(loc, start_date, end_date, value):
                                           (Results.date_time < end_date),
                                           (Results.variable == value))).first()
 
-    if qry is not None :
+    if qry is not None:
         flag = True
     else:
         flag = False
