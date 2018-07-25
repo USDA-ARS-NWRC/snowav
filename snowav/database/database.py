@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata
+from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, BASINS
 from sqlalchemy import and_
 import pandas as pd
 
@@ -50,7 +50,7 @@ def insert_results(loc,values):
     session.commit()
     session.close()
 
-def query_basin_value(loc, start_date, end_date, value):
+def query_basin_value(loc, start_date, end_date, bid, value):
     '''
 
     '''
@@ -61,13 +61,15 @@ def query_basin_value(loc, start_date, end_date, value):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    qry = session.query(Results).filter(and_((Results.date_time > start_date),
-                                          (Results.date_time < end_date),
+    qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                          (Results.date_time <= end_date),
                                           (Results.variable == value),
-                                          (Results.basin_id == 1)))
+                                          (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
+
+    return df
 
 def check_fields(loc, start_date, end_date, value):
     '''
