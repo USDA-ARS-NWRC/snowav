@@ -27,6 +27,10 @@ def accumulated(snow):
     for n in range(ixs,ixe):
         accum = accum + snow.outputs['swi_z'][n]
 
+    accum = np.multiply(accum,snow.depth_factor)
+
+    print('accum',np.nanmean(np.nanmean(snow.outputs['swi_z'][-1])))
+
     # Make df from database
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
@@ -109,8 +113,7 @@ def accumulated(snow):
         tlbl = '%s = %s %s'%(snow.plotorder[0],
                              str(np.round(accum_byelev[snow.plotorder[0]].sum(),
                             snow.dplcs)),snow.vollbl)
-    print(accum_byelev[snow.plotorder[0]])
-    print(np.round(accum_byelev[snow.plotorder[0]].sum()),snow.dplcs)
+
     # Plot the bars
     for iters,name in enumerate(sumorder):
         if snow.dplcs == 0:
