@@ -29,8 +29,6 @@ def accumulated(snow):
 
     accum = np.multiply(accum,snow.depth_factor)
 
-    print('accum',np.nanmean(np.nanmean(snow.outputs['swi_z'][-1])))
-
     # Make df from database
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
