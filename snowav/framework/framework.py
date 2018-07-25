@@ -31,41 +31,16 @@ class SNOWAV(object):
 
         # Do any values in this date already already exist?
         flag = database.database.check_fields(self.database, self.start_date,
-                                              self.end_date, 'swe')
+                                              self.end_date, 'swe_z')
 
-        # If data does not exist, process and put it on the database
-        if (self.db_overwrite_flag is True) or (flag is not True):
-
-            # Process
+        # Process results and put on the database
+        if (flag is True) and (self.db_overwrite_flag is False):
+            print('There are existing fields on the database for this time '
+            'period, and the config file option [results] > overwrite is set to '
+            'False, skipping processing...')
+        else:
             snowav.methods.process.process(self)
 
-            # Save data
-            if self.location == 'database':
-
-                # Put into format for Results table on database
-                # database.package_results.package_results(self)
-                print('finished onto database')
-
-                # Insert into database
-                # snowav.database.database.insert_results(self,values)
-
-            if self.location == 'csv':
-                print('Make a csv-saver...')
-
-
-        # If data does already exist on the database
-        if (flag is True) and (self.db_overwrite_flag is not True):
-            print('Database values in the date range '
-                  + '%s to %s already exist.\n'%(self.start_date,self.end_date)
-                  + 'Config option [results] -> overwrite is set to False, '
-                  + 'if you wish to overwrite, set to True.')
-
-
-        if (flag is True) and (self.db_overwrite_flag is True):
-            print('Database values in the date range '
-                  + '%s to %s already exist.\n'%(self.start_date,self.end_date)
-                  + 'WARNING: config option [results] -> overwrite is set to True, '
-                  + 'database values will be overwritten...')
 
         # Plots
         snowav.plotting.accumulated.accumulated(self)
