@@ -7,18 +7,42 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
+from snowav import database
+from snowav.database.tables import BASINS
+import pandas as pd
 
 
 def accumulated(snow):
     '''
     Issues:
     - matplotlib, multiple colormaps, and qMin/qMax do not play nice
-
+    - swi_z seems as depth map seems waaaay too high right now...
     '''
 
-    # Only report accum by the subsection between
-    accum = copy.deepcopy(snow.accum_sub)
-    accum_byelev = copy.deepcopy(snow.accum_byelev_sub)
+    # Calculate accumulated swi during the specified period
+    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
+    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
+    accum = np.zeros((snow.nrows,snow.ncols))
+
+    for n in range(ixs,ixe):
+        accum = accum + snow.outputs['swi_z'][n]
+
+    # Make df from database
+    accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+
+    loc = snow.database
+    start_date = snow.start_date
+    end_date = snow.end_date
+    bid = snow.plotorder
+    value = 'swi_vol'
+
+    for bid in snow.plotorder:
+        r = database.database.query_basin_value(loc, start_date,
+                                                end_date, bid, value)
+
+        for elev in snow.edges:
+            v = r[r['elevation'] == str(elev)]
+            accum_byelev.loc[elev,bid] = np.nansum(v['value'].values)
 
     qMin,qMax = np.percentile(accum,[0,99.8])
     clims = (0,qMax)
@@ -43,10 +67,8 @@ def accumulated(snow):
     mymap.set_under('grey',1.)
 
     plt.close(0)
-    fig,(ax,ax1) = plt.subplots(num=0,
-                                figsize = snow.figsize,
-                                dpi=snow.dpi,
-                                nrows = 1, ncols = 2)
+    fig,(ax,ax1) = plt.subplots(num=0, figsize = snow.figsize,
+                                dpi=snow.dpi, nrows = 1, ncols = 2)
     h = ax.imshow(accum, clim = clims, cmap = mymap)
 
     # Basin boundaries
@@ -71,8 +93,8 @@ def accumulated(snow):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[%s]'%(snow.depthlbl))
     h.axes.set_title('Accumulated SWI \n %s to %s'
-                     %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
-                       snow.dateTo.date().strftime("%Y-%-m-%-d")))
+                     %(snow.start_date.date().strftime("%Y-%-m-%-d"),
+                       snow.end_date.date().strftime("%Y-%-m-%-d")))
 
     # Total basin label
     sumorder = snow.plotorder[1:]
@@ -87,7 +109,8 @@ def accumulated(snow):
         tlbl = '%s = %s %s'%(snow.plotorder[0],
                              str(np.round(accum_byelev[snow.plotorder[0]].sum(),
                             snow.dplcs)),snow.vollbl)
-
+    print(accum_byelev[snow.plotorder[0]])
+    print(np.round(accum_byelev[snow.plotorder[0]].sum()),snow.dplcs)
     # Plot the bars
     for iters,name in enumerate(sumorder):
         if snow.dplcs == 0:
@@ -143,18 +166,18 @@ def accumulated(snow):
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
         elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.74))     
-    
+            ax1.legend(loc= (0.01,0.74))
+
     if snow.basin == 'TUOL':
         ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
-    
+
     if snow.basin == 'BRB':
         ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10) 
+             transform=ax1.transAxes,fontsize = 10)
     else:
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)   
+             transform=ax1.transAxes,fontsize = 10)
 
     # Make SWI-free legend if we need one
     if sum(sum(r)) > 1000:
