@@ -13,44 +13,34 @@ import pandas as pd
 
 def state_by_elev(snow):
     '''
-    Plots SWE by elevation, delineated by melt/nonmelt
+    Plots SWE by elevation, delineated by melt/nonmelt.
 
     '''
 
-    # snow.melt
-    # snow.nonmelt
-    # Calculate accumulated swi during the specified period
-    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
-    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
-    accum = np.zeros((snow.nrows,snow.ncols))
-
-    for n in range(ixs,ixe):
-        accum = accum + snow.outputs['swi_z'][n]
-
-    accum = np.multiply(accum,snow.depth_factor)
-
-    # Make df from database
-    snow.melt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-    snow.nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    loc = snow.database
-    start_date = snow.end_date
-    end_date = snow.end_date
-    bid = snow.plotorder
+    # Fill df from database
+    melt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(loc, start_date,
-                                                end_date, bid, 'swe_avail')
-        r2 = database.database.query_basin_value(loc, start_date,
-                                                end_date, bid, 'swe_unavail')
+        r = database.database.query_basin_value(snow.database,
+                                                snow.start_date,
+                                                snow.end_date,
+                                                snow.plotorder,
+                                                'swe_avail')
+
+        r2 = database.database.query_basin_value(snow.database,
+                                                snow.start_date,
+                                                snow.end_date,
+                                                snow.plotorder,
+                                                'swe_unavail')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]
             v2 = r2[r2['elevation'] == str(elev)]
-            snow.melt.loc[elev,bid] = np.nansum(v['value'].values)
-            snow.nonmelt.loc[elev,bid] = np.nansum(v2['value'].values)
+            melt.loc[elev,bid] = np.nansum(v['value'].values)
+            nonmelt.loc[elev,bid] = np.nansum(v2['value'].values)
 
-    lim = np.max(snow.melt[snow.plotorder[0]]) + np.max(snow.nonmelt[snow.plotorder[0]])
+    lim = np.max(melt[snow.plotorder[0]]) + np.max(nonmelt[snow.plotorder[0]])
     ylim = np.max(lim) + np.max(lim)*0.3
     colors = ['xkcd:rose red','xkcd:cool blue']
     fs = list(snow.figsize)
@@ -82,11 +72,9 @@ def state_by_elev(snow):
         fig.delaxes(axs[5])
 
     for iters,name in enumerate(snow.plotorder):
-        # iters = 0
-        # name = snow.plotorder[iters]
-        axs[iters].bar(range(0,len(snow.edges)),snow.melt[name],
-                       color = colors[0], bottom = snow.nonmelt[name])
-        axs[iters].bar(range(0,len(snow.edges)),snow.nonmelt[name],
+        axs[iters].bar(range(0,len(snow.edges)),melt[name],
+                       color = colors[0], bottom = nonmelt[name])
+        axs[iters].bar(range(0,len(snow.edges)),nonmelt[name],
                        color = colors[1], label = 'unavail ')
 
         xts = axs[iters].get_xticks()
@@ -119,13 +107,13 @@ def state_by_elev(snow):
         axs[iters].tick_params(axis='y')
 
         # Get basin total storage in strings for label
-        kaf = str(np.int(sum(snow.melt[name]) + sum(snow.nonmelt[name])))
+        kaf = str(np.int(sum(melt[name]) + sum(nonmelt[name])))
 
         if snow.dplcs == 0:
-            kaf = str(np.int(sum(snow.melt[name]) + sum(snow.nonmelt[name])))
+            kaf = str(np.int(sum(melt[name]) + sum(nonmelt[name])))
         else:
-            kaf = str(np.round(sum(snow.melt[name])
-                               + sum(snow.nonmelt[name]),snow.dplcs))
+            kaf = str(np.round(sum(melt[name])
+                               + sum(nonmelt[name]),snow.dplcs))
 
         axs[iters].text(0.5,0.92,'%s - %s %s'
                         %(snow.masks[name]['label'],kaf,snow.vollbl),
@@ -141,17 +129,17 @@ def state_by_elev(snow):
         for n in (0,1):
             if n == 0:
                 if snow.dplcs == 0:
-                    kafa = str(np.int(sum(snow.melt[name])))
+                    kafa = str(np.int(sum(melt[name])))
                 else:
-                    kafa = str(np.round(sum(snow.melt[name]),snow.dplcs))
+                    kafa = str(np.round(sum(melt[name]),snow.dplcs))
 
                 tmpa = (r'avail = %s')%(kafa)
                 lbl.append(tmpa)
 
             if snow.dplcs == 0:
-                kafna = str(np.int(sum(snow.nonmelt[name])))
+                kafna = str(np.int(sum(nonmelt[name])))
             else:
-                kafna = str(np.round(sum(snow.nonmelt[name]),snow.dplcs))
+                kafna = str(np.round(sum(nonmelt[name]),snow.dplcs))
 
             tmpna = ('unavail = %s')%(kafna)
             lbl.append(tmpna)
@@ -165,10 +153,6 @@ def state_by_elev(snow):
         axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     fig.tight_layout()
-    # for n in range(0,len(axs)):
-    #     axs[n].set_xticks(xts)
-    #     axs[n].set_xlim(snow.xlims)
-
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle('SWE, %s'%snow.end_date.date().strftime("%Y-%-m-%-d"))
 
