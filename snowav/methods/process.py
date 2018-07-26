@@ -44,7 +44,7 @@ def process(self):
     cclimit = -5*1000*1000
 
     # Daily, by elevation
-    dz = pd.DataFrame(np.nan, index = self.edges, columns = self.masks.keys())
+    dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
     adj = 0
     t = 0
@@ -108,6 +108,7 @@ def process(self):
 
         # Get a snow-free mask ready
         swe = copy.deepcopy(self.outputs['swe_z'][iters])
+        cold = copy.deepcopy(self.outputs['coldcont'][iters])
 
         # Loop over outputs (depths are copied, volumes are calculated)
         for k in list(daily_outputs.keys()):
@@ -126,10 +127,7 @@ def process(self):
 
                 # make a subbasin, by elevation, snow-free mask
                 swe_mask_sub = np.multiply(copy.deepcopy(swe),mask)
-
-                # Need this for coldcontent, swe_avail, swe_unavail
-                if k in ['swe_z','coldcont']:
-                    cold = np.multiply(self.outputs[k][iters],mask)
+                cold_sub = np.multiply(cold,mask)
 
                 # Now mask the subbasins by elevation band
                 for n in np.arange(0,len(self.edges)):
@@ -143,7 +141,7 @@ def process(self):
                     # Assign values
                     # swe_z and derivatives
                     if k == 'swe_z':
-                        ccb = cold[ind][ix]
+                        ccb = cold_sub[ind][ix]
                         cind = ccb > cclimit
 
                         # masked out by pixels with snow -> [ix]
@@ -162,6 +160,11 @@ def process(self):
                             daily_outputs['swe_vol'].loc[b,name] = (
                                         np.multiply(np.nansum(swe_bin),
                                                     self.conversion_factor) )
+                        else:
+                            daily_outputs['swe_unavail'].loc[b,name] = 0
+                            daily_outputs['swe_avail'].loc[b,name] = 0
+                            daily_outputs['swe_z'].loc[b,name] = 0
+                            daily_outputs['swe_vol'].loc[b,name] = 0
 
                     elif k == 'swi_z':
                         # Not masked out by pixels with snow
