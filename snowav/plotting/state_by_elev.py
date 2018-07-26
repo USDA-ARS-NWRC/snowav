@@ -7,12 +7,48 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
+from snowav import database
+from snowav.database.tables import BASINS
+import pandas as pd
 
 def state_by_elev(snow):
     '''
     Plots SWE by elevation, delineated by melt/nonmelt
 
     '''
+
+    # snow.melt
+    # snow.nonmelt
+    # Calculate accumulated swi during the specified period
+    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
+    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
+    accum = np.zeros((snow.nrows,snow.ncols))
+
+    for n in range(ixs,ixe):
+        accum = accum + snow.outputs['swi_z'][n]
+
+    accum = np.multiply(accum,snow.depth_factor)
+
+    # Make df from database
+    snow.melt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    snow.nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+
+    loc = snow.database
+    start_date = snow.end_date
+    end_date = snow.end_date
+    bid = snow.plotorder
+
+    for bid in snow.plotorder:
+        r = database.database.query_basin_value(loc, start_date,
+                                                end_date, bid, 'swe_avail')
+        r2 = database.database.query_basin_value(loc, start_date,
+                                                end_date, bid, 'swe_unavail')
+
+        for elev in snow.edges:
+            v = r[r['elevation'] == str(elev)]
+            v2 = r2[r2['elevation'] == str(elev)]
+            snow.melt.loc[elev,bid] = np.nansum(v['value'].values)
+            snow.nonmelt.loc[elev,bid] = np.nansum(v2['value'].values)
 
     lim = np.max(snow.melt[snow.plotorder[0]]) + np.max(snow.nonmelt[snow.plotorder[0]])
     ylim = np.max(lim) + np.max(lim)*0.3
@@ -34,14 +70,14 @@ def state_by_elev(snow):
         nc = 3
     if nf == 1:
         nr = 1
-        nc = 1       
+        nc = 1
 
     plt.close(7)
     fig,ax = plt.subplots(num=7, figsize=fs, dpi=snow.dpi,
                            nrows = nr, ncols = nc)
     ax = np.array(ax)
-    axs = ax.ravel() 
-    
+    axs = ax.ravel()
+
     if nf == 5:
         fig.delaxes(axs[5])
 
@@ -125,7 +161,7 @@ def state_by_elev(snow):
 
         for tick in axs[iters].get_xticklabels():
             tick.set_rotation(30)
-            
+
         axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     fig.tight_layout()
@@ -134,7 +170,7 @@ def state_by_elev(snow):
     #     axs[n].set_xlim(snow.xlims)
 
     fig.subplots_adjust(top=0.92,wspace = 0.1)
-    fig.suptitle('SWE, %s'%snow.dateTo.date().strftime("%Y-%-m-%-d"))
+    fig.suptitle('SWE, %s'%snow.end_date.date().strftime("%Y-%-m-%-d"))
 
     snow._logger.info('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append))
