@@ -25,13 +25,13 @@ def state_by_elev(snow):
         r = database.database.query_basin_value(snow.database,
                                                 snow.start_date,
                                                 snow.end_date,
-                                                snow.plotorder,
+                                                bid,
                                                 'swe_avail')
 
         r2 = database.database.query_basin_value(snow.database,
                                                 snow.start_date,
                                                 snow.end_date,
-                                                snow.plotorder,
+                                                bid,
                                                 'swe_unavail')
 
         for elev in snow.edges:
