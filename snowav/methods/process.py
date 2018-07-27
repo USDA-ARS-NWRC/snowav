@@ -46,6 +46,10 @@ def process(self):
     # Daily, by elevation
     dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
+    # Order matters!
+    vars = ['coldcont','evap_z','rain_z','density','depth','precip_z','precip_vol',
+            'swi_z','swi_vol','swe_z','swe_vol','swe_avail','swe_unavail']
+
     adj = 0
     t = 0
     for iters, out_date in enumerate(self.outputs['dates']):
@@ -111,7 +115,7 @@ def process(self):
         cold = copy.deepcopy(self.outputs['coldcont'][iters])
 
         # Loop over outputs (depths are copied, volumes are calculated)
-        for k in list(daily_outputs.keys()):
+        for k in vars:
 
             # Mask by subbasin
             for name in self.masks:
@@ -122,6 +126,10 @@ def process(self):
                 # If the key is something we've already calculated (i.e., not
                 # volume), get the masked subbasin output, otherwise it will be
                 # calculated below
+
+                # Careful with the order here! Some of the z/vol things may not be
+                # getting run through as expected here...
+                # This also gets reassigned in some cases below...
                 if k in self.outputs.keys():
                     mask_out = np.multiply(self.outputs[k][iters],mask)
 
@@ -141,6 +149,7 @@ def process(self):
                     # Assign values
                     # swe_z and derivatives
                     if k == 'swe_z':
+                        mask_out = np.multiply(self.outputs['swe_z'][iters],mask)
                         ccb = cold_sub[ind][ix]
                         cind = ccb > cclimit
 
@@ -160,6 +169,7 @@ def process(self):
                             daily_outputs['swe_vol'].loc[b,name] = (
                                         np.multiply(np.nansum(swe_bin),
                                                     self.conversion_factor) )
+
                         else:
                             daily_outputs['swe_unavail'].loc[b,name] = 0
                             daily_outputs['swe_avail'].loc[b,name] = 0
@@ -168,6 +178,7 @@ def process(self):
 
                     elif k == 'swi_z':
                         # Not masked out by pixels with snow
+                        mask_out = np.multiply(self.outputs['swi_z'][iters],mask)
                         r = np.nansum(mask_out[ind])
                         daily_outputs['swi_z'].loc[b,name] = (
                                         np.multiply(np.nanmean(mask_out[ind]),
