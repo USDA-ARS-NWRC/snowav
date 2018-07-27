@@ -39,16 +39,16 @@ def stn_validate(snow):
     meta_sno = pd.read_sql(qry, cnx)
     meta_sno.index = meta_sno['primary_id']
     swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                                                     snow.dateTo,
+                                                     snow.end_date,
                                                      freq='D'),columns = stns)
     swe_mod = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                                                     snow.dateTo,
+                                                     snow.end_date,
                                                      freq='D'),columns = stns)
 
     tbl = 'tbl_level1'
     var = 'snow_water_equiv'
     st_time = '%s-10-1 00:00:00'%(str(snow.wy - 1))
-    end_time = snow.dateTo.date().strftime("%Y-%-m-%-d")
+    end_time = snow.end_date.date().strftime("%Y-%-m-%-d")
 
     # Get Snotel station results
     for iters,stn in enumerate(stns):
@@ -93,7 +93,7 @@ def stn_validate(snow):
         # iters = 0
         # stn = stns[iters]
         # swe_mod_pix = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-        #                                 snow.dateTo, freq='D'), columns = stnpix)
+        #                                 snow.end_date, freq='D'), columns = stnpix)
 
         for n,m in zip(px,py):
             # n = 0
@@ -133,7 +133,7 @@ def stn_validate(snow):
             axs[iters].plot(swe_meas[stn],'k',label='measured')
             axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')
             axs[iters].set_title(lbls[iters])
-            axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.dateTo))
+            axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
 
         if iters == 1 or iters == 3 or iters == 5:
             axs[iters].yaxis.tick_right()

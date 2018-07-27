@@ -40,8 +40,7 @@ class SNOWAV(object):
             'False, skipping processing...')
         else:
             snowav.methods.process.process(self)
-
-
+            
         # Plots
         snowav.plotting.accumulated.accumulated(self)
         snowav.plotting.current_image.current_image(self)
@@ -50,8 +49,8 @@ class SNOWAV(object):
         snowav.plotting.swe_change.swe_change(self)
         snowav.plotting.basin_total.basin_total(self)
         snowav.plotting.pixel_swe.pixel_swe(self)
-        snowav.plotting.density.density(self)
-        snowav.plotting.water_balance.water_balance(self)
+        # snowav.plotting.density.density(self)
+        # snowav.plotting.water_balance.water_balance(self)
         snowav.plotting.stn_validate.stn_validate(self)
 
         # This may need its own query as well

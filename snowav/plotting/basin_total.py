@@ -10,8 +10,41 @@ import matplotlib.patches as mpatches
 from datetime import datetime
 import pandas as pd
 from matplotlib.dates import DateFormatter
+import pandas as pd
+from snowav import database
+from snowav.database.tables import BASINS
+import dateutil.parser
 
 def basin_total(snow):
+
+    '''
+
+    '''
+
+    # Make df from database
+    swe_summary = pd.DataFrame(columns = snow.plotorder)
+    swi_summary = pd.DataFrame(columns = snow.plotorder)
+
+    for bid in snow.plotorder:
+        r = database.database.query_basin_value(snow.database,
+                                                datetime(snow.wy-1,10,1),
+                                                snow.end_date,
+                                                bid,
+                                                'swe_vol')
+        r2 = database.database.query_basin_value(snow.database,
+                                                datetime(snow.wy-1,10,1),
+                                                snow.end_date,
+                                                bid,
+                                                'swi_vol')
+
+        v = r[(r['elevation'] == 'total')]
+        v2 = r2[(r2['elevation'] == 'total')]
+
+        for iter,d in enumerate(v['date_time'].values):
+            swe_summary.loc[d,bid] = v['value'].values[iter]
+            swi_summary.loc[d,bid] = v2['value'].values[iter]
+
+    swi_summary = swi_summary.cumsum()
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -30,8 +63,8 @@ def basin_total(snow):
     for iters,name in enumerate(plotorder):
         # name = snow.plotorder[0]
         # iters = 0
-        snow.state_summary[name].plot(ax=ax, color = snow.barcolors[iters])
-        ax1.plot(snow.accum_summary[name],
+        swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
+        ax1.plot(swi_summary[name],
                  color = snow.barcolors[iters], label='_nolegend_')
 
     if snow.flight_dates is not None:
@@ -40,8 +73,8 @@ def basin_total(snow):
             ax1.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
 
     ax1.yaxis.set_label_position("right")
-    ax1.set_xlim((datetime(snow.wy -1 , 10, 1),snow.dateTo))
-    ax.set_xlim((datetime(snow.wy - 1, 10, 1),snow.dateTo))
+    ax1.set_xlim((datetime(snow.wy -1 , 10, 1),snow.end_date))
+    ax.set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
     ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
     ax.legend(loc='upper left')
@@ -86,22 +119,21 @@ def basin_total(snow):
         return
 
     if snow.basin == 'BRB':
-        accum_summary = snow.accum_summary
         main = 'Boise River Basin'
         multiswe = pd.read_csv(snow.summary_swe)
         multiswi = pd.read_csv(snow.summary_swi)
+        multiswe['date'] = pd.to_datetime(multiswe['date'])
+        multiswi['date'] = pd.to_datetime(multiswi['date'])
 
         multiswe.wy17.iloc[304:] = 0
         multiswi.wy17 = np.cumsum(multiswi.wy17)
         multiswi.wy17.iloc[304:] = multiswi.wy17[303]
 
-        state_summary = snow.state_summary.asfreq('D')
-
         # Put in this year
-        multiswe.wy18.iloc[:len(state_summary[main])] = (
-                                            state_summary[main].values)
-        multiswi.wy18.iloc[:len(accum_summary[main])] = (
-                                            accum_summary[main].values)
+        print(swe_summary.columns)
+        multiswe.wy18.loc[swe_summary.index.date()] = swe_summary.values
+        multiswi.wy18.loc[:len(swi_summary[main])] = (
+                                            swi_summary[main].values)
 
         if snow.units == 'SI':
             multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
@@ -115,17 +147,17 @@ def basin_total(snow):
         fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
                                     dpi=snow.dpi, nrows = 1, ncols = 2)
 
-        ax.plot(multiswe['wy13'], color = 'c',label = 'wy2013')
-        ax.plot(multiswe['wy15'], color = 'g',label = 'wy2015')
-        ax.plot(multiswe['wy16'], color = 'r',label = 'wy2016')
-        ax.plot(multiswe['wy17'], color = 'k',label = 'wy2017')
-        ax.plot(multiswe['wy18'], color = 'b', label = 'wy2018')
-
-        ax1.plot(multiswi['wy13'], color = 'c',label = 'wy2013')
-        ax1.plot(multiswi['wy15'], color = 'g',label = 'wy2015')
-        ax1.plot(multiswi['wy16'], color = 'r',label = 'wy2016')
-        ax1.plot(multiswi['wy17'], color = 'k',label = 'wy2017')
-        ax1.plot(multiswi['wy18'], color = 'b', label = 'wy2018')
+        ax.plot(multiswe['date'], multiswe['wy13'], color = 'c',label = 'wy2013')
+        ax.plot(multiswe['date'], multiswe['wy15'], color = 'g',label = 'wy2015')
+        ax.plot(multiswe['date'], multiswe['wy16'], color = 'r',label = 'wy2016')
+        ax.plot(multiswe['date'], multiswe['wy17'], color = 'k',label = 'wy2017')
+        ax.plot(multiswe['date'], multiswe['wy18'], color = 'b', label = 'wy2018')
+        #
+        ax1.plot(multiswi['date'], multiswi['wy13'], color = 'c',label = 'wy2013')
+        ax1.plot(multiswi['date'], multiswi['wy15'], color = 'g',label = 'wy2015')
+        ax1.plot(multiswi['date'], multiswi['wy16'], color = 'r',label = 'wy2016')
+        ax1.plot(multiswi['date'], multiswi['wy17'], color = 'k',label = 'wy2017')
+        ax1.plot(multiswi['date'], multiswi['wy18'], color = 'b', label = 'wy2018')
 
         formatter = DateFormatter('%b')
         ax.xaxis.set_major_formatter(formatter)
@@ -147,7 +179,7 @@ def basin_total(snow):
         ax.axes.set_title('Water Year SWE')
         ax1.axes.set_title('Accumulated Basin SWI')
 
-        ax.set_ylim((0,ax1.get_ylim()[1]))
+        ax.set_ylim((-0.1,ax1.get_ylim()[1]))
         plt.tight_layout()
 
         snow._logger.info('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))

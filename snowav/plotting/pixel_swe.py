@@ -7,8 +7,44 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
+import pandas as pd
+from snowav import database
+from snowav.database.tables import BASINS
 
 def pixel_swe(snow):
+
+    '''
+
+    '''
+
+    # Start and end indices
+    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
+    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
+
+    # delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
+    # delta_swe = np.multiply(delta_swe,snow.depth_factor)
+
+    # Make df from database
+    swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    depth_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+
+    for bid in snow.plotorder:
+        r = database.database.query_basin_value(snow.database,
+                                                snow.end_date,
+                                                snow.end_date,
+                                                bid,
+                                                'swe_z')
+        r2 = database.database.query_basin_value(snow.database,
+                                                snow.end_date,
+                                                snow.end_date,
+                                                bid,
+                                                'depth')
+
+        for iter,elev in enumerate(snow.edges):
+            v = r[r['elevation'] == str(elev)]
+            v2 = r2[r2['elevation'] == str(elev)]
+            swe_byelev.loc[elev,bid] = r['value'].values[iter]
+            depth_byelev.loc[elev,bid] = r2['value'].values[iter]
 
     sns.set_style('darkgrid')
     sns.set_context('notebook')
@@ -28,14 +64,12 @@ def pixel_swe(snow):
     wid = np.linspace(-0.3,0.3,len(sumorder))
 
     for iters,name in enumerate(sumorder):
-        # iters = 0
-        # name = sumorder[iters]
         ax.bar(range(0,len(snow.edges))-wid[iters],
-                snow.depth_mdep_byelev[name],
+                depth_byelev[name],
                 color = snow.barcolors[iters], width = swid, edgecolor = 'k',label = name)
 
         ax1.bar(range(0,len(snow.edges))-wid[iters],
-                snow.state_mswe_byelev[name],
+                swe_byelev[name],
                 color = snow.barcolors[iters], width = swid, edgecolor = 'k',label = name)
 
     plt.tight_layout()
@@ -49,7 +83,7 @@ def pixel_swe(snow):
     for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
         tick.set_rotation(30)
         tick1.set_rotation(30)
-        
+
     ax.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
@@ -68,8 +102,8 @@ def pixel_swe(snow):
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
-    ax.set_title('Mean Depth, %s'%(snow.dateTo.date().strftime("%Y-%-m-%-d")))
-    ax1.set_title('Mean SWE, %s'%(snow.dateTo.date().strftime("%Y-%-m-%-d")))
+    ax.set_title('Mean Depth, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
+    ax1.set_title('Mean SWE, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
 
     plt.tight_layout()
     snow._logger.info('saving figure to %smean_swe_depth%s.png'%(snow.figs_path,snow.name_append))

@@ -16,6 +16,7 @@ from inicheck.config import MasterConfig
 import logging
 import coloredlogs
 import netCDF4 as nc
+from dateutil.relativedelta import relativedelta
 
 
 def read_config(self, external_logger=None):
@@ -256,13 +257,21 @@ def read_config(self, external_logger=None):
 
     self.rundirs_dict = {}
 
+    fdirs = ['brb/ops/wy2018/runs/run20171001_20180107/output/',
+             'brb/ops/wy2018/runs/run20180108_20180117/']
+
     for rd in self.run_dirs:
         output = iSnobalReader(rd.split('output')[0],
                                'netcdf',
                                snowbands = [0,1,2],
                                embands = [6,7,8,9],
                                wy = self.wy)
-        self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+        if (fdirs[0] in rd) or (fdirs[1] in rd):
+            self.outputs['dates'] = np.append(
+                    self.outputs['dates'],output.dates-relativedelta(years=1)
+                                                )
+        else:
+            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
         self.outputs['time'] = np.append(self.outputs['time'],output.time)
 
         # Make a dict for wyhr-rundir lookup

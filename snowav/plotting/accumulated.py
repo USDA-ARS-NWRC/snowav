@@ -16,7 +16,6 @@ def accumulated(snow):
     '''
     Issues:
     - matplotlib, multiple colormaps, and qMin/qMax do not play nice
-    - swi_z seems as depth map seems waaaay too high right now...
     '''
 
     # Calculate accumulated swi during the specified period
@@ -64,7 +63,7 @@ def accumulated(snow):
 
     # Now set SWI-free to some color
     r = ~np.isnan(accum)
-    r[r] &= accum[r] < 0.1
+    r[r] &= accum[r] < 0.05
     accum[r] = -1
     mymap.set_under('grey',1.)
 

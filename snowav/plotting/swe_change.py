@@ -8,15 +8,42 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
+import pandas as pd
+from snowav import database
+from snowav.database.tables import BASINS
 
 def swe_change(snow):
+    '''
+    Change in SWE as a depth.
 
-    delta_state = copy.deepcopy(snow.delta_state)
-    qMin,qMax = np.percentile(delta_state,[1,99.5])
+    '''
 
-    ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
-    delta_state[ix] = qMin + qMin*0.2
-    vMin,vMax = np.percentile(delta_state,[1,99])
+    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
+    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
+
+    delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
+    delta_swe = np.multiply(delta_swe,snow.depth_factor)
+
+    # Make df from database
+    delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+
+    for bid in snow.plotorder:
+        r = database.database.query_basin_value(snow.database,
+                                                snow.start_date,
+                                                snow.end_date,
+                                                bid,
+                                                'swe_z')
+
+        for elev in snow.edges:
+            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
+            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
+            delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+
+    qMin,qMax = np.percentile(delta_swe,[1,99.5])
+
+    ix = np.logical_and(delta_swe < qMin, delta_swe >= np.nanmin(np.nanmin(delta_swe)))
+    delta_swe[ix] = qMin + qMin*0.2
+    vMin,vMax = np.percentile(delta_swe,[1,99])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -24,11 +51,11 @@ def swe_change(snow):
     colors = np.vstack((colorsbad,colors1, colors2))
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
-    ixf = delta_state == 0
-    delta_state[ixf] = -100000 # set snow-free
+    ixf = delta_swe == 0
+    delta_swe[ixf] = -100000 # set snow-free
     pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
-    delta_state[ixo] = np.nan
+    delta_swe[ixo] = np.nan
     cmap = copy.copy(mymap)
     cmap.set_bad('white',1.)
 
@@ -38,7 +65,7 @@ def swe_change(snow):
     plt.close(6)
     fig,(ax,ax1) = plt.subplots(num=6, figsize=snow.figsize,
                                 dpi=snow.dpi, nrows = 1, ncols = 2)
-    h = ax.imshow(delta_state, interpolation='none',
+    h = ax.imshow(delta_swe, interpolation='none',
         cmap = cmap, norm=MidpointNormalize(midpoint=0,
                                             vmin = vMin-0.01,vmax=vMax+0.01))
 
@@ -65,8 +92,8 @@ def swe_change(snow):
     cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
-                     %(snow.dateFrom.date().strftime("%Y-%-m-%-d"),
-                       snow.dateTo.date().strftime("%Y-%-m-%-d")))
+                     %(snow.start_date.date().strftime("%Y-%-m-%-d"),
+                       snow.end_date.date().strftime("%Y-%-m-%-d")))
 
     sumorder = snow.plotorder[1:]
     if snow.basin == 'LAKES' or snow.basin == 'RCEW':
@@ -81,7 +108,7 @@ def swe_change(snow):
     for iters,name in enumerate(sumorder):
         lbl = name
         ax1.bar(range(0,len(snow.edges))-wid[iters],
-                snow.delta_swe_byelev[name],
+                delta_swe_byelev[name],
                 color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)

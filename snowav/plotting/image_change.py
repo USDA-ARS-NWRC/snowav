@@ -14,9 +14,10 @@ from snowav.database.tables import BASINS
 
 def image_change(snow):
     '''
-    This plots change in SWE.
+    Change in SWE volume.
 
     '''
+
     # Calculate accumulated swi during the specified period
     ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
     ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
