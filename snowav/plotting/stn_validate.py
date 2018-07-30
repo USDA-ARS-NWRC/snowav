@@ -8,6 +8,7 @@ import netCDF4 as nc
 import mysql.connector
 import pandas as pd
 from datetime import datetime
+import copy
 
 def stn_validate(snow):
 
@@ -61,7 +62,9 @@ def stn_validate(snow):
                     "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
                     "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
 
-        data = pd.read_sql(var_qry, cnx, index_col=bytes((bytearray(b'date_time'))))
+        # data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        data = pd.read_sql(var_qry, cnx)
+        data = data.set_index('date_time')
         dind = pd.date_range(st_time,end_time,freq='D')
         swe_meas[stn] = data.reindex(dind)
 
@@ -129,7 +132,6 @@ def stn_validate(snow):
                 iswe = iswe + len(swe.values)
 
             z = snow.dem[yind,xind]
-
             axs[iters].plot(swe_meas[stn],'k',label='measured')
             axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')
             axs[iters].set_title(lbls[iters])
