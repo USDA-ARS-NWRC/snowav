@@ -160,7 +160,7 @@ def report(obj):
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth%s.png'%(obj.name_append)
     variables['ELEV_FIG'] = 'swe_elev%s.png'%(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total%s.png'%(obj.name_append)
-    variables['TOTALSMY_FIG'] = 'basin_total_multiyr%s.png'%(obj.name_append)
+    variables['MULTITOT_FIG'] = 'basin_total_multiyr%s.png'%(obj.name_append)
     variables['HYP_FIG'] = 'hypsometry%s.png'%(obj.name_append)
     variables['MEAN_FIG'] = 'mean_swe_depth%s.png'%(obj.name_append)
     variables['DETAIL_FIG'] = 'mean_detail%s.png'%(obj.name_append)
@@ -224,6 +224,7 @@ def report(obj):
                     'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
+                    'MULTITOT_FIG_TPL':obj.figs_tpl_path + 'multitot_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt'
                     }
@@ -237,6 +238,10 @@ def report(obj):
     # Remove if no flight options
     if obj.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
+
+    # Remove if not BRB
+    if obj.basin != 'BRB':
+        del section_dict['MULTITOT_FIG_TPL']
 
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')

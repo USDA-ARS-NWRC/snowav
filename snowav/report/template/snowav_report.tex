@@ -1,7 +1,7 @@
 \documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for
-\usepackage{geometry}            	% See geometry.pdf to learn the layout options. 
-\geometry{letterpaper, margin=1in}              	% ... or a4paper or a5paper or ... 
-\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use 	
+\usepackage{geometry}            	% See geometry.pdf to learn the layout options.
+\geometry{letterpaper, margin=1in}              	% ... or a4paper or a5paper or ...
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage[font=small,labelfont=bf]{caption}
@@ -15,7 +15,7 @@
 \usepackage{tikz}
 
 \setlength{\droptitle}{-8em}
-\setlength\headheight{26pt} 
+\setlength\headheight{26pt}
 \usepackage{fancyhdr}
 \pagestyle{fancy} % enable fancy page style
 
@@ -32,23 +32,23 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \author{USDA Agricultural Research Service, Boise, Idaho \\
 	\small NASA Jet Propulsion Lab, Pasadena, California \\
 	\small \emph{in cooperation with} NRCS National Water and Climate Center, Portland, Oregon\\
-	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California } 
-\date{}	
+	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California }
+\date{}
 
 \begin{document}
-		
+
 \maketitle
 {
-	\begin{tikzpicture}[remember picture,overlay] 
-	\node [shift={(-19.5cm,-2.75cm)}] at (current page.north east) {\includegraphics[height=2.5cm]{\VAR{ARSLOGO}}}; 
-	\end{tikzpicture} 
-}	
+	\begin{tikzpicture}[remember picture,overlay]
+	\node [shift={(-19.5cm,-2.75cm)}] at (current page.north east) {\includegraphics[height=2.5cm]{\VAR{ARSLOGO}}};
+	\end{tikzpicture}
+}
 
 {
-	\begin{tikzpicture}[remember picture,overlay] 
-	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}}; 
-	\end{tikzpicture} 
-}	
+	\begin{tikzpicture}[remember picture,overlay]
+	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}};
+	\end{tikzpicture}
+}
 \vspace{-2cm}
 
 \section*{Summary}
@@ -92,12 +92,15 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 % WY total SWE and SWI
 \VAR{TOTALS_FIG_TPL}
 
+% Multi-year total SWE and SWI
+\VAR{MULTITOT_FIG_TPL}
+
 \clearpage
 
 % Validation
 \VAR{VALID_FIG_TPL}
 
-% Flight Change 
+% Flight Change
 \VAR{FLTCHANGES_FIG_TPL}
 
 \clearpage
@@ -131,4 +134,4 @@ Contact: \\
 \footnotesize{
 Published: \VAR{REPORT_TIME}
 }
-\end{document}  
+\end{document}
