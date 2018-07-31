@@ -14,7 +14,7 @@ python scripts/create_metadata.py
 
 '''
 
-loc = '/home/markrobertson/mrworkspace/projects/snowavdb/snowav_db.db'
+loc = '/home/markrobertson/wkspace/projects/snowavdb/snowav_db.db'
 
 def init_basin_metadata(loc, values):
 
