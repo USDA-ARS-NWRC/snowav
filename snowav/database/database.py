@@ -10,7 +10,7 @@ from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, 
 from sqlalchemy import and_
 import pandas as pd
 
-def insert_results(loc,values):
+def insert(loc,values):
     '''
     Inserts results in the following format to the database:
 
@@ -50,7 +50,7 @@ def insert_results(loc,values):
     session.commit()
     session.close()
 
-def query_basin_value(loc, start_date, end_date, bid, value):
+def query(loc, start_date, end_date, bid = None, value = None):
     '''
 
     '''
@@ -61,10 +61,14 @@ def query_basin_value(loc, start_date, end_date, bid, value):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    qry = session.query(Results).filter(and_((Results.date_time >= start_date),
-                                          (Results.date_time <= end_date),
-                                          (Results.variable == value),
-                                          (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+    if value != None:
+        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                              (Results.date_time <= end_date),
+                                              (Results.variable == value),
+                                              (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+    else:
+        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                              (Results.date_time <= end_date)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
