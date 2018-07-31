@@ -1,3 +1,4 @@
+
 from jinja2 import FileSystemLoader
 from latex.jinja2 import make_env
 from latex import build_pdf
@@ -5,36 +6,78 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import copy
+from snowav import database
+from snowav.database.tables import BASINS
+import pandas as pd
 
 
 def report(obj):
     '''
+    This function makes the pdf report.
 
+    The latex formats for figures, tables, and summary paragraphs are created
+    by templates in snowav/report/. Data is now pulled from the SNOWAV
+    database.
+
+    Issues:
+    - limited by n subbasins <= 5
     '''
 
-    # Initialize all the variables to pass to latex file
+    bid = BASINS.basins[obj.plotorder[0]]['basin_id']
+    wy_start = datetime(obj.wy-1,10,1)
+    start_date = obj.start_date
+    end_date = obj.end_date
+
+    r = database.database.query(obj.database, obj.start_date, obj.end_date)
+
+    # Initialize variables to pass to latex file
     variables = {}
-    variables['TOTAL_SWI'] = obj.accum_byelev[obj.plotorder[0]].sum()
-    variables['TOTAL_SWE'] = obj.state_byelev[obj.plotorder[0]].sum()
-    variables['TOTAL_SAV'] = obj.melt[obj.plotorder[0]].sum()
-    variables['TOTAL_SDEL'] = obj.delta_state_byelev[obj.plotorder[0]].sum()
-    variables['TOTAL_PM'] = (np.nansum(
-                            np.multiply(obj.state
-                            * obj.masks[obj.plotorder[0]]['mask'],1))
-                            / obj.masks[obj.plotorder[0]]['mask'].sum())
-    variables['TOTALPRE_PM'] = (np.nansum(
-                                np.multiply(obj.precip
-                                * obj.masks[obj.plotorder[0]]['mask'],1))
-                                / obj.masks[obj.plotorder[0]]['mask'].sum() )
-    total_rai = obj.rain_bg_byelev[obj.plotorder[0]].sum()
-    variables['TOTAL_RAT'] = str(int((total_rai
-                                      /obj.accum_byelev[obj.plotorder[0]].sum())*100))
+    variables['TOTAL_SWI'] = r[ (r['basin_id']==bid)
+                                & (r['date_time']>=wy_start)
+                                & (r['date_time']<=end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = 1)
+    variables['TOTAL_SWE'] = r[ (r['basin_id']==bid)
+                                & (r['date_time']==end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+    variables['TOTAL_SAV'] =r[  (r['basin_id']==bid)
+                                & (r['date_time']==end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='swe_avail')]['value'].values[0].round(decimals = 1)
+
+    start_swe = r[ (r['basin_id']==bid)
+                    & (r['date_time']==start_date)
+                    & (r['elevation']=='total')
+                    & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+    end_swe = r[ (r['basin_id']==bid)
+                 & (r['date_time']==end_date)
+                 & (r['elevation']=='total')
+                 & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+
+    variables['TOTAL_SDEL'] = end_swe - start_swe
+
+    variables['TOTAL_PM'] = r[ (r['basin_id']==bid)
+                                & (r['date_time']==end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='swe_z')]['value'].values[0].round(decimals = 1)
+    variables['TOTALPRE_PM'] = r[ (r['basin_id']==bid)
+                                & (r['date_time']>=wy_start)
+                                & (r['date_time']<=end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='precip_z')]['value'].sum().round(decimals = 1)
+    total_rai = r[ (r['basin_id']==bid)
+                    & (r['date_time']>=wy_start)
+                    & (r['date_time']<=end_date)
+                    & (r['elevation']=='total')
+                    & (r['variable']=='rain_z')]['value'].sum().round(decimals = 1)
+    variables['TOTAL_RAT'] = str(int((total_rai/variables['TOTALPRE_PM'])*100))
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
     if hasattr(obj,'orig_date'):
         report_time = obj.orig_date + ', revised ' + report_time
 
-    # HACK, somewhere the rounding is different when we start from Oct 1...
+    # hack, somewhere the rounding is different when we start from Oct 1...
     # if obj.dateFrom == datetime(2017,10,1,23,0):
     #     total_swe_del = copy.copy(total_swe)
 
@@ -50,18 +93,43 @@ def report(obj):
         RAIN = 'SUB' + str(n) + 'RAI'
         RATIO = 'SUB' + str(n) + '_RAT'
 
-        swival = obj.accum_byelev[sub].sum()
-        sweval = obj.state_byelev[sub].sum()
-        avsweval = obj.melt[sub].sum()
-        swedelval = obj.delta_state_byelev[sub].sum()
-        pmval = (np.nansum(np.multiply(obj.state
-                                      * obj.masks[sub]['mask'],1))
-                                      / obj.masks[sub]['mask'].sum())
-        prepmval = (np.nansum(np.multiply(obj.precip*obj.masks[sub]['mask'],1))
-                        /obj.masks[sub]['mask'].sum())
-        rainval = obj.rain_bg_byelev[sub].sum()
-        ratval = str(int((rainval/swival)*100))
-
+        swival = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                     & (r['date_time']>=wy_start)
+                     & (r['date_time']<=end_date)
+                     & (r['elevation']=='total')
+                     & (r['variable']=='swi_vol')]['value'].sum()
+        sweval = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                     & (r['date_time']==end_date)
+                     & (r['elevation']=='total')
+                     & (r['variable']=='swe_vol')]['value'].values[0]
+        avsweval = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                     & (r['date_time']==end_date)
+                     & (r['elevation']=='total')
+                     & (r['variable']=='swe_avail')]['value'].values[0]
+        start_swe = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                        & (r['date_time']==start_date)
+                        & (r['elevation']=='total')
+                        & (r['variable']=='swe_vol')]['value'].values[0]
+        end_swe = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                     & (r['date_time']==end_date)
+                     & (r['elevation']=='total')
+                     & (r['variable']=='swe_vol')]['value'].values[0]
+        swedelval = end_swe - start_swe
+        pmval = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                    & (r['date_time']==end_date)
+                    & (r['elevation']=='total')
+                    & (r['variable']=='swe_z')]['value'].values[0]
+        prepmval = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                    & (r['date_time']>=wy_start)
+                    & (r['date_time']<=end_date)
+                    & (r['elevation']=='total')
+                    & (r['variable']=='precip_z')]['value'].sum()
+        rainval = r[ (r['basin_id']==BASINS.basins[sub]['basin_id'])
+                    & (r['date_time']>=wy_start)
+                    & (r['date_time']<=end_date)
+                    & (r['elevation']=='total')
+                    & (r['variable']=='rain_z')]['value'].sum()
+        ratval = str(int((rainval/prepmval)*100))
         variables[SWIIND] = swival
         variables[SWEIND] = sweval
         variables[AVSWEIND] = avsweval
@@ -71,11 +139,6 @@ def report(obj):
         variables[RAIN] = rainval
         variables[RATIO]  = ratval
 
-    # Assign some more variables
-    start_date = obj.dateFrom.date().strftime("%B %-d")
-    end_date = obj.dateTo.date().strftime("%B %-d")
-    fore_date = ' '
-
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
     variables['REPORT_TITLE'] = obj.rep_title
@@ -84,11 +147,11 @@ def report(obj):
     variables['UNITS'] = obj.vollbl
     variables['VOLLBL'] = obj.vollbl
     variables['DEPLBL'] = obj.depthlbl
-    variables['START_DATE'] = start_date
-    variables['END_DATE'] = end_date
-    variables['FORE_DATE'] = fore_date
-    variables['SWE_IN'] = obj.state_byelev[obj.plotorder[0]].sum()
-    variables['SWI_IN'] = obj.accum_byelev[obj.plotorder[0]].sum()
+    variables['START_DATE'] = obj.start_date.date().strftime("%B %-d")
+    variables['END_DATE'] = obj.end_date.date().strftime("%B %-d")
+    variables['FORE_DATE'] = ''
+    variables['SWE_IN'] = variables['TOTAL_PM']
+    variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
     variables['SWI_FIG'] = 'swi%s.png'%(obj.name_append)
     variables['RESULTS_FIG'] = 'results%s.png'%(obj.name_append)
@@ -108,25 +171,29 @@ def report(obj):
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ars_logo.png'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
-    # Put the by-elevation tables together
-    # Eventually put this in framework? But _o is beating it to hell right now
-    obj.state_mswe_byelev.index.name = 'Elevation'
-    obj.state_mswe_byelev = obj.state_mswe_byelev.astype('float64')
-    obj.state_mswe_byelev = obj.state_mswe_byelev.fillna(0).round(1)
+    swe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    dswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    for sub in obj.plotorder:
+        swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
+                                    & (r['variable']=='swe_z')
+                                    & (r['basin_id'] == BASINS.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+        sswe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
+                                    & (r['variable']=='swe_z')
+                                    & (r['basin_id'] == BASINS.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+        dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
+
     variables['SWE_BYELEV'] = (
                                 r'\textbf{Mean SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.dateTo.date().strftime("%Y-%-m-%-d"))
-                                + obj.state_mswe_byelev[obj.plotorder].to_latex()
+                                %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                + swe_byelev[obj.plotorder].to_latex()
                                 )
 
-    obj.delta_swe_byelev.index.name = 'Elevation'
-    obj.delta_swe_byelev = obj.delta_swe_byelev.astype('float64')
-    obj.delta_swe_byelev = obj.delta_swe_byelev.fillna(0).round(1)
     variables['DSWE_BYELEV'] = (
                                 r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.dateFrom.date().strftime("%Y-%-m-%-d"),
-                                  obj.dateTo.date().strftime("%Y-%-m-%-d"))
-                                + obj.delta_swe_byelev[obj.plotorder].to_latex()
+                                %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
+                                  obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                + dswe_byelev[obj.plotorder].to_latex()
                                 )
 
     variables['TOT_LBL'] = obj.plotorder[0]
@@ -166,7 +233,6 @@ def report(obj):
                                           + 'precip_summary_%ssub.txt'%str(len(obj.plotorder)) )
     section_dict['SWE_SUMMARY_TPL'] = (obj.figs_tpl_path
                                           + 'swe_summary_%ssub.txt'%str(len(obj.plotorder)) )
-
 
     # Remove if no flight options
     if obj.flt_flag is False:
