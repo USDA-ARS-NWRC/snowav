@@ -7,6 +7,9 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
+import pandas as pd
+from snowav import database
+from snowav.database.tables import BASINS
 
 def flt_image_change(snow):
     '''
@@ -14,8 +17,31 @@ def flt_image_change(snow):
 
     '''
 
+    ixs = np.where(snow.outputs['dates'] == snow.flt_start_date)[0][0]
+    ixe = np.where(snow.outputs['dates'] == snow.flt_end_date)[0][0]
+
+    delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
+    delta_swe = np.multiply(delta_swe,snow.depth_factor)
+
+    # Make df from database
+    delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+
+    for bid in snow.plotorder:
+        r = database.database.query(snow.database, snow.start_date,
+                                    snow.end_date, bid, 'swe_vol')
+
+        for elev in snow.edges:
+            v = r[ (r['elevation'] == str(elev))
+                    & (r['date_time'] == snow.flt_start_date)
+                    & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
+            v2 = r[ (r['elevation'] == str(elev))
+                    & (r['date_time'] == snow.flt_end_date)
+                    & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
+            delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values[0] - v['value'].values[0])
+
+
     # Make copy so that we can add nans for the plots, but not mess up the original
-    delta_state = copy.deepcopy(snow.flt_delta_state)
+    delta_state = copy.deepcopy(delta_swe)
     qMin,qMax = np.percentile(delta_state,[1,99.5])
 
     ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
@@ -73,8 +99,8 @@ def flt_image_change(snow):
         cbar.set_label(r'$\Delta$ SWE [mm]')
 
     h.axes.set_title('Change in SWE from Snow Depth Update\n%s to %s'
-                     %(snow.fltdateFrom.date().strftime("%Y-%-m-%-d"),
-                       snow.fltdateTo.date().strftime("%Y-%-m-%-d")))
+                     %(snow.flt_start_date.date().strftime("%Y-%-m-%-d"),
+                       snow.flt_end_date.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
     sumorder  = snow.plotorder[1:]
@@ -82,45 +108,44 @@ def flt_image_change(snow):
         sumorder = [snow.plotorder[0]]
     if snow.dplcs == 0:
         tlbl = '%s = %s %s'%(snow.plotorder[0],
-                             str(int(snow.flt_delta_state_byelev[snow.plotorder[0]].sum())),
+                             str(int(delta_swe_byelev[snow.plotorder[0]].sum())),
                              snow.vollbl)
     else:
         tlbl = '%s = %s %s'%(snow.plotorder[0],
-                             str(np.round(snow.flt_delta_state_byelev[snow.plotorder[0]].sum(),
+                             str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
                                           snow.dplcs)),snow.vollbl)
 
     for iters,name in enumerate(sumorder):
 
         if snow.dplcs == 0:
             lbl = '%s = %s %s'%(name,
-                                str(int(snow.flt_delta_state_byelev[name].sum())),
+                                str(int(delta_swe_byelev[name].sum())),
                                 snow.vollbl)
         else:
             lbl = '%s = %s %s'%(name,
-                                str(np.round(snow.flt_delta_state_byelev[name].sum(),
+                                str(np.round(delta_swe_byelev[name].sum(),
                                 snow.dplcs)),snow.vollbl)
 
         if iters == 0:
-            ax1.bar(range(0,len(snow.edges)),snow.flt_delta_state_byelev[name],
+            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
                     color = snow.barcolors[iters],
                     edgecolor = 'k',label = lbl)
         elif iters == 1:
-            ax1.bar(range(0,len(snow.edges)),snow.flt_delta_state_byelev[name],
-                    bottom = snow.flt_delta_state_byelev[sumorder[iters-1]],
+            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
+                    bottom = delta_swe_byelev[sumorder[iters-1]],
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
         elif iters == 2:
-            ax1.bar(range(0,len(snow.edges)),snow.flt_delta_state_byelev[name],
-                    bottom = snow.flt_delta_state_byelev[sumorder[iters-1]]
-                    + snow.flt_delta_state_byelev[sumorder[iters-2]],
+            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
+                    bottom = delta_swe_byelev[sumorder[iters-1]]
+                    + delta_swe_byelev[sumorder[iters-2]],
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
         elif iters == 3:
-            ax1.bar(range(0,len(snow.edges)),snow.flt_delta_state_byelev[name],
-                    bottom = snow.flt_delta_state_byelev[sumorder[iters-1]]
-                    + snow.flt_delta_state_byelev[sumorder[iters-2]]
-                    + snow.flt_delta_state_byelev[sumorder[iters-3]],
+            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
+                    bottom = delta_swe_byelev[sumorder[iters-1]]
+                    + delta_swe_byelev[sumorder[iters-2]]
+                    + delta_swe_byelev[sumorder[iters-3]],
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     plt.tight_layout()
     xts = ax1.get_xticks()
     edges_lbl = []

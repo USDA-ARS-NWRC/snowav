@@ -76,15 +76,12 @@ def read_config(self, external_logger=None):
             return
 
     # Check for forced flight comparison images
-    self.fltphour = ucfg.cfg['outputs']['fltphour']
-    self.fltchour = ucfg.cfg['outputs']['fltchour']
-    if self.fltchour is not None:
+    self.flt_start_date = ucfg.cfg['outputs']['flt_start_date']
+    self.flt_end_date = ucfg.cfg['outputs']['flt_end_date']
+
+    if self.flt_start_date is not None:
         self.flt_flag = True
-        if self.fltphour >= self.fltchour:
-            self._logger.info('fltphour > fltchour, fix in config file,'
-                          + ' exiting...')
-            print('fltphour > fltchour, fix in config file, exiting...')
-            return
+
     else:
         self.flt_flag = False
 
@@ -303,14 +300,6 @@ def read_config(self, external_logger=None):
     #     print('phour and/or chour are not hours in run_dirs, exiting...')
     #     self.error = True
     #     return
-
-    # Need to change these from hours to times!
-    if self.fltphour is not None:
-        if ( (self.fltphour not in self.snow_files) or
-             (self.fltchour not in self.snow_files) ):
-            print('fltphour and/or fltchour are not hours in run_dirs, exiting...')
-            self.error = True
-            return
 
     # Pixel size and elevation bins
     fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
