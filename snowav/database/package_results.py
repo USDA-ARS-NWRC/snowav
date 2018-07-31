@@ -3,7 +3,7 @@ import datetime
 import snowav
 from snowav.database.tables import BASINS
 
-def package_results(self, df, output, dtime):
+def package(self, df, output, dtime):
     '''
     This function sends process() results to the snowav database.
 
@@ -39,4 +39,4 @@ def package_results(self, df, output, dtime):
                       'elevation': str(df[var].index[iters]),
                       'elev_units': self.elevlbl}
 
-            snowav.database.database.insert_results(self.database,values)
+            snowav.database.database.insert(self.database,values)

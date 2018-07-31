@@ -38,7 +38,7 @@ def accumulated(snow):
     value = 'swi_vol'
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(loc, start_date,
+        r = database.database.query(loc, start_date,
                                                 end_date, bid, value)
 
         for elev in snow.edges:

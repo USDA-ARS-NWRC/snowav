@@ -26,12 +26,12 @@ def basin_total(snow):
     swi_summary = pd.DataFrame(columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(snow.database,
+        r = database.database.query(snow.database,
                                                 datetime(snow.wy-1,10,1),
                                                 snow.end_date,
                                                 bid,
                                                 'swe_vol')
-        r2 = database.database.query_basin_value(snow.database,
+        r2 = database.database.query(snow.database,
                                                 datetime(snow.wy-1,10,1),
                                                 snow.end_date,
                                                 bid,

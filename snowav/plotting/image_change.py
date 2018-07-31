@@ -29,7 +29,7 @@ def image_change(snow):
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(snow.database,
+        r = database.database.query(snow.database,
                                                 snow.start_date,
                                                 snow.end_date,
                                                 bid,

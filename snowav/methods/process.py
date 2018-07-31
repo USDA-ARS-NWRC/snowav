@@ -204,7 +204,9 @@ def process(self):
 
                     elif k == 'precip_z':
                         # not masked out by pixels with snow
+                        nanmask = mask == 0
                         mask_out = np.multiply(precip,mask)
+                        mask_out[nanmask] = np.nan
                         r = np.nanmean(mask_out[ind])
                         rv = np.nansum(mask_out[ind])
 
@@ -215,7 +217,10 @@ def process(self):
 
                     elif k == 'rain_z':
                         # not masked out by pixels with snow
+                        nanmask = mask == 0
                         mask_out = np.multiply(rain,mask)
+                        mask_out[nanmask] = np.nan
+
                         r = np.nanmean(mask_out[ind])
                         daily_outputs[k].loc[b,name] = (
                                         np.multiply(r,self.depth_factor) )
@@ -260,7 +265,9 @@ def process(self):
                     daily_outputs['swi_vol'].loc['total',name] = copy.deepcopy(s)
 
                 if k == 'precip_z':
+                    nanmask = mask == 0
                     out = np.multiply(precip,mask)
+                    out[nanmask] = np.nan
                     total = np.multiply(np.nanmean(out), self.depth_factor)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
@@ -268,7 +275,10 @@ def process(self):
                     daily_outputs['precip_vol'].loc['total',name] = copy.deepcopy(s)
 
                 if k == 'rain_z':
+                    nanmask = mask == 0
                     out = np.multiply(rain,mask)
+                    out[nanmask] = np.nan
+
                     total = np.multiply(np.nanmean(out), self.depth_factor)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
@@ -276,8 +286,8 @@ def process(self):
             if self.location == 'database':
                 df = daily_outputs[k].copy()
                 df = df.round(decimals = 3)
-                database.package_results.package_results(self, df, k,
-                                                         self.outputs['dates'][iters])
+                database.package_results.package(self, df, k,
+                                                 self.outputs['dates'][iters])
 
         # It's nice to see where we are...
         debug = 'snow file: %s, hours: %s, date: %s'%(

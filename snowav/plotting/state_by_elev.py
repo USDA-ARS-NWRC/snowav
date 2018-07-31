@@ -22,23 +22,27 @@ def state_by_elev(snow):
     nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(snow.database,
+        r = database.database.query(snow.database,
                                                 snow.start_date,
                                                 snow.end_date,
                                                 bid,
                                                 'swe_avail')
 
-        r2 = database.database.query_basin_value(snow.database,
+        r2 = database.database.query(snow.database,
                                                 snow.start_date,
                                                 snow.end_date,
                                                 bid,
                                                 'swe_unavail')
 
         for elev in snow.edges:
-            v = r[r['elevation'] == str(elev)]
-            v2 = r2[r2['elevation'] == str(elev)]
-            melt.loc[elev,bid] = np.nansum(v['value'].values)
-            nonmelt.loc[elev,bid] = np.nansum(v2['value'].values)
+            v = r[(r['elevation'] == str(elev))
+                  & (r['date_time'] == snow.end_date)
+                  & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
+            v2 = r2[(r2['elevation'] == str(elev))
+                  & (r2['date_time'] == snow.end_date)
+                  & (r2['basin_id'] == BASINS.basins[bid]['basin_id'])]
+            melt.loc[elev,bid] = v['value'].values[0]
+            nonmelt.loc[elev,bid] = v2['value'].values[0]
 
     lim = np.max(melt[snow.plotorder[0]]) + np.max(nonmelt[snow.plotorder[0]])
     ylim = np.max(lim) + np.max(lim)*0.3

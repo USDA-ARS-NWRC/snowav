@@ -29,12 +29,12 @@ def pixel_swe(snow):
     depth_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query_basin_value(snow.database,
+        r = database.database.query(snow.database,
                                                 snow.end_date,
                                                 snow.end_date,
                                                 bid,
                                                 'swe_z')
-        r2 = database.database.query_basin_value(snow.database,
+        r2 = database.database.query(snow.database,
                                                 snow.end_date,
                                                 snow.end_date,
                                                 bid,
