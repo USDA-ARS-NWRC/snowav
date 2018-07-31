@@ -241,7 +241,7 @@ def report(obj):
 
     # Remove if not BRB
     if obj.basin != 'BRB':
-        del section_dict['MULTITOT_FIG_TPL']
+        variables['MULTITOT_FIG_TPL'] = ' '
 
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')

@@ -30,17 +30,32 @@ class SNOWAV(object):
         methods.read_config.read_config(self)
 
         # Do any values in this date already already exist?
-        flag = database.database.check_fields(self.database, self.start_date,
-                                              self.end_date, 'swe_z')
+        flag = database.database.check_fields(self.database,
+                                              self.start_date,
+                                              self.end_date,
+                                              self.plotorder[0],
+                                              'swe_z')
 
         # Process results and put on the database
         if (flag is True) and (self.db_overwrite_flag is False):
             print('There are existing fields on the database for this time '
-            'period, and the config file option [results] > overwrite is set to '
-            'False, skipping processing...')
+            'period, and the config file option [results] -> overwrite is set '
+            'to False, skipping processing...')
+        elif (flag is True) and (self.db_overwrite_flag is True):
+            print('There are existing fields on the database for this time '
+            'period, and the config file option [results] -> overwrite is set '
+            'to True, OVERWRITING RESULTS')
+
+            for bid in self.plotorder:
+                database.database.delete(self.database,
+                                         self.start_date,
+                                         self.end_date,
+                                         bid)
+            snowav.methods.process.process(self)
+
         else:
             snowav.methods.process.process(self)
-            
+
         # Plots
         snowav.plotting.accumulated.accumulated(self)
         snowav.plotting.current_image.current_image(self)
