@@ -12,17 +12,19 @@ import pandas as pd
 
 def insert(loc,values):
     '''
-    Inserts results in the following format to the database:
+    Inserts results to the database.
 
-        values = {'basin_id': 1,
-                  'date_time': datetime.datetime.now(),
-                  'proc_time': datetime.datetime.now(),
-                  'version': '1',
-                  'variable': 'swe',
-                  'var_units': 'in',
-                  'value': 2.0,
-                  'elevation': 'total',
-                  'elev_units': 'ft'}
+    Args
+        values in the following format:
+            values = {'basin_id': 1,
+                      'date_time': datetime.datetime.now(),
+                      'proc_time': datetime.datetime.now(),
+                      'version': '1',
+                      'variable': 'swe',
+                      'var_units': 'in',
+                      'value': 2.0,
+                      'elevation': 'total',
+                      'elev_units': 'ft'}
 
     '''
 
@@ -30,9 +32,6 @@ def insert(loc,values):
     DeclarativeBase = declarative_base()
     metadata = DeclarativeBase.metadata
     Base.metadata.bind = engine
-
-    # Bind the engine to the metadata of the Base class so that the
-    # declaratives can be accessed through a DBSession instance
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
@@ -52,16 +51,27 @@ def insert(loc,values):
 
 def query(loc, start_date, end_date, bid = None, value = None):
     '''
+    Query and retrieve results from the database.
+
+    Args
+        loc: database location
+        start_date: (datetime)
+        end_date: (datetime)
+        bid: basin id in string format ('Boise River Basin')
+        value: value to query (i.e. 'swi_z')
+
+    Returns:
+        dataframe of query results
 
     '''
 
     engine = create_engine('sqlite:///%s'%(loc))
     connection = engine.connect()
-
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    if value != None:
+    # Subset query with value and bid if desired
+    if (value != None) and (bid != None):
         qry = session.query(Results).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
                                               (Results.variable == value),
@@ -75,10 +85,16 @@ def query(loc, start_date, end_date, bid = None, value = None):
 
     return df
 
-def check_fields(loc, start_date, end_date, value):
+def delete(loc, start_date, end_date, bid):
     '''
-    This functions queries the database and returns True if any value exists in
-    the given date range, and False if not.
+    Delete results from the database. Currently this deletes all values with
+    basin_id == bid in the selected date range.
+
+    Args
+        loc: database location
+        start_date: (datetime)
+        end_date: (datetime)
+        bid: basin id in string format ('Boise River Basin')
 
     '''
 
@@ -87,8 +103,41 @@ def check_fields(loc, start_date, end_date, value):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    qry = session.query(Results).filter(and_((Results.date_time > start_date),
-                                          (Results.date_time < end_date),
+    qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                          (Results.date_time <= end_date),
+                                          (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+
+    # print(bid,qry)
+    qry.delete()
+    session.commit()
+    session.close()
+
+
+def check_fields(loc, start_date, end_date, bid, value):
+    '''
+    This functions queries the database and returns True if any value exists in
+    the given date range, and False if not.
+
+    Args
+        loc: database location
+        start_date: (datetime)
+        end_date: (datetime)
+        bid: basin id in string format ('Boise River Basin')
+        value: value to query (i.e. 'swi_z')
+
+    Returns:
+        flag: boolean (True if results exist)    
+
+    '''
+
+    engine = create_engine('sqlite:///%s'%(loc))
+    connection = engine.connect()
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                          (Results.date_time <= end_date),
+                                          (Results.basin_id == BASINS.basins[bid]['basin_id']),
                                           (Results.variable == value))).first()
 
     if qry is not None:
