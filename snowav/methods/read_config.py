@@ -71,8 +71,8 @@ def read_config(self, external_logger=None):
 
     if (self.start_date is not None and self.end_date is not None):
         if self.start_date >= self.end_date:
-            self._logger.info('start_date > end_date, needs to be fixed in config file,'
-                              + ' exiting...')
+            print('start_date > end_date, needs to be fixed in config file, '
+                  'exiting...')
             return
 
     # Check for forced flight comparison images
@@ -296,10 +296,16 @@ def read_config(self, external_logger=None):
         print('start_date and/or end_date not specified, using:'
               + ' %s and %s'%(self.psnowFile,self.csnowFile))
 
-    # if (self.phour not in self.snow_files) or (self.chour not in self.snow_files):
-    #     print('phour and/or chour are not hours in run_dirs, exiting...')
-    #     self.error = True
-    #     return
+    # check that dates are in range
+    if self.start_date > self.end_date:
+        print('[Outputs] -> start_date is greater than end_date...')
+        return
+
+    if ((self.start_date < self.outputs['dates'][0])
+        or (self.end_date > self.outputs['dates'][-1])):
+        print('[Outputs] -> start_date or end_date outside of range in [runs]'
+        ' -> run_dirs...')
+        return
 
     # Pixel size and elevation bins
     fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')

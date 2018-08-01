@@ -4,8 +4,6 @@ import snowav
 
 '''
 Issues:
-- make sure there are unique records; when 'overwrite', should be deleting
-current records and then replacing
 - memory issues?
 - run metadata table
 - store elevation bands in array
