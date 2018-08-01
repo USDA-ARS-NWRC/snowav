@@ -9,6 +9,7 @@ import mysql.connector
 import pandas as pd
 from datetime import datetime
 import copy
+from datetime import date
 
 def stn_validate(snow):
 
@@ -88,24 +89,18 @@ def stn_validate(snow):
     # First need to combine all nc files...
     px = (1,1,1,0,0,0,-1,-1,-1)
     py = (1,0,-1,1,0,-1,1,0,-1)
-    # stnpix = []
-    # for n,m in zip(px,py):
-    #     stnpix = stnpix + ['%s,%s'%(str(m),str(n))]
 
     for iters,stn in enumerate(stns):
-        # iters = 0
-        # stn = stns[iters]
-        # swe_mod_pix = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-        #                                 snow.end_date, freq='D'), columns = stnpix)
 
         for n,m in zip(px,py):
-            # n = 0
-            # m = 0
-            iswe = snow.offset
+            # ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
+            if ( (snow.offset == 0)
+                and (snow.outputs['dates'][0].date() != datetime(snow.wy-1,10,1)) ):
+                iswe = (snow.outputs['dates'][0].date() -  datetime(snow.wy-1,10,1).date()).days
+            else:
+                iswe = snow.offset
 
             for rname in rundirs:
-                # rname = rundirs[1]
-
                 ncpath = rname.split('output')[0]
                 ncf = nc.Dataset(ncpath + 'snow.nc', 'r')
                 nctvec = ncf.variables['time'][:]
@@ -121,12 +116,11 @@ def stn_validate(snow):
 
                 try:
                     swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values
-                    # swe_mod_pix.loc[iswe:(iswe + len(swe.values)),'%s,%s'%(n,m)] = swe.values
+
                 except:
                     sv = swe_mod[stn].values
                     lx = len(sv[iswe::])
                     swe_mod.loc[iswe:(iswe + lx),stn] = swe.values[0:lx]
-                    # swe_mod_pix.loc[iswe:(iswe + lx),'%s,%s'%(n,m)] = swe.values[0:lx]
 
                 ncf.close()
                 iswe = iswe + len(swe.values)
@@ -145,10 +139,6 @@ def stn_validate(snow):
                 tick.set_rotation(30)
         else:
             axs[iters].set_xticklabels('')
-
-        # swe_mod_pix = swe_mod_pix.astype(float).round(decimals=1)
-        # swe_mod_pix.to_csv('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2018_swe_mm_%s.csv'%(stn))
-        # print('/home/markrobertson/mrworkspace/projects/ferix/tuol_wy2017_swe_mm_%s.csv'%(stn))
 
     # Plot
     maxm = np.nanmax(swe_meas)
