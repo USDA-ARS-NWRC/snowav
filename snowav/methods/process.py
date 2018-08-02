@@ -17,9 +17,9 @@ def process(self):
 
     It loops over each day in the specified directory and:
         - sums total precip and rain from the ipw ppt ppt files
-        - then loops over each daily_outputs ('swe_z', 'swe_vol', etc)
-        - then loops over sub-basin
-        - then loops over elevation band, and calculates volumes and mean depths
+        - loops over each daily_outputs ('swe_z', 'swe_vol', etc)
+        - loops over sub-basins
+        - loops over elevation band, and calculates volumes and mean depths
             (masked where there is SWE greater than 0) for each daily_outputs
             value in that elevation band
         - once all elevation bands for each subbasin have been calculated,
@@ -47,8 +47,9 @@ def process(self):
     dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
     # Order matters!
-    vars = ['coldcont','evap_z','rain_z','density','depth','precip_z','precip_vol',
-            'swi_z','swi_vol','swe_z','swe_vol','swe_avail','swe_unavail']
+    vars = ['coldcont','evap_z','rain_z','density','depth','precip_z',
+            'precip_vol','swi_z','swi_vol','swe_z','swe_vol','swe_avail',
+            'swe_unavail']
 
     adj = 0
     t = 0
@@ -85,9 +86,8 @@ def process(self):
 
         pFlag = False
         ppt_files = []
-        # Get all the ppt_files for that day
+        # Get all the ppt_files for that day and make 0-padded strings
         for hr in hrs:
-            # Make 0-padded strings
             if hr < 100:
                 shr = '00' + str(hr)
             if hr >= 100 and hr < 1000:
@@ -126,10 +126,6 @@ def process(self):
                 # If the key is something we've already calculated (i.e., not
                 # volume), get the masked subbasin output, otherwise it will be
                 # calculated below
-
-                # Careful with the order here! Some of the z/vol things may not be
-                # getting run through as expected here...
-                # This also gets reassigned in some cases below...
                 if k in self.outputs.keys():
                     mask_out = np.multiply(self.outputs[k][iters],mask)
 
@@ -147,7 +143,6 @@ def process(self):
                     ix = swe_mask_sub[ind] > 0
 
                     # Assign values
-                    # swe_z and derivatives
                     if k == 'swe_z':
                         mask_out = np.multiply(self.outputs['swe_z'][iters],mask)
                         ccb = cold_sub[ind][ix]

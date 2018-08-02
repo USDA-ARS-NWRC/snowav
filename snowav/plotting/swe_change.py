@@ -29,10 +29,11 @@ def swe_change(snow):
 
     for bid in snow.plotorder:
         r = database.database.query(snow.database,
-                                                snow.start_date,
-                                                snow.end_date,
-                                                bid,
-                                                'swe_z')
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_z')
 
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]

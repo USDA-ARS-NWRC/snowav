@@ -18,7 +18,7 @@ def image_change(snow):
 
     '''
 
-    # Calculate accumulated swi during the specified period
+    # Get change in swe during the specified period
     ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
     ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
 
@@ -30,10 +30,11 @@ def image_change(snow):
 
     for bid in snow.plotorder:
         r = database.database.query(snow.database,
-                                                snow.start_date,
-                                                snow.end_date,
-                                                bid,
-                                                'swe_vol')
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_vol')
 
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
@@ -53,7 +54,7 @@ def image_change(snow):
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
     ixf = delta_swe == 0
-    delta_swe[ixf] = -100000 # set snow-free
+    delta_swe[ixf] = -100000 
     pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_swe[ixo] = np.nan

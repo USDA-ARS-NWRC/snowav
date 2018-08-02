@@ -28,7 +28,10 @@ def report(obj):
     start_date = obj.start_date
     end_date = obj.end_date
 
-    r = database.database.query(obj.database, wy_start, obj.end_date)
+    r = database.database.query(obj.database,
+                                wy_start,
+                                obj.end_date,
+                                obj.run_name)
 
     # Initialize variables to pass to latex file
     variables = {}

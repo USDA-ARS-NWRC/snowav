@@ -27,8 +27,12 @@ def flt_image_change(snow):
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow.database, snow.start_date,
-                                    snow.end_date, bid, 'swe_vol')
+        r = database.database.query(snow.database,
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_vol')
 
         for elev in snow.edges:
             v = r[ (r['elevation'] == str(elev))
@@ -38,7 +42,6 @@ def flt_image_change(snow):
                     & (r['date_time'] == snow.flt_end_date)
                     & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
             delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values[0] - v['value'].values[0])
-
 
     # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(delta_swe)

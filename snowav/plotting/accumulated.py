@@ -16,6 +16,7 @@ def accumulated(snow):
     '''
     Issues:
     - matplotlib, multiple colormaps, and qMin/qMax do not play nice
+    
     '''
 
     # Calculate accumulated swi during the specified period
@@ -31,15 +32,13 @@ def accumulated(snow):
     # Make df from database
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
-    loc = snow.database
-    start_date = snow.start_date
-    end_date = snow.end_date
-    bid = snow.plotorder
-    value = 'swi_vol'
-
     for bid in snow.plotorder:
-        r = database.database.query(loc, start_date,
-                                                end_date, bid, value)
+        r = database.database.query(snow.database,
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swi_vol')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]

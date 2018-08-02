@@ -2,10 +2,11 @@
 import datetime
 import snowav
 from snowav.database.tables import BASINS
+from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, BASINS
 
 def package(self, df, output, dtime):
     '''
-    This function sends process() results to the snowav database.
+    This function sends process() results to the database.
 
     Args
         df: results DataFrame
@@ -28,15 +29,13 @@ def package(self, df, output, dtime):
     for var in df:
 
         # By elevation band
-        for iters,r in enumerate(df[var].values):
+        for iters,val in enumerate(df[var].values):
             values = {'basin_id': BASINS.basins[var]['basin_id'],
+                      'run_id':self.runid,
+                      'run_name':self.run_name,
                       'date_time': dtime,
-                      'proc_time': datetime.datetime.now(),
-                      'version': 'snowav'+ snowav.__version__,
                       'variable': output,
-                      'var_units': lbl,
-                      'value': r,
-                      'elevation': str(df[var].index[iters]),
-                      'elev_units': self.elevlbl}
+                      'value': val,
+                      'elevation': str(df[var].index[iters])}
 
-            snowav.database.database.insert(self.database,values)
+            snowav.database.database.insert(self.database,'Results',values)

@@ -16,7 +16,7 @@ import numpy as np
 
 def insert(loc,table,values):
     '''
-    Inserts results to the database.
+    Inserts standard run results to the database.
 
     Args
         loc: database location
@@ -25,43 +25,25 @@ def insert(loc,table,values):
 
     '''
 
-    engine = create_engine('sqlite:///%s'%(loc))
+    engine = create_engine(loc)
     DeclarativeBase = declarative_base()
     metadata = DeclarativeBase.metadata
     Base.metadata.bind = engine
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    if table != 'Run_Metadata':
-        val = Results(basin_id = values['basin_id'],
-                      run_id = values['run_id'],
-                      date_time = values['date_time'],
-                      variable = values['variable'],
-                      value = values['value'],
-                      elevation = values['elevation'])
+    dbtable = getattr(snowav.database.tables, table)
+    my_dbtable = dbtable()
 
-    else:
-        val = Run_Metadata( run_id = values['run_id'],
-                            basin_id = values['basin_id'],
-                            basin_name = values['basin_name'],
-                            description = values['description'],
-                            smrf_version = values['smrf_version'],
-                            awsm_version = values['awsm_version'],
-                            snowav_version = values['snowav_version'],
-                            data_type = values['data_type'],
-                            data_location = values['data_location'],
-                            file_type = values['file_type'],
-                            config_file = values['config_file'],
-                            proc_time = values['proc_time'],
-                            var_units = values['var_units'],
-                            elev_units = values['elev_units'] )
+    for k,v in values.items():
+        setattr(my_dbtable, k, v)
 
-    session.add(val)
+    session.add(my_dbtable)
     session.commit()
     session.close()
 
 
-def query(loc, start_date, end_date, bid = None, value = None):
+def query(loc, start_date, end_date, run_name, bid = None, value = None):
     '''
     Query and retrieve results from the database.
 
@@ -69,6 +51,7 @@ def query(loc, start_date, end_date, bid = None, value = None):
         loc: database location
         start_date: (datetime)
         end_date: (datetime)
+        run_name: identifier for run, specified in config file
         bid: basin id in string format ('Boise River Basin')
         value: value to query (i.e. 'swi_z')
 
@@ -77,7 +60,7 @@ def query(loc, start_date, end_date, bid = None, value = None):
 
     '''
 
-    engine = create_engine('sqlite:///%s'%(loc))
+    engine = create_engine(loc)
     connection = engine.connect()
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
@@ -86,48 +69,55 @@ def query(loc, start_date, end_date, bid = None, value = None):
     if (value != None) and (bid != None):
         qry = session.query(Results).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
+                                              (Results.run_name == run_name),
                                               (Results.variable == value),
                                               (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+
+    # Otherwise you're gonna get a bunch of stuff...
     else:
         qry = session.query(Results).filter(and_((Results.date_time >= start_date),
-                                              (Results.date_time <= end_date)))
+                                              (Results.date_time <= end_date),
+                                              (Results.run_name == run_name)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
 
     return df
 
-def delete(loc, start_date, end_date, bid):
+def delete(loc, start_date, end_date, bid, run_name):
     '''
-    Delete results from the database. Currently this deletes all values with
-    basin_id == bid in the selected date range.
+    Delete results from the database. Currently this deletes all values
+    with basin_id == bid and run_name = run_name within the date range.
 
     Args
         loc: database location
         start_date: (datetime)
         end_date: (datetime)
         bid: basin id in string format ('Boise River Basin')
+        run_name: identifier for run, specified in config file
 
     '''
 
-    engine = create_engine('sqlite:///%s'%(loc))
+    engine = create_engine(loc)
     connection = engine.connect()
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
+
     try:
         qry = session.query(Results).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
+                                          (Results.run_name == run_name),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
         # Only ever figured out how to do this one record at a time
-        for act in qry:
-            session.delete(act)
+        for f in qry:
+            session.delete(f)
 
-        # (Results.run_metadata.run_name == run_name)
         session.commit()
         session.close()
+
     except:
-        print('delete exception')
+        print('Failed during attempted deletion in database.delete()')
         session.commit()
         session.close()
 
@@ -138,7 +128,7 @@ def run_metadata(self):
     '''
 
     # Get latest run id
-    engine = create_engine('sqlite:///%s'%(self.database))
+    engine = create_engine(self.database)
     connection = engine.connect()
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
@@ -156,7 +146,7 @@ def run_metadata(self):
     values = {
               'run_id':self.runid,
               'basin_id':BASINS.basins[self.plotorder[0]]['basin_id'],
-              # 'run_name':self.run_name,
+              'run_name':self.run_name,
               'basin_name':self.plotorder[0],
               'description':'',
               'smrf_version':'smrf'+ smrf.__version__,
@@ -175,16 +165,18 @@ def run_metadata(self):
     snowav.database.database.insert(self.database,'Run_Metadata',values)
 
 
-def check_fields(loc, start_date, end_date, bid, value):
+def check_fields(loc, start_date, end_date, bid, run_name, value):
     '''
-    This functions queries the database and returns True if any value exists in
-    the given date range, and False if not.
+    This functions queries the database and returns True if any value exists
+    in the given date range, basin_id = id and run_name = run_name,
+    and False if not.
 
     Args
         loc: database location
         start_date: (datetime)
         end_date: (datetime)
         bid: basin id in string format ('Boise River Basin')
+        run_name: identifier for run, specified in config file
         value: value to query (i.e. 'swi_z')
 
     Returns:
@@ -192,14 +184,14 @@ def check_fields(loc, start_date, end_date, bid, value):
 
     '''
 
-    engine = create_engine('sqlite:///%s'%(loc))
+    engine = create_engine(loc)
     connection = engine.connect()
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
     qry = session.query(Results).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
-                                          # (Results.run_metadata.run_name == self.run_name),
+                                          (Results.run_name == run_name),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id']),
                                           (Results.variable == value))).first()
 

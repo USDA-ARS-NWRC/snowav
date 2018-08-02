@@ -23,16 +23,18 @@ def state_by_elev(snow):
 
     for bid in snow.plotorder:
         r = database.database.query(snow.database,
-                                                snow.start_date,
-                                                snow.end_date,
-                                                bid,
-                                                'swe_avail')
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_avail')
 
         r2 = database.database.query(snow.database,
-                                                snow.start_date,
-                                                snow.end_date,
-                                                bid,
-                                                'swe_unavail')
+                                    snow.start_date,
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_unavail')
 
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev))

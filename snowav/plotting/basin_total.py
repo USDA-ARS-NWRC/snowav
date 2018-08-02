@@ -27,15 +27,17 @@ def basin_total(snow):
 
     for bid in snow.plotorder:
         r = database.database.query(snow.database,
-                                                datetime(snow.wy-1,10,1),
-                                                snow.end_date,
-                                                bid,
-                                                'swe_vol')
+                                    datetime(snow.wy-1,10,1),
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swe_vol')
         r2 = database.database.query(snow.database,
-                                                datetime(snow.wy-1,10,1),
-                                                snow.end_date,
-                                                bid,
-                                                'swi_vol')
+                                    datetime(snow.wy-1,10,1),
+                                    snow.end_date,
+                                    snow.run_name,
+                                    bid,
+                                    'swi_vol')
 
         v = r[(r['elevation'] == 'total')]
         v2 = r2[(r2['elevation'] == 'total')]
@@ -61,8 +63,6 @@ def basin_total(snow):
         plotorder = snow.plotorder
 
     for iters,name in enumerate(plotorder):
-        # name = snow.plotorder[0]
-        # iters = 0
         swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
         ax1.plot(swi_summary[name],
                  color = snow.barcolors[iters], label='_nolegend_')

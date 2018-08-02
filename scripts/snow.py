@@ -3,10 +3,6 @@ import sys
 import snowav
 
 '''
-Issues:
-- memory issues?
-- run metadata table
-- store elevation bands in array
 
 '''
 

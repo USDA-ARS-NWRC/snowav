@@ -9,8 +9,6 @@ from sqlalchemy import schema, types
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
 
-# db_location = '/home/markrobertson/mrworkspace/projects/snowav_database.db'
-
 Base = declarative_base()
 
 class Basin_Metadata(Base):
@@ -25,25 +23,27 @@ class Results(Base):
     __tablename__ = 'Results'
 
     id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('Basin_Metadata.basin_id'))
-    date_time = Column(types.DateTime(),nullable=False)
-    proc_time = Column(types.DateTime(),nullable=True)
-    version = Column(String(250), nullable=True)
-    variable = Column(String(250), nullable=False)
-    var_units = Column(String(250), nullable=False)
+    basin_id = Column(Integer, ForeignKey('Basin_Metadata.basin_id'), index = True)
+    run_id = Column(Integer, ForeignKey('Run_Metadata.run_id'), index = True)
+    run_name = Column(String(250), nullable=False, index = True)
+    date_time = Column(types.DateTime(),nullable=False, index = True)
+    variable = Column(String(250), nullable=False, index = True)
     value = Column(types.Float(), nullable=True)
     elevation = Column(String(250), nullable=True)
-    elev_units = Column(String(250), nullable=True)
 
     # This puts Basin_Metadata.results and Results.basin_metadata
     basin_metadata = relationship('Basin_Metadata',
                                 backref=backref('results',lazy='dynamic'))
 
+    run_metadata = relationship('Run_Metadata',
+                                backref=backref('results',lazy='dynamic'))
+
 class Run_Metadata(Base):
     __tablename__ = 'Run_Metadata'
 
-    run_id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('Results.id'))
+    run_id = Column(Integer, primary_key=True, autoincrement=True)
+    basin_id = Column(Integer, nullable=False)
+    run_name = Column(String(250), nullable=False)
     basin_name = Column(String(250), nullable=True)
     description = Column(String(250), nullable=True)
     smrf_version = Column(String(250), nullable=True)
@@ -53,9 +53,9 @@ class Run_Metadata(Base):
     data_location = Column(String(250), nullable=True)
     file_type = Column(String(250), nullable=True)
     config_file = Column(String(250), nullable=True)
-
-    run_metadata = relationship('Results',
-                                backref=backref('run_metadata',lazy='dynamic'))
+    proc_time = Column(types.DateTime(),nullable=True)
+    var_units = Column(String(250), nullable=False)
+    elev_units = Column(String(250), nullable=True)
 
 
 class BASINS(object):
@@ -88,6 +88,30 @@ class BASINS(object):
                             'state':'California'},
                 'Eleanor':{'basin_id':8,
                             'basin_name':'Eleanor',
-                            'state':'California'}
+                            'state':'California'},
+                'San Joaquin':{'basin_id':9,
+                               'basin_name':'San Joaquin',
+                               'state':'California'},
+                'South Fork':{'basin_id':10,
+                                'basin_name':'South Fork',
+                                'state':'California'},
+                'Main':{'basin_id':11,
+                                'basin_name':'Main',
+                                'state':'California'},
+                'Jose Creek':{'basin_id':12,
+                               'basin_name':'Jose Creek',
+                               'state':'California'},
+                'Willow Creek':{'basin_id':13,
+                               'basin_name':'Willow Creek',
+                               'state':'California'},
+                'Reynolds Creek':{'basin_id':14,
+                               'basin_name':'Reynolds Creek',
+                               'state':'Idaho'},
+                'Tollgate':{'basin_id':15,
+                               'basin_name':'Tollgate',
+                               'state':'Idaho'},
+                'Lakes':{'basin_id':16,
+                               'basin_name':'Lakes',
+                               'state':'California'}
 
                 }

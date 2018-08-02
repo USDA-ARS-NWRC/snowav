@@ -23,9 +23,6 @@ def read_config(self, external_logger=None):
     '''
     Read snowav config file and assign fields.
 
-    To-dos:
-    -make a catch for start/end dates outside of range
-
     '''
     print('Reading SNOWAV config file and loading iSnobal outputs...')
     ucfg = get_user_config(self.config_file, modules = 'snowav')
@@ -207,6 +204,7 @@ def read_config(self, external_logger=None):
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
     self.database = ucfg.cfg['results']['database']
+    self.run_name = ucfg.cfg['results']['run_name']
     self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
     self.db_variables = ucfg.cfg['results']['variables']
 
@@ -216,7 +214,6 @@ def read_config(self, external_logger=None):
 
     if type(self.db_variables) != list:
         self.db_variables = [self.db_variables]
-
 
     # Done reading config options...
     self.plotorder = []
@@ -283,7 +280,6 @@ def read_config(self, external_logger=None):
             self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
             self.outputs['depth'].append(output.snow_data[0][n,:,:])
             self.outputs['density'].append(output.snow_data[1][n,:,:])
-
 
     # If no psnowFile and csnowFile specified, use first and last
     if (self.start_date is not None) and (self.end_date is not None):
