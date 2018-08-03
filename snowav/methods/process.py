@@ -71,7 +71,7 @@ def process(self):
                          'coldcont':dz.copy()}
 
         # Hack for Hx-repeats-itself forecasting
-        if out_date == self.psnowFile:
+        if out_date == self.start_date:
             self.dateFrom = self.outputs['dates'][iters]
             if self.adj_hours != None:
                 self._logger.debug('Hacking adj_hours...')
