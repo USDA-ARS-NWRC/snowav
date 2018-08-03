@@ -30,9 +30,9 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 }
 
 \author{USDA Agricultural Research Service, Boise, Idaho \\
-	\small NASA Jet Propulsion Lab, Pasadena, California \\
-	\small \emph{in cooperation with} NRCS National Water and Climate Center, Portland, Oregon\\
-	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California }
+	\small \emph{in cooperation with} NASA Jet Propulsion Lab, Pasadena, California, \\
+	\small NRCS National Water and Climate Center, Portland, Oregon, \\
+	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California}
 \date{}
 
 \begin{document}
@@ -54,9 +54,9 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \section*{Summary}
 \VAR{SUMMARY}
 
-\VAR{PRECIP_SUMMARY_TPL}
-
 \VAR{SWE_SUMMARY_TPL}
+
+\VAR{PRECIP_SUMMARY_TPL}
 
 \clearpage
 \section*{Results}
@@ -109,13 +109,11 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \begin{itemize}
 	\setlength\itemsep{0.05em}
 	\footnotesize{
-		\item[] SWE: Snow Water Equivalent, snow storage in the basin
-		\item[] SWE (avail): amount of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
-		\item[] SWE (mean): basin-wide mean SWE, as a depth
+		\item[] SWE: Snow Water Equivalent
+		\item[] SWE (avail): volume of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
 		\item[] $\Delta$SWE: change in SWE during the reporting period
-		\item[] SWI: Surface Water Inputs, the combination of snowmelt and rain that exited the base of the snowpack, and rain on bare ground
-		\item[] ppt (mean): basin-wide mean precipitation, as a depth
-		\item[] Rain: approximate percent of precipitation that fell as rain (\textit{NOTE:} in most cases this is different than \%SWI that is attributable to rain)
+		\item[] SWI: Surface Water Inputs, total of all water inputs to the basin (the combination of snowmelt that exits the base of the snowpack, and rain on bare ground)
+		\item[] Rain: approximate percent of precipitation that fell as rain
 		\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
 	}
 \end{itemize}

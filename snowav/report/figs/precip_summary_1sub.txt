@@ -3,9 +3,9 @@
 	\centering
 	\begin{tabular}{l c c  }
 		\toprule
-		
-		\multirow{2}{*} {\bf{Basin} }	& ppt (mean) & Rain \\ & [DEPLBL] & [$\%$] \\
-		
+
+		\multirow{2}{*} {\bf{Basin} }	& Total & Rain \\ & [DEPLBL] & [$\%$] \\
+
 		\midrule
 		TOT_LBL		& TOTALPRE_PM 	& $\sim$TOTAL_RAT \\
 

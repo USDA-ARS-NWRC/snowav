@@ -125,17 +125,9 @@ def basin_total(snow):
         multiswe['date'] = pd.to_datetime(multiswe['date'])
         multiswi['date'] = pd.to_datetime(multiswi['date'])
 
-        multiswe.wy17.iloc[304:] = 0
-        multiswi.wy17 = np.cumsum(multiswi.wy17)
-        multiswi.wy17.iloc[304:] = multiswi.wy17[303]
-
-        # Put in this year
-        # print(swe_summary.index)
-        # swe_summary = swe_summary.set_index('date_time')
-        # swe_summary['date_time'] = pd.to_datetime(swe_summary['date_time'])
-
-        multiswe.loc[range(0,len(swe_summary[main])),'wy18'] = swe_summary[main].values
-        multiswi.loc[range(0,len(swi_summary[main])),'wy18'] = swi_summary[main].values
+        multiswi.wy17 = multiswi.wy17.cumsum()
+        multiswe.loc[range(0,len(swe_summary[main])),'wy18'] = swe_summary[main].values.copy()
+        multiswi.loc[range(0,len(swi_summary[main])),'wy18'] = swi_summary[main].values.copy()
 
         if snow.units == 'SI':
             multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)

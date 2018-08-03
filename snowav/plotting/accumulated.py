@@ -16,7 +16,7 @@ def accumulated(snow):
     '''
     Issues:
     - matplotlib, multiple colormaps, and qMin/qMax do not play nice
-    
+
     '''
 
     # Calculate accumulated swi during the specified period

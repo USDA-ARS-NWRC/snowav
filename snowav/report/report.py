@@ -175,8 +175,10 @@ def report(obj):
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
     swe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    swe_byelev.index.name = 'Elevation'
     sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
     dswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    dswe_byelev.index.name = 'Elevation'
     for sub in obj.plotorder:
         swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
@@ -187,13 +189,13 @@ def report(obj):
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
     variables['SWE_BYELEV'] = (
-                                r'\textbf{Mean SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                r'\textbf{Mean SWE [%s] by elevation band, %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
                                 + swe_byelev[obj.plotorder].to_latex()
                                 )
 
     variables['DSWE_BYELEV'] = (
-                                r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                r'\textbf{Change in SWE [%s] by elevation band, %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
                                   obj.end_date.date().strftime("%Y-%-m-%-d"))
                                 + dswe_byelev[obj.plotorder].to_latex()

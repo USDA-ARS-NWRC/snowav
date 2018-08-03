@@ -281,16 +281,12 @@ def read_config(self, external_logger=None):
             self.outputs['depth'].append(output.snow_data[0][n,:,:])
             self.outputs['density'].append(output.snow_data[1][n,:,:])
 
-    # If no psnowFile and csnowFile specified, use first and last
-    if (self.start_date is not None) and (self.end_date is not None):
-        self.psnowFile = self.start_date
-        self.csnowFile = self.end_date
-
-    else:
-        self.psnowFile = self.outputs['dates'][0]
-        self.csnowFile = self.outputs['dates'][-1]
+    # If no dates are specified, use first and last
+    if (self.start_date is None) and (self.end_date is None):
+        self.start_date = self.outputs['dates'][0]
+        self.end_date = self.outputs['dates'][-1]
         print('start_date and/or end_date not specified, using:'
-              + ' %s and %s'%(self.psnowFile,self.csnowFile))
+              + ' %s and %s'%(self.start_date,self.end_date))
 
     # check that dates are in range
     if self.start_date > self.end_date:
