@@ -244,18 +244,19 @@ def report(obj):
     if obj.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
 
-    # Remove if not BRB
-    if obj.basin != 'BRB':
-        variables['MULTITOT_FIG_TPL'] = ' '
-
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
         var = fid.read()
         fid.close()
 
-        for name in variables:
+        for name in sorted(variables):
             var = var.replace(name,variables[name])
         variables[rep] = var
+
+    # Remove if not BRB
+    if obj.basin != 'BRB':
+        variables['MULTITOT_FIG'] = ' '
+        variables['MULTITOT_FIG_TPL'] = ' '
 
     # If figs are listed in exclude, replace with empty string in latex file
     if obj.exclude_figs != None:
