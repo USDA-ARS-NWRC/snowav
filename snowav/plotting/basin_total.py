@@ -112,7 +112,6 @@ def basin_total(snow):
     ########################################
 
     # This needs to be improved...
-
     if snow.basin_total_flag is False:
         snow._logger.info('No basin total summary files specified in config file, '
               + 'skipping...')
