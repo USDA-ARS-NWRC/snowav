@@ -17,11 +17,21 @@ import logging
 import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
+from sqlalchemy import create_engine
+from snowav.database.tables import Base, Basin_Metadata, Results, Run_Metadata, BASINS
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import git
 
 
-def read_config(self, external_logger=None):
+def read_config(self, external_logger=None, awsm=None):
     '''
     Read snowav config file and assign fields.
+
+    Args
+        external_logger: awsm logger
+        awsm: awsm class, if this is passed, run_dir will be assigned from the
+            directory being created in awsm
 
     '''
     print('Reading SNOWAV config file and loading iSnobal outputs...')
@@ -38,7 +48,6 @@ def read_config(self, external_logger=None):
     # Check the user config file for errors and report issues if any
     self.tmp_log.append("Reading config file and loading iSnobal outputs...")
     warnings, errors = check_config(ucfg)
-    # print_config_report(warnings, errors)
 
     ####################################################
     #             snowav system                        #
@@ -47,8 +56,11 @@ def read_config(self, external_logger=None):
     self.log_to_file = ucfg.cfg['snowav system']['log_to_file']
     self.basin = ucfg.cfg['snowav system']['basin']
     self.save_path = ucfg.cfg['snowav system']['save_path']
+
     if self.save_path is None:
-        self.save_path = os.path.join(self.snowav_path, 'snowav/data/')
+        self.save_path = self.snowav_path + '/snowav/data/'
+        print('No save_path specified, using {}'.format(self.save_path))
+
     self.wy = ucfg.cfg['snowav system']['wy']
     self.units = ucfg.cfg['snowav system']['units']
     self.filetype = ucfg.cfg['snowav system']['filetype']
@@ -89,9 +101,14 @@ def read_config(self, external_logger=None):
     ####################################################
     #           runs                                   #
     ####################################################
-    self.run_dirs = ucfg.cfg['runs']['run_dirs']
-    if type(self.run_dirs) != list:
-        self.run_dirs = [self.run_dirs]
+    # If an awsm class is passed, use that run_dir
+    if awsm is not None:
+        self.run_dirs = [awsm.pathrr]
+
+    else:
+        self.run_dirs = ucfg.cfg['runs']['run_dirs']
+        if type(self.run_dirs) != list:
+            self.run_dirs = [self.run_dirs]
 
     ####################################################
     #           validate                               #
@@ -107,8 +124,6 @@ def read_config(self, external_logger=None):
 
     else:
         self.valid_flag = False
-        self.exclude_figs = ['VALID']
-        print('No validation stations listed, will not generate figure')
 
     # This is being used to combine 2017 HRRR data
     self.offset = int(ucfg.cfg['validate']['offset'])
@@ -152,10 +167,15 @@ def read_config(self, external_logger=None):
     #          report                                  #
     ####################################################
     self.report_flag = ucfg.cfg['report']['report']
-
     self.exclude_figs = ucfg.cfg['report']['exclude_figs']
+
     if type(self.exclude_figs) != list and self.exclude_figs != None:
         self.exclude_figs = [self.exclude_figs]
+
+    if (self.valid_flag is False) and (self.exclude_figs is not None):
+        self.exclude_figs.append('VALID')
+    if (self.valid_flag is False) and (self.exclude_figs is None):
+        self.exclude_figs = ['VALID']
 
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
@@ -204,6 +224,46 @@ def read_config(self, external_logger=None):
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
     self.database = ucfg.cfg['results']['database']
+
+    # If no database is specified, make the directory and database in the repo
+    if self.database is None:
+        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
+        database = os.path.abspath(dbpath + '/model_results.db')
+        self.database = 'sqlite:///{}'.format(database)
+        print('No results database specified in config file...')
+
+        if not os.path.exists(dbpath):
+            os.mkdir(dbpath)
+
+        if not os.path.exists(database):
+
+            try:
+                print('Creating and using {}'.format(self.database))
+                engine = create_engine(self.database)
+                Base.metadata.create_all(engine)
+
+                DBSession = sessionmaker(bind=engine)
+                session = DBSession()
+
+                # Initialize basin metadata for all basin defitions
+                for basin in BASINS.basins:
+                    val = Basin_Metadata(basin_id = BASINS.basins[basin]['basin_id'],
+                                         basin_name = BASINS.basins[basin]['basin_name'],
+                                         state = BASINS.basins[basin]['state'])
+
+                    session.add(val)
+                    session.commit()
+                session.close()
+
+            except:
+                # If database creation failed, remove what might be empty db
+                if os.path.exists(self.database):
+                    os.remove(self.database)
+
+                print('Database {} creation failed...'.format(self.database))
+        else:
+            print('Using database {}...'.format(self.database))
+
     self.run_name = ucfg.cfg['results']['run_name']
     self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
     self.db_variables = ucfg.cfg['results']['variables']
@@ -251,19 +311,31 @@ def read_config(self, external_logger=None):
 
     self.rundirs_dict = {}
 
-    fdirs = ['brb/ops/wy2018/runs/run20171001_20180107/output/',
-             'brb/ops/wy2018/runs/run20180108_20180117/']
+    # these were made with an old version of awsm and have the wrong date
+    fdirs = ['brb/ops/wy2018/runs/run20171001_20180107/',
+             'brb/ops/wy2018/runs/run20180108_20180117/',
+             'brb/devel/wy2018/hrrr_comparison/run20171001_20180107/',
+             'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
 
     for rd in self.run_dirs:
-        output = iSnobalReader(rd.split('output')[0],
-                               'netcdf',
+        if self.filetype == 'ipw':
+            path = rd
+
+        if self.filetype == 'netcdf':
+            if 'output' in rd:
+                path = rd.split('output')[0]
+            else:
+                path = rd
+
+        output = iSnobalReader(path,
+                               self.filetype,
                                snowbands = [0,1,2],
                                embands = [6,7,8,9],
                                wy = self.wy)
-        if (fdirs[0] in rd) or (fdirs[1] in rd):
+
+        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
             self.outputs['dates'] = np.append(
-                    self.outputs['dates'],output.dates-relativedelta(years=1)
-                                                )
+                    self.outputs['dates'],output.dates-relativedelta(years=1) )
         else:
             self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
         self.outputs['time'] = np.append(self.outputs['time'],output.time)
@@ -300,8 +372,17 @@ def read_config(self, external_logger=None):
         return
 
     # Pixel size and elevation bins
-    fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
-    topo = ts.get_topo_stats(fp,filetype = 'netcdf')
+    if self.filetype == 'netcdf':
+        if 'output' in self.run_dirs[0]:
+            fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
+        else:
+            fp = os.path.join(self.run_dirs[0],'snow.nc')
+
+    if self.filetype == 'ipw':
+        fp = os.path.join(self.run_dirs[0], os.listdir(self.run_dirs[0])[0])
+
+    topo = ts.get_topo_stats(fp, filetype = self.filetype)
+
     self.pixel = int(topo['dv'])
     self.edges = np.arange(self.elev_bins[0],
                            self.elev_bins[1]+self.elev_bins[2],
