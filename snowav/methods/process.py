@@ -278,11 +278,11 @@ def process(self):
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
             # Send daily results to database
-            if self.location == 'database':
-                df = daily_outputs[k].copy()
-                df = df.round(decimals = 3)
-                database.package_results.package(self, df, k,
-                                                 self.outputs['dates'][iters])
+            # if self.location == 'database':
+            df = daily_outputs[k].copy()
+            df = df.round(decimals = 3)
+            database.package_results.package(self, df, k,
+                                             self.outputs['dates'][iters])
 
         # It's nice to see where we are...
         debug = 'snow file: %s, hours: %s, date: %s'%(

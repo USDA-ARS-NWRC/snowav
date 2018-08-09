@@ -74,7 +74,11 @@ def report(obj):
                     & (r['date_time']<=end_date)
                     & (r['elevation']=='total')
                     & (r['variable']=='rain_z')]['value'].sum().round(decimals = 1)
-    variables['TOTAL_RAT'] = str(int((total_rai/variables['TOTALPRE_PM'])*100))
+
+    if variables['TOTALPRE_PM'] != 0.0:
+        variables['TOTAL_RAT'] = str(int((total_rai/variables['TOTALPRE_PM'])*100))
+    else:
+        variables['TOTAL_RAT'] = '0'
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
     if hasattr(obj,'orig_date'):
@@ -132,7 +136,10 @@ def report(obj):
                     & (r['date_time']<=end_date)
                     & (r['elevation']=='total')
                     & (r['variable']=='rain_z')]['value'].sum()
-        ratval = str(int((rainval/prepmval)*100))
+        if prepmval != 0.0:
+            ratval = str(int((rainval/prepmval)*100))
+        else:
+            ratval = '0'
         variables[SWIIND] = swival
         variables[SWEIND] = sweval
         variables[AVSWEIND] = avsweval
@@ -261,6 +268,7 @@ def report(obj):
     # If figs are listed in exclude, replace with empty string in latex file
     if obj.exclude_figs != None:
         for name in obj.exclude_figs:
+            variables[name + '_FIG'] = ' '
             variables[name + '_FIG_TPL'] = ' '
 
     # Make the report
