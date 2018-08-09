@@ -6,11 +6,17 @@ from snowav import database
 
 class SNOWAV(object):
 
-    def __init__(self,config_file = None):
+    def __init__(self, config_file = None, external_logger = None, awsm = None):
         '''
         Initialize snowav class with config file, read config file, and
         run processing, results storage, figures, and reports as specified in
         the config file.
+
+        Args:
+            config_file: snowav config file for independent snowav processing
+            external_logger: awsm logger
+            awsm: awsm class if being run with awsm. Currently, this only uses
+                the config file and run directory from the awsm class
 
         '''
 
@@ -23,7 +29,12 @@ class SNOWAV(object):
             return
 
         # Read config file
-        methods.read_config.read_config(self)
+        if external_logger is not None:
+            methods.read_config.read_config(self,
+                                            external_logger = external_logger,
+                                            awsm = awsm)
+        else:
+            methods.read_config.read_config(self)
 
         # Do any values in this date already already exist?
         flag = database.database.check_fields(self.database,
