@@ -89,7 +89,7 @@ class iSnobalReader():
             if self.wy is None:
                 raise IOError('WY not included in iSnobalReader call with type ipw')
             # set start date for wyhrs from ipw files to allow datetime conversion
-            self.start_ipw = pd.to_datetime('10-01-{} 00:00'.format(wy-1))
+            self.start_ipw = pd.to_datetime('10-01-{} 00:00'.format(self.wy-1))
             # get the data
             snow_data, em_data = self.read_isnobal_ipw()
 
@@ -166,7 +166,6 @@ class iSnobalReader():
         ipw_dates = [self.start_ipw + pd.to_timedelta(dts, unit='h') for dts in self.time]
         self.dates = np.array(ipw_dates)
 
-        print('Reading in ipw images')
         for idt, ts in enumerate(timesteps):
             # get correct file
             fps = os.path.join(self.outputdir, 'snow.%04i'%(ts))
