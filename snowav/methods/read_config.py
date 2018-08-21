@@ -101,14 +101,9 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #           runs                                   #
     ####################################################
-    # If an awsm class is passed, use that run_dir
-    if awsm is not None:
-        self.run_dirs = [awsm.pathrr]
-
-    else:
-        self.run_dirs = ucfg.cfg['runs']['run_dirs']
-        if type(self.run_dirs) != list:
-            self.run_dirs = [self.run_dirs]
+    self.run_dirs = ucfg.cfg['runs']['run_dirs']
+    if type(self.run_dirs) != list:
+        self.run_dirs = [self.run_dirs]
 
     ####################################################
     #           validate                               #
@@ -275,7 +270,24 @@ def read_config(self, external_logger=None, awsm=None):
     if type(self.db_variables) != list:
         self.db_variables = [self.db_variables]
 
-    # Done reading config options...
+    self.plot_runs = ucfg.cfg['results']['plot_runs']
+    self.plot_labels = ucfg.cfg['results']['plot_labels']
+    self.plot_wy = ucfg.cfg['results']['plot_wy']
+    self.plot_variables = ucfg.cfg['results']['plot_variables']
+
+    # If these fields are specified in the config_file, plot_flag will be set
+    # to False, no processing occurs, and no report is generated
+    if self.plot_runs is not None:
+        self.plot_flag = True
+        print('Config file option [results] -> plot_runs are {}, '
+              'creating figures from existing database '
+              'entries for these runs...'.format(self.plot_runs))
+    else:
+        self.plot_flag = False
+
+    ########################################################################
+    #               done reading config options...                         #
+    ########################################################################
     self.plotorder = []
     maskpaths = []
 
@@ -304,77 +316,11 @@ def read_config(self, external_logger=None, awsm=None):
     self.ncols = len(self.dem[0,:])
     blank = np.zeros((self.nrows,self.ncols))
 
-    # Set up processed information
-    self.outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],
-                    'depth':[], 'dates':[], 'time':[], 'density':[],
-                    'coldcont':[] }
-
-    self.rundirs_dict = {}
-
-    # these were made with an old version of awsm and have the wrong date
-    fdirs = ['brb/ops/wy2018/runs/run20171001_20180107/',
-             'brb/ops/wy2018/runs/run20180108_20180117/',
-             'brb/devel/wy2018/hrrr_comparison/run20171001_20180107/',
-             'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
-
-    for rd in self.run_dirs:
-        if self.filetype == 'ipw':
-            path = rd
-
-        if self.filetype == 'netcdf':
-            if 'output' in rd:
-                path = rd.split('output')[0]
-            else:
-                path = rd
-
-        output = iSnobalReader(path,
-                               self.filetype,
-                               snowbands = [0,1,2],
-                               embands = [6,7,8,9],
-                               wy = self.wy)
-
-        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-            self.outputs['dates'] = np.append(
-                    self.outputs['dates'],output.dates-relativedelta(years=1) )
-        else:
-            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
-        self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-        # Make a dict for wyhr-rundir lookup
-        for t in output.time:
-            self.rundirs_dict[int(t)] = rd
-
-        for n in range(0,len(output.em_data[8])):
-            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-            self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-            self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-            self.outputs['depth'].append(output.snow_data[0][n,:,:])
-            self.outputs['density'].append(output.snow_data[1][n,:,:])
-
-    # If no dates are specified, use first and last
-    if (self.start_date is None) and (self.end_date is None):
-        self.start_date = self.outputs['dates'][0]
-        self.end_date = self.outputs['dates'][-1]
-        print('start_date and/or end_date not specified, using:'
-              + ' %s and %s'%(self.start_date,self.end_date))
-
-    # check that dates are in range
-    if self.start_date > self.end_date:
-        print('[Outputs] -> start_date is greater than end_date...')
-        return
-
-    if ((self.start_date < self.outputs['dates'][0])
-        or (self.end_date > self.outputs['dates'][-1])):
-        print('[Outputs] -> start_date or end_date outside of range in [runs]'
-        ' -> run_dirs...')
-        return
-
     # Pixel size and elevation bins
     if self.filetype == 'netcdf':
+        # split on the last instance of 'output', not very robust
         if 'output' in self.run_dirs[0]:
-            fp = os.path.abspath(self.run_dirs[0].split('output/')[0] + 'snow.nc')
+            fp = os.path.abspath(self.run_dirs[0].rsplit('output/',1)[0] + 'snow.nc')
         else:
             fp = os.path.join(self.run_dirs[0],'snow.nc')
 
@@ -442,12 +388,92 @@ def read_config(self, external_logger=None, awsm=None):
         self.vollbl = '$km^3$'
         self.elevlbl = 'm'
 
-    # Copy the config file where figs will be saved
-    extf = os.path.splitext(os.path.split(self.config_file)[1])
-    ext_shr = self.start_date.date().strftime("%Y%m%d")
-    ext_ehr = self.end_date.date().strftime("%Y%m%d")
-    self.figs_path = os.path.join(self.save_path,
-                                '%s_%s/'%(ext_shr,ext_ehr))
+    # If the user isn't just trying to create figures from the database, load
+    # iSnobal outputs and so forth
+    if self.plot_flag is False:
+        self.outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],
+                        'depth':[], 'dates':[], 'time':[], 'density':[],
+                        'coldcont':[] }
+
+        self.rundirs_dict = {}
+
+        # these were made with an old version of awsm and have the wrong date
+        fdirs = ['brb/ops/wy2018/runs/run20171001_20180107/',
+                 'brb/ops/wy2018/runs/run20180108_20180117/',
+                 'brb/devel/wy2018/hrrr_comparison/run20171001_20180107/',
+                 'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
+
+        for rd in self.run_dirs:
+            if self.filetype == 'ipw':
+                path = rd
+
+            if self.filetype == 'netcdf':
+                # split on the last instance of 'output', not very robust
+                if 'output' in rd:
+                    path = rd.rsplit('output',1)[0]
+                else:
+                    path = rd
+
+            output = iSnobalReader(path,
+                                   self.filetype,
+                                   snowbands = [0,1,2],
+                                   embands = [6,7,8,9],
+                                   wy = self.wy)
+
+            if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                self.outputs['dates'] = np.append(
+                        self.outputs['dates'],output.dates-relativedelta(years=1) )
+            else:
+                self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+            self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+            # Make a dict for wyhr-rundir lookup
+            for t in output.time:
+                self.rundirs_dict[int(t)] = rd
+
+            for n in range(0,len(output.em_data[8])):
+                self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                self.outputs['density'].append(output.snow_data[1][n,:,:])
+
+        # If no dates are specified, use first and last
+        if (self.start_date is None) and (self.end_date is None):
+            self.start_date = self.outputs['dates'][0]
+            self.end_date = self.outputs['dates'][-1]
+            print('start_date and/or end_date not specified, using:'
+                  + ' %s and %s'%(self.start_date,self.end_date))
+
+        # check that dates are in range
+        if self.start_date > self.end_date:
+            print('[Outputs] -> start_date is greater than end_date...')
+            return
+
+        if ((self.start_date < self.outputs['dates'][0])
+            or (self.end_date > self.outputs['dates'][-1])):
+            print('[Outputs] -> start_date or end_date outside of range in [runs]'
+            ' -> run_dirs...')
+            return
+
+        # Copy the config file where figs will be saved
+        # use name_append if only plotting figures from database and don't
+        # have start_date, end_date
+        extf = os.path.splitext(os.path.split(self.config_file)[1])
+        ext_shr = self.name_append
+        ext_ehr = ''
+        self.figs_path = os.path.join(self.save_path, '%s_%s/'%(ext_shr,ext_ehr))
+
+    # Otherwise, all we need to do is create the figs_path
+    else:
+        self.start_date = datetime.datetime(self.wy-1,10,1)
+        self.end_date = datetime.datetime(self.wy,9,30)
+        extf = os.path.splitext(os.path.split(self.config_file)[1])
+        ext_shr = self.start_date.date().strftime("%Y%m%d")
+        ext_ehr = self.end_date.date().strftime("%Y%m%d")
+        self.figs_path = os.path.join(self.save_path, '%s_%s/'%(ext_shr,ext_ehr))
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)

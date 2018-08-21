@@ -36,64 +36,71 @@ class SNOWAV(object):
         else:
             methods.read_config.read_config(self)
 
-        # Do any values in this date already already exist?
-        flag = database.database.check_fields(self.database,
-                                              self.start_date,
-                                              self.end_date,
-                                              self.plotorder[0],
-                                              self.run_name,
-                                              'swe_z')
+        # If user just wants plots from database, skip processing and just pull
+        # results from the database
+        if self.plot_flag is True:
+            snowav.plotting.compare_runs.compare_runs(self)
 
-        # Process results and put on the database
-        if (flag is True) and (self.db_overwrite_flag is False):
-            print('There are existing fields on the database between '
-                  '{} and {}, with run_name: {}, and the config file option '
-                  '[results] -> overwrite is set to False, '
-                  'skipping processing...'.format(self.start_date.date(),
-                                                  self.end_date.date(),
-                                                  self.run_name))
-
-        elif (flag is True) and (self.db_overwrite_flag is True):
-            print('There are existing fields on the database between '
-                  '{} and {}, with run_name: {}, and the config file option '
-                  '[results] -> overwrite is set to True, '
-                  'OVERWRITING RESULTS...'.format(self.start_date.date(),
-                                                  self.end_date.date(),
-                                                  self.run_name))
-
-            # Delete existing fields
-            for bid in self.plotorder:
-                database.database.delete(self.database,
-                                         self.start_date,
-                                         self.end_date,
-                                         bid,
-                                         self.run_name)
-
-            # Process and put on database
-            database.database.run_metadata(self)
-            snowav.methods.process.process(self)
-
+        # Otherwise, start the processing steps
         else:
-            # Process and put on database
-            database.database.run_metadata(self)
-            snowav.methods.process.process(self)
+            # Do any values in this date already already exist?
+            flag = database.database.check_fields(self.database,
+                                                  self.start_date,
+                                                  self.end_date,
+                                                  self.plotorder[0],
+                                                  self.run_name,
+                                                  'swe_z')
 
-        # Plots
-        snowav.plotting.accumulated.accumulated(self)
-        snowav.plotting.current_image.current_image(self)
-        snowav.plotting.state_by_elev.state_by_elev(self)
-        snowav.plotting.image_change.image_change(self)
-        snowav.plotting.swe_change.swe_change(self)
-        snowav.plotting.basin_total.basin_total(self)
-        snowav.plotting.pixel_swe.pixel_swe(self)
-        # snowav.plotting.density.density(self)
-        # snowav.plotting.water_balance.water_balance(self)
-        snowav.plotting.stn_validate.stn_validate(self)
+            # Process results and put on the database
+            if (flag is True) and (self.db_overwrite_flag is False):
+                print('There are existing fields on the database between '
+                      '{} and {}, with run_name: {}, and the config file option '
+                      '[results] -> overwrite is set to False, '
+                      'skipping processing...'.format(self.start_date.date(),
+                                                      self.end_date.date(),
+                                                      self.run_name))
 
-        # Make flight difference figure in options in config file
-        if self.flt_flag is True:
-            snowav.plotting.flt_image_change.flt_image_change(self)
+            elif (flag is True) and (self.db_overwrite_flag is True):
+                print('There are existing fields on the database between '
+                      '{} and {}, with run_name: {}, and the config file option '
+                      '[results] -> overwrite is set to True, '
+                      'OVERWRITING RESULTS...'.format(self.start_date.date(),
+                                                      self.end_date.date(),
+                                                      self.run_name))
 
-        # Create pdf report
-        if self.report_flag is True:
-            snowav.report.report.report(self)
+                # Delete existing fields
+                for bid in self.plotorder:
+                    database.database.delete(self.database,
+                                             self.start_date,
+                                             self.end_date,
+                                             bid,
+                                             self.run_name)
+
+                # Process and put on database
+                database.database.run_metadata(self)
+                snowav.methods.process.process(self)
+
+            else:
+                # Process and put on database
+                database.database.run_metadata(self)
+                snowav.methods.process.process(self)
+
+            # Plots
+            snowav.plotting.accumulated.accumulated(self)
+            snowav.plotting.current_image.current_image(self)
+            snowav.plotting.state_by_elev.state_by_elev(self)
+            snowav.plotting.image_change.image_change(self)
+            snowav.plotting.swe_change.swe_change(self)
+            snowav.plotting.basin_total.basin_total(self)
+            snowav.plotting.pixel_swe.pixel_swe(self)
+            # snowav.plotting.density.density(self)
+            # snowav.plotting.water_balance.water_balance(self)
+            snowav.plotting.stn_validate.stn_validate(self)
+
+            # Make flight difference figure in options in config file
+            if self.flt_flag is True:
+                snowav.plotting.flt_image_change.flt_image_change(self)
+
+            # Create pdf report
+            if self.report_flag is True:
+                snowav.report.report.report(self)

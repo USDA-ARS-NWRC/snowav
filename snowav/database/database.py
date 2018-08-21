@@ -153,7 +153,7 @@ def run_metadata(self):
               'awsm_version':'aswm'+ awsm.__version__,
               'snowav_version':'snowav'+ snowav.__version__,
               'data_type':'',
-              'data_location':'',
+              'data_location':','.join(self.run_dirs),
               'file_type':'',
               'config_file':self.config_file,
               'proc_time':datetime.datetime.now(),

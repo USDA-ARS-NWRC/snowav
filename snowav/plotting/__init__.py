@@ -12,3 +12,4 @@ from . import state_by_elev
 from . import stn_validate
 from . import basin_detail
 from . import write_summary
+from . import compare_runs
