@@ -28,6 +28,14 @@ python scripts/database_overview.py 'Basin' wy
 
 '''
 
+if __name__ == '__main__':
+    bid = sys.argv[1]
+
+    if len(sys.argv) > 2:
+        wy = sys.argv[2]
+    else:
+        wy = 2018
+
 # Making these defaults for now
 location = 'sqlite:////home/markrobertson/wkspace/projects/snowavdb/snowavdb.db'
 value = 'swe_vol'
@@ -45,15 +53,8 @@ qry = session.query(Results).filter(and_((Results.date_time >= start_date),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
 df = pd.read_sql(qry.statement, qry.session.connection())
+print(df.run_id)
 session.close()
 
 print('On database: {},\nAvailable runs for {}: {},\nDate range: {}, {}'.format(
 location,bid,df.run_name.unique(),df['date_time'].min(),df['date_time'].max()))
-
-if __name__ == '__main__':
-    bid = sys.argv[1]
-
-    if len(sys.argv) > 2:
-        wy = sys.argv[2]
-    else:
-        wy = 2018
