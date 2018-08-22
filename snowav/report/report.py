@@ -9,6 +9,7 @@ import copy
 from snowav import database
 from snowav.database.tables import BASINS
 import pandas as pd
+import os
 
 
 def report(obj):
@@ -278,6 +279,8 @@ def report(obj):
     # To see what's in latex  >>> print(tpl.render(variables))
 
     # Save in reports and with figs
-    obj._logger.info('Saving report to %s%s and \n%s%s'%(obj.rep_path,obj.report_name,obj.rep_path,obj.report_name))
-    pdf.save_to('%s%s'%(obj.rep_path,obj.report_name))
-    pdf.save_to('%s%s'%(obj.figs_path,obj.report_name))
+    rpath_1 = os.path.join(obj.rep_path, '' + obj.report_name)
+    rpath_2 = os.path.join(obj.figs_path, '' + obj.report_name)
+    obj._logger.info('Saving report to {} and \n{}'.format(rpath_1,rpath_2))
+    pdf.save_to(rpath_1)
+    pdf.save_to(rpath_2)

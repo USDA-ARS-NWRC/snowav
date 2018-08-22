@@ -44,11 +44,12 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\end{tikzpicture}
 }
 
-{
-	\begin{tikzpicture}[remember picture,overlay]
-	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}};
-	\end{tikzpicture}
-}
+%{
+%	\begin{tikzpicture}[remember picture,overlay]
+%	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}};
+%	\end{tikzpicture}
+%}
+
 \vspace{-2cm}
 
 \section*{Summary}
@@ -110,9 +111,9 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\setlength\itemsep{0.05em}
 	\footnotesize{
 		\item[] SWE: Snow Water Equivalent
-		\item[] SWE (avail): volume of snow at 0$^{\circ}$C, which will melt with any additional energy inputs
+		\item[] SWE (avail): volume of SWE at 0$^{\circ}$C, which will melt with any additional energy inputs
 		\item[] $\Delta$SWE: change in SWE during the reporting period
-		\item[] SWI: Surface Water Inputs, total of all water inputs to the basin (the combination of snowmelt that exits the base of the snowpack, and rain on bare ground)
+		\item[] SWI: Surface Water Inputs, total of all water inputs to the basin (combination of snowmelt that exits the base of the snowpack and rain on bare ground)
 		\item[] Rain: approximate percent of precipitation that fell as rain
 		\item[] Cold Content: energy required to bring the snowpack to 0$^{\circ}$C
 	}

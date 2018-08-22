@@ -54,7 +54,7 @@ def image_change(snow):
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
     ixf = delta_swe == 0
-    delta_swe[ixf] = -100000 
+    delta_swe[ixf] = -100000
     pmask = snow.masks[snow.plotorder[0]]['mask']
     ixo = pmask == 0
     delta_swe[ixo] = np.nan
@@ -200,7 +200,7 @@ def image_change(snow):
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'TUOL':
-        ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()

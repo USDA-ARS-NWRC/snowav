@@ -1,3 +1,4 @@
+
 from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
 from matplotlib import pyplot as plt
@@ -10,6 +11,7 @@ import matplotlib.patches as mpatches
 import pandas as pd
 from snowav import database
 from snowav.database.tables import BASINS
+import datetime
 
 def flt_image_change(snow):
     '''
@@ -17,8 +19,11 @@ def flt_image_change(snow):
 
     '''
 
-    ixs = np.where(snow.outputs['dates'] == snow.flt_start_date)[0][0]
-    ixe = np.where(snow.outputs['dates'] == snow.flt_end_date)[0][0]
+    for i,d in enumerate(snow.outputs['dates']):
+        if d.date() == snow.flt_start_date.date():
+            ixs = i
+        if d.date() == snow.flt_end_date.date():
+            ixe = i
 
     delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
@@ -33,15 +38,10 @@ def flt_image_change(snow):
                                     snow.run_name,
                                     bid,
                                     'swe_vol')
-
         for elev in snow.edges:
-            v = r[ (r['elevation'] == str(elev))
-                    & (r['date_time'] == snow.flt_start_date)
-                    & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
-            v2 = r[ (r['elevation'] == str(elev))
-                    & (r['date_time'] == snow.flt_end_date)
-                    & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
-            delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values[0] - v['value'].values[0])
+            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
+            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
+            delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
 
     # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(delta_swe)
@@ -208,7 +208,7 @@ def flt_image_change(snow):
              transform=ax1.transAxes,fontsize = 10)
 
     if snow.basin == 'TUOL':
-        ax1.text(0.17,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()

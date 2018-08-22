@@ -167,12 +167,12 @@ def accumulated(snow):
         elif len(snow.plotorder) == 4:
             ax1.legend(loc= (0.01,0.74))
 
-    if snow.basin == 'TUOL':
-        ax1.text(0.16,0.94,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
-
     if snow.basin == 'BRB':
         ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
+
+    elif snow.basin == 'TUOL':
+        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
     else:
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
