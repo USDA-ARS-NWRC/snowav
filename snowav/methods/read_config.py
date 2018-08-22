@@ -21,7 +21,6 @@ from sqlalchemy import create_engine
 from snowav.database.tables import Base, Basin_Metadata, Results, Run_Metadata, BASINS
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import git
 
 
 def read_config(self, external_logger=None, awsm=None):
