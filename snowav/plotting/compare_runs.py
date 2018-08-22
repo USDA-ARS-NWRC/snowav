@@ -39,37 +39,49 @@ def compare_runs(self):
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
-    plt.close(0)
-    plt.figure(num = 0)
-    ax = plt.gca()
+    for i,var in enumerate(self.plot_variables):
 
-    var = self.plot_variables[0]
+        plt.close(i)
+        plt.figure(num = i, figsize = (6,4), dpi = 200)
+        ax = plt.gca()
 
-    for run in self.plot_runs:
-        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
-                                                  (Results.date_time <= end_date),
-                                                  (Results.variable == var),
-                                                  (Results.run_name == run),
-                                                  (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+        if 'z' in var:
+            lbl = 'mm'
+        if ('vol' in var) or 'avail' in var:
+            lbl = self.vollbl
+        if var == 'density':
+            lbl = 'kg/m^3'
 
-        df = pd.read_sql(qry.statement, qry.session.connection())
+        for run in self.plot_runs:
+            qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+                                                      (Results.date_time <= end_date),
+                                                      (Results.variable == var),
+                                                      (Results.run_name == run),
+                                                      (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
-        df.index = df['date_time']
-        df['month'] = df.index.to_series().dt.strftime('%b')
+            df = pd.read_sql(qry.statement, qry.session.connection())
 
-        ax.plot(df[df['elevation'] == 'total']['date_time'],
-                df[df['elevation'] == 'total']['value'],label = run)
+            df.index = df['date_time']
+            df['month'] = df.index.to_series().dt.strftime('%b')
 
-    session.close()
+            if var == 'swi_vol':
+                ax.plot(df[df['elevation'] == 'total']['date_time'],
+                        df[df['elevation'] == 'total']['value'].cumsum(),label = run)
+            else:
+                ax.plot(df[df['elevation'] == 'total']['date_time'],
+                        df[df['elevation'] == 'total']['value'],label = run)
 
-    for tick in ax.get_xticklabels():
-        tick.set_rotation(30)
+            for tick in ax.get_xticklabels():
+                tick.set_rotation(30)
 
-    formatter = mdates.DateFormatter('%b')
-    ax.xaxis.set_major_formatter(formatter)
-    ax.legend()
-    ax.set_ylabel('[%s]'%(self.vollbl))
+            formatter = mdates.DateFormatter('%b')
+            ax.xaxis.set_major_formatter(formatter)
+            ax.legend()
+            ax.set_ylabel('[%s]'%(lbl))
+            ax.set_title(var)
+            plt.tight_layout()
 
-    # plt.savefig('%sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
-    plt.tight_layout()
+            plt.savefig('{}{}_{}{}.png'.format(self.figs_path,run,var,self.name_append))
+
     plt.show()
+    session.close()
