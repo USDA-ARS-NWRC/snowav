@@ -1,8 +1,6 @@
 # set the colormap and centre the colorbar
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.colors as colors
-from matplotlib.mlab import bivariate_normal
 
 class MidpointNormalize(colors.Normalize):
     """
