@@ -88,6 +88,10 @@ def read_config(self, external_logger=None, awsm=None):
     self.flt_start_date = ucfg.cfg['outputs']['flt_start_date']
     self.flt_end_date = ucfg.cfg['outputs']['flt_end_date']
 
+    if not isinstance(self.flt_start_date, datetime.date):
+        self.flt_start_date = pd.to_datetime(self.flt_start_date)
+        self.flt_end_date = pd.to_datetime(self.flt_end_date)
+
     if self.flt_start_date is not None:
         self.flt_flag = True
 
