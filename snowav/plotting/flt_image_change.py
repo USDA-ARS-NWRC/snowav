@@ -1,8 +1,6 @@
 
 from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -21,8 +19,8 @@ def flt_image_change(snow):
 
     '''
 
-    ixs = len(snow.outputs['dates']) - 1
-    ixe = len(snow.outputs['dates'])
+    ixs = len(snow.outputs['dates']) - 2
+    ixe = len(snow.outputs['dates']) - 1
 
     for i,d in enumerate(snow.outputs['dates']):
         if d == snow.flt_start_date:
