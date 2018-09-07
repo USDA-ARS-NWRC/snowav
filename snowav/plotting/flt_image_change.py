@@ -19,6 +19,9 @@ def flt_image_change(snow):
 
     '''
 
+    ixs = len(snow.outputs['dates']) - 1
+    ixe = len(snow.outputs['dates'])
+
     for i,d in enumerate(snow.outputs['dates']):
         if d == snow.flt_start_date:
             ixs = i
