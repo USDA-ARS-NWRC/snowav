@@ -20,9 +20,9 @@ def flt_image_change(snow):
     '''
 
     for i,d in enumerate(snow.outputs['dates']):
-        if d.date() == snow.flt_start_date.date():
+        if d == snow.flt_start_date:
             ixs = i
-        if d.date() == snow.flt_end_date.date():
+        if d == snow.flt_end_date:
             ixe = i
 
     delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
