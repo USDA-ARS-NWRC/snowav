@@ -18,15 +18,18 @@ def flt_image_change(snow):
     This plots a second image_change fig, intended for flight updates
 
     '''
+    # Get change in swe during the specified period
+    # ixs = np.where(snow.outputs['dates'] == snow.flt_start_date)[0][0]
+    # ixe = np.where(snow.outputs['dates'] == snow.flt_end_date)[0][0]
 
-    ixs = len(snow.outputs['dates']) - 2
-    ixe = len(snow.outputs['dates']) - 1
+    # find closest
+    ixs = np.abs([date - snow.flt_start_date for date in snow.outputs['dates']])
+    ixe = np.abs([date - snow.flt_end_date for date in snow.outputs['dates']])
 
-    for i,d in enumerate(snow.outputs['dates']):
-        if d == snow.flt_start_date:
-            ixs = i
-        if d == snow.flt_end_date:
-            ixe = i
+    if (ixs == ixe) and len(snow.outputs['dates'] > 1):
+        ixs = ixe - 1
+        snow._logger.info('flt_start_date and/or flt_end_date not found, using '
+                            'last two images as flight difference')
 
     delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
