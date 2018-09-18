@@ -3,7 +3,7 @@ import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from snowav.database.tables import Basin_Metadata, Results, Run_Metadata, BASINS
+from snowav.database.tables import BasinMetadata, Results, RunMetadata, BASINS
 
 '''
 This scipt creates the basin and subbasin fields in Basin_Metadata. Those fields

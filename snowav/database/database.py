@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, BASINS
+from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
 from sqlalchemy import and_
 import pandas as pd
 import smrf
@@ -20,7 +20,7 @@ def insert(loc,table,values):
 
     Args
         loc: database location
-        table: database table (currently Run_Metadata or Results)
+        table: database table (currently RunMetadata or Results)
         values: dictionary of values
 
     '''
@@ -133,7 +133,7 @@ def run_metadata(self):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    qry = session.query(Run_Metadata)
+    qry = session.query(RunMetadata)
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
 
@@ -162,7 +162,7 @@ def run_metadata(self):
               'elev_units':self.elevlbl
                 }
 
-    snowav.database.database.insert(self.database,'Run_Metadata',values)
+    snowav.database.database.insert(self.database,'RunMetadata',values)
 
 
 def check_fields(loc, start_date, end_date, bid, run_name, value):

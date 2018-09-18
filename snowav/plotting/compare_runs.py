@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, BASINS
+from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
 from sqlalchemy import and_
 from snowav import database
 from snowav.database.tables import BASINS

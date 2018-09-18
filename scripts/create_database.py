@@ -2,7 +2,7 @@
 import os
 import sys
 from sqlalchemy import create_engine
-from snowav.database.tables import Base, Basin_Metadata, Results, Run_Metadata
+from snowav.database.tables import Base, BasinMetadata, Results, RunMetadata
 
 '''
 This script creates a sqlite database with tables defined in

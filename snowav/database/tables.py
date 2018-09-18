@@ -11,8 +11,8 @@ from sqlalchemy.orm import backref
 
 Base = declarative_base()
 
-class Basin_Metadata(Base):
-    __tablename__ = 'Basin_Metadata'
+class BasinMetadata(Base):
+    __tablename__ = 'BasinMetadata'
 
     basin_id = Column(Integer, primary_key=True, autoincrement=True)
     basin_name = Column(String(250), nullable=False, unique=True)
@@ -23,8 +23,8 @@ class Results(Base):
     __tablename__ = 'Results'
 
     id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('Basin_Metadata.basin_id'), index = True)
-    run_id = Column(Integer, ForeignKey('Run_Metadata.run_id'), index = True)
+    basin_id = Column(Integer, ForeignKey('BasinMetadata.basin_id'), index = True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index = True)
     run_name = Column(String(250), nullable=False, index = True)
     date_time = Column(types.DateTime(),nullable=False, index = True)
     variable = Column(String(250), nullable=False, index = True)
@@ -32,14 +32,14 @@ class Results(Base):
     elevation = Column(String(250), nullable=True)
 
     # This puts Basin_Metadata.results and Results.basin_metadata
-    basin_metadata = relationship('Basin_Metadata',
+    basin_metadata = relationship('BasinMetadata',
                                 backref=backref('results',lazy='dynamic'))
 
-    run_metadata = relationship('Run_Metadata',
+    run_metadata = relationship('RunMetadata',
                                 backref=backref('results',lazy='dynamic'))
 
-class Run_Metadata(Base):
-    __tablename__ = 'Run_Metadata'
+class RunMetadata(Base):
+    __tablename__ = 'RunMetadata'
 
     run_id = Column(Integer, primary_key=True, autoincrement=True)
     basin_id = Column(Integer, nullable=False)

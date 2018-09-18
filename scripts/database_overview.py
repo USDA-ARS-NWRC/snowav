@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import Basin_Metadata, Base, Results, Run_Metadata, BASINS
+from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
 from sqlalchemy import and_
 from snowav import database
 from snowav.database.tables import BASINS
@@ -25,7 +25,7 @@ import argparse
 '''
 List available runs on database by basin and water year.
 
-$ python scripts/database_overview.py 'Basin River Basin' 2017
+$ python scripts/database_overview.py -b Basin River Basin -wy 2017
 
 '''
 
