@@ -18,9 +18,10 @@ import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
-from snowav.database.tables import Base, Basin_Metadata, Results, Run_Metadata, BASINS
+from snowav.database.tables import Base, Results, BASINS
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+import urllib.parse
 
 
 def read_config(self, external_logger=None, awsm=None):
@@ -223,12 +224,16 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_password = ucfg.cfg['results']['password']
     self.database = ucfg.cfg['results']['database']
 
-    # If no database is specified, make the directory and database in the repo
-    if self.database is None:
+    # If no database is specified make the directory and database in
+    # snowav/data/; if specified database doesn't exist, create it
+    f = urllib.parse.urlparse(self.database)
+
+    if (self.database is None) or not (os.path.isfile(f.path)):
         dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
         database = os.path.abspath(dbpath + '/model_results.db')
         self.database = 'sqlite:///{}'.format(database)
-        print('No results database specified in config file...')
+        print('Either no results database was specified in the config file, '
+              ' or the specified file does not exist...')
 
         if not os.path.exists(dbpath):
             os.mkdir(dbpath)
