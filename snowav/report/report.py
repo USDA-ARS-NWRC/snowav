@@ -282,5 +282,9 @@ def report(obj):
     rpath_1 = os.path.join(obj.rep_path, '' + obj.report_name)
     rpath_2 = os.path.join(obj.figs_path, '' + obj.report_name)
     obj._logger.info('Saving report to {} and \n{}'.format(rpath_1,rpath_2))
+
+    if not os.path.isdir(os.path.join(obj.rep_path,'')):
+        os.makedirs(os.path.join(obj.rep_path,''))
+
     pdf.save_to(rpath_1)
     pdf.save_to(rpath_2)
