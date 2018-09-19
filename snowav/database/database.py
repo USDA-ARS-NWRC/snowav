@@ -208,19 +208,22 @@ def check_fields(loc, start_date, end_date, bid, run_name, value):
 def write_csv(self):
     '''
     This writes out variables, specified in the config file, from the database
-    to the figs_path directory/
+    to the figs_path directory
 
     '''
 
+    # Initialize
     out = pd.DataFrame(columns = self.plotorder)
 
-    # Get all desired variables
+    # By variable
     for var in self.write_csv:
 
-        # Get all subbasins
+        # For all subbasins
         for bid in self.plotorder:
-            r = database.database.query(self.database, datetime(self.wy-1,10,1), self.end_date,
-                      self.run_name, bid, var)
+            r = database.database.query(self.database,
+                                        datetime.datetime(self.wy-1,10,1),
+                                        self.end_date,
+                                        self.run_name, bid, var)
 
             # For now, just write out totals
             v = r[(r['elevation'] == 'total')]
@@ -232,5 +235,8 @@ def write_csv(self):
             if var == 'swi_vol':
                 out = out.cumsum()
 
-            print(os.path.join(self.figs_path,var + '.csv'))
-            out.to_csv(os.path.join(self.figs_path,var + '.csv'))
+        if self.vollbl == 'KAF':
+            out.to_csv(os.path.join(self.figs_path,var + self.vollbl + '.csv'))
+
+        if self.vollbl == 'SI'
+            out.to_csv(os.path.join(self.figs_path,var + 'm3' + '.csv'))

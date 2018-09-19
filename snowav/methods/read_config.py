@@ -18,7 +18,7 @@ import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
-from snowav.database.tables import Base, Results, BASINS
+from snowav.database.tables import Base, Results, BASINS, BasinMetadata
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import urllib.parse
@@ -224,11 +224,13 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_password = ucfg.cfg['results']['password']
     self.database = ucfg.cfg['results']['database']
     self.write_csv = ucfg.cfg['results']['write_csv']
+    if type(self.write_csv) != list and self.write_csv != None:
+        self.write_csv = [self.write_csv]
 
     if self.write_csv != None:
         self.write_csv_flag = True
     else:
-        self.write_csv_flag = False           
+        self.write_csv_flag = False
 
     # If no database is specified make the directory and database in
     # snowav/data/; if specified database doesn't exist, create it
@@ -239,7 +241,7 @@ def read_config(self, external_logger=None, awsm=None):
         database = os.path.abspath(dbpath + '/model_results.db')
         self.database = 'sqlite:///{}'.format(database)
         print('Either no results database was specified in the config file, '
-              ' or the specified file does not exist...')
+              'or the specified file does not exist...')
 
         if not os.path.exists(dbpath):
             os.mkdir(dbpath)
@@ -256,17 +258,16 @@ def read_config(self, external_logger=None, awsm=None):
 
                 # Initialize basin metadata for all basin defitions
                 for basin in BASINS.basins:
-                    val = Basin_Metadata(basin_id = BASINS.basins[basin]['basin_id'],
+                    val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
                                          basin_name = BASINS.basins[basin]['basin_name'],
                                          state = BASINS.basins[basin]['state'])
-
                     session.add(val)
                     session.commit()
                 session.close()
 
             except:
                 # If database creation failed, remove what might be empty db
-                if os.path.exists(self.database):
+                if os.path.isfile(self.database):
                     os.remove(self.database)
 
                 print('Database {} creation failed...'.format(self.database))
@@ -382,21 +383,25 @@ def read_config(self, external_logger=None, awsm=None):
         self.error = True
         return
 
-    # Assign unit-specific things
+    # Conversion factors and labels
+    # Note! If new units are introduced, may need a second look at figure
+    # labels, database fields, and writing out variable csv...
     if self.units == 'KAF':
+        # KAF, inches, ft
         self.conversion_factor = ((self.pixel**2)
-                                 * 0.000000810713194*0.001) # [KAF]
-        self.depth_factor = 0.03937 # [inches]
-        self.dem = self.dem * 3.28 # [ft]
+                                 * 0.000000810713194*0.001)
+        self.depth_factor = 0.03937
+        self.dem = self.dem * 3.28
         self.ixd = np.digitize(self.dem,self.edges)
         self.depthlbl = 'in'
         self.vollbl = self.units
         self.elevlbl = 'ft'
 
     if self.units == 'SI':
+        # m^3, m, mm
         self.conversion_factor = ((self.pixel**2)
                                   * 0.000000810713194*1233.48/1e9)
-        self.depth_factor = 1 # [m]
+        self.depth_factor = 1
         self.ixd = np.digitize(self.dem,self.edges)
         self.depthlbl = 'mm'
         self.vollbl = '$km^3$'
