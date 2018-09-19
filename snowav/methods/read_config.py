@@ -239,7 +239,10 @@ def read_config(self, external_logger=None, awsm=None):
     if (self.database is None) or not (os.path.isfile(fp.path)):
         print('Either no results database was specified in the config file, '
               'or the specified file does not exist...')
-              
+
+        # Default snowav database location and name.
+        # If this changes, update scripts/snow.py, which uses the default
+        # location but does not always call read_config().
         dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
         database = os.path.abspath(dbpath + '/model_results.db')
         self.database = 'sqlite:///{}'.format(database)
