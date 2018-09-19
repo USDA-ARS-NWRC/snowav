@@ -67,14 +67,14 @@ setup(
     author_email='mark.robertson@ars.usda.gov',
     url='https://github.com/roberton-mark/SNOWAV',
     packages=['snowav',
-				'snowav.framework',
-				'snowav.database',
-                'snowav.plotting',
-                'snowav.report',
-                'snowav.methods',
-                'snowav.utils'
+			  'scripts',
+			  'snowav.framework',
+			  'snowav.database',
+              'snowav.plotting',
+              'snowav.report',
+              'snowav.methods',
+              'snowav.utils'
 			  ],
-
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
