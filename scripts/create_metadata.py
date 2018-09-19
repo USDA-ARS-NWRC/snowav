@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from snowav.database.tables import BasinMetadata, Results, RunMetadata, BASINS
 
 '''
-This scipt creates the basin and subbasin fields in Basin_Metadata. Those fields
+This script creates the basin and subbasin fields in BasinMetadata. Those fields
 are defined in snowav/database/tables.
 
 To add subbasins:
@@ -22,7 +22,7 @@ def init_basin_metadata(loc, values):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    val = Basin_Metadata(basin_id = values['basin_id'],
+    val = BasinMetadata(basin_id = values['basin_id'],
                          basin_name = values['basin_name'],
                          state = values['state']
                         )
