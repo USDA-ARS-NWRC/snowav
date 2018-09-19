@@ -177,7 +177,7 @@ def write_csv(self):
     to the figs_path directory
 
     '''
-    
+
     # Initialize
     out = pd.DataFrame(columns = self.plotorder)
 
@@ -200,7 +200,7 @@ def write_csv(self):
                 out = out.cumsum()
 
         if self.vollbl == 'KAF':
-            out.to_csv(os.path.join(self.figs_path,var + self.vollbl + '.csv'))
+            out.to_csv(os.path.join(self.figs_path,var + '_' + self.vollbl + '.csv'))
 
         if self.vollbl == 'SI':
-            out.to_csv(os.path.join(self.figs_path,var + 'm3' + '.csv'))
+            out.to_csv(os.path.join(self.figs_path,var + '_' + 'm3' + '.csv'))
