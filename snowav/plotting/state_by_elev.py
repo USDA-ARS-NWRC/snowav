@@ -23,19 +23,11 @@ def state_by_elev(snow):
     nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow.database,
-                                    snow.start_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swe_avail')
+        r = database.database.query(snow, snow.start_date, snow.end_date,
+                                    snow.run_name, bid, 'swe_avail')
 
-        r2 = database.database.query(snow.database,
-                                    snow.start_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swe_unavail')
+        r2 = database.database.query(snow, snow.start_date, snow.end_date,
+                                    snow.run_name, bid, 'swe_unavail')
 
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev))

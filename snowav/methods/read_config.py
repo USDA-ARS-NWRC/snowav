@@ -232,47 +232,53 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self.write_csv_flag = False
 
-    # If no database is specified make the directory and database in
-    # snowav/data/; if specified database doesn't exist, create it
-    f = urllib.parse.urlparse(self.database)
+    # If no database is specified, make database snowav/data/model_results.db
+    # Also, if specified database doesn't exist, it will be created
+    fp = urllib.parse.urlparse(self.database)
 
-    if (self.database is None) or not (os.path.isfile(f.path)):
+    if (self.database is None) or not (os.path.isfile(fp.path)):
+        print('Either no results database was specified in the config file, '
+              'or the specified file does not exist...')
+              
         dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
         database = os.path.abspath(dbpath + '/model_results.db')
         self.database = 'sqlite:///{}'.format(database)
-        print('Either no results database was specified in the config file, '
-              'or the specified file does not exist...')
 
-        if not os.path.exists(dbpath):
-            os.mkdir(dbpath)
+        try:
+            print('Creating and using {}'.format(self.database))
 
-        if not os.path.exists(database):
+            # Make database connection for duration of snowav processing
+            engine = create_engine(self.database)
+            Base.metadata.create_all(engine)
+            DBSession = sessionmaker(bind=engine)
+            self.session = DBSession()
 
-            try:
-                print('Creating and using {}'.format(self.database))
-                engine = create_engine(self.database)
-                Base.metadata.create_all(engine)
+            # Initialize basin metadata for all basin defitions
+            for basin in BASINS.basins:
+                val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
+                                     basin_name = BASINS.basins[basin]['basin_name'],
+                                     state = BASINS.basins[basin]['state'])
+                self.session.add(val)
+                self.session.commit()
 
-                DBSession = sessionmaker(bind=engine)
-                session = DBSession()
+        except:
+            # If database creation failed, remove what might be empty db
+            if os.path.isfile(self.database):
+                os.remove(self.database)
 
-                # Initialize basin metadata for all basin defitions
-                for basin in BASINS.basins:
-                    val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
-                                         basin_name = BASINS.basins[basin]['basin_name'],
-                                         state = BASINS.basins[basin]['state'])
-                    session.add(val)
-                    session.commit()
-                session.close()
+            print('Database {} creation failed...'.format(self.database))
 
-            except:
-                # If database creation failed, remove what might be empty db
-                if os.path.isfile(self.database):
-                    os.remove(self.database)
+    # Make database connection for duration of snowav processing
+    else:
+        try:
+            engine = create_engine(self.database)
+            Base.metadata.create_all(engine)
+            DBSession = sessionmaker(bind=engine)
+            self.session = DBSession()
 
-                print('Database {} creation failed...'.format(self.database))
-        else:
-            print('Using database {}...'.format(self.database))
+        except:
+            print('Failed trying to make database connection '
+                  'to {}'.format(self.database))
 
     self.run_name = ucfg.cfg['results']['run_name']
     self.db_overwrite_flag = ucfg.cfg['results']['overwrite']

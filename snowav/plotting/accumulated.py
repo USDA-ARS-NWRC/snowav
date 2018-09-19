@@ -34,12 +34,8 @@ def accumulated(snow):
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow.database,
-                                    snow.start_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swi_vol')
+        r = database.database.query(snow, snow.start_date, snow.end_date,
+                                    snow.run_name, bid, 'swi_vol')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]

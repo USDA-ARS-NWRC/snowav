@@ -27,18 +27,10 @@ def pixel_swe(snow):
     depth_byelev = pd.DataFrame(np.nan, index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow.database,
-                                    snow.end_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swe_z')
-        r2 = database.database.query(snow.database,
-                                    snow.end_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'depth')
+        r = database.database.query(snow, snow.end_date, snow.end_date,
+                                    snow.run_name, bid, 'swe_z')
+        r2 = database.database.query(snow, snow.end_date, snow.end_date,
+                                    snow.run_name, bid, 'depth')
 
         for iter,elev in enumerate(snow.edges):
             v = r[r['elevation'] == str(elev)]

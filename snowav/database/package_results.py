@@ -39,4 +39,4 @@ def package(self, df, output, dtime):
                       'elevation': str(df[var].index[iters])}
             # r = Results(values)
 
-            snowav.database.database.insert(self.database,'Results',values)
+            snowav.database.database.insert(self,'Results',values)

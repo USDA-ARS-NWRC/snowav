@@ -44,7 +44,7 @@ class SNOWAV(object):
         # Otherwise, start the processing steps
         else:
             # Do any values in this date already already exist?
-            flag = database.database.check_fields(self.database,
+            flag = database.database.check_fields(self,
                                                   self.start_date,
                                                   self.end_date,
                                                   self.plotorder[0],
@@ -54,27 +54,24 @@ class SNOWAV(object):
             # Process results and put on the database
             if (flag is True) and (self.db_overwrite_flag is False):
                 print('There are existing fields on the database between '
-                      '{} and {}, with run_name: {}, and the config file option '
-                      '[results] -> overwrite is set to False, '
+                      '{} and {} with run_name={}, and config file option '
+                      '[results] -> overwrite=False, '
                       'skipping processing...'.format(self.start_date.date(),
                                                       self.end_date.date(),
                                                       self.run_name))
 
             elif (flag is True) and (self.db_overwrite_flag is True):
                 print('There are existing fields on the database between '
-                      '{} and {}, with run_name: {}, and the config file option '
-                      '[results] -> overwrite is set to True, '
-                      'OVERWRITING RESULTS...'.format(self.start_date.date(),
+                      '{} and {} with run_name={}, and config file option '
+                      '[results] -> overwrite=True, '
+                      'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
                                                       self.end_date.date(),
                                                       self.run_name))
 
                 # Delete existing fields
                 for bid in self.plotorder:
-                    database.database.delete(self.database,
-                                             self.start_date,
-                                             self.end_date,
-                                             bid,
-                                             self.run_name)
+                    database.database.delete(self, self.start_date,
+                                             self.end_date, bid, self.run_name)
 
                 # Process and put on database
                 database.database.run_metadata(self)
@@ -97,8 +94,6 @@ class SNOWAV(object):
             snowav.plotting.swe_change.swe_change(self)
             snowav.plotting.basin_total.basin_total(self)
             snowav.plotting.pixel_swe.pixel_swe(self)
-            # snowav.plotting.density.density(self)
-            # snowav.plotting.water_balance.water_balance(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
             # Make flight difference figure in options in config file
@@ -108,3 +103,6 @@ class SNOWAV(object):
             # Create pdf report
             if self.report_flag is True:
                 snowav.report.report.report(self)
+
+        # Close the database session
+        self.session.close()

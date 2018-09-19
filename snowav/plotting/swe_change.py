@@ -29,12 +29,8 @@ def swe_change(snow):
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow.database,
-                                    snow.start_date,
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swe_z')
+        r = database.database.query(snow, snow.start_date, snow.end_date,
+                                    snow.run_name, bid, 'swe_z')
 
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]

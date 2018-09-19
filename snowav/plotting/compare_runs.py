@@ -25,11 +25,6 @@ def compare_runs(self):
 
     '''
 
-    engine = create_engine(self.database)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
     start_date = datetime.datetime(self.wy - 1,10,1)
     end_date = datetime.datetime(self.wy,6,10)
 
@@ -54,7 +49,7 @@ def compare_runs(self):
             lbl = 'kg/m^3'
 
         for run in self.plot_runs:
-            qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+            qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (Results.run_name == run),
@@ -85,4 +80,4 @@ def compare_runs(self):
             plt.savefig('{}{}_{}{}.png'.format(self.figs_path,run,var,self.name_append))
 
     plt.show()
-    session.close()
+    # session.close()

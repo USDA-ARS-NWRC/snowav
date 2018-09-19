@@ -15,23 +15,17 @@ import snowav
 from snowav import database
 import numpy as np
 
-def insert(loc,table,values):
+
+def insert(self, table, values):
     '''
-    Inserts standard run results to the database.
+    Inserts standard run results to the database. Uses database session created
+    in read_config()
 
     Args
-        loc: database location
         table: database table (currently RunMetadata or Results)
         values: dictionary of values
 
     '''
-
-    engine = create_engine(loc)
-    DeclarativeBase = declarative_base()
-    metadata = DeclarativeBase.metadata
-    Base.metadata.bind = engine
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
 
     dbtable = getattr(snowav.database.tables, table)
     my_dbtable = dbtable()
@@ -39,36 +33,30 @@ def insert(loc,table,values):
     for k,v in values.items():
         setattr(my_dbtable, k, v)
 
-    session.add(my_dbtable)
-    session.commit()
-    session.close()
+    self.session.add(my_dbtable)
+    self.session.commit()
 
 
-def query(loc, start_date, end_date, run_name, bid = None, value = None):
+def query(self, start_date, end_date, run_name, bid = None, value = None):
     '''
-    Query and retrieve results from the database.
+    Query and retrieve results from the database, using database session created
+    in read_config().
 
     Args
-        loc: database location
         start_date: (datetime)
         end_date: (datetime)
         run_name: identifier for run, specified in config file
         bid: basin id in string format ('Boise River Basin')
         value: value to query (i.e. 'swi_z')
 
-    Returns:
+    Returns
         dataframe of query results
 
     '''
 
-    engine = create_engine(loc)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
     # Subset query with value and bid if desired
     if (value != None) and (bid != None):
-        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
                                               (Results.run_name == run_name),
                                               (Results.variable == value),
@@ -76,22 +64,21 @@ def query(loc, start_date, end_date, run_name, bid = None, value = None):
 
     # Otherwise you're gonna get a bunch of stuff...
     else:
-        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
                                               (Results.run_name == run_name)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
-    session.close()
 
     return df
 
-def delete(loc, start_date, end_date, bid, run_name):
+def delete(self, start_date, end_date, bid, run_name):
     '''
-    Delete results from the database. Currently this deletes all values
-    with basin_id == bid and run_name = run_name within the date range.
+    Delete results from the databaseusing database session created
+    in read_config(). Currently this deletes all values with basin_id == bid
+    and run_name = run_name within the date range.
 
     Args
-        loc: database location
         start_date: (datetime)
         end_date: (datetime)
         bid: basin id in string format ('Boise River Basin')
@@ -99,44 +86,31 @@ def delete(loc, start_date, end_date, bid, run_name):
 
     '''
 
-    engine = create_engine(loc)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
     try:
-        qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
                                           (Results.run_name == run_name),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
         # Only ever figured out how to do this one record at a time
-        for f in qry:
-            session.delete(f)
+        for record in qry:
+            self.session.delete(record)
 
-        session.commit()
-        session.close()
+        self.session.commit()
 
     except:
         print('Failed during attempted deletion in database.delete()')
-        session.commit()
-        session.close()
+
 
 def run_metadata(self):
     '''
-    Create run metadata entry for each snowav run.
+    Create run metadata entry for each snowav run, using database session
+    created in read_config().
 
     '''
 
-    # Get latest run id
-    engine = create_engine(self.database)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-    qry = session.query(RunMetadata)
+    qry = self.session.query(RunMetadata)
     df = pd.read_sql(qry.statement, qry.session.connection())
-    session.close()
 
     # Increase each runid by 1
     if not df.run_id.values.size:
@@ -163,17 +137,16 @@ def run_metadata(self):
               'elev_units':self.elevlbl
                 }
 
-    snowav.database.database.insert(self.database,'RunMetadata',values)
+    snowav.database.database.insert(self,'RunMetadata',values)
 
 
-def check_fields(loc, start_date, end_date, bid, run_name, value):
+def check_fields(self, start_date, end_date, bid, run_name, value):
     '''
     This functions queries the database and returns True if any value exists
     in the given date range, basin_id = id and run_name = run_name,
     and False if not.
 
     Args
-        loc: database location
         start_date: (datetime)
         end_date: (datetime)
         bid: basin id in string format ('Boise River Basin')
@@ -185,12 +158,7 @@ def check_fields(loc, start_date, end_date, bid, run_name, value):
 
     '''
 
-    engine = create_engine(loc)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-    qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+    qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
                                           (Results.run_name == run_name),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id']),
@@ -201,8 +169,6 @@ def check_fields(loc, start_date, end_date, bid, run_name, value):
     else:
         flag = False
 
-    session.close()
-
     return flag
 
 def write_csv(self):
@@ -211,7 +177,7 @@ def write_csv(self):
     to the figs_path directory
 
     '''
-
+    
     # Initialize
     out = pd.DataFrame(columns = self.plotorder)
 
@@ -220,10 +186,8 @@ def write_csv(self):
 
         # For all subbasins
         for bid in self.plotorder:
-            r = database.database.query(self.database,
-                                        datetime.datetime(self.wy-1,10,1),
-                                        self.end_date,
-                                        self.run_name, bid, var)
+            r = database.database.query(self, datetime.datetime(self.wy-1,10,1),
+                                        self.end_date, self.run_name, bid, var)
 
             # For now, just write out totals
             v = r[(r['elevation'] == 'total')]
@@ -238,5 +202,5 @@ def write_csv(self):
         if self.vollbl == 'KAF':
             out.to_csv(os.path.join(self.figs_path,var + self.vollbl + '.csv'))
 
-        if self.vollbl == 'SI'
+        if self.vollbl == 'SI':
             out.to_csv(os.path.join(self.figs_path,var + 'm3' + '.csv'))
