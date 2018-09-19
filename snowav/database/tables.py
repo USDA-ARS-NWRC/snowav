@@ -31,11 +31,11 @@ class Results(Base):
     value = Column(types.Float(), nullable=True)
     elevation = Column(String(250), nullable=True)
 
-    # This puts Basin_Metadata.results and Results.basin_metadata
-    basin_metadata = relationship('BasinMetadata',
+    # This puts BasinMetadata.results and Results.basinmetadata
+    basinmetadata = relationship('BasinMetadata',
                                 backref=backref('results',lazy='dynamic'))
 
-    run_metadata = relationship('RunMetadata',
+    runmetadata = relationship('RunMetadata',
                                 backref=backref('results',lazy='dynamic'))
 
 class RunMetadata(Base):
