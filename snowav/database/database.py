@@ -12,6 +12,7 @@ import pandas as pd
 import smrf
 import awsm
 import snowav
+from snowav import database
 import numpy as np
 
 def insert(loc,table,values):
@@ -203,3 +204,33 @@ def check_fields(loc, start_date, end_date, bid, run_name, value):
     session.close()
 
     return flag
+
+def write_csv(self):
+    '''
+    This writes out variables, specified in the config file, from the database
+    to the figs_path directory/
+
+    '''
+
+    out = pd.DataFrame(columns = self.plotorder)
+
+    # Get all desired variables
+    for var in self.write_csv:
+
+        # Get all subbasins
+        for bid in self.plotorder:
+            r = database.database.query(self.database, datetime(self.wy-1,10,1), self.end_date,
+                      self.run_name, bid, var)
+
+            # For now, just write out totals
+            v = r[(r['elevation'] == 'total')]
+
+            for iter,d in enumerate(v['date_time'].values):
+                out.loc[d,bid] = v['value'].values[iter]
+
+            # SWI is cumulative
+            if var == 'swi_vol':
+                out = out.cumsum()
+
+            print(os.path.join(self.figs_path,var + '.csv'))
+            out.to_csv(os.path.join(self.figs_path,var + '.csv'))

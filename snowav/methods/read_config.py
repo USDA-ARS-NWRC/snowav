@@ -223,6 +223,12 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
     self.database = ucfg.cfg['results']['database']
+    self.write_csv = ucfg.cfg['results']['write_csv']
+
+    if self.write_csv != None:
+        self.write_csv_flag = True
+    else:
+        self.write_csv_flag = False           
 
     # If no database is specified make the directory and database in
     # snowav/data/; if specified database doesn't exist, create it

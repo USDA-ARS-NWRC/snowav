@@ -85,6 +85,10 @@ class SNOWAV(object):
                 database.database.run_metadata(self)
                 snowav.methods.process.process(self)
 
+            # Write out variables from database to csv if desired
+            if self.write_csv_flag is True:
+                database.database.write_csv(self)
+
             # Plots
             snowav.plotting.accumulated.accumulated(self)
             snowav.plotting.current_image.current_image(self)
