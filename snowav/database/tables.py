@@ -25,7 +25,6 @@ class Results(Base):
     id = Column(Integer, primary_key=True)
     basin_id = Column(Integer, ForeignKey('basin_metadata.basin_id'), index = True)
     run_id = Column(Integer, ForeignKey('run_metadata.run_id'), index = True)
-    run_name = Column(String(250), nullable=False, index = True)
     date_time = Column(types.DateTime(),nullable=False, index = True)
     variable = Column(String(250), nullable=False, index = True)
     value = Column(types.Float(), nullable=True)

@@ -32,7 +32,6 @@ def package(self, df, output, dtime):
         for iters,val in enumerate(df[var].values):
             values = {'basin_id': BASINS.basins[var]['basin_id'],
                       'run_id':self.runid,
-                      'run_name':self.run_name,
                       'date_time': dtime,
                       'variable': output,
                       'value': val,

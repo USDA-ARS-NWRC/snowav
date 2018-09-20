@@ -160,9 +160,9 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
 
     '''
 
-    qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+    qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
-                                          (Results.run_name == run_name),
+                                          (RunMetadata.run_name == run_name),
                                           (Results.basin_id == BASINS.basins[bid]['basin_id']),
                                           (Results.variable == value))).first()
 
