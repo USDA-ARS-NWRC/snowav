@@ -56,20 +56,20 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
 
     # Subset query with value and bid if desired
     if (value != None) and (bid != None):
-        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
-                                              (Results.run_name == run_name),
+                                              (RunMetadata.run_name == run_name),
                                               (Results.variable == value),
                                               (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
     # Otherwise you're gonna get a bunch of stuff...
     else:
-        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
-                                              (Results.run_name == run_name)))
+                                              (RunMetadata.run_name == run_name)))
 
     # x = self.session.query(Results).get(1)
-    # print(x.run_metadata.data_location)
+    # print(x.run_metadata.run_name)
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     return df
