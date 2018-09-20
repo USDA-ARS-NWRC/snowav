@@ -68,8 +68,10 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
                                               (Results.date_time <= end_date),
                                               (Results.run_name == run_name)))
 
-    df = pd.read_sql(qry.statement, qry.session.connection())
+    # x = self.session.query(Results).get(1)
+    # print(x.run_metadata.data_location)
 
+    df = pd.read_sql(qry.statement, qry.session.connection())
     return df
 
 def delete(self, start_date, end_date, bid, run_name):

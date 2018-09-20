@@ -12,7 +12,7 @@ from sqlalchemy.orm import backref
 Base = declarative_base()
 
 class BasinMetadata(Base):
-    __tablename__ = 'BasinMetadata'
+    __tablename__ = 'basin_metadata'
 
     basin_id = Column(Integer, primary_key=True, autoincrement=True)
     basin_name = Column(String(250), nullable=False, unique=True)
@@ -20,26 +20,25 @@ class BasinMetadata(Base):
     area = Column(types.Float(), nullable=True)
 
 class Results(Base):
-    __tablename__ = 'Results'
+    __tablename__ = 'results'
 
     id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('BasinMetadata.basin_id'), index = True)
-    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index = True)
+    basin_id = Column(Integer, ForeignKey('basin_metadata.basin_id'), index = True)
+    run_id = Column(Integer, ForeignKey('run_metadata.run_id'), index = True)
     run_name = Column(String(250), nullable=False, index = True)
     date_time = Column(types.DateTime(),nullable=False, index = True)
     variable = Column(String(250), nullable=False, index = True)
     value = Column(types.Float(), nullable=True)
     elevation = Column(String(250), nullable=True)
 
-    # This puts BasinMetadata.results and Results.basinmetadata
-    basinmetadata = relationship('BasinMetadata',
-                                backref=backref('results',lazy='dynamic'))
-
-    runmetadata = relationship('RunMetadata',
-                                backref=backref('results',lazy='dynamic'))
+    # This puts BasinMetadata.results and Results.basin_metadata
+    basin_metadata = relationship('BasinMetadata',
+                                  backref=backref('results',lazy='dynamic'))
+    run_metadata = relationship('RunMetadata',
+                                  backref=backref('results',lazy='dynamic'))
 
 class RunMetadata(Base):
-    __tablename__ = 'RunMetadata'
+    __tablename__ = 'run_metadata'
 
     run_id = Column(Integer, primary_key=True, autoincrement=True)
     basin_id = Column(Integer, nullable=False)
