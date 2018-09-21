@@ -53,6 +53,9 @@ def process(self):
 
     adj = 0
     t = 0
+    precip_total = np.zeros((self.nrows,self.ncols))
+    rain_total = np.zeros((self.nrows,self.ncols))
+
     for iters, out_date in enumerate(self.outputs['dates']):
 
         # Initialize output dataframes for every day
@@ -110,6 +113,9 @@ def process(self):
                 rain = rain + np.multiply(pre,(1-percent_snow))
                 precip = precip + pre
 
+        self.precip_total = precip_total + precip
+        self.rain_total = rain_total + rain
+
         # Get a snow-free mask ready
         swe = copy.deepcopy(self.outputs['swe_z'][iters])
         cold = copy.deepcopy(self.outputs['coldcont'][iters])
@@ -145,11 +151,11 @@ def process(self):
                     # Assign values
                     if k == 'swe_z':
                         mask_out = np.multiply(self.outputs['swe_z'][iters],mask)
-                        ccb = cold_sub[ind][ix]
+                        ccb = cold_sub[ind]
                         cind = ccb > cclimit
 
                         # masked out by pixels with snow -> [ix]
-                        swe_bin = mask_out[ind][ix]
+                        swe_bin = mask_out[ind]
                         if swe_bin.size:
                             r = np.nansum(swe_bin[cind])
                             ru = np.nansum(swe_bin[~cind])
@@ -183,7 +189,7 @@ def process(self):
 
                     elif k in ['evap_z','depth']:
                         # masked out by pixels with snow -> [ix]
-                        r = np.nanmean(mask_out[ind][ix])
+                        r = np.nanmean(mask_out[ind])
 
                         if k == 'depth':
                             daily_outputs[k].loc[b,name] = (
@@ -226,7 +232,7 @@ def process(self):
                 if k in ['swe_z','evap_z','coldcont']:
                     # Mask by snow-free
                     out = np.multiply(self.outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out[ixs]), self.depth_factor)
+                    total = np.multiply(np.nanmean(out), self.depth_factor)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                     if k == 'swe_z':
@@ -241,7 +247,7 @@ def process(self):
                 if k == 'depth':
                     # Mask by snow-free
                     out = np.multiply(self.outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out[ixs]), self.depth_factor*1000)
+                    total = np.multiply(np.nanmean(out), self.depth_factor*1000)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'density':
