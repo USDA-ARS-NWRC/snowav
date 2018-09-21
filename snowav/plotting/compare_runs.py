@@ -22,6 +22,7 @@ import matplotlib.dates as mdates
 def compare_runs(self):
 
     '''
+    Figure not complete for all basins, see bid...
 
     '''
 
@@ -29,8 +30,7 @@ def compare_runs(self):
     end_date = datetime.datetime(self.wy,6,10)
 
     # hack
-    if self.basin == 'BRB':
-        bid = 'Boise River Basin'
+    bid = self.plotorder[0]
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -49,13 +49,21 @@ def compare_runs(self):
             lbl = 'kg/m^3'
 
         for run in self.plot_runs:
-            qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+            qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
                                                       (Results.variable == var),
-                                                      (Results.run_name == run),
+                                                      (RunMetadata.run_name == run),
                                                       (Results.basin_id == BASINS.basins[bid]['basin_id'])))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
+
+            if df.empty:
+                print('No results from database in compare_runs() query, '
+                      'database may not have results for:\n'
+                      '{} to {}\n'
+                      '{}\n'
+                      '{}\n'
+                      '{}'.format(start_date,end_date,var,run,bid))
 
             df.index = df['date_time']
             df['month'] = df.index.to_series().dt.strftime('%b')
