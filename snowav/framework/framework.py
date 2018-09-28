@@ -96,6 +96,10 @@ class SNOWAV(object):
             snowav.plotting.pixel_swe.pixel_swe(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
+            # The SWI, precip, and rain plot requires process() 
+            if self.plot_flag is not True:
+                snowav.plotting.precip_depth.precip_depth(self)
+
             # Make flight difference figure in options in config file
             if self.flt_flag is True:
                 snowav.plotting.flt_image_change.flt_image_change(self)

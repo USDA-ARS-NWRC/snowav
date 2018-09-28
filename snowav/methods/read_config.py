@@ -160,7 +160,7 @@ def read_config(self, external_logger=None, awsm=None):
                     ucfg.cfg['plots']['fig_height'])
     self.dpi = ucfg.cfg['plots']['dpi']
     self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
-                      'xkcd:vibrant green','red']
+                      'xkcd:vibrant green']                    
 
     ####################################################
     #          report                                  #
@@ -295,17 +295,25 @@ def read_config(self, external_logger=None, awsm=None):
         self.db_variables = [self.db_variables]
 
     self.plot_runs = ucfg.cfg['results']['plot_runs']
-    self.plot_labels = ucfg.cfg['results']['plot_labels']
-    self.plot_wy = ucfg.cfg['results']['plot_wy']
-    self.plot_variables = ucfg.cfg['results']['plot_variables']
 
     # If these fields are specified in the config_file, plot_flag will be set
     # to False, no processing occurs, and no report is generated
     if self.plot_runs is not None:
         self.plot_flag = True
-        print('Config file option [results] -> plot_runs are {}, '
+        self.plot_labels = ucfg.cfg['results']['plot_labels']
+        self.plot_wy = ucfg.cfg['results']['plot_wy']
+        self.plot_variables = ucfg.cfg['results']['plot_variables']
+
+        if ( (self.plot_labels is None) or
+           (self.plot_wy is None) or
+           (self.plot_variables is None) ):
+            print('Must fill config file options [results] -> plot_labels, '
+                 'plot_wy, and plot_variables!')
+
+        print('Config file option [results] -> plot_runs={}, '
               'creating figures from existing database '
-              'entries for these runs...'.format(self.plot_runs))
+              'entries for {}, some figures from standard report '
+              'will be omitted...'.format(self.plot_flag, self.plot_runs))
     else:
         self.plot_flag = False
 

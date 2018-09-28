@@ -22,6 +22,20 @@ def report(obj):
 
     Issues:
     - limited by n subbasins <= 5
+
+    To add a figure to the report:
+    - create the plot (of course)
+    - add to variables dict in this file, with the same naming convention
+        variables['PDEP_FIG'] = 'precip_depth%s.png'%(obj.name_append)
+    - add figure template to snowav_report.tex
+        \VAR{PDEP_FIG_TPL}
+    - add to section_dict in this file
+    - add template to snowav/report/figs/
+    - add to snowav/config/CoreConfig.py [report] exclude_figs
+    - if the figure may not exist (such as flt_diff, or those that require
+      process() to run), address that with some form of exception before
+      creating the pdf
+
     '''
 
     bid = BASINS.basins[obj.plotorder[0]]['basin_id']
@@ -175,6 +189,7 @@ def report(obj):
     variables['DENSITY_FIG'] = 'density%s.png'%(obj.name_append)
     variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
+    variables['PDEP_FIG'] = 'precip_depth%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ars_logo.png'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
@@ -236,7 +251,8 @@ def report(obj):
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
                     'MULTITOT_FIG_TPL':obj.figs_tpl_path + 'multitot_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
-                    'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt'
+                    'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt',
+                    'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt'
                     }
 
     # Define and load summary tables depending on number of subbasins
@@ -248,6 +264,10 @@ def report(obj):
     # Remove if no flight options
     if obj.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
+
+    # Remove if not available
+    if obj.plot_flag is True:
+        del section_dict['PDEP_FIG_TPL']
 
     for rep in section_dict.keys():
         fid = open(section_dict[rep],'r')
