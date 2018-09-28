@@ -53,8 +53,8 @@ def process(self):
 
     adj = 0
     t = 0
-    precip_total = np.zeros((self.nrows,self.ncols))
-    rain_total = np.zeros((self.nrows,self.ncols))
+    self.precip_total = np.zeros((self.nrows,self.ncols))
+    self.rain_total = np.zeros((self.nrows,self.ncols))
 
     for iters, out_date in enumerate(self.outputs['dates']):
 
@@ -111,10 +111,10 @@ def process(self):
                 pre = ppt.bands[0].data
                 percent_snow = ppt.bands[1].data
                 rain = rain + np.multiply(pre,(1-percent_snow))
-                precip = precip + pre
+                precip = precip + copy.deepcopy(pre)
 
-        self.precip_total = precip_total + precip
-        self.rain_total = rain_total + rain
+        self.precip_total = self.precip_total + copy.deepcopy(precip)
+        self.rain_total = self.rain_total + copy.deepcopy(rain)
 
         # Get a snow-free mask ready
         swe = copy.deepcopy(self.outputs['swe_z'][iters])
