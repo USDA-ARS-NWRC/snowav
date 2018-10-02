@@ -8,9 +8,10 @@ import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from snowav.database.tables import Base, Results, BASINS
+from snowav.database.tables import Base, Results, BASINS,  BasinMetadata
 from sqlalchemy import and_
 from snowav.utils.utilities import get_snowav_path
+import urllib.parse
 
 def run():
 
@@ -33,11 +34,57 @@ def run():
                         'existing fields. If -wy and -b are passed, will '
                         'check database.')
 
+    parser.add_argument('-create', '--create', dest='create', type=str,
+                        help='Flag for initial database creation for docker.')
+
     args = parser.parse_args()
+
+    #########################################################################
+    #                       SNOWAV run                                      #
+    #########################################################################
 
     # If config file is passed, do standard snowav processing, figs, and report
     if args.config_file:
         snowav.framework.framework.SNOWAV(config_file = args.config_file)
+
+    #########################################################################
+    #                       Database creationm                              #
+    #########################################################################
+
+    if args.create:
+        print('create')
+
+        fp = os.path.abspath(args.create + '/model_results/')
+
+        if not os.path.exists(fp):
+            os.makedirs(fp)
+
+        self.database = 'sqlite:///{}'.format(database)
+
+        try:
+            print('Creating and using {}'.format(self.database))
+
+            # Make database connection for duration of snowav processing
+            engine = create_engine(self.database)
+            Base.metadata.create_all(engine)
+            DBSession = sessionmaker(bind=engine)
+            self.session = DBSession()
+
+            # Initialize basin metadata for all basin defitions
+            for basin in BASINS.basins:
+                val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
+                                     basin_name = BASINS.basins[basin]['basin_name'],
+                                     state = BASINS.basins[basin]['state'])
+                self.session.add(val)
+                self.session.commit()
+
+        except:
+
+            print('Database {} creation failed...'.format(self.database))
+
+    #########################################################################
+    #                       Database query                                  #
+    #########################################################################
 
     # Run a database query for existing fields if desired
     if args.bid and args.wy:
