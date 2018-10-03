@@ -18,7 +18,7 @@ import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
-from snowav.database.tables import Base, Results, BASINS, BasinMetadata
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import urllib.parse
@@ -247,29 +247,42 @@ def read_config(self, external_logger=None, awsm=None):
         database = os.path.abspath(dbpath + '/model_results.db')
         self.database = 'sqlite:///{}'.format(database)
 
-        try:
-            print('Creating and using {}'.format(self.database))
+        print('Creating and using {}'.format(self.database))
 
-            # Make database connection for duration of snowav processing
-            engine = create_engine(self.database)
-            Base.metadata.create_all(engine)
-            DBSession = sessionmaker(bind=engine)
-            self.session = DBSession()
+        # Make database connection for duration of snowav processing
+        engine = create_engine(self.database)
+        Base.metadata.create_all(engine)
+        DBSession = sessionmaker(bind=engine)
+        self.session = DBSession()
 
-            # Initialize basin metadata for all basin defitions
-            for basin in BASINS.basins:
-                val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
-                                     basin_name = BASINS.basins[basin]['basin_name'],
-                                     state = BASINS.basins[basin]['state'])
-                self.session.add(val)
-                self.session.commit()
+        # Initialize watersheds
+        for ws in Watersheds.watersheds:
+            wval = Watershed(watershed_id = Watersheds.watersheds[ws]['watershed_id'],
+                             watershed_name = Watersheds.watersheds[ws]['watershed_name'])
+            # basins = Watersheds.watersheds[ws]['basins']
+            # shapefile = Watersheds.watersheds[ws]['shapefile']
+            self.session.add(wval)
+            self.session.commit()
 
-        except:
-            # If database creation failed, remove what might be empty db
-            if os.path.isfile(self.database):
-                os.remove(self.database)
+            # Initialize basins within the watershed
+            # print('ws',ws)
+            for bid in Basins.basins:
+                if Basins.basins[bid]['watershed_id'] == Watersheds.watersheds[ws]['watershed_id']:
+                    # print('bid inside',bid)
+                    bval = Basin(watershed_id = Watersheds.watersheds[ws]['watershed_id'],
+                                 basin_id = Basins.basins[bid]['basin_id'],
+                                 basin_name = Basins.basins[bid]['basin_name'])
+                     # shapefile = Watersheds.watersheds[ws]['shapefile']
 
-            print('Database {} creation failed...'.format(self.database))
+                    self.session.add(bval)
+                    self.session.commit()
+
+        # test
+        # x = self.session.query(Results).get(1)
+        # print(x.run_metadata.run_name)
+        x = self.session.query(Basin).get(1)
+        print(x.basin_name, x.watershed.watershed_name)
+
 
     # Make database connection for duration of snowav processing
     else:
