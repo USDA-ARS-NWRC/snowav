@@ -8,11 +8,7 @@ import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-<<<<<<< HEAD
-from snowav.database.tables import Base, Results, BASINS,  BasinMetadata
-=======
 from snowav.database.tables import Base, Results, Basins, RunMetadata, Watersheds
->>>>>>> new_db_tables
 from sqlalchemy import and_
 from snowav.utils.utilities import get_snowav_path
 import urllib.parse
