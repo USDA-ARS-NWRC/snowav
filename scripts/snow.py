@@ -8,7 +8,7 @@ import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from snowav.database.tables import Base, Results, BASINS
+from snowav.database.tables import Base, Results, Basins, RunMetadata, Watersheds
 from sqlalchemy import and_
 from snowav.utils.utilities import get_snowav_path
 
@@ -39,7 +39,7 @@ def run():
     if args.config_file:
         snowav.framework.framework.SNOWAV(config_file = args.config_file)
 
-    # Run a database query for existing fields if desired
+    # Database query for existing fields
     if args.bid and args.wy:
 
         # Making this a default for now
@@ -51,25 +51,32 @@ def run():
             sbase = 'sqlite:///' + sbase
             args.db = sbase + '/snowav/data/model_results.db'
 
-        start_date = datetime.datetime(args.wy - 1,10,1)
+        start_date = datetime.datetime(args.wy-1,10,1)
         end_date = datetime.datetime(args.wy,9,30)
 
         try:
-            # Connect to database and query
             engine = create_engine(args.db)
             connection = engine.connect()
             DBSession = sessionmaker(bind=engine)
             session = DBSession()
-            qry = session.query(Results).filter(and_((Results.date_time >= start_date),
+
+            # Get available run_names for the watershed
+            wid =  Basins.basins[args.bid]['watershed_id']
+            q = session.query(RunMetadata).filter(RunMetadata.watershed_id == wid)
+            df = pd.read_sql(q.statement, q.session.connection())
+            names = df.run_name.unique()
+
+            qry = session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
-                                                      (Results.basin_id == BASINS.basins[args.bid]['basin_id'])))
+                                                      (RunMetadata.run_name.in_(names)),
+                                                      (Results.basin_id == Basins.basins[args.bid]['basin_id'])))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 
             session.close()
 
             print('On database: {},\nAvailable runs for {}: {},\nDate range: {}, {}'.format(
-            args.db,args.bid,df.run_name.unique(),df['date_time'].min(),df['date_time'].max()))
+            args.db,args.bid,names,df['date_time'].min(),df['date_time'].max()))
 
         except:
             print('Failed connecting to database {} for query.'.format(args.db))

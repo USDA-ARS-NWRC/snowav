@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
+from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from sqlalchemy import and_
 import pandas as pd
 import smrf
@@ -15,14 +15,13 @@ import snowav
 from snowav import database
 import numpy as np
 
-
 def insert(self, table, values):
     '''
     Inserts standard run results to the database. Uses database session created
     in read_config()
 
     Args
-        table: database table (currently RunMetadata or Results)
+        table: database table (RunMetadata, Results, or VariableUnits)
         values: dictionary of values
 
     '''
@@ -50,23 +49,22 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
         value: value to query (i.e. 'swi_z')
 
     Returns
-        dataframe of query results
+        df: dataframe of query results
 
     '''
 
     # Subset query with value and bid if desired
     if (value != None) and (bid != None):
-        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
-                                              (Results.run_name == run_name),
+                                              (RunMetadata.run_name == run_name),
                                               (Results.variable == value),
-                                              (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+                                              (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
-    # Otherwise you're gonna get a bunch of stuff...
     else:
-        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                               (Results.date_time <= end_date),
-                                              (Results.run_name == run_name)))
+                                              (RunMetadata.run_name == run_name)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
 
@@ -74,7 +72,7 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
 
 def delete(self, start_date, end_date, bid, run_name):
     '''
-    Delete results from the databaseusing database session created
+    Delete results from the database using database session created
     in read_config(). Currently this deletes all values with basin_id == bid
     and run_name = run_name within the date range.
 
@@ -87,12 +85,11 @@ def delete(self, start_date, end_date, bid, run_name):
     '''
 
     try:
-        qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
-                                          (Results.run_name == run_name),
-                                          (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+                                          (RunMetadata.run_name == run_name),
+                                          (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
-        # Only ever figured out how to do this one record at a time
         for record in qry:
             self.session.delete(record)
 
@@ -120,9 +117,9 @@ def run_metadata(self):
 
     values = {
               'run_id':self.runid,
-              'basin_id':BASINS.basins[self.plotorder[0]]['basin_id'],
               'run_name':self.run_name,
-              'basin_name':self.plotorder[0],
+              'watershed_id':Watersheds.watersheds[self.plotorder[0]]['watershed_id'],
+              'pixel':self.pixel,
               'description':'',
               'smrf_version':'smrf'+ smrf.__version__,
               'awsm_version':'aswm'+ awsm.__version__,
@@ -131,11 +128,27 @@ def run_metadata(self):
               'data_location':','.join(self.run_dirs),
               'file_type':'',
               'config_file':self.config_file,
-              'proc_time':datetime.datetime.now(),
-              'var_units': (self.depthlbl + ', ' + self.vollbl + ', ' + 'MJ'
-                            + ', ' + 'kg/m^3'),
-              'elev_units':self.elevlbl
+              'proc_time':datetime.datetime.now()
                 }
+
+    # self.vars is defined in read_config(), and is also used in process()
+    for v in self.vars.keys():
+        if (('vol' in v) or ('avail' in v)):
+            u = self.units
+        if (('z' in v) or (v == 'depth')):
+            u = self.depthlbl
+        if v == 'density':
+            u = 'kg m^-3'
+        if v == 'coldcont':
+            u = 'MJ'
+
+        variables = {
+                     'run_id':self.runid,
+                     'variable':v,
+                     'unit':u,
+                     'name':self.vars[v]
+                    }
+        snowav.database.database.insert(self,'VariableUnits',variables)
 
     snowav.database.database.insert(self,'RunMetadata',values)
 
@@ -158,10 +171,10 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
 
     '''
 
-    qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+    qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
-                                          (Results.run_name == run_name),
-                                          (Results.basin_id == BASINS.basins[bid]['basin_id']),
+                                          (RunMetadata.run_name == run_name),
+                                          (Results.basin_id == Basins.basins[bid]['basin_id']),
                                           (Results.variable == value))).first()
 
     if qry is not None:

@@ -5,10 +5,10 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
+from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins, Base
 from sqlalchemy import and_
 from snowav import database
-from snowav.database.tables import BASINS
+from snowav.database.tables import Basins
 import pandas as pd
 import snowav
 import numpy as np
@@ -53,7 +53,7 @@ def compare_runs(self):
                                                       (Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (Results.run_name == run),
-                                                      (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+                                                      (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 

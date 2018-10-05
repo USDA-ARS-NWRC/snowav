@@ -46,11 +46,6 @@ def process(self):
     # Daily, by elevation
     dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
-    # Order matters!
-    vars = ['coldcont','evap_z','rain_z','density','depth','precip_z',
-            'precip_vol','swi_z','swi_vol','swe_z','swe_vol','swe_avail',
-            'swe_unavail']
-
     adj = 0
     t = 0
     for iters, out_date in enumerate(self.outputs['dates']):
@@ -115,8 +110,8 @@ def process(self):
         cold = copy.deepcopy(self.outputs['coldcont'][iters])
 
         # Loop over outputs (depths are copied, volumes are calculated)
-        for k in vars:
-
+        for k in self.vars.keys():
+            
             # Mask by subbasin
             for name in self.masks:
 

@@ -11,41 +11,15 @@ from sqlalchemy.orm import backref
 
 Base = declarative_base()
 
-class BasinMetadata(Base):
-    __tablename__ = 'BasinMetadata'
-
-    basin_id = Column(Integer, primary_key=True, autoincrement=True)
-    basin_name = Column(String(250), nullable=False, unique=True)
-    state = Column(String(250), nullable=True)
-    area = Column(types.Float(), nullable=True)
-
-class Results(Base):
-    __tablename__ = 'Results'
-
-    id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('BasinMetadata.basin_id'), index = True)
-    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index = True)
-    run_name = Column(String(250), nullable=False, index = True)
-    date_time = Column(types.DateTime(),nullable=False, index = True)
-    variable = Column(String(250), nullable=False, index = True)
-    value = Column(types.Float(), nullable=True)
-    elevation = Column(String(250), nullable=True)
-
-    # This puts BasinMetadata.results and Results.basinmetadata
-    basinmetadata = relationship('BasinMetadata',
-                                backref=backref('results',lazy='dynamic'))
-
-    runmetadata = relationship('RunMetadata',
-                                backref=backref('results',lazy='dynamic'))
-
 class RunMetadata(Base):
     __tablename__ = 'RunMetadata'
 
-    run_id = Column(Integer, primary_key=True, autoincrement=True)
-    basin_id = Column(Integer, nullable=False)
-    run_name = Column(String(250), nullable=False)
-    basin_name = Column(String(250), nullable=True)
-    description = Column(String(250), nullable=True)
+    run_id = Column(Integer, ForeignKey('VariableUnits.run_id'),
+                    primary_key=True, autoincrement=True)
+    run_name = Column(String(250), nullable=False, index=True)
+    watershed_id = Column(Integer, nullable=True)
+    pixel =  Column(Integer, nullable=True)
+    description =  Column(String(250), nullable=True)
     smrf_version = Column(String(250), nullable=True)
     awsm_version = Column(String(250), nullable=True)
     snowav_version = Column(String(250), nullable=True)
@@ -53,65 +27,198 @@ class RunMetadata(Base):
     data_location = Column(String(250), nullable=True)
     file_type = Column(String(250), nullable=True)
     config_file = Column(String(250), nullable=True)
-    proc_time = Column(types.DateTime(),nullable=True)
-    var_units = Column(String(250), nullable=False)
-    elev_units = Column(String(250), nullable=True)
+    proc_time = Column(types.DateTime(), nullable=True)
+
+class Watershed(Base):
+    __tablename__ = 'Watershed'
+
+    watershed_id = Column(Integer, ForeignKey('RunMetadata.watershed_id'),
+                          primary_key=True, autoincrement=True)
+    watershed_name = Column(String(250), nullable=False, index=True)
+    basins = Column(String(250), nullable=True)
+    shapefile = Column(types.LargeBinary, nullable=True)
+
+    # This puts Watershed fields available through Basin at Basin.watershed
+    runmetadata = relationship('RunMetadata',
+                               backref=backref('watershed',lazy='dynamic'))
+
+class Basin(Base):
+    __tablename__ = 'Basin'
+
+    watershed_id = Column(Integer, ForeignKey('Watershed.watershed_id'),
+                          nullable=False)
+    basin_id = Column(Integer, primary_key=True, nullable=False,
+                      autoincrement=True)
+    basin_name = Column(String(250), nullable=False)
+    shapefile = Column(types.LargeBinary, nullable=True)
+
+    watershed = relationship('Watershed',
+                             backref=backref('basin',lazy='dynamic'))
+
+class Results(Base):
+    __tablename__ = 'Results'
+
+    id = Column(Integer, primary_key=True)
+    basin_id = Column(Integer, index=True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index=True)
+    date_time = Column(types.DateTime(),nullable=False, index=True)
+    variable = Column(String(250), ForeignKey('VariableUnits.variable'),
+                      nullable=False, index=True)
+    value = Column(types.Float(), nullable=True)
+    elevation = Column(String(250), nullable=False)
+
+    runmetadata = relationship('RunMetadata',
+                               backref=backref('results',lazy='dynamic'))
+    variable_units = relationship('VariableUnits',
+                                  backref=backref('results',lazy='dynamic'))
+
+class VariableUnits(Base):
+    __tablename__ = 'VariableUnits'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    run_id = Column(Integer, index=True)
+    variable = Column(String(250), nullable=True)
+    unit = Column(String(250), nullable=True)
+    name = Column(String(250), nullable=True)
+
+class Watersheds(object):
+    '''
+    To add a watershed:
+        'Basin Name':{'watershed_id':n+1,
+                             'watershed_name':'Basin Name short version',
+                             'basins': '',
+                             'shapefile':'empty'}
+
+    Also fill out Basins with relevant subbasins.
+
+    Basins main key and watershed_id must match a Watershed!
+
+    '''
+    
+    watersheds = {
+                'Boise River Basin':{'watershed_id':1,
+                                     'watershed_name':'Boise',
+                                     'basins': '',
+                                     'shapefile':'empty'},
+
+                'Extended Tuolumne':{'watershed_id':2,
+                                     'watershed_name':'Extended Tuolumne',
+                                     'basins': '',
+                                     'shapefile':'empty'},
+
+                'San Joaquin River Basin':{'watershed_id':3,
+                                           'watershed_name':'San Joaquin',
+                                           'basins': '',
+                                           'shapefile':'empty'},
+
+                'Lakes Basin':{'watershed_id':4,
+                               'watershed_name':'Lakes',
+                               'basins': '',
+                               'shapefile':'empty'},
+
+                'Merced River Basin':{'watershed_id':5,
+                                      'watershed_name':'Merced',
+                                      'basins': '',
+                                      'shapefile':'empty'},
+
+                'Kaweah River Basin':{'watershed_id':6,
+                                      'watershed_name':'Kaweah',
+                                      'basins': '',
+                                      'shapefile':'empty'},
+
+                'Kings River Basin':{'watershed_id':7,
+                                     'watershed_name':'Kings',
+                                     'basins': '',
+                                     'shapefile':'empty'},
+
+                'Reynolds Creek':{'watershed_id':8,
+                                  'watershed_name':'Reynolds Creek',
+                                  'basins': '',
+                                  'shapefile':'empty'}
+                }
 
 
-class BASINS(object):
+class Basins(object):
     '''
     This class defines the basin metadata for all of the subbasins that are
     used in the database.
 
+    To add basins, Basins main key and watershed_id must match the
+    correct Watershed!
+
     '''
     basins = {
-                'Boise River Basin':{'basin_id':1,
-                                     'basin_name':'Boise River Basin',
-                                     'state':'Idaho'},
-                'Featherville':{'basin_id':2,
-                                'basin_name':'Featherville',
-                                'state':'Idaho'},
-                'Twin Springs':{'basin_id':3,
-                                'basin_name':'Twin Springs',
-                                'state':'Idaho'},
-                'Mores Creek':{'basin_id':4,
-                               'basin_name':'Mores Creek',
-                               'state':'Idaho'},
-                'Extended Tuolumne':{'basin_id':5,
-                            'basin_name':'Extended Tuolumne',
-                            'state':'California'},
-                'Tuolumne':{'basin_id':6,
-                            'basin_name':'Tuolumne',
-                            'state':'California'},
-                'Cherry Creek':{'basin_id':7,
-                            'basin_name':'Cherry Creek',
-                            'state':'California'},
-                'Eleanor':{'basin_id':8,
-                            'basin_name':'Eleanor',
-                            'state':'California'},
-                'San Joaquin':{'basin_id':9,
-                               'basin_name':'San Joaquin',
-                               'state':'California'},
-                'South Fork':{'basin_id':10,
-                                'basin_name':'South Fork',
-                                'state':'California'},
-                'Main':{'basin_id':11,
-                                'basin_name':'Main',
-                                'state':'California'},
-                'Jose Creek':{'basin_id':12,
-                               'basin_name':'Jose Creek',
-                               'state':'California'},
-                'Willow Creek':{'basin_id':13,
-                               'basin_name':'Willow Creek',
-                               'state':'California'},
-                'Reynolds Creek':{'basin_id':14,
-                               'basin_name':'Reynolds Creek',
-                               'state':'Idaho'},
-                'Tollgate':{'basin_id':15,
-                               'basin_name':'Tollgate',
-                               'state':'Idaho'},
-                'Lakes':{'basin_id':16,
-                               'basin_name':'Lakes',
-                               'state':'California'}
+                # BRB
+                'Boise River Basin':{'watershed_id':1,
+                                     'basin_id':1,
+                                     'basin_name':'Boise River Basin'},
+                'Featherville':{'watershed_id':1,
+                                'basin_id':2,
+                                'basin_name':'Featherville'},
+                'Twin Springs':{'watershed_id':1,
+                                'basin_id':3,
+                                'basin_name':'Twin Springs'},
+                'Mores Creek':{'watershed_id':1,
+                               'basin_id':4,
+                               'basin_name':'Mores Creek'},
+
+                # Tuolumne
+                'Extended Tuolumne':{'watershed_id':2,
+                                     'basin_id':5,
+                                     'basin_name':'Extended Tuolumne'},
+                'Tuolumne':{'watershed_id':2,
+                            'basin_id':6,
+                            'basin_name':'Tuolumne'},
+                'Cherry Creek':{'watershed_id':2,
+                                'basin_id':7,
+                                'basin_name':'Cherry Creek'},
+                'Eleanor':{'watershed_id':2,
+                           'basin_id':8,
+                           'basin_name':'Eleanor'},
+
+                # San Joaquin
+                'San Joaquin River Basin':{'watershed_id':3,
+                                           'basin_id':9,
+                                           'basin_name':'San Joaquin'},
+                'South Fork':{'watershed_id':3,
+                              'basin_id':10,
+                              'basin_name':'South Fork'},
+                'Main':{'watershed_id':3,
+                        'basin_id':11,
+                        'basin_name':'Main'},
+                'Jose Creek':{'watershed_id':3,
+                              'basin_id':12,
+                              'basin_name':'Jose Creek'},
+                'Willow Creek':{'watershed_id':3,
+                                'basin_id':13,
+                                'basin_name':'Willow Creek'},
+
+                # Reynolds
+                'Reynolds Creek':{'watershed_id':8,
+                                  'basin_id':14,
+                                  'basin_name':'Reynolds Creek'},
+                'Tollgate':{'watershed_id':8,
+                            'basin_id':15,
+                            'basin_name':'Tollgate'},
+
+                # Lakes
+                'Lakes Basin':{'watershed_id':4,
+                               'basin_id':16,
+                               'basin_name':'Lakes'},
+
+                # Merced
+                'Merced River Basin':{'watershed_id':5,
+                                      'basin_id':17,
+                                      'basin_name':'Merced'},
+
+                # Kaweah
+                'Kaweah River Basin':{'watershed_id':6,
+                                      'basin_id':18,
+                                      'basin_name':'Kaweah'},
+
+                # Kings
+                'Kings River Basin':{'watershed_id':7,
+                                     'basin_id':19,
+                                     'basin_name':'Kings'},
 
                 }

@@ -18,10 +18,11 @@ import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import create_engine
-from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results,VariableUnits, Watersheds, Basins
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import urllib.parse
+from collections import OrderedDict
 
 
 def read_config(self, external_logger=None, awsm=None):
@@ -232,6 +233,22 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self.write_csv_flag = False
 
+    # These are used in process() - and order matters!
+    # Also used to define database table VariableUnits
+    self.vars = OrderedDict([('coldcont','cold content'),
+                 ('evap_z','evaporation depth'),
+                 ('rain_z','rain depth'),
+                 ('density','density'),
+                 ('depth','depth'),
+                 ('precip_z','precipitation depth'),
+                 ('precip_vol','precipitation volume'),
+                 ('swi_z','surface water input depth'),
+                 ('swi_vol','surface water input volume'),
+                 ('swe_z','snow water equivalent depth'),
+                 ('swe_vol','snow water equivalent volume'),
+                 ('swe_avail','snow water equivalent available for melt'),
+                 ('swe_unavail','snow water equivalent unavailable for melt')])
+
     # If no database is specified, make database snowav/data/model_results.db
     # Also, if specified database doesn't exist, it will be created
     fp = urllib.parse.urlparse(self.database)
@@ -257,40 +274,31 @@ def read_config(self, external_logger=None, awsm=None):
 
         # Initialize watersheds
         for ws in Watersheds.watersheds:
-            wval = Watershed(watershed_id = Watersheds.watersheds[ws]['watershed_id'],
-                             watershed_name = Watersheds.watersheds[ws]['watershed_name'])
-            # basins = Watersheds.watersheds[ws]['basins']
-            # shapefile = Watersheds.watersheds[ws]['shapefile']
+            wsid = Watersheds.watersheds[ws]['watershed_id']
+            wsn = Watersheds.watersheds[ws]['watershed_name']
+            wval = Watershed(watershed_id = wsid, watershed_name = wsn)
             self.session.add(wval)
-            self.session.commit()
 
             # Initialize basins within the watershed
-            # print('ws',ws)
             for bid in Basins.basins:
-                if Basins.basins[bid]['watershed_id'] == Watersheds.watersheds[ws]['watershed_id']:
-                    # print('bid inside',bid)
-                    bval = Basin(watershed_id = Watersheds.watersheds[ws]['watershed_id'],
+                if Basins.basins[bid]['watershed_id'] == wsid:
+                    bval = Basin(watershed_id = wsid,
                                  basin_id = Basins.basins[bid]['basin_id'],
                                  basin_name = Basins.basins[bid]['basin_name'])
-                     # shapefile = Watersheds.watersheds[ws]['shapefile']
-
                     self.session.add(bval)
-                    self.session.commit()
 
-        # test
-        # x = self.session.query(Results).get(1)
-        # print(x.run_metadata.run_name)
-        x = self.session.query(Basin).get(1)
-        print(x.basin_name, x.watershed.watershed_name)
-
+        self.session.commit()
 
     # Make database connection for duration of snowav processing
     else:
+
         try:
             engine = create_engine(self.database)
             Base.metadata.create_all(engine)
             DBSession = sessionmaker(bind=engine)
             self.session = DBSession()
+            # x = self.session.query(Results).get(1)
+            # print('rc 312',x.variable_units.unit)
 
         except:
             print('Failed trying to make database connection '
@@ -298,15 +306,6 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.run_name = ucfg.cfg['results']['run_name']
     self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
-    self.db_variables = ucfg.cfg['results']['variables']
-
-    if self.db_variables == 'all':
-        self.db_variables = ['swi','snowmelt','precip','swe','depth',
-                             'density','avail','unavail','evap','cold']
-
-    if type(self.db_variables) != list:
-        self.db_variables = [self.db_variables]
-
     self.plot_runs = ucfg.cfg['results']['plot_runs']
     self.plot_labels = ucfg.cfg['results']['plot_labels']
     self.plot_wy = ucfg.cfg['results']['plot_wy']

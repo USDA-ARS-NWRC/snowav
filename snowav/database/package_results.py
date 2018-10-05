@@ -1,8 +1,8 @@
 
 import datetime
 import snowav
-from snowav.database.tables import BASINS
-from snowav.database.tables import BasinMetadata, Base, Results, RunMetadata, BASINS
+from snowav.database.tables import Basins
+from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 
 def package(self, df, output, dtime):
     '''
@@ -30,13 +30,11 @@ def package(self, df, output, dtime):
 
         # By elevation band
         for iters,val in enumerate(df[var].values):
-            values = {'basin_id': BASINS.basins[var]['basin_id'],
+            values = {'basin_id': Basins.basins[var]['basin_id'],
                       'run_id':self.runid,
-                      'run_name':self.run_name,
                       'date_time': dtime,
                       'variable': output,
                       'value': val,
                       'elevation': str(df[var].index[iters])}
-            # r = Results(values)
 
             snowav.database.database.insert(self,'Results',values)
