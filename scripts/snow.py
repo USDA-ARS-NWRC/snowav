@@ -51,7 +51,6 @@ def run():
     if args.config_file:
         snowav.framework.framework.SNOWAV(config_file = args.config_file)
 
-<<<<<<< HEAD
     #########################################################################
     #                       Database creationm                              #
     #########################################################################
