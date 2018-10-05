@@ -9,7 +9,7 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 from snowav import database
-from snowav.database.tables import BASINS
+from snowav.database.tables import Basins
 import pandas as pd
 
 def state_by_elev(snow):
@@ -32,10 +32,10 @@ def state_by_elev(snow):
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev))
                   & (r['date_time'] == snow.end_date)
-                  & (r['basin_id'] == BASINS.basins[bid]['basin_id'])]
+                  & (r['basin_id'] == Basins.basins[bid]['basin_id'])]
             v2 = r2[(r2['elevation'] == str(elev))
                   & (r2['date_time'] == snow.end_date)
-                  & (r2['basin_id'] == BASINS.basins[bid]['basin_id'])]
+                  & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
             melt.loc[elev,bid] = v['value'].values[0]
             nonmelt.loc[elev,bid] = v2['value'].values[0]
 

@@ -13,7 +13,7 @@ import pandas as pd
 from matplotlib.dates import DateFormatter
 import pandas as pd
 from snowav import database
-from snowav.database.tables import BASINS
+from snowav.database.tables import Basins
 import dateutil.parser
 
 def basin_total(snow):

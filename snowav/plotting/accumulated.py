@@ -9,7 +9,7 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 from snowav import database
-from snowav.database.tables import BASINS
+from snowav.database.tables import Basins
 import pandas as pd
 
 

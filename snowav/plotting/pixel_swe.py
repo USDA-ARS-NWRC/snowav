@@ -10,7 +10,7 @@ import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
 from snowav import database
-from snowav.database.tables import BASINS
+from snowav.database.tables import Basins
 
 def pixel_swe(snow):
 
