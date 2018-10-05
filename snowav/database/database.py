@@ -36,7 +36,7 @@ def insert(self, table, values):
     self.session.commit()
 
 
-def query(self, start_date, end_date, run_name, bid = None, value = None):
+def query(self, start_date, end_date, run_name, bid = None, value = None, rid = None):
     '''
     Query and retrieve results from the database, using database session created
     in read_config().
@@ -47,6 +47,7 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
         run_name: identifier for run, specified in config file
         bid: basin id in string format ('Boise River Basin')
         value: value to query (i.e. 'swi_z')
+        rid: run_id
 
     Returns
         df: dataframe of query results
@@ -60,6 +61,15 @@ def query(self, start_date, end_date, run_name, bid = None, value = None):
                                               (RunMetadata.run_name == run_name),
                                               (Results.variable == value),
                                               (Results.basin_id == Basins.basins[bid]['basin_id'])))
+
+    # Report queries here
+    elif (value == None) and (bid != None) and rid != None:
+        bids = [Basins.basins[n]['basin_id'] for n in bid]
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
+                                              (Results.date_time <= end_date),
+                                              (Results.run_id == rid),
+                                              (RunMetadata.run_name == run_name),
+                                              (Results.basin_id.in_(bids))))
 
     else:
         qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),

@@ -7,7 +7,7 @@ import numpy as np
 from datetime import datetime
 import copy
 from snowav import database
-from snowav.database.tables import Basins
+from snowav.database.tables import Basins, Watersheds
 import pandas as pd
 import os
 
@@ -29,7 +29,12 @@ def report(obj):
     start_date = obj.start_date
     end_date = obj.end_date
 
-    r = database.database.query(obj, obj.start_date, obj.end_date, obj.run_name)
+    r = database.database.query(obj, obj.start_date, obj.end_date, obj.run_name,
+                                bid = obj.plotorder,
+                                rid = obj.runid)
+
+    # bids = [Basins.basins[n]['basin_id'] for n in obj.plotorder]
+    # r[r['basin_id'].isin(bids)]
 
     # Initialize variables to pass to latex file
     variables = {}
