@@ -85,8 +85,18 @@ def delete(self, start_date, end_date, bid, run_name):
     '''
 
     try:
+
         qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
+                                          (RunMetadata.run_name == run_name),
+                                          (Results.basin_id == Basins.basins[bid]['basin_id'])))
+
+        df = pd.read_sql(qry.statement, qry.session.connection())
+        rid = df.run_id.unique()
+
+        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
+                                          (Results.date_time <= end_date),
+                                          (Results.run_id.in_(rid)),
                                           (RunMetadata.run_name == run_name),
                                           (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
