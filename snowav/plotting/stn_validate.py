@@ -64,9 +64,8 @@ def stn_validate(snow):
                     "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
                     "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
 
-        # data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
-        data = pd.read_sql(var_qry, cnx)
-        data = data.set_index('date_time')
+        data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        data.index.names=['date_time']
         dind = pd.date_range(st_time,end_time,freq='D')
         swe_meas[stn] = data.reindex(dind)
 
