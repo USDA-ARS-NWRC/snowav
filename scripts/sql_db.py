@@ -12,8 +12,8 @@ from sqlalchemy.orm import sessionmaker
 import urllib.parse
 import mysql.connector
 
-user = ''
-password = ''
+user = 'mark'
+password = 'whatdystm?1'
 host = '127.0.0.1'
 db = 'mysql_results'
 
@@ -21,10 +21,12 @@ cnx = mysql.connector.connect(user=user, password=password, host=host)
 cursor = cnx.cursor()
 
 # Check if database exists, create if necessary
-query = ("SHOW DATABASES LIKE '{}';".format(db))
-result = cursor.execute(query)
+query = ("SHOW DATABASES")
+cursor.execute(query)
+dbs = cursor.fetchall()
+dbs = [i[0].decode("utf-8") for i in dbs]
 
-if not [print(row) for row in cursor if not None]:
+if db not in dbs:
     query = ("CREATE DATABASE {};".format(db))
     cursor.execute(query)
     cursor.close()

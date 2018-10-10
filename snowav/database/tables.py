@@ -14,10 +14,9 @@ Base = declarative_base()
 class RunMetadata(Base):
     __tablename__ = 'RunMetadata'
 
-    run_id = Column(Integer, ForeignKey('VariableUnits.run_id'),
-                    primary_key=True, autoincrement=True)
+    run_id = Column(Integer,primary_key=True)
     run_name = Column(String(250), nullable=False, index=True)
-    watershed_id = Column(Integer, nullable=True)
+    watershed_id = Column(Integer,nullable=True)
     pixel =  Column(Integer, nullable=True)
     description =  Column(String(250), nullable=True)
     smrf_version = Column(String(250), nullable=True)
@@ -32,50 +31,49 @@ class RunMetadata(Base):
 class Watershed(Base):
     __tablename__ = 'Watershed'
 
-    watershed_id = Column(Integer, ForeignKey('RunMetadata.watershed_id'),
-                          primary_key=True, autoincrement=True)
+    watershed_id = Column(Integer,primary_key=True)
     watershed_name = Column(String(250), nullable=False, index=True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'))
     basins = Column(String(250), nullable=True)
     shapefile = Column(types.LargeBinary, nullable=True)
 
     # This puts Watershed fields available through Basin at Basin.watershed
     runmetadata = relationship('RunMetadata',
-                               backref=backref('watershed',lazy='dynamic'))
+                               backref=backref('Watershed',lazy='dynamic'))
 
 class Basin(Base):
     __tablename__ = 'Basin'
 
-    watershed_id = Column(Integer, ForeignKey('Watershed.watershed_id'),
-                          nullable=False)
-    basin_id = Column(Integer, primary_key=True, nullable=False,
-                      autoincrement=True)
+    watershed_id = Column(Integer, ForeignKey('Watershed.watershed_id'),nullable=False)
+    basin_id = Column(Integer, primary_key=True, nullable=False)
     basin_name = Column(String(250), nullable=False)
     shapefile = Column(types.LargeBinary, nullable=True)
 
     watershed = relationship('Watershed',
-                             backref=backref('basin',lazy='dynamic'))
+                             backref=backref('Basin',lazy='dynamic'))
 
 class Results(Base):
-    __tablename__ = 'results'
+    __tablename__ = 'Results'
 
     id = Column(Integer, primary_key=True)
     basin_id = Column(Integer, index=True)
     run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index=True)
-    date_time = Column(types.DateTime(),nullable=False, index=True)
-    variable = Column(String(250), ForeignKey('VariableUnits.variable'),
-                      nullable=False, index=True)
+    date_time = Column(types.DateTime(), nullable=False, index=True)
+    variable = Column(String(250), nullable=False, index=True)
+    variable_id = Column(Integer, ForeignKey('VariableUnits.id'))
     value = Column(types.Float(), nullable=True)
     elevation = Column(String(250), nullable=False)
 
-    runmetadata = relationship('RunMetadata',
-                               backref=backref('results',lazy='dynamic'))
     variable_units = relationship('VariableUnits',
-                                  backref=backref('results',lazy='dynamic'))
+                                  backref=backref('Results',lazy='dynamic'))
+
+    runmetadata = relationship('RunMetadata',
+                               backref=backref('Results',lazy='dynamic'))
 
 class VariableUnits(Base):
     __tablename__ = 'VariableUnits'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(Integer, primary_key=True)
     run_id = Column(Integer, index=True)
     variable = Column(String(250), nullable=True)
     unit = Column(String(250), nullable=True)

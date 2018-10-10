@@ -34,6 +34,7 @@ def package(self, df, output, dtime):
                       'run_id':self.runid,
                       'date_time': dtime,
                       'variable': output,
+                      'variable_id':output,
                       'value': val,
                       'elevation': str(df[var].index[iters])}
 

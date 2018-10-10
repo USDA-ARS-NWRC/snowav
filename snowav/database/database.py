@@ -76,8 +76,9 @@ def query(self, start_date, end_date, run_name, bid = None, value = None, rid = 
                                               (Results.date_time <= end_date),
                                               (RunMetadata.run_name == run_name)))
 
-    # x = self.session.query(Results).get(1)
-    # print(x.run_metadata.run_name)
+    x = self.session.query(Results).get(1)
+    # print(x.runmetadata.run_name)
+    # print(x.variable_units.unit)
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     return df
