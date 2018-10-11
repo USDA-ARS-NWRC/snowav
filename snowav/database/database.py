@@ -6,7 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import backref
-from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from sqlalchemy import and_
 import pandas as pd
 import smrf
@@ -14,6 +14,10 @@ import awsm
 import snowav
 from snowav import database
 import numpy as np
+import copy
+import urllib.parse
+import mysql.connector
+
 
 def insert(self, table, values):
     '''
@@ -76,11 +80,10 @@ def query(self, start_date, end_date, run_name, bid = None, value = None, rid = 
                                               (Results.date_time <= end_date),
                                               (RunMetadata.run_name == run_name)))
 
-    x = self.session.query(Results).get(1)
+    # x = self.session.query(Results).get(1)
     # print(x.runmetadata.run_name)
-    # print(x.variable_units.unit)
-
     df = pd.read_sql(qry.statement, qry.session.connection())
+
     return df
 
 def delete(self, start_date, end_date, bid, run_name):
@@ -98,7 +101,6 @@ def delete(self, start_date, end_date, bid, run_name):
     '''
 
     try:
-
         qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                           (Results.date_time <= end_date),
                                           (RunMetadata.run_name == run_name),
@@ -107,20 +109,47 @@ def delete(self, start_date, end_date, bid, run_name):
         df = pd.read_sql(qry.statement, qry.session.connection())
         rid = df.run_id.unique()
 
-        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                          (Results.date_time <= end_date),
-                                          (Results.run_id.in_(rid)),
-                                          (RunMetadata.run_name == run_name),
-                                          (Results.basin_id == Basins.basins[bid]['basin_id'])))
-
-        for record in qry:
-            self.session.delete(record)
+        for r in rid:
+            qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
+                                              (Results.date_time <= end_date),
+                                              (Results.run_id == int(r)),
+                                              (Results.basin_id == Basins.basins[bid]['basin_id']))).delete(synchronize_session='fetch')
 
         self.session.commit()
 
     except:
         print('Failed during attempted deletion in database.delete()')
 
+
+def create_tables(self):
+    '''
+    This function creates the Watersheds and Basins tables in the database
+    from classes defined in /snowav/database/tables.py
+
+    '''
+
+    # Make database connection for duration of snowav processing
+    engine = create_engine(self.database)
+    Base.metadata.create_all(engine)
+    DBSession = sessionmaker(bind=engine)
+    self.session = DBSession()
+
+    # Initialize watersheds
+    for ws in Watersheds.watersheds:
+        wsid = Watersheds.watersheds[ws]['watershed_id']
+        wsn = Watersheds.watersheds[ws]['watershed_name']
+        wval = Watershed(watershed_id = wsid, watershed_name = wsn)
+        self.session.add(wval)
+
+        # Initialize basins within the watershed
+        for bid in Basins.basins:
+            if Basins.basins[bid]['watershed_id'] == wsid:
+                bval = Basin(watershed_id = wsid,
+                             basin_id = Basins.basins[bid]['basin_id'],
+                             basin_name = Basins.basins[bid]['basin_name'])
+                self.session.add(bval)
+
+    self.session.commit()
 
 def run_metadata(self):
     '''
@@ -155,6 +184,7 @@ def run_metadata(self):
                 }
 
     # self.vars is defined in read_config(), and is also used in process()
+    self.vid = {}
     for v in self.vars.keys():
         if (('vol' in v) or ('avail' in v)):
             u = self.units
@@ -171,7 +201,12 @@ def run_metadata(self):
                      'unit':u,
                      'name':self.vars[v]
                     }
+
         snowav.database.database.insert(self,'VariableUnits',variables)
+
+        # After inserting into VariableUnits, get the existing id
+        x = self.session.query(VariableUnits).all()
+        self.vid[v] = copy.deepcopy(x[-1].id)
 
     snowav.database.database.insert(self,'RunMetadata',values)
 
@@ -206,6 +241,104 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
         flag = False
 
     return flag
+
+def connect(self):
+    '''
+    This establishes a connection with a database for results, and will make
+    a default sqlite database in the repo /snowav/data/model_results.db if
+    no database is specified.
+
+    '''
+
+    # If no database is specified, make database snowav/data/model_results.db
+    # Also, if specified database doesn't exist, it will be created
+    fp = urllib.parse.urlparse(self.database)
+
+    # No database specified, create default sqlite in snowav/data
+    if self.database is None:
+
+        # If this changes, update scripts/snow.py, which uses the default
+        # location but does not always call read_config().
+        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
+        database = os.path.abspath(dbpath + '/model_results.db')
+        self.database = 'sqlite:///{}'.format(database)
+
+        # Create metadata tables and keep open self.session
+        if not os.path.isfile(database):
+            print('No results database specified, creating default sqlite database '
+                  '{}'.format(self.database))
+
+            create_tables(self)
+
+        else:
+            engine = create_engine(self.database)
+            DBSession = sessionmaker(bind=engine)
+            self.session = DBSession()
+            print('Using {} for results...'.format(self.database))
+
+    # sqlite specified, but doesn't exist
+    if (not (os.path.isfile(fp.path))) and (fp.scheme == 'sqlite'):
+
+        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
+        database = os.path.abspath(dbpath + '/model_results.db')
+        self.database = 'sqlite:///{}'.format(database)
+
+        print('Database specified in config file does not exist, creating '
+              'default {}'.format(self.database))
+
+        # Create metadata tables and keep open self.session
+        create_tables(self)
+
+    # Make database connection for duration of snowav processing
+    if (os.path.isfile(fp.path)) and (fp.scheme == 'sqlite'):
+
+        engine = create_engine(self.database)
+        # Base.metadata.create_all(engine)
+        DBSession = sessionmaker(bind=engine)
+        self.session = DBSession()
+        print('Using {} for results...'.format(self.database))
+
+    if 'mysql' in self.database:
+
+        # First, check if database exists, if not, make it
+        cnx = mysql.connector.connect(user=self.db_user,
+                                      password=self.db_password,
+                                      host=self.db_host)
+        cursor = cnx.cursor()
+
+        # Check if database exists, create if necessary
+        query = ("SHOW DATABASES")
+        cursor.execute(query)
+        dbs = cursor.fetchall()
+        dbs = [i[0].decode("utf-8") for i in dbs]
+
+        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(self.db_user,
+                                                                self.db_password,
+                                                                self.db_host,
+                                                                self.database)
+
+        # If the database doesn't exist, create it, otherwise connect
+        if self.database not in dbs:
+            print('Specified mysql database {} does not exist, it is being '
+                  'created...'.format(self.database))
+            query = ("CREATE DATABASE {};".format(self.database))
+            cursor.execute(query)
+            cursor.close()
+            cnx.close()
+
+            create_tables(db_engine)
+
+        else:
+            try:
+                engine = create_engine(db_engine)
+                Base.metadata.create_all(engine)
+                DBSession = sessionmaker(bind=engine)
+                self.session = DBSession()
+                print('Using {} for results...'.format(db_engine))
+
+            except:
+                print('Failed trying to make database connection '
+                      'to {}'.format(self.database))
 
 def write_csv(self):
     '''

@@ -21,8 +21,8 @@ from sqlalchemy import create_engine
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results,VariableUnits, Watersheds, Basins
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import urllib.parse
 from collections import OrderedDict
+from snowav import database
 
 
 def read_config(self, external_logger=None, awsm=None):
@@ -161,7 +161,7 @@ def read_config(self, external_logger=None, awsm=None):
                     ucfg.cfg['plots']['fig_height'])
     self.dpi = ucfg.cfg['plots']['dpi']
     self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
-                      'xkcd:vibrant green']                    
+                      'xkcd:vibrant green']
 
     ####################################################
     #          report                                  #
@@ -220,9 +220,9 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #         results
     ####################################################
-    self.location = ucfg.cfg['results']['location']
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
+    self.db_host = ucfg.cfg['results']['host']
     self.database = ucfg.cfg['results']['database']
     self.write_csv = ucfg.cfg['results']['write_csv']
     if type(self.write_csv) != list and self.write_csv != None:
@@ -249,64 +249,12 @@ def read_config(self, external_logger=None, awsm=None):
                  ('swe_avail','snow water equivalent available for melt'),
                  ('swe_unavail','snow water equivalent unavailable for melt')])
 
-    # If no database is specified, make database snowav/data/model_results.db
-    # Also, if specified database doesn't exist, it will be created
-    fp = urllib.parse.urlparse(self.database)
-
-    if (self.database is None) or not (os.path.isfile(fp.path)):
-        print('Either no results database was specified in the config file, '
-              'or the specified file does not exist...')
-
-        # Default snowav database location and name.
-        # If this changes, update scripts/snow.py, which uses the default
-        # location but does not always call read_config().
-        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
-        database = os.path.abspath(dbpath + '/model_results.db')
-        self.database = 'sqlite:///{}'.format(database)
-
-        print('Creating and using {}'.format(self.database))
-
-        # Make database connection for duration of snowav processing
-        engine = create_engine(self.database)
-        Base.metadata.create_all(engine)
-        DBSession = sessionmaker(bind=engine)
-        self.session = DBSession()
-
-        # Initialize watersheds
-        for ws in Watersheds.watersheds:
-            wsid = Watersheds.watersheds[ws]['watershed_id']
-            wsn = Watersheds.watersheds[ws]['watershed_name']
-            wval = Watershed(watershed_id = wsid, watershed_name = wsn)
-            self.session.add(wval)
-
-            # Initialize basins within the watershed
-            for bid in Basins.basins:
-                if Basins.basins[bid]['watershed_id'] == wsid:
-                    bval = Basin(watershed_id = wsid,
-                                 basin_id = Basins.basins[bid]['basin_id'],
-                                 basin_name = Basins.basins[bid]['basin_name'])
-                    self.session.add(bval)
-
-        self.session.commit()
-
-    # Make database connection for duration of snowav processing
-    else:
-
-        try:
-            engine = create_engine(self.database)
-            Base.metadata.create_all(engine)
-            DBSession = sessionmaker(bind=engine)
-            self.session = DBSession()
-            # x = self.session.query(Results).get(1)
-            # print('rc 312',x.variable_units.unit)
-
-        except:
-            print('Failed trying to make database connection '
-                  'to {}'.format(self.database))
-
     self.run_name = ucfg.cfg['results']['run_name']
     self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
     self.plot_runs = ucfg.cfg['results']['plot_runs']
+
+    # Establish database connection, create if necessary
+    database.database.connect(self)
 
     # If these fields are specified in the config_file, plot_flag will be set
     # to False, no processing occurs, and no report is generated

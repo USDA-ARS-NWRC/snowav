@@ -1,4 +1,5 @@
 
+import numpy as np
 import datetime
 import snowav
 from snowav.database.tables import Basins
@@ -30,11 +31,14 @@ def package(self, df, output, dtime):
 
         # By elevation band
         for iters,val in enumerate(df[var].values):
+            if np.isnan(val):
+                val = None
+
             values = {'basin_id': Basins.basins[var]['basin_id'],
                       'run_id':self.runid,
                       'date_time': dtime,
                       'variable': output,
-                      'variable_id':output,
+                      'variable_id': self.vid[output],
                       'value': val,
                       'elevation': str(df[var].index[iters])}
 
