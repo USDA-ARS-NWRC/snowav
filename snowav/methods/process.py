@@ -20,15 +20,11 @@ def process(self):
         - loops over each daily_outputs ('swe_z', 'swe_vol', etc)
         - loops over sub-basins
         - loops over elevation band, and calculates volumes and mean depths
-            (masked where there is SWE greater than 0) for each daily_outputs
-            value in that elevation band
+            for each daily_outputs value in that elevation band
         - once all elevation bands for each subbasin have been calculated,
             'total' fields (either mean depth for the subbasin or total volume
             for the subbasin) are calculated
         - finally, that is sent to the database
-
-    to-dos:
-    - Hx-Repeats-Itself forecasting probably no longer works in this format
 
     '''
 
@@ -117,7 +113,7 @@ def process(self):
 
         # Loop over outputs (depths are copied, volumes are calculated)
         for k in self.vars.keys():
-            
+
             # Mask by subbasin
             for name in self.masks:
 
