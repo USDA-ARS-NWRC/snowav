@@ -16,7 +16,7 @@ class RunMetadata(Base):
 
     run_id = Column(Integer, primary_key=True)
     run_name = Column(String(250), nullable=False, index=True)
-    watershed_id = Column(Integer, nullable=True)
+    watershed_id = Column(Integer, ForeignKey('Watershed.watershed_id'), nullable=True)
     pixel = Column(Integer, nullable=True)
     description = Column(String(250), nullable=True)
     smrf_version = Column(String(250), nullable=True)
@@ -28,18 +28,19 @@ class RunMetadata(Base):
     config_file = Column(String(250), nullable=True)
     proc_time = Column(types.DateTime(), nullable=True)
 
+    # This puts Watershed fields available through Basin at Basin.watershed
+    run_metadata = relationship('Watershed',
+                               backref=backref('RunMetadata',lazy='dynamic'))
+
 class Watershed(Base):
     __tablename__ = 'Watershed'
 
     watershed_id = Column(Integer, primary_key=True)
     watershed_name = Column(String(250), nullable=False, index=True)
-    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'))
-    basins = Column(String(250), nullable=True)
+    # run_id = Column(Integer, ForeignKey('RunMetadata.run_id'))
+    # basins = Column(String(250), nullable=True)
     shapefile = Column(types.LargeBinary, nullable=True)
 
-    # This puts Watershed fields available through Basin at Basin.watershed
-    runmetadata = relationship('RunMetadata',
-                               backref=backref('Watershed',lazy='dynamic'))
 
 class Basin(Base):
     __tablename__ = 'Basin'
@@ -67,7 +68,7 @@ class Results(Base):
     elevation = Column(String(250), nullable=True)
 
     variable_units = relationship('VariableUnits',
-                                  backref=backref('Results',lazy='dynamic'))
+                                  backref=backref('Results'))
 
     runmetadata = relationship('RunMetadata',
                                backref=backref('Results',lazy='dynamic'))
@@ -76,10 +77,13 @@ class VariableUnits(Base):
     __tablename__ = 'VariableUnits'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    run_id = Column(Integer, index=True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'),index=True)
     variable = Column(String(250), nullable=True)
     unit = Column(String(250), nullable=True)
     name = Column(String(250), nullable=True)
+
+    run_metadata = relationship('RunMetadata',
+                               backref=backref('VariableUnits',lazy='dynamic'))
 
 class Watersheds(object):
     '''

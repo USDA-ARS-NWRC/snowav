@@ -40,7 +40,7 @@ def insert(self, table, values):
     self.session.commit()
 
 
-def query(self, start_date, end_date, run_name, bid = None, value = None, rid = None):
+def query(self, start_date, end_date, run_name, bid=None, value=None, rid=None):
     '''
     Query and retrieve results from the database, using database session created
     in read_config().
@@ -90,7 +90,8 @@ def delete(self, start_date, end_date, bid, run_name):
     '''
     Delete results from the database using database session created
     in read_config(). Currently this deletes all values with basin_id == bid
-    and run_name = run_name within the date range.
+    and run_name = run_name within the date range, in other words, it removes
+    all records of a previous run that share run_name with any date overlap.
 
     Args
         start_date: (datetime)
@@ -99,29 +100,31 @@ def delete(self, start_date, end_date, bid, run_name):
         run_name: identifier for run, specified in config file
 
     '''
-
     try:
-        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                          (Results.date_time <= end_date),
-                                          (RunMetadata.run_name == run_name),
-                                          (Results.basin_id == Basins.basins[bid]['basin_id'])))
+        # Since we know run_name, but not run_id, get the run_id
+        qry = self.session.query(Results).join(RunMetadata).\
+                        filter(and_((Results.date_time >= start_date),
+                        (Results.date_time <= end_date),
+                        (RunMetadata.run_name == run_name),
+                        (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
         df = pd.read_sql(qry.statement, qry.session.connection())
-        rid = df.run_id.unique()
 
-        for r in rid:
-            qry = self.session.query(Results).filter(and_((Results.date_time >= start_date),
-                                              (Results.date_time <= end_date),
-                                              (Results.run_id == int(r)),
-                                              (Results.basin_id == Basins.basins[bid]['basin_id']))).delete(synchronize_session='fetch')
+        for r in df.run_id.unique():
+            self.session.query(Results).\
+                                filter(Results.run_id == int(r)).delete()
+            self.session.query(RunMetadata).\
+                                filter(RunMetadata.run_id == int(r)).delete()
+            self.session.query(VariableUnits).\
+                                filter(VariableUnits.run_id == int(r)).delete()
+            self.session.flush()
 
         self.session.commit()
 
     except:
-        print('Failed during attempted deletion in database.delete()')
+        print('Failed to delete database records in database.delete()...')
 
-
-def create_tables(self):
+def create_tables(self, url=None):
     '''
     This function creates the Watersheds and Basins tables in the database
     from classes defined in /snowav/database/tables.py
@@ -129,7 +132,11 @@ def create_tables(self):
     '''
 
     # Make database connection for duration of snowav processing
-    engine = create_engine(self.database)
+    if url is not None:
+        engine = create_engine(url)
+    else:
+        engine = create_engine(self.database)
+
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
     self.session = DBSession()
@@ -150,6 +157,7 @@ def create_tables(self):
                 self.session.add(bval)
 
     self.session.commit()
+    print('Completed initializing basins and watersheds')
 
 def run_metadata(self):
     '''
@@ -183,6 +191,8 @@ def run_metadata(self):
               'proc_time':datetime.datetime.now()
                 }
 
+    snowav.database.database.insert(self, 'RunMetadata', values)
+
     # self.vars is defined in read_config(), and is also used in process()
     self.vid = {}
     for v in self.vars.keys():
@@ -207,8 +217,6 @@ def run_metadata(self):
         # After inserting into VariableUnits, get the existing id
         x = self.session.query(VariableUnits).all()
         self.vid[v] = copy.deepcopy(x[-1].id)
-
-    snowav.database.database.insert(self,'RunMetadata',values)
 
 
 def check_fields(self, start_date, end_date, bid, run_name, value):
@@ -326,7 +334,7 @@ def connect(self):
             cursor.close()
             cnx.close()
 
-            create_tables(db_engine)
+            create_tables(self, url = db_engine)
 
         else:
             try:
