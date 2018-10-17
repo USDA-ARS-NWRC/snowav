@@ -223,8 +223,10 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
     self.db_host = ucfg.cfg['results']['host']
-    self.database = ucfg.cfg['results']['database']
+    self.mysql = ucfg.cfg['results']['mysql']
+    self.sqlite = ucfg.cfg['results']['sqlite']
     self.write_csv = ucfg.cfg['results']['write_csv']
+    
     if type(self.write_csv) != list and self.write_csv != None:
         self.write_csv = [self.write_csv]
 

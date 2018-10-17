@@ -99,6 +99,8 @@ def delete(self, start_date, end_date, bid, run_name):
         bid: basin id in string format ('Boise River Basin')
         run_name: identifier for run, specified in config file
 
+    Table deletion order matters, by relationship.
+
     '''
     try:
         # Since we know run_name, but not run_id, get the run_id
@@ -113,10 +115,10 @@ def delete(self, start_date, end_date, bid, run_name):
         for r in df.run_id.unique():
             self.session.query(Results).\
                                 filter(Results.run_id == int(r)).delete()
-            self.session.query(RunMetadata).\
-                                filter(RunMetadata.run_id == int(r)).delete()
             self.session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).delete()
+            self.session.query(RunMetadata).\
+                                filter(RunMetadata.run_id == int(r)).delete()
             self.session.flush()
 
         self.session.commit()
@@ -260,10 +262,9 @@ def connect(self):
 
     # If no database is specified, make database snowav/data/model_results.db
     # Also, if specified database doesn't exist, it will be created
-    fp = urllib.parse.urlparse(self.database)
 
     # No database specified, create default sqlite in snowav/data
-    if self.database is None:
+    if self.sqlite is None and self.mysql is None:
 
         # If this changes, update scripts/snow.py, which uses the default
         # location but does not always call read_config().
@@ -285,28 +286,30 @@ def connect(self):
             print('Using {} for results...'.format(self.database))
 
     # sqlite specified, but doesn't exist
-    if (not (os.path.isfile(fp.path))) and (fp.scheme == 'sqlite'):
+    if self.sqlite is not None:
+        fp = urllib.parse.urlparse(self.sqlite)
 
-        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
-        database = os.path.abspath(dbpath + '/model_results.db')
-        self.database = 'sqlite:///{}'.format(database)
+        if (not os.path.isfile(fp.path)):
 
-        print('Database specified in config file does not exist, creating '
-              'default {}'.format(self.database))
+            dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
+            database = os.path.abspath(dbpath + '/model_results.db')
+            self.database = 'sqlite:///{}'.format(database)
 
-        # Create metadata tables and keep open self.session
-        create_tables(self)
+            print('Database specified in config file does not exist, creating '
+                  'default {}'.format(self.database))
 
-    # Make database connection for duration of snowav processing
-    if (os.path.isfile(fp.path)) and (fp.scheme == 'sqlite'):
+            # Create metadata tables and keep open self.session
+            create_tables(self)
+            engine = create_engine(self.database)
 
-        engine = create_engine(self.database)
-        # Base.metadata.create_all(engine)
+        else:
+            engine = create_engine(self.sqlite)
+
         DBSession = sessionmaker(bind=engine)
         self.session = DBSession()
-        print('Using {} for results...'.format(self.database))
+        print('Using {} for results...'.format(self.sqlite))
 
-    if 'mysql' in self.database:
+    if self.mysql is not None:
 
         # First, check if database exists, if not, make it
         cnx = mysql.connector.connect(user=self.db_user,
@@ -323,13 +326,13 @@ def connect(self):
         db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(self.db_user,
                                                                 self.db_password,
                                                                 self.db_host,
-                                                                self.database)
+                                                                self.mysql)
 
         # If the database doesn't exist, create it, otherwise connect
-        if self.database not in dbs:
+        if self.mysql not in dbs:
             print('Specified mysql database {} does not exist, it is being '
-                  'created...'.format(self.database))
-            query = ("CREATE DATABASE {};".format(self.database))
+                  'created...'.format(self.mysql))
+            query = ("CREATE DATABASE {};".format(self.mysql))
             cursor.execute(query)
             cursor.close()
             cnx.close()
@@ -346,7 +349,7 @@ def connect(self):
 
             except:
                 print('Failed trying to make database connection '
-                      'to {}'.format(self.database))
+                      'to {}'.format(self.mysql))
 
 def write_csv(self):
     '''
