@@ -8,10 +8,12 @@ import os
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from snowav.database.tables import Base, Results, Basins, RunMetadata, Watersheds
 from sqlalchemy import and_
 from snowav.utils.utilities import get_snowav_path
 import urllib.parse
+import mysql.connector
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
+from snowav import database
 
 def run():
 
@@ -37,6 +39,17 @@ def run():
     parser.add_argument('-create', '--create', dest='create', type=str,
                         help='Flag for initial database creation for docker.')
 
+    parser.add_argument('-user', '--user', dest = 'user', type=str,
+                        help='Flag for initial database creation for docker.')
+
+    parser.add_argument('-pwd', '--pwd', dest = 'pwd', type=str,
+                        help='Flag for initial database creation for docker.')
+
+    parser.add_argument('-host', '--host', dest = 'host', type=str,
+                        help='Flag for initial database creation for docker.')
+
+    # parser.add_argument('--create', nargs='+')
+
     args = parser.parse_args()
 
     #########################################################################
@@ -48,39 +61,52 @@ def run():
         snowav.framework.framework.SNOWAV(config_file = args.config_file)
 
     #########################################################################
-    #                       Database creationm                              #
+    #                       Database creation                               #
     #########################################################################
+    # snowav -create model_r -user mark -pwd whatdystm?1 -host 127.0.0.1
 
     if args.create:
-        print('create')
+        # First, check if database exists, if not, make it
+        cnx = mysql.connector.connect(user=args.user,
+                                      password=args.pwd,
+                                      host=args.host)
+        cursor = cnx.cursor()
 
-        fp = os.path.abspath(args.create + '/model_results/')
+        # Check if database exists, create if necessary
+        query = ("SHOW DATABASES")
+        cursor.execute(query)
+        dbs = cursor.fetchall()
+        dbs = [i[0].decode("utf-8") for i in dbs]
+        print(dbs)
 
-        if not os.path.exists(fp):
-            os.makedirs(fp)
+        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(args.user,
+                                                                args.pwd,
+                                                                args.host,
+                                                                args.create)
 
-        self.database = 'sqlite:///{}'.format(database)
+        # If the database doesn't exist, create it, otherwise connect
+        if args.create not in dbs:
+            print('Specified mysql database {} does not exist, it is being '
+                  'created...'.format(args.create))
+            query = ("CREATE DATABASE {};".format(args.create))
+            cursor.execute(query)
+            cursor.close()
+            cnx.close()
 
-        try:
-            print('Creating and using {}'.format(self.database))
+            database.database.create_tables(url = db_engine)
 
-            # Make database connection for duration of snowav processing
-            engine = create_engine(self.database)
-            Base.metadata.create_all(engine)
-            DBSession = sessionmaker(bind=engine)
-            self.session = DBSession()
+        else:
+            try:
+                engine = create_engine(db_engine)
+                Base.metadata.create_all(engine)
+                DBSession = sessionmaker(bind=engine)
+                session = DBSession()
+                print('Using {} for results...'.format(db_engine))
+                session.close()
 
-            # Initialize basin metadata for all basin defitions
-            for basin in BASINS.basins:
-                val = BasinMetadata(basin_id = BASINS.basins[basin]['basin_id'],
-                                     basin_name = BASINS.basins[basin]['basin_name'],
-                                     state = BASINS.basins[basin]['state'])
-                self.session.add(val)
-                self.session.commit()
-
-        except:
-
-            print('Database {} creation failed...'.format(self.database))
+            except:
+                print('Failed trying to make database connection '
+                      'to {}'.format(args.create))
 
     #########################################################################
     #                       Database query                                  #

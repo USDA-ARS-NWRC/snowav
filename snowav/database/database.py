@@ -126,7 +126,7 @@ def delete(self, start_date, end_date, bid, run_name):
     except:
         print('Failed to delete database records in database.delete()...')
 
-def create_tables(self, url=None):
+def create_tables(self=None, url=None):
     '''
     This function creates the Watersheds and Basins tables in the database
     from classes defined in /snowav/database/tables.py
@@ -136,19 +136,20 @@ def create_tables(self, url=None):
     # Make database connection for duration of snowav processing
     if url is not None:
         engine = create_engine(url)
+
     else:
         engine = create_engine(self.database)
 
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
-    self.session = DBSession()
+    session = DBSession()
 
     # Initialize watersheds
     for ws in Watersheds.watersheds:
         wsid = Watersheds.watersheds[ws]['watershed_id']
         wsn = Watersheds.watersheds[ws]['watershed_name']
         wval = Watershed(watershed_id = wsid, watershed_name = wsn)
-        self.session.add(wval)
+        session.add(wval)
 
         # Initialize basins within the watershed
         for bid in Basins.basins:
@@ -156,9 +157,13 @@ def create_tables(self, url=None):
                 bval = Basin(watershed_id = wsid,
                              basin_id = Basins.basins[bid]['basin_id'],
                              basin_name = Basins.basins[bid]['basin_name'])
-                self.session.add(bval)
+                session.add(bval)
 
-    self.session.commit()
+    session.commit()
+    
+    if self is not None:
+        self.session = session
+
     print('Completed initializing basins and watersheds')
 
 def run_metadata(self):
