@@ -59,7 +59,7 @@ class Results(Base):
     __tablename__ = 'Results'
 
     id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, index=True)
+    basin_id = Column(Integer, ForeignKey('Basin.basin_id'), index=True)
     run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index=True)
     date_time = Column(types.DateTime(), nullable=False, index=True)
     variable = Column(String(250), nullable=True, index=True)
@@ -71,6 +71,9 @@ class Results(Base):
                                   backref=backref('Results'))
 
     runmetadata = relationship('RunMetadata',
+                               backref=backref('Results',lazy='dynamic'))
+
+    basinid = relationship('Basin',
                                backref=backref('Results',lazy='dynamic'))
 
 class VariableUnits(Base):
