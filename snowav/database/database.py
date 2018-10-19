@@ -160,7 +160,7 @@ def create_tables(self=None, url=None):
                 session.add(bval)
 
     session.commit()
-    
+
     if self is not None:
         self.session = session
 
@@ -225,6 +225,29 @@ def run_metadata(self):
         x = self.session.query(VariableUnits).all()
         self.vid[v] = copy.deepcopy(x[-1].id)
 
+    # Add post-processing values
+    sum_vals = {'swi_vol_wy':'surface water input volume, water year total',
+                'swi_z_wy':'surface water input depth, water year total',
+                'evap_z_wy':'evaporation depth, water year total'}
+
+    for v in sum_vals.keys():
+        if ('vol' in v):
+            u = self.units
+        if ('z' in v) :
+            u = self.depthlbl
+
+        variables = {
+                     'run_id':self.runid,
+                     'variable':v,
+                     'unit':u,
+                     'name':sum_vals[v]
+                    }
+
+        snowav.database.database.insert(self,'VariableUnits',variables)
+
+        # After inserting into VariableUnits, get the existing id
+        x = self.session.query(VariableUnits).all()
+        self.vid[v] = copy.deepcopy(x[-1].id)
 
 def check_fields(self, start_date, end_date, bid, run_name, value):
     '''
@@ -290,25 +313,22 @@ def connect(self):
             self.session = DBSession()
             print('Using {} for results...'.format(self.database))
 
-    # sqlite specified, but doesn't exist
+    # sqlite specified
     if self.sqlite is not None:
         fp = urllib.parse.urlparse(self.sqlite)
 
-        if (not os.path.isfile(fp.path)):
+        try:
+            if (not os.path.isfile(fp.path)):
+                    self.database = self.sqlite
+                    print('Creating {} for results'.format(self.database))
 
-            dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
-            database = os.path.abspath(dbpath + '/model_results.db')
-            self.database = 'sqlite:///{}'.format(database)
-
-            print('Database specified in config file does not exist, creating '
-                  'default {}'.format(self.database))
-
-            # Create metadata tables and keep open self.session
-            create_tables(self)
-            engine = create_engine(self.database)
-
-        else:
-            engine = create_engine(self.sqlite)
+                    # Create metadata tables and keep open self.session
+                    create_tables(self)
+                    engine = create_engine(self.sqlite)
+            else:
+                engine = create_engine(self.sqlite)
+        except:
+            print('Failed creating or connecting to {}...'.format(self.database))
 
         DBSession = sessionmaker(bind=engine)
         self.session = DBSession()
