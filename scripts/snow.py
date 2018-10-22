@@ -1,4 +1,24 @@
 
+'''
+rm -rf /mydata/
+
+$ docker stop $(docker ps -a -q)
+$ docker rm $(docker ps -a -q)
+$ docker rmi $(docker images -q)
+$ docker system prune -a
+
+$ docker inspect <image>
+
+Create dockerized mysql snowav database:
+docker-compose up -d
+
+then snowav
+- snowav fails
+- inside docker 'drop database snowav;'
+- then snowav again
+
+'''
+
 import sys
 import snowav
 import argparse
@@ -89,6 +109,7 @@ def run():
             print('Specified mysql database {} does not exist, it is being '
                   'created...'.format(args.create))
             query = ("CREATE DATABASE {};".format(args.create))
+            print('snow 105, ', db_engine)
             cursor.execute(query)
             cursor.close()
             cnx.close()
@@ -122,7 +143,7 @@ def run():
         if not args.db:
             sbase = get_snowav_path()
             sbase = 'sqlite:///' + sbase
-            args.db = sbase + '/snowav/data/model_results.db'
+            args.db = sbase + '/snowav/data/snowav.db'
 
         start_date = datetime.datetime(args.wy-1,10,1)
         end_date = datetime.datetime(args.wy,9,30)

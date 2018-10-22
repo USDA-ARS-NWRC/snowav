@@ -297,7 +297,7 @@ def connect(self):
         # If this changes, update scripts/snow.py, which uses the default
         # location but does not always call read_config().
         dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
-        database = os.path.abspath(dbpath + '/model_results.db')
+        database = os.path.abspath(dbpath + '/snowav.db')
         self.database = 'sqlite:///{}'.format(database)
 
         # Create metadata tables and keep open self.session

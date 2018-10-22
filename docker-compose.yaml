@@ -1,0 +1,15 @@
+database:
+  image: mysql
+  container_name: database
+  command: mysqld --user=root --verbose
+  volumes:
+     - ./mydata:/var/lib/mysql
+  ports:
+    - "8080:8080"
+  environment:
+    MYSQL_DATABASE: "snowav"
+    MYSQL_USER: "mark"
+    MYSQL_PASSWORD: "whatdystm?1"
+    MYSQL_ROOT_PASSWORD: "whatdystm?1"
+    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    # DB_HOST: 'docker-snowav'
