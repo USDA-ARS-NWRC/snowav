@@ -339,14 +339,19 @@ def connect(self):
         # First, check if database exists, if not, make it
         cnx = mysql.connector.connect(user=self.db_user,
                                       password=self.db_password,
-                                      host=self.db_host)
+                                      host=self.db_host,
+                                      port=self.db_port)
         cursor = cnx.cursor()
 
         # Check if database exists, create if necessary
         query = ("SHOW DATABASES")
         cursor.execute(query)
         dbs = cursor.fetchall()
-        dbs = [i[0].decode("utf-8") for i in dbs]
+
+        try:
+            dbs = [i[0].decode("utf-8") for i in dbs]
+        except:
+            dbs = [i[0] for i in dbs]
 
         db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(self.db_user,
                                                                 self.db_password,
@@ -354,17 +359,24 @@ def connect(self):
                                                                 self.mysql)
 
         # If the database doesn't exist, create it, otherwise connect
-        if self.mysql not in dbs:
+        if (self.mysql not in dbs):
             print('Specified mysql database {} does not exist, it is being '
                   'created...'.format(self.mysql))
             query = ("CREATE DATABASE {};".format(self.mysql))
             cursor.execute(query)
             cursor.close()
             cnx.close()
-
             create_tables(self, url = db_engine)
 
         else:
+            # Currently, if created in docker-compose, snowav exists as an
+            # empty database, and create_tables(self, url = db_engine) needs
+            # to be run on its own
+            try:
+                create_tables(self, url = db_engine)
+            except:
+                print('Did not create tables...')
+
             try:
                 engine = create_engine(db_engine)
                 Base.metadata.create_all(engine)

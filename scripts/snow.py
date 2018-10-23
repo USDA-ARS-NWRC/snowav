@@ -1,23 +1,4 @@
 
-'''
-rm -rf /mydata/
-
-$ docker stop $(docker ps -a -q)
-$ docker rm $(docker ps -a -q)
-$ docker rmi $(docker images -q)
-$ docker system prune -a
-
-$ docker inspect <image>
-
-Create dockerized mysql snowav database:
-docker-compose up -d
-
-then snowav
-- snowav fails
-- inside docker 'drop database snowav;'
-- then snowav again
-
-'''
 
 import sys
 import snowav
@@ -68,7 +49,8 @@ def run():
     parser.add_argument('-host', '--host', dest = 'host', type=str,
                         help='Flag for initial database creation for docker.')
 
-    # parser.add_argument('--create', nargs='+')
+    parser.add_argument('-port', '--port', dest = 'port', type=str,
+                        help='Flag for initial database creation for docker.')
 
     args = parser.parse_args()
 
@@ -89,7 +71,9 @@ def run():
         # First, check if database exists, if not, make it
         cnx = mysql.connector.connect(user=args.user,
                                       password=args.pwd,
-                                      host=args.host)
+                                      host=args.host,
+                                      port=args.port,
+                                      auth_plugin='mysql_native_password')
         cursor = cnx.cursor()
 
         # Check if database exists, create if necessary
@@ -99,9 +83,10 @@ def run():
         dbs = [i[0].decode("utf-8") for i in dbs]
         print(dbs)
 
-        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(args.user,
+        db_engine = 'mysql+mysqlconnector://{}:{}@{}:{}/{}'.format(args.user,
                                                                 args.pwd,
                                                                 args.host,
+                                                                args.port,
                                                                 args.create)
 
         # If the database doesn't exist, create it, otherwise connect

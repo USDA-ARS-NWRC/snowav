@@ -36,6 +36,8 @@ def package(self, df, output, dtime):
         for iters,val in enumerate(df[var].values):
             if np.isnan(val):
                 val = None
+            else:
+                val = float(val)
 
             values = {'basin_id': Basins.basins[var]['basin_id'],
                       'run_id':self.runid,
@@ -46,10 +48,6 @@ def package(self, df, output, dtime):
                       'elevation': str(df[var].index[iters])}
 
             snowav.database.database.insert(self,'Results',values)
-
-            # if ((values['basin_id'] == 1)
-            #     and (values['elevation'] == '6000')):
-            #     print('prev, ',values)
 
 
 def post_process(self, dtime):
@@ -84,7 +82,9 @@ def post_process(self, dtime):
 
             for iters, sval in enumerate(summary[bid].values):
                 if np.isnan(sval):
-                    val = None
+                    sval = None
+                elif (type(sval) is not str):
+                    sval = float(sval)
 
                 values = {'basin_id': Basins.basins[bid]['basin_id'],
                           'run_id':self.runid,
@@ -97,12 +97,17 @@ def post_process(self, dtime):
                 snowav.database.database.insert(self,'Results',values)
 
             # add total as the sum
+            if np.nansum(summary[bid].values) != np.nan:
+                v = float(np.nansum(summary[bid].values))
+            else:
+                v = np.nansum(summary[bid].values)
+
             values = {'basin_id': Basins.basins[bid]['basin_id'],
                       'run_id':self.runid,
                       'date_time': dtime,
                       'variable': sum_vals[val],
                       'variable_id': self.vid[sum_vals[val]],
-                      'value': np.nansum(summary[bid].values),
+                      'value': v,
                       'elevation': 'total'}
 
             snowav.database.database.insert(self,'Results',values)

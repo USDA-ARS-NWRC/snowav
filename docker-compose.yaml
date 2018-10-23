@@ -1,15 +1,20 @@
+
 database:
-  image: mysql
-  container_name: database
-  command: mysqld --user=root --verbose
+  image: mysql_xtra
+  container_name: snowav_database
+  restart: always
+  # command: mysqld --user=root --verbose
+  # command: mysqld --default-authentication-plugin=mysql_native_password
   volumes:
-     - ./mydata:/var/lib/mysql
+      - /database/docker_snowav:/var/lib/mysql
+      - /home/database/backup/snowav_database:/backup
+      - /home/database/scripts/bgbackup_snowav.cnf:/home/bgbackup/bgbackup.cnf
   ports:
-    - "8080:8080"
+    - 8888:3306
   environment:
-    MYSQL_DATABASE: "snowav"
-    MYSQL_USER: "mark"
-    MYSQL_PASSWORD: "whatdystm?1"
-    MYSQL_ROOT_PASSWORD: "whatdystm?1"
+    MYSQL_DATABASE: snowav
+    MYSQL_USER: mark
+    MYSQL_PASSWORD: whatdystm?1
+    MYSQL_ROOT_PASSWORD: whatdystm?1
+    MYSQL_ROOT_HOST: 172.17.0.2
     MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    # DB_HOST: 'docker-snowav'

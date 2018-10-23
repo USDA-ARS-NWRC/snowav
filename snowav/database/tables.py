@@ -23,7 +23,7 @@ class RunMetadata(Base):
     awsm_version = Column(String(250), nullable=True)
     snowav_version = Column(String(250), nullable=True)
     data_type = Column(String(250), nullable=True)
-    data_location = Column(String(250), nullable=True)
+    data_location = Column(String(1200), nullable=True)
     file_type = Column(String(250), nullable=True)
     config_file = Column(String(250), nullable=True)
     proc_time = Column(types.DateTime(), nullable=True)
