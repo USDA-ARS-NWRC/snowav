@@ -196,7 +196,15 @@ def report(obj):
     variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
     variables['PDEP_FIG'] = 'precip_depth%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
-    variables['ARSLOGO'] = obj.figs_tpl_path + 'ars_logo.png'
+    variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
+    variables['ASOLOGO'] = obj.figs_tpl_path + 'ASO.jpg'
+    variables['USDALOGO'] = obj.figs_tpl_path + 'USDA.png'
+    variables['JPLLOGO'] = obj.figs_tpl_path + 'JPL.png'
+    variables['CDWRLOGO'] = obj.figs_tpl_path + 'CDWR.png'
+    variables['USBRLOGO'] = obj.figs_tpl_path + 'USBR.jpg'
+    variables['NRCSLOGO'] = obj.figs_tpl_path + 'NRCS.jpg'
+    variables['KRWALOGO'] = obj.figs_tpl_path + 'KRWA.jpg'
+    variables['FRIANTLOGO'] = obj.figs_tpl_path + 'FRIANT.jpg'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
     swe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
@@ -214,13 +222,13 @@ def report(obj):
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
     variables['SWE_BYELEV'] = (
-                                r'\textbf{Mean SWE [%s] by elevation band, %s}\\ \vspace{0.1cm} \\'
+                                r'\textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
                                 + swe_byelev[obj.plotorder].to_latex()
                                 )
 
     variables['DSWE_BYELEV'] = (
-                                r'\textbf{Change in SWE [%s] by elevation band, %s to %s}\\ \vspace{0.1cm} \\'
+                                r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
                                   obj.end_date.date().strftime("%Y-%-m-%-d"))
                                 + dswe_byelev[obj.plotorder].to_latex()
@@ -292,6 +300,7 @@ def report(obj):
     if obj.exclude_figs != None:
         for name in obj.exclude_figs:
             variables[name + '_FIG'] = ' '
+            variables[name + '_TPL'] = ' '
             variables[name + '_FIG_TPL'] = ' '
 
     # Make the report

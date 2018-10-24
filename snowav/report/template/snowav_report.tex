@@ -14,52 +14,66 @@
 \usepackage{multirow}
 \usepackage{tikz}
 
+\usepackage[export]{adjustbox}
+
 \setlength{\droptitle}{-8em}
 \setlength\headheight{26pt}
 \usepackage{fancyhdr}
-\pagestyle{fancy} % enable fancy page style
+\pagestyle{fancy}
 
 \newenvironment{noindlist}
  {\begin{list}{\labelitemi}{\leftmargin=1em \itemindent=0em}}
  {\end{list}}
 
-\rhead{ \begin{flushleft} \vspace{-1cm} {\color{red} DRAFT }  \vspace{-1cm} \end{flushleft}}
-
 \title{ {\color{red} DRAFT SUBJECT TO CHANGE} \\ \textbf{\VAR{REPORT_TITLE}} \\
-Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
-}
+Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE} }
 
 \author{USDA Agricultural Research Service, Boise, Idaho \\
-	\small \emph{in cooperation with} NASA Jet Propulsion Lab, Pasadena, California, \\
-	\small NRCS National Water and Climate Center, Portland, Oregon, \\
-	\small \emph{and} U.S. Bureau of Reclamation, Sacramento, California}
+	      NASA Jet Propulsion Lab, Pasadena, California}
 \date{}
+
+
+\fancypagestyle{specialfooter}{
+  \fancyhf{}
+  \renewcommand\headrulewidth{0pt}
+  \fancyfoot[R]{ \textit{In cooperation with} \hspace{0.5cm}
+        \includegraphics[scale=0.6,valign=c]{\VAR{CDWRLOGO}} \hspace{0.2cm}
+        \includegraphics[scale=0.7,valign=c]{\VAR{USBRLOGO}} \hspace{0.2cm}
+        \includegraphics[scale=0.25,valign=c]{\VAR{FRIANTLOGO}} \hspace{0.2cm}
+        \includegraphics[scale=0.2,valign=c]{\VAR{KRWALOGO}} \hspace{0.2cm}
+        \includegraphics[scale=0.75,valign=c]{\VAR{NRCSLOGO}}
+         }
+}
+
+\pagestyle{empty}
 
 \begin{document}
 
+\vspace{1cm}
 \maketitle
 {
 	\begin{tikzpicture}[remember picture,overlay]
-	\node [shift={(-19.5cm,-2.75cm)}] at (current page.north east) {\includegraphics[height=2.5cm]{\VAR{ARSLOGO}}};
+	\node [shift={(-19cm,-2.65cm)}] at (current page.north east) {\includegraphics[height=2.75cm]{\VAR{ASOLOGO}}};
+  \node [shift={(-19cm,-5.25cm)}] at (current page.north east) {\includegraphics[height=1.5cm]{\VAR{ARSLOGO}}};
+  % \node [shift={(-19cm,-6.0cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
 	\end{tikzpicture}
 }
 
-%{
-%	\begin{tikzpicture}[remember picture,overlay]
-%	\node [shift={(-19.5cm,-5.75cm)}] at (current page.north east) {\includegraphics[height=2.2cm]{\VAR{AWSMLOGO}}};
-%	\end{tikzpicture}
-%}
-
-\vspace{-2cm}
 
 \section*{Summary}
 \VAR{SUMMARY}
+
+\thispagestyle{specialfooter}
 
 \VAR{SWE_SUMMARY_TPL}
 
 \VAR{PRECIP_SUMMARY_TPL}
 
 \clearpage
+
+\pagestyle{fancy}
+% \fancyfoot[R]{\thepage}
+
 \section*{Results}
 \vspace{1cm}
 
