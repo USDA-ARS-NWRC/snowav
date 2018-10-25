@@ -364,19 +364,19 @@ def connect(self):
                   'created...'.format(self.mysql))
             query = ("CREATE DATABASE {};".format(self.mysql))
             cursor.execute(query)
-            cursor.close()
-            cnx.close()
             create_tables(self, url = db_engine)
 
         else:
-            # Currently, if created in docker-compose, snowav exists as an
-            # empty database, and create_tables(self, url = db_engine) needs
-            # to be run on its own
-            try:
+
+            query = ("SHOW DATABASES")
+            cursor.execute('USE {}'.format(self.mysql))
+            cursor.execute('SHOW TABLES')
+            tbls = cursor.fetchall()
+
+            # This hasn't been tested with new docker mysql instance, could be
+            # a point of failure...
+            if tbls is None:
                 create_tables(self, url = db_engine)
-            except:
-                print('')
-                # self._logger.info('Did not create tables')
 
             try:
                 engine = create_engine(db_engine)
@@ -388,6 +388,10 @@ def connect(self):
             except:
                 print('Failed trying to make database connection '
                       'to {}'.format(self.mysql))
+
+
+        cursor.close()
+        cnx.close()
 
 def write_csv(self):
     '''
