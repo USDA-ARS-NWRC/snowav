@@ -94,7 +94,6 @@ def run():
             print('Specified mysql database {} does not exist, it is being '
                   'created...'.format(args.create))
             query = ("CREATE DATABASE {};".format(args.create))
-            print('snow 105, ', db_engine)
             cursor.execute(query)
             cursor.close()
             cnx.close()
@@ -117,6 +116,7 @@ def run():
     #########################################################################
     #                       Database query                                  #
     #########################################################################
+    # snowav -b 'Boise River Basin' -wy 2018 -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/snowav
 
     # Database query for existing fields
     if args.bid and args.wy:

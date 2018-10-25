@@ -375,7 +375,8 @@ def connect(self):
             try:
                 create_tables(self, url = db_engine)
             except:
-                print('Did not create tables...')
+                print('')
+                # self._logger.info('Did not create tables')
 
             try:
                 engine = create_engine(db_engine)

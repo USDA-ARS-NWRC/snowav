@@ -76,8 +76,8 @@ def read_config(self, external_logger=None, awsm=None):
     #           outputs                                #
     ####################################################
     self.dplcs = ucfg.cfg['outputs']['decimals']
-    self.start_date = ucfg.cfg['outputs']['start_date']
-    self.end_date = ucfg.cfg['outputs']['end_date']
+    self.start_date = ucfg.cfg['outputs']['start_date'].to_pydatetime()
+    self.end_date = ucfg.cfg['outputs']['end_date'].to_pydatetime()
 
     if (self.start_date is not None and self.end_date is not None):
         if self.start_date >= self.end_date:
@@ -90,8 +90,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.flt_end_date = ucfg.cfg['outputs']['flt_end_date']
 
     if not isinstance(self.flt_start_date, datetime.date):
-        self.flt_start_date = pd.to_datetime(self.flt_start_date)
-        self.flt_end_date = pd.to_datetime(self.flt_end_date)
+        self.flt_start_date = self.flt_start_date.to_pydatetime()
+        self.flt_end_date = self.flt_end_date.to_pydatetime()
 
     if self.flt_start_date is not None:
         self.flt_flag = True
