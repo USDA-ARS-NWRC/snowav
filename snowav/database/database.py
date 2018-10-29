@@ -112,9 +112,24 @@ def delete(self, start_date, end_date, bid, run_name):
 
         df = pd.read_sql(qry.statement, qry.session.connection())
 
+        # Show what we are deleting
+        for r in df.run_id.unique():
+            qry2 = self.session.query(Results).filter(Results.run_id == int(r))
+            df2 = pd.read_sql(qry2.statement, qry2.session.connection())
+            print('Deleting all records in run_id={}, from {} '
+                  'to {}'.format(r,df2['date_time'].min(),df2['date_time'].max()))
+
+            if ((start_date > df2['date_time'].min())
+                or (start_date < df2['date_time'].max())):
+                print('The date range of records being deleted for run_id={} is '
+                '{} to {}, more records are being deleted than will be '
+                'replaced!'.format(r,df2['date_time'].min(),df2['date_time'].max()))
+
+
         for r in df.run_id.unique():
             self.session.query(Results).\
                                 filter(Results.run_id == int(r)).delete()
+
             self.session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).delete()
             self.session.query(RunMetadata).\
@@ -262,9 +277,6 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
         run_name: identifier for run, specified in config file
         value: value to query (i.e. 'swi_z')
 
-    Returns:
-        flag: boolean (True if results exist)
-
     '''
 
     qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
@@ -274,11 +286,9 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
                                           (Results.variable == value))).first()
 
     if qry is not None:
-        flag = True
+        self.pflag = True
     else:
-        flag = False
-
-    return flag
+        self.pflag = False
 
 def connect(self):
     '''
@@ -388,7 +398,6 @@ def connect(self):
             except:
                 print('Failed trying to make database connection '
                       'to {}'.format(self.mysql))
-
 
         cursor.close()
         cnx.close()
