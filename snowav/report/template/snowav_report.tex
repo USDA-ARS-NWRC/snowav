@@ -16,7 +16,7 @@
 
 \usepackage[export]{adjustbox}
 
-\setlength{\droptitle}{-8em}
+\setlength{\droptitle}{-2em}
 \setlength\headheight{26pt}
 \usepackage{fancyhdr}
 \pagestyle{fancy}
@@ -49,18 +49,20 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 
 \begin{document}
 
-\vspace{1cm}
+
 \maketitle
 {
 	\begin{tikzpicture}[remember picture,overlay]
-	\node [shift={(-19cm,-2.65cm)}] at (current page.north east) {\includegraphics[height=2.75cm]{\VAR{ASOLOGO}}};
-  \node [shift={(-2.2cm,-2.55cm)}] at (current page.north east) {\includegraphics[height=1.75cm]{\VAR{ARSLOGO}}};
-  % \node [shift={(-19cm,-6.0cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
+	\node [shift={(-18cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
+	\node [shift={(-10.75cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=2.85cm]{\VAR{ASOLOGO}}};
+  \node [shift={(-2.2cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=1.55cm]{\VAR{ARSLOGO}}};
+
 	\end{tikzpicture}
 }
 
 
 \section*{Summary}
+
 \VAR{SUMMARY}
 
 \thispagestyle{specialfooter}

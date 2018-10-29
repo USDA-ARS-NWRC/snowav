@@ -207,7 +207,7 @@ def report(obj):
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
     variables['ASOLOGO'] = obj.figs_tpl_path + 'ASO.jpg'
     variables['USDALOGO'] = obj.figs_tpl_path + 'USDA.png'
-    variables['JPLLOGO'] = obj.figs_tpl_path + 'JPL.png'
+    variables['JPLLOGO'] = obj.figs_tpl_path + 'JPL.jpg'
     variables['CDWRLOGO'] = obj.figs_tpl_path + 'CDWR.png'
     variables['USBRLOGO'] = obj.figs_tpl_path + 'USBR.jpg'
     variables['NRCSLOGO'] = obj.figs_tpl_path + 'NRCS.jpg'
