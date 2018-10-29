@@ -35,7 +35,7 @@ def read_config(self, external_logger=None, awsm=None):
             directory being created in awsm
 
     '''
-    print('Reading SNOWAV config file and loading iSnobal outputs...')
+    print('Reading SNOWAV config file...')
     ucfg = get_user_config(self.config_file, modules = 'snowav')
 
     # find path to snowav code directory
@@ -195,15 +195,17 @@ def read_config(self, external_logger=None, awsm=None):
         self.env_path = os.path.join(self.snowav_path,
                                      'snowav/report/template/section_text/')
     if self.templ_path is None:
-        self.templ_path = os.path.join(self.snowav_path,'snowav/report/template/')
+        self.templ_path = os.path.join(self.snowav_path,
+                                       'snowav/report/template/')
     if self.summary_file is None:
         self.summary_file = os.path.join(self.snowav_path,
-                                         'snowav/report/template/section_text/report_summary.txt')
+                      'snowav/report/template/section_text/report_summary.txt')
     if self.tex_file is None:
         self.tex_file = os.path.join(self.snowav_path,
                                      'snowav/report/template/snowav_report.tex')
     if self.figs_tpl_path is None:
-        self.figs_tpl_path = os.path.join(self.snowav_path,'snowav/report/figs/')
+        self.figs_tpl_path = os.path.join(self.snowav_path,
+                                          'snowav/report/figs/')
 
     ####################################################
     #           hx forecast
@@ -275,7 +277,7 @@ def read_config(self, external_logger=None, awsm=None):
             print('Must fill config file options [results] -> plot_labels, '
                  'plot_wy, and plot_variables!')
 
-        print('Config file option [results] -> plot_runs={}, '
+        print('Config file option [results]->plot_runs={}, '
               'creating figures from existing database '
               'entries for {}, some figures from standard report '
               'will be omitted...'.format(self.plot_flag, self.plot_runs))
@@ -445,8 +447,10 @@ def read_config(self, external_logger=None, awsm=None):
         if (self.start_date is None) and (self.end_date is None):
             self.start_date = self.outputs['dates'][0]
             self.end_date = self.outputs['dates'][-1]
-            print('start_date and/or end_date not specified, using:'
-                  + ' %s and %s'%(self.start_date,self.end_date))
+            self._logger.info('start_date and/or end_date not specified, '
+                              'using: {} and {}'.format(self.start_date,
+                                                        self.end_date))
+
 
         # check that dates are in range
         if self.start_date > self.end_date:
@@ -455,8 +459,8 @@ def read_config(self, external_logger=None, awsm=None):
 
         if ((self.start_date < self.outputs['dates'][0])
             or (self.end_date > self.outputs['dates'][-1])):
-            print('[Outputs] -> start_date or end_date outside of range in [runs]'
-            ' -> run_dirs...')
+            print('[Outputs]->start_date or end_date outside of range in [runs]'
+            '->run_dirs...')
             return
 
         # Copy the config file where figs will be saved
