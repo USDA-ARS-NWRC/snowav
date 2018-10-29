@@ -115,9 +115,21 @@ def delete(self, start_date, end_date, bid, run_name):
         # Show what we are deleting
         for r in df.run_id.unique():
             qry2 = self.session.query(Results).filter(Results.run_id == int(r))
+            qry3 = self.session.query(RunMetadata).filter(RunMetadata.run_id == int(r))
+
             df2 = pd.read_sql(qry2.statement, qry2.session.connection())
-            print('Deleting all records in run_id={}, from {} '
-                  'to {}'.format(r,df2['date_time'].min(),df2['date_time'].max()))
+            df3 = pd.read_sql(qry3.statement, qry3.session.connection())
+
+            self._logger.info('Deleting all records from run_id={}, from {} '
+                              'to {}, from config file {}'.format(r,
+                                                      df2['date_time'].min(),
+                                                      df2['date_time'].max()),
+                                                      df3['config_file'])
+
+            print('Deleting all records from run_id={}, from {} '
+                  'to {}'.format(r,
+                                 df2['date_time'].min(),
+                                 df2['date_time'].max()))
 
             if ((start_date > df2['date_time'].min())
                 or (end_date < df2['date_time'].max())):
@@ -321,7 +333,7 @@ def connect(self):
             engine = create_engine(self.database)
             DBSession = sessionmaker(bind=engine)
             self.session = DBSession()
-            print('Using {} for results...'.format(self.database))
+            self._logger.info('Using {} for results...'.format(self.database))
 
     # sqlite specified
     if self.sqlite is not None:
@@ -342,7 +354,7 @@ def connect(self):
 
         DBSession = sessionmaker(bind=engine)
         self.session = DBSession()
-        print('Using {} for results...'.format(self.sqlite))
+        self._logger.info('Using {} for results...'.format(self.sqlite))
 
     if self.mysql is not None:
 
