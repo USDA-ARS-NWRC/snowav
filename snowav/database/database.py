@@ -120,7 +120,7 @@ def delete(self, start_date, end_date, bid, run_name):
                   'to {}'.format(r,df2['date_time'].min(),df2['date_time'].max()))
 
             if ((start_date > df2['date_time'].min())
-                or (start_date < df2['date_time'].max())):
+                or (end_date < df2['date_time'].max())):
                 print('The date range of records being deleted for run_id={} is '
                 '{} to {}, more records are being deleted than will be '
                 'replaced!'.format(r,df2['date_time'].min(),df2['date_time'].max()))
