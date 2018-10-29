@@ -111,5 +111,5 @@ def basin_detail(self):
         ax.text(0.2,0.84,'Cherry',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
         ax.text(0.14,0.35,'Eleanor',horizontalalignment='center',transform=ax.transAxes,fontsize = 10)
 
-    self._logger.info('saving figure to %shypsometry%s.png'%(self.figs_path,self.name_append))
-    plt.savefig('%shypsometry%s.png'%(self.figs_path,self.name_append))
+    self._logger.info('saving figure to %shypsometry_%s.png'%(self.figs_path,self.name_append))
+    plt.savefig('%shypsometry_%s.png'%(self.figs_path,self.name_append))

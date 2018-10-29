@@ -239,5 +239,5 @@ def density(snow):
     cbar.set_label('elevation [ft]')
     plt.tight_layout()
 
-    snow._logger.info('saving figure to %sdensity_swe%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sdensity_swe%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))

@@ -155,5 +155,5 @@ def state_by_elev(snow):
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle('SWE, %s'%snow.end_date.date().strftime("%Y-%-m-%-d"))
 
-    snow._logger.info('saving figure to %sswe_elev%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswe_elev%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sswe_elev_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sswe_elev_%s.png'%(snow.figs_path,snow.name_append))

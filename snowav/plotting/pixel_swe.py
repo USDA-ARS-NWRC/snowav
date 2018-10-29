@@ -98,5 +98,5 @@ def pixel_swe(snow):
     ax1.set_title('Mean SWE, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
 
     plt.tight_layout()
-    snow._logger.info('saving figure to %smean_swe_depth%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%smean_swe_depth%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %smean_swe_depth_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%smean_swe_depth_%s.png'%(snow.figs_path,snow.name_append))

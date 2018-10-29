@@ -33,12 +33,18 @@ def precip_depth(snow):
     precip = np.multiply(snow.precip_total, snow.depth_factor)
     rain = np.multiply(snow.rain_total, snow.depth_factor)
 
-    if np.percentile(accum,[0,99.9])[1] > np.percentile(precip,[0,99.9])[1]:
-        qMin,qMax = np.percentile(accum,[0,99.9])
+    lims = [0.1,99.9]
+    if np.percentile(accum,lims)[1] > np.percentile(precip,lims)[1]:
+        z,qMax = np.percentile(accum,lims)
     else:
-        qMin,qMax = np.percentile(precip,[0,99.9])
+        z,qMax = np.percentile(precip,lims)
 
-    clims = (0,qMax)
+    if np.percentile(accum,lims)[0] < np.percentile(precip,lims)[0]:
+        qMin,z = np.percentile(accum,lims)
+    else:
+        qMin,z = np.percentile(precip,lims)
+
+    clims = (qMin,qMax)
 
     # Get accum by elevation
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
@@ -59,9 +65,8 @@ def precip_depth(snow):
                                     snow.run_name, bid, 'precip_z')
 
         for elev in snow.edges:
-            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
-            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
-            precip_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+            v = r[r['elevation'] == str(elev)]
+            precip_byelev.loc[elev,bid] = np.nansum(v['value'].values)
 
     # Get rain by elevation
     rain_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
@@ -71,9 +76,8 @@ def precip_depth(snow):
                                     snow.run_name, bid, 'rain_z')
 
         for elev in snow.edges:
-            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
-            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
-            rain_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+            v = r[r['elevation'] == str(elev)]
+            rain_byelev.loc[elev,bid] = np.nansum(v['value'].values)
 
     # Get bar plot ylims
     if accum_byelev.values.max() > precip_byelev.values.max():
@@ -88,7 +92,7 @@ def precip_depth(snow):
     sns.set_context("notebook")
 
     plt.close(0)
-    fig, ax = plt.subplots(num=0, figsize = (10,10),
+    fig, ax = plt.subplots(num=0, figsize = (12,12),
                                 dpi=snow.dpi, nrows = 3, ncols = 2)
 
     ################################################
@@ -152,6 +156,7 @@ def precip_depth(snow):
                 color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)
+        ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
     xts = ax[0,1].get_xticks()
     edges_lbl = []
@@ -243,6 +248,7 @@ def precip_depth(snow):
                 color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)
+        ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
     xts = ax[1,1].get_xticks()
     edges_lbl = []
@@ -341,6 +347,7 @@ def precip_depth(snow):
                 color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)
+        ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
     xts = ax[2,1].get_xticks()
     edges_lbl = []
@@ -385,5 +392,5 @@ def precip_depth(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.92)
 
-    snow._logger.info('saving figure to %sprecip_depth%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sprecip_depth%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sprecip_depth_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sprecip_depth_%s.png'%(snow.figs_path,snow.name_append))

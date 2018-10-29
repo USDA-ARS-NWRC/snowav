@@ -68,7 +68,7 @@ def stn_validate(snow):
             data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
         except:
             data = pd.read_sql(var_qry, cnx, index_col='date_time')
-            
+
         data.index.names=['date_time']
         dind = pd.date_range(st_time,end_time,freq='D')
         swe_meas[stn] = data.reindex(dind)
@@ -166,5 +166,5 @@ def stn_validate(snow):
     snow.swe_meas = swe_meas
     snow.swe_mod = swe_mod
 
-    snow._logger.info('saving figure to %svalidation%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%svalidation%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %svalidation_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%svalidation_%s.png'%(snow.figs_path,snow.name_append))

@@ -104,9 +104,9 @@ def basin_total(snow):
     # plt.tight_layout()
     del snow.barcolors[0]
 
-    snow._logger.info('saving figure to %sbasin_total%s.png'%(snow.figs_path,
+    snow._logger.info('saving figure to %sbasin_total_%s.png'%(snow.figs_path,
                                                   snow.name_append))
-    plt.savefig('%sbasin_total%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sbasin_total_%s.png'%(snow.figs_path,snow.name_append))
 
     ########################################
     #         Second figure
@@ -176,5 +176,5 @@ def basin_total(snow):
         ax.set_ylim((-0.1,ax1.get_ylim()[1]))
         plt.tight_layout()
 
-        snow._logger.info('saving figure to %sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
-        plt.savefig('%sbasin_total_multiyr%s.png'%(snow.figs_path,snow.name_append))
+        snow._logger.info('saving figure to %sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))
+        plt.savefig('%sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))

@@ -108,5 +108,5 @@ def current_image(snow):
     if snow.basin == 'RCEW':
         ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )
 
-    snow._logger.info('saving figure to %sresults%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sresults%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to %sresults_%s.png'%(snow.figs_path,snow.name_append))
+    plt.savefig('%sresults_%s.png'%(snow.figs_path,snow.name_append))
