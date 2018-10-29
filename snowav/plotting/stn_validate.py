@@ -87,7 +87,11 @@ def stn_validate(snow):
     sns.set_context('notebook')
 
     plt.close(9)
-    fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)
+    if len(stns) <= 6:
+        fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)
+    if len(stns) <= 12:
+        fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 4,ncols = 3)
+        
     axs = axs.flatten()
 
     # First need to combine all nc files...
