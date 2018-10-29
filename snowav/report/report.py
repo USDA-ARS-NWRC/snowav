@@ -43,17 +43,18 @@ def report(obj):
     start_date = obj.start_date
     end_date = obj.end_date
 
-    r = database.database.query(obj, obj.start_date, obj.end_date, obj.run_name,
-                                bid = obj.plotorder,
-                                rid = obj.runid)
-
-    # bids = [Basins.basins[n]['basin_id'] for n in obj.plotorder]
-    # r[r['basin_id'].isin(bids)]
+    r = database.database.query(obj, wy_start, obj.end_date, obj.run_name,
+                                bid = obj.plotorder)
 
     # Initialize variables to pass to latex file
     variables = {}
     variables['TOTAL_SWI'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']>=wy_start)
+                                & (r['date_time']<=end_date)
+                                & (r['elevation']=='total')
+                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = 1)
+    variables['PER_SWI'] = r[ (r['basin_id']==bid)
+                                & (r['date_time']>=start_date)
                                 & (r['date_time']<=end_date)
                                 & (r['elevation']=='total')
                                 & (r['variable']=='swi_vol')]['value'].sum().round(decimals = 1)
@@ -109,6 +110,7 @@ def report(obj):
 
     for n,sub in zip(numsubs,obj.plotorder[1:]):
         SWIIND = 'SUB' + str(n) + '_SWI'
+        PERSWIIND = 'SUB' + str(n) + '_PERSWI'
         SWEIND = 'SUB' + str(n) + '_SWE'
         AVSWEIND = 'SUB' + str(n) + '_SAV'
         SWEDEL = 'SUB' + str(n) + '_SDEL'
@@ -119,6 +121,11 @@ def report(obj):
 
         swival = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
                      & (r['date_time']>=wy_start)
+                     & (r['date_time']<=end_date)
+                     & (r['elevation']=='total')
+                     & (r['variable']=='swi_vol')]['value'].sum()
+        perswival = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
+                     & (r['date_time']>=start_date)
                      & (r['date_time']<=end_date)
                      & (r['elevation']=='total')
                      & (r['variable']=='swi_vol')]['value'].sum()
@@ -158,6 +165,7 @@ def report(obj):
         else:
             ratval = '0'
         variables[SWIIND] = swival
+        variables[PERSWIIND] = perswival
         variables[SWEIND] = sweval
         variables[AVSWEIND] = avsweval
         variables[SWEDEL] = swedelval
@@ -180,22 +188,22 @@ def report(obj):
     variables['SWE_IN'] = variables['TOTAL_PM']
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
-    variables['SWI_FIG'] = 'swi%s.png'%(obj.name_append)
-    variables['RESULTS_FIG'] = 'results%s.png'%(obj.name_append)
-    variables['CHANGES_FIG'] = 'swe_change%s.png'%(obj.name_append)
-    variables['DFLT_FIG'] = 'dflt_swe_change%s.png'%(obj.name_append)
-    variables['CHANGES_DEP_FIG'] = 'swe_change_depth%s.png'%(obj.name_append)
-    variables['ELEV_FIG'] = 'swe_elev%s.png'%(obj.name_append)
-    variables['TOTALS_FIG'] = 'basin_total%s.png'%(obj.name_append)
-    variables['MULTITOT_FIG'] = 'basin_total_multiyr%s.png'%(obj.name_append)
-    variables['HYP_FIG'] = 'hypsometry%s.png'%(obj.name_append)
-    variables['MEAN_FIG'] = 'mean_swe_depth%s.png'%(obj.name_append)
-    variables['DETAIL_FIG'] = 'mean_detail%s.png'%(obj.name_append)
-    variables['DENSITY_FIG'] = 'density%s.png'%(obj.name_append)
-    variables['DENSITY_SUB_FIG'] = 'density_sub%s.png'%(obj.name_append)
-    variables['DENSITY_SWE_FIG'] = 'density_swe%s.png'%(obj.name_append)
-    variables['PDEP_FIG'] = 'precip_depth%s.png'%(obj.name_append)
-    variables['VALID_FIG'] = 'validation%s.png'%(obj.name_append)
+    variables['SWI_FIG'] = 'swi_%s.png'%(obj.name_append)
+    variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
+    variables['CHANGES_FIG'] = 'swe_change_%s.png'%(obj.name_append)
+    variables['DFLT_FIG'] = 'dflt_swe_change_%s.png'%(obj.name_append)
+    variables['CHANGES_DEP_FIG'] = 'swe_change_depth_%s.png'%(obj.name_append)
+    variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
+    variables['TOTALS_FIG'] = 'basin_total_%s.png'%(obj.name_append)
+    variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
+    variables['HYP_FIG'] = 'hypsometry_%s.png'%(obj.name_append)
+    variables['MEAN_FIG'] = 'mean_swe_depth_%s.png'%(obj.name_append)
+    variables['DETAIL_FIG'] = 'mean_detail_%s.png'%(obj.name_append)
+    variables['DENSITY_FIG'] = 'density_%s.png'%(obj.name_append)
+    variables['DENSITY_SUB_FIG'] = 'density_sub_%s.png'%(obj.name_append)
+    variables['DENSITY_SWE_FIG'] = 'density_swe_%s.png'%(obj.name_append)
+    variables['PDEP_FIG'] = 'precip_depth_%s.png'%(obj.name_append)
+    variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
     variables['ASOLOGO'] = obj.figs_tpl_path + 'ASO.jpg'
     variables['USDALOGO'] = obj.figs_tpl_path + 'USDA.png'

@@ -44,23 +44,29 @@ class SNOWAV(object):
         # Otherwise, start the processing steps
         else:
             # Do any values in this date already already exist?
-            flag = database.database.check_fields(self,
-                                                  self.start_date,
-                                                  self.end_date,
-                                                  self.plotorder[0],
-                                                  self.run_name,
-                                                  'swe_z')
+            database.database.check_fields(self,
+                                           self.start_date,
+                                           self.end_date,
+                                           self.plotorder[0],
+                                           self.run_name,
+                                           'swe_z')
 
             # Process results and put on the database
-            if (flag is True) and (self.db_overwrite_flag is False):
+            if self.write_db is False:
                 print('There are existing fields on the database between '
                       '{} and {} with run_name={}, and config file option '
-                      '[results] -> overwrite=False, '
-                      'skipping processing...'.format(self.start_date.date(),
+                      '[results] -> overwrite=False\n'
+                      'Using iSnobal outputs specified in run_dirs for '
+                      'spatial figures, loading processed results '
+                      'from the database'.format(self.start_date.date(),
                                                       self.end_date.date(),
                                                       self.run_name))
 
-            elif (flag is True) and (self.db_overwrite_flag is True):
+                # We still send to process() in order to get spatial sums for SWI,
+                # precip, etc., but do not insert onto database
+                snowav.methods.process.process(self)
+
+            elif self.write_db is True:
                 print('There are existing fields on the database between '
                       '{} and {} with run_name={}, and config file option '
                       '[results] -> overwrite=True, '
@@ -96,8 +102,8 @@ class SNOWAV(object):
             snowav.plotting.pixel_swe.pixel_swe(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
-            # The SWI, precip, and rain plot requires process() 
-            if self.plot_flag is not True:
+            # The SWI, precip, and rain plot requires process()
+            if ((self.plot_flag is not True) and ('PRECIP_DEPTH' not in self.exclude_figs)):
                 snowav.plotting.precip_depth.precip_depth(self)
 
             # Make flight difference figure in options in config file

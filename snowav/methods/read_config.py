@@ -76,10 +76,12 @@ def read_config(self, external_logger=None, awsm=None):
     #           outputs                                #
     ####################################################
     self.dplcs = ucfg.cfg['outputs']['decimals']
-    self.start_date = ucfg.cfg['outputs']['start_date'].to_pydatetime()
-    self.end_date = ucfg.cfg['outputs']['end_date'].to_pydatetime()
+    self.start_date = ucfg.cfg['outputs']['start_date']
+    self.end_date = ucfg.cfg['outputs']['end_date']
 
     if (self.start_date is not None and self.end_date is not None):
+        self.start_date = self.start_date.to_pydatetime()
+        self.end_date = self.end_date.to_pydatetime()
         if self.start_date >= self.end_date:
             print('start_date > end_date, needs to be fixed in config file, '
                   'exiting...')
@@ -91,7 +93,7 @@ def read_config(self, external_logger=None, awsm=None):
 
     if self.flt_start_date is not None:
         self.flt_flag = True
-        
+
         if not isinstance(self.flt_start_date, datetime.date):
             self.flt_start_date = self.flt_start_date.to_pydatetime()
             self.flt_end_date = self.flt_end_date.to_pydatetime()
@@ -253,7 +255,7 @@ def read_config(self, external_logger=None, awsm=None):
                  ('swe_unavail','snow water equivalent unavailable for melt')])
 
     self.run_name = ucfg.cfg['results']['run_name']
-    self.db_overwrite_flag = ucfg.cfg['results']['overwrite']
+    self.write_db = ucfg.cfg['results']['write_db']
     self.plot_runs = ucfg.cfg['results']['plot_runs']
 
     # Establish database connection, create if necessary
@@ -461,21 +463,23 @@ def read_config(self, external_logger=None, awsm=None):
         # use name_append if only plotting figures from database and don't
         # have start_date, end_date
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        ext_shr = self.name_append
-        ext_ehr = ''
-        self.figs_path = os.path.join(self.save_path, '%s_%s/'%(ext_shr,ext_ehr))
+        ext_shr = self.name_append + '_' + self.end_date.date().strftime("%Y%m%d")
+        self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
     # Otherwise, all we need to do is create the figs_path
     else:
-        self.start_date = datetime.datetime(self.wy-1,10,1)
-        self.end_date = datetime.datetime(self.wy,9,30)
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        ext_shr = self.start_date.date().strftime("%Y%m%d")
-        ext_ehr = self.end_date.date().strftime("%Y%m%d")
-        self.figs_path = os.path.join(self.save_path, '%s_%s/'%(ext_shr,ext_ehr))
+        ext_shr = self.name_append + '_' + self.end_date.date().strftime("%Y%m%d")
+        self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)
+
+    # Append date to report name
+    parts = self.report_name.split('.')
+    self.report_name = ( parts[0]
+                       + self.end_date.date().strftime("%Y%m%d")
+                       + '.' + parts[1] )
 
     ####################################################
     #             log file                             #
@@ -488,7 +492,7 @@ def read_config(self, external_logger=None, awsm=None):
     # Only need to store this name if we decide to
     # write more to the copied config file...
     self.config_copy = (self.figs_path + extf[0] + self.name_append
-                        + '_%s_%s'%(ext_shr,ext_ehr) + extf[1])
+                        + '_%s'%(ext_shr) + extf[1])
 
     if not os.path.isfile(self.config_copy):
         generate_config(ucfg,self.config_copy)

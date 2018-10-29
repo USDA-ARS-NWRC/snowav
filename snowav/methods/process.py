@@ -118,6 +118,7 @@ def process(self):
             for name in self.masks:
 
                 mask = copy.deepcopy(self.masks[name]['mask'])
+                mask[mask == 0] = np.nan
                 elevbin = np.multiply(self.ixd,mask)
 
                 # If the key is something we've already calculated (i.e., not
@@ -167,6 +168,7 @@ def process(self):
                             daily_outputs['swe_avail'].loc[b,name] = 0
                             daily_outputs['swe_z'].loc[b,name] = 0
                             daily_outputs['swe_vol'].loc[b,name] = 0
+
 
                     elif k == 'swi_z':
                         # Not masked out by pixels with snow
@@ -220,20 +222,25 @@ def process(self):
                 # Add basin total mean/volume field once all elevations are done
                 ixs = swe_mask_sub > 0
 
-                if k in ['swe_z','evap_z','coldcont']:
+                if k in ['evap_z','coldcont']:
                     # Mask by snow-free
                     out = np.multiply(self.outputs[k][iters],mask)
                     total = np.multiply(np.nanmean(out), self.depth_factor)
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
-                    if k == 'swe_z':
-                        # calc swe_z derived values
-                        s = np.nansum(daily_outputs['swe_vol'][name].values)
-                        s1 = np.nansum(daily_outputs['swe_avail'][name].values)
-                        s2 = np.nansum(daily_outputs['swe_unavail'][name].values)
-                        daily_outputs['swe_vol'].loc['total',name] = copy.deepcopy(s)
-                        daily_outputs['swe_avail'].loc['total',name] = copy.deepcopy(s1)
-                        daily_outputs['swe_unavail'].loc['total',name] = copy.deepcopy(s2)
+                if k == 'swe_z':
+                    # calc swe_z derived values
+                    out = np.multiply(self.outputs[k][iters],mask)
+                    total = np.multiply(np.nanmean(out), self.depth_factor)
+
+                    s = np.nansum(daily_outputs['swe_vol'][name].values)
+                    s1 = np.nansum(daily_outputs['swe_avail'][name].values)
+                    s2 = np.nansum(daily_outputs['swe_unavail'][name].values)
+                    daily_outputs['swe_vol'].loc['total',name] = copy.deepcopy(s)
+                    daily_outputs['swe_avail'].loc['total',name] = copy.deepcopy(s1)
+                    daily_outputs['swe_unavail'].loc['total',name] = copy.deepcopy(s2)
+
+                    daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'depth':
                     # Mask by snow-free
@@ -277,11 +284,23 @@ def process(self):
             # Send daily results to database
             df = daily_outputs[k].copy()
             df = df.round(decimals = 3)
-            database.package_results.package(self, df, k,
-                                             self.outputs['dates'][iters])
+
+            # If there are already results on database, only insert if overwriting
+            if self.pflag is False:
+                database.package_results.package(self, df, k,
+                                                 self.outputs['dates'][iters])
+
+            if (self.pflag is True) and (self.write_db is True):
+                database.package_results.package(self, df, k,
+                                                 self.outputs['dates'][iters])
 
         # Add water year totals for swi and evap
-        if out_date != datetime.datetime(self.wy-1,10,1,23,0,0):
+        if (out_date != datetime.datetime(self.wy-1,10,1,23,0,0) and
+            (self.pflag is False) ):
+            database.package_results.post_process(self, out_date)
+
+        if (out_date != datetime.datetime(self.wy-1,10,1,23,0,0) and
+            (self.pflag is True) and (self.write_db is True) ):
             database.package_results.post_process(self, out_date)
 
         # It's nice to see where we are...
@@ -294,9 +313,3 @@ def process(self):
 
         # Step this along so that we can see how many hours between outputs
         t = int(hr)
-
-    # Append date to report name
-    parts = self.report_name.split('.')
-    self.report_name = ( parts[0]
-                       + self.outputs['dates'][-1].date().strftime("%Y%m%d")
-                       + '.' + parts[1] )
