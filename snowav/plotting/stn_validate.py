@@ -87,11 +87,16 @@ def stn_validate(snow):
     sns.set_context('notebook')
 
     plt.close(9)
+
     if len(stns) <= 6:
-        fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 3,ncols = 2)
-    if len(stns) <= 12:
-        fig, axs = plt.subplots(num = 9,figsize = (10,10),nrows = 4,ncols = 3)
-        
+        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=2)
+
+    if (len(stns) > 6) and (len(stns) <= 9):
+        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=3)
+
+    if (len(stns) > 9) and (len(stns) <= 12):
+        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=4, ncols=3)
+
     axs = axs.flatten()
 
     # First need to combine all nc files...
@@ -139,14 +144,35 @@ def stn_validate(snow):
             axs[iters].set_title(lbls[iters])
             axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
 
-        if iters == 1 or iters == 3 or iters == 5:
-            axs[iters].yaxis.tick_right()
+    if len(stns) <= 6:
+        for n in (1,3,5):
+            axs[n].yaxis.tick_right()
 
-        if iters == 4 or iters == 5:
-            for tick in axs[iters].get_xticklabels():
+        for n in (4,5):
+            for tick in axs[n].get_xticklabels():
                 tick.set_rotation(30)
-        else:
-            axs[iters].set_xticklabels('')
+        for n in (0,1,2,3):
+            axs[n].set_xticklabels('')
+
+    if (len(stns) > 6) and (len(stns) <=9):
+        for n in (2,5,8):
+            axs[n].yaxis.tick_right()
+
+        for n in (6,7,8):
+            for tick in axs[n].get_xticklabels():
+                tick.set_rotation(30)
+        for n in (0,1,2,3,4,5):
+            axs[n].set_xticklabels('')
+
+    if (len(stns) > 9) and (len(stns) <=12):
+        for n in (2,5,8,11):
+            axs[n].yaxis.tick_right()
+
+        for n in (9,10,11):
+            for tick in axs[n].get_xticklabels():
+                tick.set_rotation(30)
+        for n in (0,1,2,3,4,5,6,7,8):
+            axs[n].set_xticklabels('')
 
     # Plot
     maxm = np.nanmax(swe_meas)
@@ -164,7 +190,7 @@ def stn_validate(snow):
     axs[0].set_ylabel('SWE [mm]')
 
     plt.suptitle('Validation at Measured Sites')
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.subplots_adjust(top=0.92)
 
     snow.swe_meas = swe_meas
