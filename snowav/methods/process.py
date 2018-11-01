@@ -49,6 +49,10 @@ def process(self):
 
     for iters, out_date in enumerate(self.outputs['dates']):
 
+        # end processing at self.ixe
+        if iters > self.ixe:
+            break
+
         # Initialize output dataframes for every day
         daily_outputs = {'swe_vol':dz.copy(),
                          'swe_avail':dz.copy(),
