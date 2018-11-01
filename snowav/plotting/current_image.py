@@ -15,10 +15,9 @@ def current_image(snow):
 
     '''
 
-    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
-    state = copy.deepcopy(snow.outputs['swe_z'][ixe])
+    state = copy.deepcopy(snow.outputs['swe_z'][self.ixe])
     state = np.multiply(state,snow.depth_factor)
-    cold = copy.deepcopy(snow.outputs['coldcont'][ixe])
+    cold = copy.deepcopy(snow.outputs['coldcont'][self.ixe])
     cold = np.multiply(cold,0.000001)
 
     qMin,qMax = np.nanpercentile(state,[0,99.8])

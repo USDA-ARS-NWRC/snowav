@@ -20,10 +20,7 @@ def density(snow):
     '''
 
     # Calculate accumulated swi during the specified period
-    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
-    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
-
-    density = snow.outputs['density'][ixe]
+    density = snow.outputs['density'][self.ixe]
 
     # Make df from database
     density_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
@@ -224,9 +221,9 @@ def density(snow):
     # 2nd B
     ###############################
 
-    dvalue = copy.deepcopy(density) - snow.outputs['density'][ixs]
+    dvalue = copy.deepcopy(density) - snow.outputs['density'][self.ixs]
 
-    zf = snow.outputs['swe_z'][ixe] == 0
+    zf = snow.outputs['swe_z'][self.ixe] == 0
     dvalue[zf] = np.nan
 
     qMin,qMax = np.percentile(dvalue,[0.1,99.9])
@@ -332,9 +329,9 @@ def density(snow):
     ###############################
 
     nsub = 100
-    depth  = copy.deepcopy(snow.outputs['depth'][ixe])
+    depth  = copy.deepcopy(snow.outputs['depth'][self.ixe])
     density = cvalue
-    swe = copy.deepcopy(snow.outputs['swe_z'][ixe])
+    swe = copy.deepcopy(snow.outputs['swe_z'][self.ixe])
 
     depths = np.reshape(depth,(1,len(depth[:,0])*len(depth[0,:])))
     densitys = np.reshape(density,(1,len(depth[:,0])*len(density[0,:])))

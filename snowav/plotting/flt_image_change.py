@@ -19,8 +19,6 @@ def flt_image_change(snow):
 
     '''
     # Get change in swe during the specified period
-    # ixs = np.where(snow.outputs['dates'] == snow.flt_start_date)[0][0]
-    # ixe = np.where(snow.outputs['dates'] == snow.flt_end_date)[0][0]
 
     # find closest
     ixs = np.abs([date - snow.flt_start_date for date in snow.outputs['dates']])

@@ -82,6 +82,7 @@ def read_config(self, external_logger=None, awsm=None):
     if (self.start_date is not None and self.end_date is not None):
         self.start_date = self.start_date.to_pydatetime()
         self.end_date = self.end_date.to_pydatetime()
+
         if self.start_date >= self.end_date:
             print('WARNING! start_date > end_date, needs to be fixed in '
                   'config file, exiting...')
@@ -100,6 +101,9 @@ def read_config(self, external_logger=None, awsm=None):
 
     else:
         self.flt_flag = False
+
+    # Once we load in self.outputs, will make the indices for these dates the
+    # closest to a specified hour
 
     self.summary = ucfg.cfg['outputs']['summary']
     if type(self.summary) != list:
@@ -454,6 +458,12 @@ def read_config(self, external_logger=None, awsm=None):
                               'using: {} and {}'.format(self.start_date,
                                                         self.end_date))
 
+        # Otherwise, get closest dates and make indices
+        else:
+            s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
+            e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
+            self.ixs = np.where(self.outputs['dates'] == s)[0][0]
+            self.ixe = np.where(self.outputs['dates'] == e)[0][0]
 
         # check that dates are in range
         if self.start_date > self.end_date:

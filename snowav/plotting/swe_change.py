@@ -19,10 +19,7 @@ def swe_change(snow):
 
     '''
 
-    ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
-    ixe = np.where(snow.outputs['dates'] == snow.end_date)[0][0]
-
-    delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
+    delta_swe = snow.outputs['swe_z'][self.ixe] - snow.outputs['swe_z'][self.ixs]
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
     # Make df from database
