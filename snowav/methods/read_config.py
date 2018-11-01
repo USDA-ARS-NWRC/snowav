@@ -470,10 +470,10 @@ def read_config(self, external_logger=None, awsm=None):
             print('[Outputs] -> start_date is greater than end_date...')
             return
 
-        if ((self.start_date < self.outputs['dates'][0])
-            or (self.end_date > self.outputs['dates'][-1])):
-            print('WARNING! [Outputs]->start_date or end_date outside of range '
-                  'in [runs] ->run_dirs...')
+        if ((self.start_date.date() < self.outputs['dates'][0].date())
+            or (self.end_date.date() > self.outputs['dates'][-1].date())):
+            print('WARNING! [Outputs] -> start_date or end_date outside of '
+                  'range in [runs] -> run_dirs')
             return
 
         # Copy the config file where figs will be saved
