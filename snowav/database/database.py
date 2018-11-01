@@ -60,25 +60,28 @@ def query(self, start_date, end_date, run_name, bid=None, value=None, rid=None):
 
     # Subset query with value and bid if desired
     if (value != None) and (bid != None):
-        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                              (Results.date_time <= end_date),
-                                              (RunMetadata.run_name == run_name),
-                                              (Results.variable == value),
-                                              (Results.basin_id == Basins.basins[bid]['basin_id'])))
+        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                        (Results.date_time >= start_date),
+                        (Results.date_time <= end_date),
+                        (RunMetadata.run_name == run_name),
+                        (Results.variable == value),
+                        (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
     # Report queries here
     elif (value == None) and (bid != None) and rid != None:
         bids = [Basins.basins[n]['basin_id'] for n in bid]
-        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                              (Results.date_time <= end_date),
-                                              (Results.run_id == rid),
-                                              (RunMetadata.run_name == run_name),
-                                              (Results.basin_id.in_(bids))))
+        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                                            (Results.date_time >= start_date),
+                                            (Results.date_time <= end_date),
+                                            (Results.run_id == rid),
+                                            (RunMetadata.run_name == run_name),
+                                            (Results.basin_id.in_(bids))))
 
     else:
-        qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                              (Results.date_time <= end_date),
-                                              (RunMetadata.run_name == run_name)))
+        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                                            (Results.date_time >= start_date),
+                                            (Results.date_time <= end_date),
+                                            (RunMetadata.run_name == run_name)))
 
     # x = self.session.query(Results).get(1)
     # print(x.runmetadata.run_name)
@@ -89,9 +92,10 @@ def query(self, start_date, end_date, run_name, bid=None, value=None, rid=None):
 def delete(self, start_date, end_date, bid, run_name):
     '''
     Delete results from the database using database session created
-    in read_config(). Currently this deletes all values with basin_id == bid
-    and run_name = run_name within the date range, in other words, it removes
-    all records of a previous run that share run_name with any date overlap.
+    in read_config(). This deletes values with basin_id == bid
+    and run_name = run_name within the date range. If there are no more
+    remaining records for that run_id (the entire run was deleted), then the
+    RunMetadata and VariableUnits data are also removed.
 
     Args
         start_date: (datetime)
@@ -103,50 +107,40 @@ def delete(self, start_date, end_date, bid, run_name):
 
     '''
     try:
+        print('Deleting records from run_name={}, from {} '
+              'to {}'.format(run_name,start_date.date(),end_date.date()))
+
         # Since we know run_name, but not run_id, get the run_id
-        qry = self.session.query(Results).join(RunMetadata).\
-                        filter(and_((Results.date_time >= start_date),
+        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                        (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
                         (RunMetadata.run_name == run_name),
                         (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
         df = pd.read_sql(qry.statement, qry.session.connection())
 
-        # Show what we are deleting
+        # Delete by date range, run_id, and basin
         for r in df.run_id.unique():
-            qry2 = self.session.query(Results).filter(Results.run_id == int(r))
-            qry3 = self.session.query(RunMetadata).filter(RunMetadata.run_id == int(r))
+            self.session.query(Results).filter(and_(
+                (Results.date_time >= start_date),
+                (Results.date_time <= end_date),
+                (Results.run_id == int(r)),
+                (Results.basin_id == Basins.basins[bid]['basin_id']))).delete()
 
-            df2 = pd.read_sql(qry2.statement, qry2.session.connection())
-            df3 = pd.read_sql(qry3.statement, qry3.session.connection())
-
-            self._logger.info('Deleting all records from run_id={}, from {} '
-                              'to {}, from config file {}'.format(r,
-                                                      df2['date_time'].min(),
-                                                      df2['date_time'].max()),
-                                                      df3['config_file'])
-
-            print('Deleting all records from run_id={}, from {} '
-                  'to {}'.format(r,
-                                 df2['date_time'].min(),
-                                 df2['date_time'].max()))
-
-            if ((start_date > df2['date_time'].min())
-                or (end_date < df2['date_time'].max())):
-                print('The date range of records being deleted for run_id={} is '
-                '{} to {}, more records are being deleted than will be '
-                'replaced!'.format(r,df2['date_time'].min(),df2['date_time'].max()))
-
-
-        for r in df.run_id.unique():
-            self.session.query(Results).\
-                                filter(Results.run_id == int(r)).delete()
-
-            self.session.query(VariableUnits).\
-                                filter(VariableUnits.run_id == int(r)).delete()
-            self.session.query(RunMetadata).\
-                                filter(RunMetadata.run_id == int(r)).delete()
             self.session.flush()
+
+        # Query again, if no results from those run_id exist still, also remove
+        # the metadata and variableUnits
+        qry2 = self.session.query(Results).filter(Results.run_id == int(r))
+        df2 = pd.read_sql(qry2.statement, qry2.session.connection())
+
+        if df2.empty:
+            for r in df.run_id.unique():
+                self.session.query(VariableUnits).\
+                                filter(VariableUnits.run_id == int(r)).delete()
+                self.session.query(RunMetadata).\
+                                filter(RunMetadata.run_id == int(r)).delete()
+                self.session.flush()
 
         self.session.commit()
 
@@ -291,11 +285,12 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
 
     '''
 
-    qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                          (Results.date_time <= end_date),
-                                          (RunMetadata.run_name == run_name),
-                                          (Results.basin_id == Basins.basins[bid]['basin_id']),
-                                          (Results.variable == value))).first()
+    qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                        (Results.date_time >= start_date),
+                        (Results.date_time <= end_date),
+                        (RunMetadata.run_name == run_name),
+                        (Results.basin_id == Basins.basins[bid]['basin_id']),
+                        (Results.variable == value))).first()
 
     if qry is not None:
         self.pflag = True
@@ -324,8 +319,8 @@ def connect(self):
 
         # Create metadata tables and keep open self.session
         if not os.path.isfile(database):
-            print('No results database specified, creating default sqlite database '
-                  '{}'.format(self.database))
+            print('No results database specified, creating default sqlite '
+                  'database {}'.format(self.database))
 
             create_tables(self)
 
@@ -438,12 +433,13 @@ def write_csv(self):
             for iter,d in enumerate(v['date_time'].values):
                 out.loc[d,bid] = v['value'].values[iter]
 
-            # SWI is cumulative
-            if var == 'swi_vol':
-                out = out.cumsum()
+
+        # SWI is cumulative
+        if var == 'swi_vol':
+            out = out.cumsum()
 
         if self.vollbl == 'KAF':
-            out.to_csv(os.path.join(self.figs_path,var + '_' + self.vollbl + '.csv'))
+            out.to_csv(os.path.join(self.figs_path,var+'_'+self.vollbl+'.csv'))
 
         if self.vollbl == 'SI':
-            out.to_csv(os.path.join(self.figs_path,var + '_' + 'm3' + '.csv'))
+            out.to_csv(os.path.join(self.figs_path,var+'_'+'m3'+'.csv'))
