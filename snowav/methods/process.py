@@ -28,7 +28,7 @@ def process(self):
 
     '''
 
-    self._logger.info('SNOWAV processing iSnobal outputs...')
+    # self._logger.info('SNOWAV processing iSnobal outputs...')
 
     # Is this a good idea?
     pd.options.mode.chained_assignment = None

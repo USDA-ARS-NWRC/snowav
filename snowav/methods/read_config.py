@@ -83,8 +83,8 @@ def read_config(self, external_logger=None, awsm=None):
         self.start_date = self.start_date.to_pydatetime()
         self.end_date = self.end_date.to_pydatetime()
         if self.start_date >= self.end_date:
-            print('start_date > end_date, needs to be fixed in config file, '
-                  'exiting...')
+            print('WARNING! start_date > end_date, needs to be fixed in '
+                  'config file, exiting...')
             return
 
     # Check for forced flight comparison images
@@ -447,7 +447,10 @@ def read_config(self, external_logger=None, awsm=None):
         if (self.start_date is None) and (self.end_date is None):
             self.start_date = self.outputs['dates'][0]
             self.end_date = self.outputs['dates'][-1]
-            self._logger.info('start_date and/or end_date not specified, '
+            # self._logger.info('start_date and/or end_date not specified, '
+            #                   'using: {} and {}'.format(self.start_date,
+            #                                             self.end_date))
+            print('start_date and/or end_date not specified, '
                               'using: {} and {}'.format(self.start_date,
                                                         self.end_date))
 
@@ -459,8 +462,8 @@ def read_config(self, external_logger=None, awsm=None):
 
         if ((self.start_date < self.outputs['dates'][0])
             or (self.end_date > self.outputs['dates'][-1])):
-            print('[Outputs]->start_date or end_date outside of range in [runs]'
-            '->run_dirs...')
+            print('WARNING! [Outputs]->start_date or end_date outside of range '
+                  'in [runs] ->run_dirs...')
             return
 
         # Copy the config file where figs will be saved
@@ -500,7 +503,6 @@ def read_config(self, external_logger=None, awsm=None):
 
     if not os.path.isfile(self.config_copy):
         generate_config(ucfg,self.config_copy)
-
 
 def createLog(self):
     '''
