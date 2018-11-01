@@ -65,8 +65,7 @@ def basin_total(snow):
 
     for iters,name in enumerate(plotorder):
         swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
-        ax1.plot(swi_summary[name],
-                 color = snow.barcolors[iters], label='_nolegend_')
+        swi_summary[name].plot(ax=ax1,color = snow.barcolors[iters], label='_nolegend_')
 
     if snow.flight_dates is not None:
         for d in snow.flight_dates:

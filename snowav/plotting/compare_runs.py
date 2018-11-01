@@ -53,7 +53,7 @@ def compare_runs(self):
                                                       (Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (RunMetadata.run_name == run),
-                                                      (Results.basin_id == BASINS.basins[bid]['basin_id'])))
+                                                      (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
 
             df = pd.read_sql(qry.statement, qry.session.connection())
