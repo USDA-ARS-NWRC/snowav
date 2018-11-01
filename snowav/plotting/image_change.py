@@ -20,7 +20,7 @@ def image_change(snow):
     '''
 
     # Get change in swe during the specified period
-    delta_swe = snow.outputs['swe_z'][self.ixe] - snow.outputs['swe_z'][self.ixs]
+    delta_swe = snow.outputs['swe_z'][snow.ixe] - snow.outputs['swe_z'][snow.ixs]
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
     # Make df from database

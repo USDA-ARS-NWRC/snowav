@@ -23,7 +23,7 @@ def accumulated(snow):
     # Calculate accumulated swi during the specified period
     accum = np.zeros((snow.nrows,snow.ncols))
 
-    for n in range(self.ixs,self.ixe):
+    for n in range(snow.ixs,snow.ixe):
         accum = accum + snow.outputs['swi_z'][n]
 
     accum = np.multiply(accum,snow.depth_factor)
