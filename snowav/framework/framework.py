@@ -39,7 +39,21 @@ class SNOWAV(object):
         # If user just wants plots from database, skip processing and just pull
         # results from the database
         if self.plot_flag is True:
-            snowav.plotting.compare_runs.compare_runs(self)
+            # These currently require loading nc files and read_config()
+            # snowav.plotting.accumulated.accumulated(self)
+            # snowav.plotting.current_image.current_image(self)
+            # snowav.plotting.pixel_swe.pixel_swe(self)
+            # snowav.plotting.image_change.image_change(self)
+            # snowav.plotting.swe_change.swe_change(self)
+            # snowav.plotting.precip_depth.precip_depth(self)
+
+            snowav.plotting.state_by_elev.state_by_elev(self)
+            snowav.plotting.basin_total.basin_total(self)
+            snowav.plotting.density.density(self)
+            snowav.plotting.stn_validate.stn_validate(self)
+
+            # This one still needs editing
+            # snowav.plotting.compare_runs.compare_runs(self)
 
         # Otherwise, start the processing steps
         else:
@@ -52,7 +66,7 @@ class SNOWAV(object):
                                            'swe_z')
 
             # Process results and put on the database
-            if self.write_db is False:
+            if (self.pflag is True) and (self.write_db is False):
                 print('There are existing fields on the database between '
                       '{} and {} with run_name={}, and config file option '
                       '[results] -> overwrite=False\n'
@@ -66,7 +80,7 @@ class SNOWAV(object):
                 # precip, etc., but do not insert onto database
                 snowav.methods.process.process(self)
 
-            elif self.write_db is True:
+            elif (self.pflag is True) and (self.write_db is True):
                 print('There are existing fields on the database between '
                       '{} and {} with run_name={}, and config file option '
                       '[results] -> overwrite=True, '
@@ -100,10 +114,12 @@ class SNOWAV(object):
             snowav.plotting.swe_change.swe_change(self)
             snowav.plotting.basin_total.basin_total(self)
             snowav.plotting.pixel_swe.pixel_swe(self)
+            snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
             # The SWI, precip, and rain plot requires process()
-            if ((self.plot_flag is not True) and ('PRECIP_DEPTH' not in self.exclude_figs)):
+            if ((self.exclude_figs is not None) and
+                ('PRECIP_DEPTH' not in self.exclude_figs)):
                 snowav.plotting.precip_depth.precip_depth(self)
 
             # Make flight difference figure in options in config file
