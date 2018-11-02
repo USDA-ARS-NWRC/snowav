@@ -37,7 +37,8 @@ class SNOWAV(object):
             methods.read_config.read_config(self)
 
         # If user just wants plots from database, skip processing and just pull
-        # results from the database
+        # results from the database. This will also attempt to make the figures
+        # if they don't already exist
         if self.plot_flag is True:
             # These currently require loading nc files and read_config()
             # snowav.plotting.accumulated.accumulated(self)
@@ -47,10 +48,27 @@ class SNOWAV(object):
             # snowav.plotting.swe_change.swe_change(self)
             # snowav.plotting.precip_depth.precip_depth(self)
 
-            snowav.plotting.state_by_elev.state_by_elev(self)
-            snowav.plotting.basin_total.basin_total(self)
-            snowav.plotting.density.density(self)
-            snowav.plotting.stn_validate.stn_validate(self)
+            if (not os.path.isfile('{}swe_elev_{}.png'
+                                    .format(self.figs_path,self.name_append))):
+                snowav.plotting.state_by_elev.state_by_elev(self)
+
+            # There are two, we just check the first
+            if (not os.path.isfile('{}basin_total_{}.png'
+                                    .format(self.figs_path,self.name_append))):
+                snowav.plotting.basin_total.basin_total(self)
+
+            # There are several, we just check the first
+            if (not os.path.isfile('{}density_subs_{}.png'
+                                    .format(self.figs_path,self.name_append))):
+                snowav.plotting.density.density(self)
+
+            if (not os.path.isfile('{}validation_{}.png'
+                                    .format(self.figs_path,self.name_append))):
+                snowav.plotting.stn_validate.stn_validate(self)
+
+            # Create pdf report
+            if self.report_flag is True:
+                snowav.report.report.report(self)                
 
             # This one still needs editing
             # snowav.plotting.compare_runs.compare_runs(self)

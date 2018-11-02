@@ -284,7 +284,7 @@ def read_config(self, external_logger=None, awsm=None):
         print('Config file option [results]->plot_runs={}, '
               'creating figures from existing database '
               'entries for {}, some figures from standard report '
-              'will be omitted...'.format(self.plot_flag, self.plot_runs))
+              'may be omitted...'.format(self.plot_flag, self.plot_runs))
     else:
         self.plot_flag = False
 
@@ -338,7 +338,7 @@ def read_config(self, external_logger=None, awsm=None):
                            self.elev_bins[2])
 
     # A few remaining basin-specific things
-    if self.basin == 'TUOL' or self.basin == 'SJ' or self.basin == 'LAKES':
+    if self.basin in ['TUOL', 'SJ', 'LAKES']:
         sr = 6
     else:
         sr = 0
@@ -465,14 +465,9 @@ def read_config(self, external_logger=None, awsm=None):
             self.ixs = np.where(self.outputs['dates'] == s)[0][0]
             self.ixe = np.where(self.outputs['dates'] == e)[0][0]
 
-        # check that dates are in range
-        if self.start_date > self.end_date:
-            print('[Outputs] -> start_date is greater than end_date...')
-            return
-
         if ((self.start_date.date() < self.outputs['dates'][0].date())
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
-            print('WARNING! [Outputs] -> start_date or end_date outside of '
+            print('ERROR! [Outputs] -> start_date or end_date outside of '
                   'range in [runs] -> run_dirs')
             return
 

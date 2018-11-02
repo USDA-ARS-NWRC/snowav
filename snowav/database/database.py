@@ -107,8 +107,8 @@ def delete(self, start_date, end_date, bid, run_name):
 
     '''
     try:
-        print('Deleting records from run_name={}, from {} '
-              'to {}'.format(run_name,start_date.date(),end_date.date()))
+        print('Deleting records from bid={}, run_name={}, from {} '
+              'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
         # Since we know run_name, but not run_id, get the run_id
         qry = self.session.query(Results).join(RunMetadata).filter(and_(
@@ -136,6 +136,9 @@ def delete(self, start_date, end_date, bid, run_name):
 
         if df2.empty:
             for r in df.run_id.unique():
+                print('Deleting RunMetadata run_name={}, from {} '
+                      'to {}'.format(run_name,start_date.date(),
+                      end_date.date()))
                 self.session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).delete()
                 self.session.query(RunMetadata).\
@@ -145,7 +148,10 @@ def delete(self, start_date, end_date, bid, run_name):
         self.session.commit()
 
     except:
-        print('Failed to delete database records in database.delete()...')
+        print('Failed attempting to delete records from run_name={}, bid = {}, '
+              'from {} to {}'.format(run_name,bid,
+                                     start_date.date(),
+                                     end_date.date()))
 
 def create_tables(self=None, url=None):
     '''

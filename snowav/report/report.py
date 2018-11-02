@@ -176,7 +176,14 @@ def report(obj):
 
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
-    variables['REPORT_TITLE'] = obj.rep_title
+
+    # untested - if report title contains comma?
+    if isinstance(obj.rep_title, list):
+        title = ''.join(obj.rep_title)
+        variables['REPORT_TITLE'] = title
+    else:
+        variables['REPORT_TITLE'] = obj.rep_title
+
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(obj.wy)
     variables['UNITS'] = obj.vollbl
