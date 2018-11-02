@@ -179,7 +179,9 @@ def report(obj):
 
     # untested - if report title contains comma?
     if isinstance(obj.rep_title, list):
-        title = ''.join(obj.rep_title)
+        title = obj.rep_title[0]
+        for s in obj.rep_title[1::]:
+            title = title + ', ' + s
         variables['REPORT_TITLE'] = title
     else:
         variables['REPORT_TITLE'] = obj.rep_title
@@ -236,17 +238,18 @@ def report(obj):
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
+
     variables['SWE_BYELEV'] = (
                                 r'\textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                + swe_byelev[obj.plotorder].to_latex()
+                                + swe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
                                 )
 
     variables['DSWE_BYELEV'] = (
                                 r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
                                   obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                + dswe_byelev[obj.plotorder].to_latex()
+                                + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
                                 )
 
     variables['TOT_LBL'] = obj.plotorder[0]

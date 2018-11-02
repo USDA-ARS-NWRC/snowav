@@ -1,6 +1,7 @@
 \begin{figure}[htbp]
 \begin{centering}
 	\includegraphics[width=0.88\textwidth]{FIG_PATHTOTALS_FIG}
-	\caption{Water year total SWE (left), SWI (right) volumes.}
+	\caption{Water year total SWE (left), SWI (right) volumes. ASO depth field
+	updates are indicated by vertical dashed lines.}
 \end{centering}
 \end{figure}

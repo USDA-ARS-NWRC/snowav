@@ -1,7 +1,7 @@
-\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for
-\usepackage{geometry}            	% See geometry.pdf to learn the layout options.
-\geometry{letterpaper, margin=1in}              	% ... or a4paper or a5paper or ...
-\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use
+\documentclass[11pt, oneside]{article}
+\usepackage{geometry}
+\geometry{letterpaper, margin=1in}
+\usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{booktabs}
 \usepackage[font=small,labelfont=bf]{caption}
@@ -13,12 +13,12 @@
 \usepackage{lipsum}
 \usepackage{multirow}
 \usepackage{tikz}
-
 \usepackage[export]{adjustbox}
+\usepackage{fancyhdr}
 
 \setlength{\droptitle}{-2em}
 \setlength\headheight{26pt}
-\usepackage{fancyhdr}
+
 \pagestyle{fancy}
 
 \newenvironment{noindlist}
@@ -31,7 +31,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \author{USDA Agricultural Research Service, Boise, Idaho \\
 	      NASA Jet Propulsion Lab, Pasadena, California}
 \date{}
-
 
 \fancypagestyle{specialfooter}{
   \fancyhf{}
@@ -49,20 +48,18 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 
 \begin{document}
 
-
 \maketitle
 {
 	\begin{tikzpicture}[remember picture,overlay]
 	% \node [shift={(-18.2cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
-	\node [shift={(-18.5cm,-2.0cm)}] at (current page.north east) {\includegraphics[height=2.85cm]{\VAR{ASOLOGO}}};
+	\node [shift={(-19cm,-2.0cm)}] at (current page.north east) {\includegraphics[height=2.85cm]{\VAR{ASOLOGO}}};
   \node [shift={(-2.2cm,-1.75cm)}] at (current page.north east) {\includegraphics[height=1.5cm]{\VAR{ARSLOGO}}};
 
 	\end{tikzpicture}
 }
 
-
+\vspace{-1cm}
 \section*{Summary}
-
 \VAR{SUMMARY}
 
 \thispagestyle{specialfooter}
@@ -78,7 +75,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 \clearpage
 
 \pagestyle{fancy}
-% \fancyfoot[R]{\thepage}
 
 \section*{Results}
 \vspace{1cm}
