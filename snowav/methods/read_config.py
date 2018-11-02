@@ -168,6 +168,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.dpi = ucfg.cfg['plots']['dpi']
     self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
                       'xkcd:vibrant green']
+    self.annot_x = ucfg.cfg['plots']['annot_x']
+    self.annot_y = ucfg.cfg['plots']['annot_y']
 
     ####################################################
     #          report                                  #

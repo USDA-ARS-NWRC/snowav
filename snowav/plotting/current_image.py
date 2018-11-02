@@ -55,6 +55,11 @@ def current_image(snow):
     h = ax.imshow(state, cmap = mymap, clim=clims)
     h1 = ax1.imshow(cold, clim=clims2, cmap = mymap1)
 
+    # If these attributes are included in config, put labels on ax
+    if hasattr(snow,'annot_x') and hasattr(snow,'annot_y'):
+        for i, name in enumerate(snow.plotorder[1::]):
+            ax.annotate(name, xy=(snow.annot_x[i], snow.annot_y[i]))
+
     if snow.basin == 'LAKES':
         ax.set_xlim(snow.imgx)
         ax.set_ylim(snow.imgy)
