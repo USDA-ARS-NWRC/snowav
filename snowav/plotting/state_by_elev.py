@@ -29,6 +29,7 @@ def state_by_elev(snow):
         r2 = database.database.query(snow, snow.start_date, snow.end_date,
                                     snow.run_name, bid, 'swe_unavail')
 
+
         for elev in snow.edges:
             v = r[(r['elevation'] == str(elev))
                   & (r['date_time'] == snow.end_date)
@@ -106,7 +107,7 @@ def state_by_elev(snow):
         axs[iters].tick_params(axis='y')
 
         # Get basin total storage in strings for label
-        kaf = str(np.int(sum(melt[name]) + sum(nonmelt[name])))
+        kaf = str(np.int(np.nansum(melt[name]) + np.nansum(nonmelt[name])))
 
         if snow.dplcs == 0:
             kaf = str(np.int(sum(melt[name]) + sum(nonmelt[name])))
