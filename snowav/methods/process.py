@@ -79,35 +79,30 @@ def process(self):
         hr = int(self.outputs['time'][iters])
         sf = self.rundirs_dict[hr].replace('runs','data')
         sf = sf.replace('run','data')
-        ppt_path = sf.replace('output','ppt_4b')
-        hrs = range(hr - 23, hr + 1)
-
-        pFlag = False
-        ppt_files = []
-        # Get all the ppt_files for that day and make 0-padded strings
-        for hr in hrs:
-            if hr < 100:
-                shr = '00' + str(hr)
-            if hr >= 100 and hr < 1000:
-                shr = '0' + str(hr)
-            if hr >= 1000:
-                shr = str(hr)
-
-            if os.path.isfile(ppt_path + 'ppt.4b_' + shr):
-                pFlag = True
-                ppt_files = ppt_files + [ppt_path + 'ppt.4b_' + shr]
+        ppt_path = sf.split('output')[0] + '/smrfOutputs/precip.nc'
+        percent_snow_path = ppt_path.replace('precip','percent_snow')
 
         precip = np.zeros((self.nrows,self.ncols))
         rain = np.zeros((self.nrows,self.ncols))
 
-        if pFlag:
-            for pfile in ppt_files:
-                ppt = ipw.IPW(pfile)
-                pre = ppt.bands[0].data
-                percent_snow = ppt.bands[1].data
-                rain = rain + np.multiply(pre,(1-percent_snow))
+        if os.path.isfile(ppt_path):
+
+            ppt = nc.Dataset(ppt_path, 'r')
+            percent_snow = nc.Dataset(percent_snow_path, 'r')
+            nb = len(ppt.variables['time'][:])
+
+            for nb in range(0,nb):
+                pre = ppt['precip'][nb]
+                ps = percent_snow['percent_snow'][nb]
+
+                rain = rain + np.multiply(pre,(1-ps))
                 precip = precip + copy.deepcopy(pre)
 
+            ppt.close()
+            percent_snow.close()
+
+        # self.precip_total = np.nansum(np.dstack((self.precip_total,copy.deepcopy(precip))),2)
+        # self.rain_total = np.nansum(np.dstack((self.rain_total,copy.deepcopy(rain))),2)
         self.precip_total = self.precip_total + copy.deepcopy(precip)
         self.rain_total = self.rain_total + copy.deepcopy(rain)
 
@@ -120,9 +115,10 @@ def process(self):
 
             # Mask by subbasin
             for name in self.masks:
-
                 mask = copy.deepcopy(self.masks[name]['mask'])
-                mask[mask == 0] = np.nan
+                mask = mask.astype(float)
+
+                mask[mask < 1] = np.nan
                 elevbin = np.multiply(self.ixd,mask)
 
                 # If the key is something we've already calculated (i.e., not
@@ -317,3 +313,13 @@ def process(self):
 
         # Step this along so that we can see how many hours between outputs
         t = int(hr)
+
+    # Save images
+    swiz = np.zeros((self.nrows,self.ncols))
+    for n in range(0,len(self.outputs['swi_z'])):
+        swiz = swiz + self.outputs['swi_z'][n]
+
+    np.save('{}{}'.format(self.figs_path,'swi_z.npy'),swiz)
+    np.save('{}{}'.format(self.figs_path,'precip.npy'),self.precip_total)
+    np.save('{}{}'.format(self.figs_path,'rain.npy'),self.rain_total)
+    np.save('{}{}'.format(self.figs_path,'swe_z.npy'),self.outputs['swe_z'][self.ixe])
