@@ -89,7 +89,13 @@ def process(self):
 
             ppt = nc.Dataset(ppt_path, 'r')
             percent_snow = nc.Dataset(percent_snow_path, 'r')
-            nb = len(ppt.variables['time'][:])
+
+            # For the wy2019 daily runs, precip.nc always has an extra hour...
+            if len(ppt.variables['time'][:]) <= 24:
+                nb = 24
+            else:
+                nb = len(ppt.variables['time'][:])
+
 
             for nb in range(0,nb):
                 pre = ppt['precip'][nb]
