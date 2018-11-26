@@ -39,7 +39,7 @@ def accumulated(snow):
             v = r[r['elevation'] == str(elev)]
             accum_byelev.loc[elev,bid] = np.nansum(v['value'].values)
 
-    qMin,qMax = np.percentile(accum,[0,99.8])
+    qMin,qMax = np.nanpercentile(accum,[0,99.8])
     clims = (0,qMax)
     colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
     colors2 = plt.cm.binary(np.linspace(0, 1, 1))
@@ -92,7 +92,11 @@ def accumulated(snow):
                        snow.end_date.date().strftime("%Y-%-m-%-d")))
 
     # Total basin label
-    sumorder = snow.plotorder[1:]
+    if len(snow.plotorder) > 1:
+        sumorder = snow.plotorder[1::]
+    else:
+        sumorder = snow.plotorder
+
     if snow.basin == 'LAKES' or snow.basin == 'RCEW':
         sumorder = [snow.plotorder[0]]
 

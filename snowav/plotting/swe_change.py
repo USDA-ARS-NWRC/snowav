@@ -34,11 +34,11 @@ def swe_change(snow):
             v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
             delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
 
-    qMin,qMax = np.percentile(delta_swe,[1,99.9])
+    qMin,qMax = np.nanpercentile(delta_swe,[1,99.9])
 
     # ix = np.logical_and(delta_swe < qMin, delta_swe >= np.nanmin(np.nanmin(delta_swe)))
     # delta_swe[ix] = qMin + qMin*0.2
-    vMin,vMax = np.percentile(delta_swe,[1,99.9])
+    vMin,vMax = np.nanpercentile(delta_swe,[1,99.9])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -90,13 +90,12 @@ def swe_change(snow):
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
                        snow.end_date.date().strftime("%Y-%-m-%-d")))
 
-    sumorder = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        swid = 0.45
-    else:
+    if len(snow.plotorder) > 1:
         sumorder = snow.plotorder[1::]
         swid = 0.25
+    else:
+        sumorder = snow.plotorder
+        swid = 0.45
 
     wid = np.linspace(-0.25,0.25,len(sumorder))
 

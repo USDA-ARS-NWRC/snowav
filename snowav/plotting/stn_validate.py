@@ -11,6 +11,7 @@ import pandas as pd
 from datetime import datetime
 import copy
 from datetime import date
+import os
 
 def stn_validate(snow):
 
@@ -115,7 +116,7 @@ def stn_validate(snow):
 
             for rname in rundirs:
                 ncpath = rname.split('output')[0]
-                ncf = nc.Dataset(ncpath + 'snow.nc', 'r')
+                ncf = nc.Dataset(os.path.join(ncpath,'snow.nc'), 'r')
                 nctvec = ncf.variables['time'][:]
                 vswe = ncf.variables['specific_mass']
                 ncxvec = ncf.variables['x'][:]
@@ -175,7 +176,8 @@ def stn_validate(snow):
             axs[n].set_xticklabels('')
 
     # Plot
-    maxm = np.nanmax(swe_meas)
+    swe_meas = swe_meas.replace('[]',np.nan)
+    maxm = np.nanmax(swe_meas.max().values)
     maxi = np.nanmax(swe_mod.max().values)
 
     if maxm > maxi:
@@ -190,7 +192,6 @@ def stn_validate(snow):
     axs[0].set_ylabel('SWE [mm]')
 
     plt.suptitle('Validation at Measured Sites')
-    # plt.tight_layout()
     plt.subplots_adjust(top=0.92)
 
     snow.swe_meas = swe_meas

@@ -30,15 +30,15 @@ def precip_depth(snow):
     rain = np.multiply(snow.rain_total, snow.depth_factor)
 
     lims = [0.1,99.9]
-    if np.percentile(accum,lims)[1] > np.percentile(precip,lims)[1]:
-        z,qMax = np.percentile(accum,lims)
+    if np.nanpercentile(accum,lims)[1] > np.nanpercentile(precip,lims)[1]:
+        z,qMax = np.nanpercentile(accum,lims)
     else:
-        z,qMax = np.percentile(precip,lims)
+        z,qMax = np.nanpercentile(precip,lims)
 
-    if np.percentile(accum,lims)[0] < np.percentile(precip,lims)[0]:
-        qMin,z = np.percentile(accum,lims)
+    if np.nanpercentile(accum,lims)[0] < np.nanpercentile(precip,lims)[0]:
+        qMin,z = np.nanpercentile(accum,lims)
     else:
-        qMin,z = np.percentile(precip,lims)
+        qMin,z = np.nanpercentile(precip,lims)
 
     clims = (qMin,qMax)
 
@@ -134,14 +134,12 @@ def precip_depth(snow):
     h.axes.set_title('Accumulated SWI')
 
     # Total basin label
-    sumorder = snow.plotorder[1:]
-
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        swid = 0.45
-    else:
+    if len(snow.plotorder) > 1:
         sumorder = snow.plotorder[1::]
         swid = 0.25
+    else:
+        sumorder = snow.plotorder
+        swid = 0.45
 
     wid = np.linspace(-0.25,0.25,len(sumorder))
 
@@ -227,13 +225,13 @@ def precip_depth(snow):
 
     h2.axes.set_title('Total Precipitation')
 
-    sumorder = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        swid = 0.45
-    else:
+    # Total basin label
+    if len(snow.plotorder) > 1:
         sumorder = snow.plotorder[1::]
         swid = 0.25
+    else:
+        sumorder = snow.plotorder
+        swid = 0.45
 
     wid = np.linspace(-0.25,0.25,len(sumorder))
 
@@ -325,14 +323,14 @@ def precip_depth(snow):
     cbar.set_label(r'rain [%s]'%(snow.depthlbl))
 
     h2.axes.set_title('Rain')
-
-    sumorder = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        swid = 0.45
-    else:
+    
+    # Total basin label
+    if len(snow.plotorder) > 1:
         sumorder = snow.plotorder[1::]
         swid = 0.25
+    else:
+        sumorder = snow.plotorder
+        swid = 0.45
 
     wid = np.linspace(-0.25,0.25,len(sumorder))
 

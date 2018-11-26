@@ -112,9 +112,19 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #           runs                                   #
     ####################################################
-    self.run_dirs = ucfg.cfg['runs']['run_dirs']
-    if type(self.run_dirs) != list:
-        self.run_dirs = [self.run_dirs]
+    # If True, run_dirs are all sub directories
+    self.all_subdirs = ucfg.cfg['runs']['all_subdirs']
+
+    if self.all_subdirs is True:
+        self.run_dirs = ([ucfg.cfg['runs']['run_dirs'] + s for s in
+                        os.listdir(ucfg.cfg['runs']['run_dirs'])
+                        if (os.path.isdir(ucfg.cfg['runs']['run_dirs'] + s)) ])
+    else:
+        self.run_dirs = ucfg.cfg['runs']['run_dirs']
+        if type(self.run_dirs) != list:
+            self.run_dirs = [self.run_dirs]
+
+    self.run_dirs.sort()
 
     ####################################################
     #           validate                               #
@@ -158,7 +168,9 @@ def read_config(self, external_logger=None, awsm=None):
     #           masks                                  #
     ####################################################
     self.dempath = ucfg.cfg['masks']['dempath']
-    self.total = ucfg.cfg['masks']['basin_masks'][0]
+
+    if ucfg.cfg['masks']['basin_masks'] is not None:
+        self.total = ucfg.cfg['masks']['basin_masks'][0]
 
     ####################################################
     #          plots                                   #
@@ -170,6 +182,16 @@ def read_config(self, external_logger=None, awsm=None):
                       'xkcd:vibrant green']
     self.annot_x = ucfg.cfg['plots']['annot_x']
     self.annot_y = ucfg.cfg['plots']['annot_y']
+
+    # San SanJoaquin
+    # Jose Creek, South Fork, Main, Willow Creek
+    # annot_x: 950,1600,375,10
+    # annot_y: 1450,500,185,600
+
+    # Tuolumne
+    # Tuolumne, Cherry Creek, Eleanor
+    # annot_x: 875,175,50
+    # annot_y: 375,185,900
 
     ####################################################
     #          report                                  #
@@ -297,9 +319,7 @@ def read_config(self, external_logger=None, awsm=None):
     maskpaths = []
 
     # Initial ascii/nc handling...
-    if ((os.path.splitext(masks[0])[1] == '.txt') or
-        (os.path.splitext(masks[0])[1] == '.asc') ):
-
+    if (os.path.splitext(self.dempath)[1] != '.nc'):
         for idx, m in enumerate(masks):
             maskpaths.append(m)
             self.plotorder.append(ucfg.cfg['masks']['mask_labels'][idx])
@@ -356,8 +376,7 @@ def read_config(self, external_logger=None, awsm=None):
     try:
         self.masks = dict()
 
-        if ( (os.path.splitext(masks[0])[1] == '.txt') or
-            (os.path.splitext(masks[0])[1] == '.asc') ):
+        if os.path.splitext(self.dempath)[1] != '.nc':
             for lbl,mask in zip(self.plotorder,maskpaths):
                 self.masks[lbl] = {'border': blank,
                                    'mask': np.genfromtxt(mask,skip_header=sr),
@@ -423,31 +442,37 @@ def read_config(self, external_logger=None, awsm=None):
                 else:
                     path = rd
 
-            output = iSnobalReader(path,
-                                   self.filetype,
-                                   snowbands = [0,1,2],
-                                   embands = [6,7,8,9],
-                                   wy = self.wy)
+            # If the run_dirs isn't empty use it, otherwise remove
+            if any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path)):
+                output = iSnobalReader(path,
+                                       self.filetype,
+                                       snowbands = [0,1,2],
+                                       embands = [6,7,8,9],
+                                       wy = self.wy)
 
-            if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                self.outputs['dates'] = np.append(
-                        self.outputs['dates'],output.dates-relativedelta(years=1) )
+                if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                    self.outputs['dates'] = np.append(
+                            self.outputs['dates'],output.dates-relativedelta(years=1) )
+                else:
+                    self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+
+                self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+                # Make a dict for wyhr-rundir lookup
+                for t in output.time:
+                    self.rundirs_dict[int(t)] = rd
+
+                for n in range(0,len(output.em_data[8])):
+                    self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                    self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                    self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                    self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                    self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                    self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                    self.outputs['density'].append(output.snow_data[1][n,:,:])
+
             else:
-                self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
-            self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-            # Make a dict for wyhr-rundir lookup
-            for t in output.time:
-                self.rundirs_dict[int(t)] = rd
-
-            for n in range(0,len(output.em_data[8])):
-                self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                self.outputs['density'].append(output.snow_data[1][n,:,:])
+                self.run_dirs.remove(rd)
 
         # If no dates are specified, use first and last
         if (self.start_date is None) and (self.end_date is None):
@@ -459,6 +484,8 @@ def read_config(self, external_logger=None, awsm=None):
             print('start_date and/or end_date not specified, '
                               'using: {} and {}'.format(self.start_date,
                                                         self.end_date))
+            self.ixs = 0
+            self.ixe = len(self.outputs['dates']) - 1
 
         # Otherwise, get closest dates and make indices
         else:
@@ -471,19 +498,20 @@ def read_config(self, external_logger=None, awsm=None):
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
             print('ERROR! [Outputs] -> start_date or end_date outside of '
                   'range in [runs] -> run_dirs')
+            print( self.outputs['dates'][0].date(),self.outputs['dates'][-1].date())
             return
 
         # Copy the config file where figs will be saved
         # use name_append if only plotting figures from database and don't
         # have start_date, end_date
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        ext_shr = self.name_append + '_' + self.end_date.date().strftime("%Y%m%d")
+        ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
     # Otherwise, all we need to do is create the figs_path
     else:
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        ext_shr = self.name_append + '_' + self.end_date.date().strftime("%Y%m%d")
+        ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
     if not os.path.exists(self.figs_path):

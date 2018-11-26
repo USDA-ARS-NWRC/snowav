@@ -209,6 +209,12 @@ def run_metadata(self):
     else:
         self.runid = int(df['run_id'].max() + 1)
 
+    # From RunMetadata table, snowav/database/tables.py
+    rdir_strlim = 1200
+    trdir = ','.join(self.run_dirs)
+    if len(trdir) > rdir_strlim:
+        trdir = self.run_dirs[0].split('output')[0]
+
     values = {
               'run_id':self.runid,
               'run_name':self.run_name,
@@ -219,7 +225,7 @@ def run_metadata(self):
               'awsm_version':'aswm'+ awsm.__version__,
               'snowav_version':'snowav'+ snowav.__version__,
               'data_type':'',
-              'data_location':','.join(self.run_dirs),
+              'data_location':trdir,
               'file_type':'',
               'config_file':self.config_file,
               'proc_time':datetime.datetime.now()

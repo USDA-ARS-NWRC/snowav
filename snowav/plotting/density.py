@@ -38,7 +38,7 @@ def density(snow):
             density_byelev.loc[elev,bid] = v2['value'].values
 
     value = copy.deepcopy(density_byelev)
-    lim = np.max(value[snow.plotorder[0]])
+    lim = np.nanmax(value[snow.plotorder[0]])
     ylim = (0,600)
     color = 'xkcd:windows blue'
 
@@ -46,22 +46,23 @@ def density(snow):
     sns.set_context("notebook")
 
     nf = len(snow.masks)
-
-    if nf > 1 and nf < 5:
-        nr = 2
-        nc = 2
-    if nf == 6:
-        nr = 2
-        nc = 3
     if nf == 1:
         nr = 1
         nc = 1
+    if nf > 1 and nf <= 4:
+        nr = 2
+        nc = 2
+    if nf > 4 and nf <= 6:
+        nr = 2
+        nc = 3
 
     plt.close(3)
     fig, axs  = plt.subplots(num=3, figsize=snow.figsize, dpi=snow.dpi,
                                 nrows = nr, ncols = nc)
 
-    axs = axs.flatten()
+    axs = np.array(axs)
+    axs = axs.ravel()
+
 
     if nf == 5:
         fig.delaxes(axs[5])

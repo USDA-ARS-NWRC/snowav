@@ -21,10 +21,12 @@ def flt_image_change(snow):
     # Get change in swe during the specified period
 
     # find closest
-    ixs = np.abs([date - snow.flt_start_date for date in snow.outputs['dates']])
-    ixe = np.abs([date - snow.flt_end_date for date in snow.outputs['dates']])
+    s = min(snow.outputs['dates'],key=lambda x: abs(x-snow.flt_start_date))
+    e = min(snow.outputs['dates'],key=lambda x: abs(x-snow.flt_end_date))
+    ixs = np.where(snow.outputs['dates'] == s)[0][0]
+    ixe = np.where(snow.outputs['dates'] == e)[0][0]
 
-    if (ixs == ixe) and len(snow.outputs['dates'] > 1):
+    if (ixs == ixe) and (len(snow.outputs['dates']) > 1):
         ixs = ixe - 1
         snow._logger.info('flt_start_date and/or flt_end_date not found, using '
                             'last two images as flight difference')
@@ -45,11 +47,11 @@ def flt_image_change(snow):
 
     # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(delta_swe)
-    qMin,qMax = np.percentile(delta_state,[1,99.5])
+    qMin,qMax = np.nanpercentile(delta_state,[1,99.5])
 
     ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
     delta_state[ix] = qMin + qMin*0.2
-    vMin,vMax = np.percentile(delta_state,[1,99])
+    vMin,vMax = np.nanpercentile(delta_state,[1,99])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))

@@ -41,13 +41,12 @@ def pixel_swe(snow):
     fig,(ax,ax1) = plt.subplots(num=2, figsize=snow.figsize,
                                 dpi=snow.dpi, nrows = 1, ncols = 2)
 
-    sumorder = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-        swid = 0.45
-    else:
+    if len(snow.plotorder) > 1:
         sumorder = snow.plotorder[1::]
         swid = 0.25
+    else:
+        sumorder = snow.plotorder
+        swid = 0.45
 
     wid = np.linspace(-0.3,0.3,len(sumorder))
 
