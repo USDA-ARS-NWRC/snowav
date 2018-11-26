@@ -78,6 +78,15 @@ def report(obj):
 
     variables['TOTAL_SDEL'] = end_swe - start_swe
 
+    if float(end_swe) - float(start_swe) > 0:
+        variables['SIGN'] = '$+$'
+
+    if float(end_swe) - float(start_swe) == 0.0:
+        variables['SIGN'] = ''
+
+    if float(end_swe) - float(start_swe) < 0.0:
+        variables['SIGN'] = '$\neg$'
+
     variables['TOTAL_PM'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
@@ -238,19 +247,33 @@ def report(obj):
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
+    if 'San Joaquin' in obj.plotorder[0]:
 
-    variables['SWE_BYELEV'] = (
-                                r'\textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                + swe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
-                                )
+        variables['SWE_BYELEV'] = (
+                                    r'\small \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\ '
+                                    %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                    + swe_byelev[obj.plotorder].to_latex(column_format='lrrrrr')
+                                    )
 
-    variables['DSWE_BYELEV'] = (
-                                r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
-                                  obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
-                                )
+        variables['DSWE_BYELEV'] = (
+                                    r'\small \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\ '
+                                    %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
+                                      obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                    + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrrr')
+                                    )
+    else:
+        variables['SWE_BYELEV'] = (
+                                    r'\textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                    %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                    + swe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
+                                    )
+
+        variables['DSWE_BYELEV'] = (
+                                    r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                    %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
+                                      obj.end_date.date().strftime("%Y-%-m-%-d"))
+                                    + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
+                                    )
 
     variables['TOT_LBL'] = obj.plotorder[0]
     if len(obj.plotorder) >= 2:
