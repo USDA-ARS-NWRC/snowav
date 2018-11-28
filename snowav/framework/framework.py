@@ -68,7 +68,7 @@ class SNOWAV(object):
 
             # Create pdf report
             if self.report_flag is True:
-                snowav.report.report.report(self)                
+                snowav.report.report.report(self)
 
             # This one still needs editing
             # snowav.plotting.compare_runs.compare_runs(self)
@@ -134,6 +134,7 @@ class SNOWAV(object):
             snowav.plotting.pixel_swe.pixel_swe(self)
             snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
+            snowav.plotting.precip_validate.precip_validate(self)
 
             # The SWI, precip, and rain plot requires process()
             if ((self.exclude_figs is not None) and
