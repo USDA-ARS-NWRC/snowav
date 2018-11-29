@@ -10,6 +10,7 @@ from . import swe_change
 from . import pixel_swe
 from . import state_by_elev
 from . import stn_validate
+from . import precip_validate
 from . import basin_detail
 from . import write_summary
 from . import compare_runs

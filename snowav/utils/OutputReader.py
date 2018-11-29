@@ -7,6 +7,7 @@ import glob
 import pytz
 from netCDF4 import Dataset
 import netCDF4 as nc
+import warnings
 
 
 class iSnobalReader():
@@ -203,6 +204,8 @@ class iSnobalReader():
         em_date - dictionary of time series spatial data np arrays as well as a
                     time series array
         """
+
+        warnings.simplefilter("ignore")
 
         name_snow_fp = 'snow'
         name_em_fp = 'em'
