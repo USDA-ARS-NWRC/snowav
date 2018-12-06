@@ -1,6 +1,6 @@
 \begin{figure}[htbp]
 \begin{centering}
 	\includegraphics[width=0.88\textwidth]{FIG_PATHPDEP_FIG}
-	\caption{SWI, total precipitation, and rain for the reporting period, as a depth spatially (left), and by elevation band (right).}
+	\caption{SWI, total precipitation, and rain for the reporting period, as a depth (left), and by elevation band (right).}
 \end{centering}
 \end{figure}

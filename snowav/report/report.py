@@ -20,9 +20,6 @@ def report(obj):
     by templates in snowav/report/. Data is now pulled from the SNOWAV
     database.
 
-    Issues:
-    - limited by n subbasins <= 5
-
     To add a figure to the report:
     - create the plot (of course)
     - add to variables dict in this file, with the same naming convention
@@ -111,10 +108,6 @@ def report(obj):
     if hasattr(obj,'orig_date'):
         report_time = obj.orig_date + ', revised ' + report_time
 
-    # hack, somewhere the rounding is different when we start from Oct 1...
-    # if obj.dateFrom == datetime(2017,10,1,23,0):
-    #     total_swe_del = copy.copy(total_swe)
-
     numsubs = range(1,len(obj.plotorder))
 
     for n,sub in zip(numsubs,obj.plotorder[1:]):
@@ -169,10 +162,12 @@ def report(obj):
                     & (r['date_time']<=end_date)
                     & (r['elevation']=='total')
                     & (r['variable']=='rain_z')]['value'].sum()
+
         if prepmval != 0.0:
             ratval = str(int((rainval/prepmval)*100))
         else:
             ratval = '0'
+
         variables[SWIIND] = swival
         variables[PERSWIIND] = perswival
         variables[SWEIND] = sweval
@@ -201,7 +196,7 @@ def report(obj):
     variables['VOLLBL'] = obj.vollbl
     variables['DEPLBL'] = obj.depthlbl
     variables['START_DATE'] = obj.start_date.date().strftime("%B %-d")
-    variables['END_DATE'] = obj.end_date.date().strftime("%B %-d")
+    variables['END_DATE'] = obj.report_date.date().strftime("%B %-d")
     variables['FORE_DATE'] = ''
     variables['SWE_IN'] = variables['TOTAL_PM']
     variables['SWI_IN'] = variables['TOTAL_SWI']
@@ -233,12 +228,13 @@ def report(obj):
     variables['FRIANTLOGO'] = obj.figs_tpl_path + 'FRIANT.jpg'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
-    swe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    swe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     swe_byelev.index.name = 'Elevation'
     sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
-    dswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
+    dswe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     dswe_byelev.index.name = 'Elevation'
     for sub in obj.plotorder:
+
         swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
@@ -247,43 +243,27 @@ def report(obj):
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
-    if 'San Joaquin' in obj.plotorder[0]:
 
-        variables['SWE_BYELEV'] = (
-                                    r'\small \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\ '
-                                    %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                    + swe_byelev[obj.plotorder].to_latex(column_format='lrrrrr')
-                                    )
+    colstr = 'l' + 'r'*len(obj.plotorder)
 
-        variables['DSWE_BYELEV'] = (
-                                    r'\small \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\ '
-                                    %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
-                                      obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                    + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrrr')
-                                    )
-    else:
-        variables['SWE_BYELEV'] = (
-                                    r'\textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                    %(obj.depthlbl,obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                    + swe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
-                                    )
+    variables['SWE_BYELEV'] = (
+                                r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.report_date.date().strftime("%Y-%-m-%-d"))
+                                + r'\resizebox{\textwidth}{!}{' + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + '}'
+                                )
 
-        variables['DSWE_BYELEV'] = (
-                                    r'\textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                    %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
-                                      obj.end_date.date().strftime("%Y-%-m-%-d"))
-                                    + dswe_byelev[obj.plotorder].to_latex(column_format='lrrrr')
-                                    )
+    variables['DSWE_BYELEV'] = (
+                                r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
+                                  obj.report_date.date().strftime("%Y-%-m-%-d"))
+                                + r'\resizebox{\textwidth}{!}{' + dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + '}'
+                                )
 
     variables['TOT_LBL'] = obj.plotorder[0]
-    if len(obj.plotorder) >= 2:
-        variables['SUB1_LBL'] = obj.plotorder[1]
-    if len(obj.plotorder) >= 3:
-        variables['SUB2_LBL'] = obj.plotorder[2]
-    if len(obj.plotorder) >= 4:
-        variables['SUB3_LBL'] = obj.plotorder[3]
-    if len(obj.plotorder) >= 5:
-        variables['SUB4_LBL'] = obj.plotorder[4]
+
+    for n in range(1,len(obj.plotorder)):
+        s = 'SUB' + str(n) + '_LBL'
+        variables[s] = obj.plotorder[n]
 
     # Convert floats to strings
     for name in variables:
