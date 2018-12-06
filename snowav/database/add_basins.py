@@ -19,28 +19,36 @@ import mysql.connector
 
 
 '''
-
-basins = {
-
-            # Merced
-            # 'Merced River Basin':{'watershed_id':5,
-            #                       'basin_id':17,
-            #                       'basin_name':'Merced'},
-
-            'Merced Sub 1':{'watershed_id':5,
-                                  'basin_id':17+1,
-                                  'basin_name':'Merced'},
+mysql -h 172.17.0.2 -P 3306 -u mark -p
 
 '''
-
-# ws = 'Merced River Basin'
+# ws = 'Kings River Basin'
+# watershedid = 7
 # basins = {
-#           'Merced Sub 1':{'watershed_id':5,
-#                           'basin_id':17+1,
-#                           'basin_name':'Merced'},
-#           'Merced Sub 2':{'watershed_id':5,
-#                           'basin_id':17+2,
-#                           'basin_name':'Merced'},
+#           'Middle Fork':{'watershed_id':watershedid,
+#                           'basin_id':20,
+#                           'basin_name':'Kings'},
+#           'West Kings':{'watershed_id':watershedid,
+#                           'basin_id':21,
+#                           'basin_name':'Kings'},
+#           'Middle South Fork':{'watershed_id':watershedid,
+#                           'basin_id':22,
+#                           'basin_name':'Kings'},
+#           'South Fork':{'watershed_id':watershedid,
+#                           'basin_id':23,
+#                           'basin_name':'Kings'},
+#           'Mill Creek':{'watershed_id':watershedid,
+#                           'basin_id':24,
+#                           'basin_name':'Kings'},
+#           'North Fork':{'watershed_id':watershedid,
+#                           'basin_id':25,
+#                           'basin_name':'Kings'}
+#
+#                           }
+# basins = {
+#           'Dinkey Creek':{'watershed_id':watershedid,
+#                           'basin_id':26,
+#                           'basin_name':'Kings'}
 #                           }
 
 user = 'mark'
@@ -61,10 +69,12 @@ wsid = Watersheds.watersheds[ws]['watershed_id']
 
 # Initialize basins within the watershed
 for bid in basins:
-    if Basins.basins[bid]['watershed_id'] == wsid:
-        bval = Basin(watershed_id = wsid,
-                     basin_id = Basins.basins[bid]['basin_id'],
-                     basin_name = Basins.basins[bid]['basin_name'])
-        session.add(bval)
+    print('Adding {} to basins...'.format(bid))
+    # if Basins.basins[bid]['watershed_id'] == wsid:
+    bval = Basin(watershed_id = wsid,
+                 basin_id = basins[bid]['basin_id'],
+                 basin_name = bid)
+    session.add(bval)
+
 
 session.commit()

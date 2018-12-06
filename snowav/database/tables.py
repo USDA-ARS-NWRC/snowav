@@ -187,15 +187,19 @@ class Basins(object):
                 'San Joaquin River Basin':{'watershed_id':3,
                                            'basin_id':9,
                                            'basin_name':'San Joaquin'},
+
                 'South Fork':{'watershed_id':3,
                               'basin_id':10,
                               'basin_name':'South Fork'},
+
                 'Main':{'watershed_id':3,
                         'basin_id':11,
                         'basin_name':'Main'},
+
                 'Jose Creek':{'watershed_id':3,
                               'basin_id':12,
                               'basin_name':'Jose Creek'},
+                              
                 'Willow Creek':{'watershed_id':3,
                                 'basin_id':13,
                                 'basin_name':'Willow Creek'},
@@ -227,5 +231,34 @@ class Basins(object):
                 'Kings River Basin':{'watershed_id':7,
                                      'basin_id':19,
                                      'basin_name':'Kings'},
+
+                'Middle Fork':{'watershed_id':7,
+                              'basin_id':20,
+                              'basin_name':'Kings'},
+
+                'West Kings':{'watershed_id':7,
+                              'basin_id':21,
+                              'basin_name':'Kings'},
+
+                'Middle South Fork':{'watershed_id':7,
+                              'basin_id':22,
+                              'basin_name':'Kings'},
+
+                'South Fork':{'watershed_id':7,
+                              'basin_id':23,
+                              'basin_name':'Kings'},
+
+                'Mill Creek':{'watershed_id':7,
+                              'basin_id':24,
+                              'basin_name':'Kings'},
+
+                'North Fork':{'watershed_id':7,
+                              'basin_id':25,
+                              'basin_name':'Kings'},
+
+                'Dinkey Creek':{'watershed_id':7,
+                              'basin_id':26,
+                              'basin_name':'Kings'}
+
 
                 }

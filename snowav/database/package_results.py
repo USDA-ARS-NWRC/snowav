@@ -46,7 +46,7 @@ def package(self, df, output, dtime):
                       'variable_id': self.vid[output],
                       'value': val,
                       'elevation': str(df[var].index[iters])}
-
+                      
             snowav.database.database.insert(self,'Results',values)
 
 
@@ -69,6 +69,7 @@ def post_process(self, dtime):
             lbl = self.vollbl
 
         for bid in self.plotorder:
+
             r = database.database.query(self,
                                         datetime(self.wy-1,10,1),
                                         dtime,
