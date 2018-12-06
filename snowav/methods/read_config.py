@@ -23,6 +23,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
 from snowav import database
+from datetime import timedelta
 
 
 def read_config(self, external_logger=None, awsm=None):
@@ -141,6 +142,10 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self.valid_flag = False
 
+    self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
+    self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
+    self.precip_figure = ucfg.cfg['validate']['precip_figure']
+
     # This is being used to combine 2017 HRRR data
     self.offset = int(ucfg.cfg['validate']['offset'])
 
@@ -178,8 +183,16 @@ def read_config(self, external_logger=None, awsm=None):
     self.figsize = (ucfg.cfg['plots']['fig_length'],
                     ucfg.cfg['plots']['fig_height'])
     self.dpi = ucfg.cfg['plots']['dpi']
-    self.barcolors = ['xkcd:true green','palegreen', 'xkcd:dusty green',
-                      'xkcd:vibrant green']
+
+    self.barcolors = ['xkcd:cobalt',
+                      'xkcd:mustard green',
+                      'xkcd:lichen', # light grey green
+                      'xkcd:pale green',
+                      'xkcd:blue green',
+                      'xkcd:bluish purple',
+                      'xkcd:lightish purple',
+                      'xkcd:deep magenta']
+
     self.annot_x = ucfg.cfg['plots']['annot_x']
     self.annot_y = ucfg.cfg['plots']['annot_y']
 
@@ -287,13 +300,14 @@ def read_config(self, external_logger=None, awsm=None):
     self.run_name = ucfg.cfg['results']['run_name']
     self.write_db = ucfg.cfg['results']['write_db']
     self.plot_runs = ucfg.cfg['results']['plot_runs']
+    self.figures_only = ucfg.cfg['results']['figures_only']
 
     # Establish database connection, create if necessary
     database.database.connect(self)
 
     # If these fields are specified in the config_file, plot_flag will be set
     # to False, no processing occurs, and no report is generated
-    if self.plot_runs is not None:
+    if self.figures_only is True:
         self.plot_flag = True
         self.plot_labels = ucfg.cfg['results']['plot_labels']
         self.plot_wy = ucfg.cfg['results']['plot_wy']
@@ -305,10 +319,8 @@ def read_config(self, external_logger=None, awsm=None):
             print('Must fill config file options [results] -> plot_labels, '
                  'plot_wy, and plot_variables!')
 
-        print('Config file option [results]->plot_runs={}, '
-              'creating figures from existing database '
-              'entries for {}, some figures from standard report '
-              'may be omitted...'.format(self.plot_flag, self.plot_runs))
+        print('Config file option [results]->figures_only={}, '
+              'creating figures for {}...'.format(self.plot_flag, self.figures_only))
     else:
         self.plot_flag = False
 
@@ -318,7 +330,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.plotorder = []
     maskpaths = []
 
-    # Initial ascii/nc handling...
+    # ascii/nc
     if (os.path.splitext(self.dempath)[1] != '.nc'):
         for idx, m in enumerate(masks):
             maskpaths.append(m)
@@ -326,20 +338,44 @@ def read_config(self, external_logger=None, awsm=None):
 
         try:
             self.dem = np.genfromtxt(self.dempath)
+            sr = 0
         except:
             self.dem = np.genfromtxt(self.dempath,skip_header = 6)
+            sr = 6
+
+        self.nrows = len(self.dem[:,0])
+        self.ncols = len(self.dem[0,:])
+        blank = np.zeros((self.nrows,self.ncols))
+
+        self.masks = dict()
+        for lbl,mask in zip(self.plotorder,maskpaths):
+            self.masks[lbl] = {'border': blank,
+                               'mask': np.genfromtxt(mask,skip_header=sr),
+                               'label': lbl}
 
     if os.path.splitext(self.dempath)[1] == '.nc':
+        self.plotorder = ucfg.cfg['masks']['mask_labels']
         ncf = nc.Dataset(self.dempath, 'r')
+
         self.dem = ncf.variables['dem'][:]
         self.mask = ncf.variables['mask'][:]
+
+        self.nrows = len(self.dem[:,0])
+        self.ncols = len(self.dem[0,:])
+        blank = np.zeros((self.nrows,self.ncols))
+
+        self.masks = dict()
+        for iters, lbl in enumerate(self.plotorder):
+            if iters > 0:
+                self.masks[lbl] = {'border': blank,
+                                   'mask': ncf[lbl + ' mask'][:],
+                                   'label': lbl}
+            else:
+                self.masks[lbl] = {'border': blank,
+                                   'mask': ncf['mask'][:],
+                                   'label': lbl}
+
         ncf.close()
-
-        self.plotorder = ucfg.cfg['masks']['mask_labels']
-
-    self.nrows = len(self.dem[:,0])
-    self.ncols = len(self.dem[0,:])
-    blank = np.zeros((self.nrows,self.ncols))
 
     # Pixel size and elevation bins
     if self.filetype == 'netcdf':
@@ -371,26 +407,6 @@ def read_config(self, external_logger=None, awsm=None):
 
     # Right now this is a placeholder, could edit by basin...
     self.xlims = (0,len(self.edges))
-
-    # Compile the masks
-    try:
-        self.masks = dict()
-
-        if os.path.splitext(self.dempath)[1] != '.nc':
-            for lbl,mask in zip(self.plotorder,maskpaths):
-                self.masks[lbl] = {'border': blank,
-                                   'mask': np.genfromtxt(mask,skip_header=sr),
-                                   'label': lbl}
-
-        if os.path.splitext(self.dempath)[1] == '.nc':
-            self.masks[self.plotorder[0]] = {'border': blank,
-                               'mask': self.mask,
-                               'label': self.plotorder[0]}
-
-    except:
-        print('Failed creating mask dicts..')
-        self.error = True
-        return
 
     # Conversion factors and labels
     # Note! If new units are introduced, may need a second look at figure
@@ -443,33 +459,37 @@ def read_config(self, external_logger=None, awsm=None):
                     path = rd
 
             # If the run_dirs isn't empty use it, otherwise remove
-            if any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path)):
-                output = iSnobalReader(path,
-                                       self.filetype,
-                                       snowbands = [0,1,2],
-                                       embands = [6,7,8,9],
-                                       wy = self.wy)
+            if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
+               and not (os.path.isfile(path))):
+                try:
+                    output = iSnobalReader(path,
+                                           self.filetype,
+                                           snowbands = [0,1,2],
+                                           embands = [6,7,8,9],
+                                           wy = self.wy)
 
-                if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                    self.outputs['dates'] = np.append(
-                            self.outputs['dates'],output.dates-relativedelta(years=1) )
-                else:
-                    self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+                    if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                        self.outputs['dates'] = np.append(
+                                self.outputs['dates'],output.dates-relativedelta(years=1) )
+                    else:
+                        self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
 
-                self.outputs['time'] = np.append(self.outputs['time'],output.time)
+                    self.outputs['time'] = np.append(self.outputs['time'],output.time)
 
-                # Make a dict for wyhr-rundir lookup
-                for t in output.time:
-                    self.rundirs_dict[int(t)] = rd
+                    # Make a dict for wyhr-rundir lookup
+                    for t in output.time:
+                        self.rundirs_dict[int(t)] = rd
 
-                for n in range(0,len(output.em_data[8])):
-                    self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                    self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                    self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                    self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                    self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                    self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                    self.outputs['density'].append(output.snow_data[1][n,:,:])
+                    for n in range(0,len(output.em_data[8])):
+                        self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                        self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                        self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                        self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                        self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.outputs['density'].append(output.snow_data[1][n,:,:])
+                except:
+                    print('Failure loading file in {}, attempting to skip...'.format(path))
 
             else:
                 self.run_dirs.remove(rd)
@@ -478,9 +498,7 @@ def read_config(self, external_logger=None, awsm=None):
         if (self.start_date is None) and (self.end_date is None):
             self.start_date = self.outputs['dates'][0]
             self.end_date = self.outputs['dates'][-1]
-            # self._logger.info('start_date and/or end_date not specified, '
-            #                   'using: {} and {}'.format(self.start_date,
-            #                                             self.end_date))
+
             print('start_date and/or end_date not specified, '
                               'using: {} and {}'.format(self.start_date,
                                                         self.end_date))
@@ -501,6 +519,12 @@ def read_config(self, external_logger=None, awsm=None):
             print( self.outputs['dates'][0].date(),self.outputs['dates'][-1].date())
             return
 
+        self.report_date = self.end_date + timedelta(hours=1)
+        parts = self.report_name.split('.')
+        self.report_name = ( parts[0]
+                           + self.report_date.date().strftime("%Y%m%d")
+                           + '.' + parts[1] )
+
         # Copy the config file where figs will be saved
         # use name_append if only plotting figures from database and don't
         # have start_date, end_date
@@ -511,17 +535,13 @@ def read_config(self, external_logger=None, awsm=None):
     # Otherwise, all we need to do is create the figs_path
     else:
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
+        # ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
+        ext_shr = self.name_append
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)
 
-    # Append date to report name
-    parts = self.report_name.split('.')
-    self.report_name = ( parts[0]
-                       + self.end_date.date().strftime("%Y%m%d")
-                       + '.' + parts[1] )
 
     ####################################################
     #             log file                             #
