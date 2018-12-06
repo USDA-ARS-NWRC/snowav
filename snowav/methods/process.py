@@ -10,6 +10,7 @@ import coloredlogs
 import netCDF4 as nc
 from snowav import database
 import warnings
+from datetime import timedelta
 
 def process(self):
     '''
@@ -28,12 +29,8 @@ def process(self):
 
     '''
 
-    # self._logger.info('SNOWAV processing iSnobal outputs...')
-
-    # Is this a good idea?
+    # Suppress warnings - empty slices
     pd.options.mode.chained_assignment = None
-
-    # This suppresses the "mean of empty slice" warning
     warnings.filterwarnings('ignore')
 
     # based on an average of 60 W/m2 from TL paper
@@ -50,6 +47,9 @@ def process(self):
     for iters, out_date in enumerate(self.outputs['dates']):
 
         # end processing at self.ixe
+        if iters < self.ixs:
+            continue
+
         if iters > self.ixe:
             break
 
@@ -170,11 +170,10 @@ def process(self):
                                                     self.conversion_factor) )
 
                         else:
-                            daily_outputs['swe_unavail'].loc[b,name] = 0
-                            daily_outputs['swe_avail'].loc[b,name] = 0
-                            daily_outputs['swe_z'].loc[b,name] = 0
-                            daily_outputs['swe_vol'].loc[b,name] = 0
-
+                            daily_outputs['swe_unavail'].loc[b,name] = np.nan
+                            daily_outputs['swe_avail'].loc[b,name] = np.nan
+                            daily_outputs['swe_z'].loc[b,name] = np.nan
+                            daily_outputs['swe_vol'].loc[b,name] = np.nan
 
                     elif k == 'swi_z':
                         # Not masked out by pixels with snow
@@ -301,11 +300,11 @@ def process(self):
                                                  self.outputs['dates'][iters])
 
         # Add water year totals for swi and evap
-        if (out_date != datetime.datetime(self.wy-1,10,1,23,0,0) and
+        if (out_date.date() != datetime.datetime(self.wy-1,10,1).date() and
             (self.pflag is False) ):
             database.package_results.post_process(self, out_date)
 
-        if (out_date != datetime.datetime(self.wy-1,10,1,23,0,0) and
+        if (out_date.date() != datetime.datetime(self.wy-1,10,1).date() and
             (self.pflag is True) and (self.write_db is True) ):
             database.package_results.post_process(self, out_date)
 
@@ -324,6 +323,8 @@ def process(self):
     swiz = np.zeros((self.nrows,self.ncols))
     for n in range(0,len(self.outputs['swi_z'])):
         swiz = swiz + self.outputs['swi_z'][n]
+
+    # self.end_date = self.end_date + timedelta(hours=1)
 
     np.save('{}{}'.format(self.figs_path,'swi_z.npy'),swiz)
     np.save('{}{}'.format(self.figs_path,'precip.npy'),self.precip_total)
