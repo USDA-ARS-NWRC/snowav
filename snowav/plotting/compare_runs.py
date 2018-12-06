@@ -27,9 +27,8 @@ def compare_runs(self):
     '''
 
     start_date = datetime.datetime(self.wy - 1,10,1)
-    end_date = datetime.datetime(self.wy,6,10)
+    end_date = datetime.datetime(self.wy,8,1)
 
-    # hack
     bid = self.plotorder[0]
 
     sns.set_style('darkgrid')
@@ -48,13 +47,12 @@ def compare_runs(self):
         if var == 'density':
             lbl = 'kg/m^3'
 
-        for run in self.plot_runs:
+        for iters,run in enumerate(self.plot_runs):
             qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (RunMetadata.run_name == run),
                                                       (Results.basin_id == Basins.basins[bid]['basin_id'])))
-
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 
@@ -71,22 +69,39 @@ def compare_runs(self):
 
             if var == 'swi_vol':
                 ax.plot(df[df['elevation'] == 'total']['date_time'],
-                        df[df['elevation'] == 'total']['value'].cumsum(),label = run)
+                        df[df['elevation'] == 'total']['value'].cumsum(),
+                        label = self.plot_labels[iters])
             else:
                 ax.plot(df[df['elevation'] == 'total']['date_time'],
-                        df[df['elevation'] == 'total']['value'],label = run)
+                        df[df['elevation'] == 'total']['value'],
+                        label = self.plot_labels[iters])
 
-            for tick in ax.get_xticklabels():
-                tick.set_rotation(30)
+            if var == 'swe_vol':
+                title = 'Basin Total SWE'
+            if var == 'swi_vol':
+                title = 'Basin Total SWI'
 
-            formatter = mdates.DateFormatter('%b')
-            ax.xaxis.set_major_formatter(formatter)
-            ax.legend()
-            ax.set_ylabel('[%s]'%(lbl))
-            ax.set_title(var)
-            plt.tight_layout()
+        for i,d in enumerate(self.flight_dates):
+            if i == 0:
+                lb = 'flight update'
+            else:
+                lb = '__nolabel__'
+            ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k',label = lb)
 
-            plt.savefig('{}{}_{}{}.png'.format(self.figs_path,run,var,self.name_append))
+        for tick in ax.get_xticklabels():
+            tick.set_rotation(30)
 
-    plt.show()
-    # session.close()
+        formatter = mdates.DateFormatter('%b')
+        ax.xaxis.set_major_formatter(formatter)
+        ax.legend()
+        ax.set_ylabel('[%s]'%(lbl))
+        ax.set_ylim((-5,2600))
+
+        ax.set_title(title)
+        plt.tight_layout()
+
+        snow._logger.info('saving figure to {}compare_{}_{}.png'.format(snow.figs_path,var,snow.name_append))
+        plt.savefig('saving figure to {}compare_{}_{}.png'.format(snow.figs_path,var,snow.name_append))
+
+    # This will need to change if framework.py is updated with different workflow
+    # self.session.close()

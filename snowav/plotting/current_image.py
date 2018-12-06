@@ -93,16 +93,17 @@ def current_image(snow):
     cbar.set_label('[%s]'%(snow.depthlbl))
 
     # Do pretty stuff for the right plot
+
     h1.axes.get_xaxis().set_ticks([])
     h1.axes.get_yaxis().set_ticks([])
-    h1.axes.set_title('Cold Content \n %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
+    h1.axes.set_title('Cold Content \n %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
     divider = make_axes_locatable(ax1)
     cax2 = divider.append_axes("right", size="5%", pad=0.2)
     cbar1 = plt.colorbar(h1, cax = cax2)
     cbar1.set_label('Cold Content [MJ/$m^3$]')
     cbar1.ax.tick_params()
 
-    h.axes.set_title('SWE \n %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title('SWE \n %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
     fig.subplots_adjust(top=0.95,bottom=0.05,
                         right = 0.92, left = 0.05, wspace = 0.12)
     if snow.basin == 'LAKES':

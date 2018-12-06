@@ -89,7 +89,7 @@ def image_change(snow):
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.end_date.date().strftime("%Y-%-m-%-d")))
+                       snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
     if len(snow.plotorder) > 1:
@@ -123,20 +123,10 @@ def image_change(snow):
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
                     color = snow.barcolors[iters],
                     edgecolor = 'k',label = lbl)
-        elif iters == 1:
+
+        else:
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]],
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-        elif iters == 2:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]]
-                    + delta_swe_byelev[sumorder[iters-2]],
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-        elif iters == 3:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]]
-                    + delta_swe_byelev[sumorder[iters-2]]
-                    + delta_swe_byelev[sumorder[iters-3]],
+                    bottom = pd.DataFrame(delta_swe_byelev[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
     plt.tight_layout()
@@ -162,7 +152,7 @@ def image_change(snow):
     if ylims[1] == 0:
         ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
     if ylims[0] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
+        ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
 
     ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
     ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
@@ -177,6 +167,7 @@ def image_change(snow):
     if snow.basin == 'SJ':
         ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
                   loc=2, borderaxespad=0. )
+
     elif snow.basin == 'RCEW':
         ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
                   loc=2, borderaxespad=0. )
@@ -188,8 +179,13 @@ def image_change(snow):
         # more ifs for number subs...
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
+
         elif len(snow.plotorder) == 4:
             ax1.legend(loc= (0.01,0.745))
+
+        # kings
+        elif len(snow.plotorder) > 6:
+                ax1.legend(loc= (0.01,0.5))
 
     if snow.basin == 'BRB' or snow.basin == 'LAKES':
         ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
@@ -200,6 +196,10 @@ def image_change(snow):
     if snow.basin == 'TUOL':
         ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
+
+    elif snow.basin == 'KINGS':
+        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)

@@ -77,9 +77,15 @@ def precip_depth(snow):
 
     # Get bar plot ylims
     if accum_byelev.values.max() > precip_byelev.values.max():
-        yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.2
+        if len(snow.plotorder) < 5:
+            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.2
+        else:
+            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.5
     else:
-        yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.2
+        if len(snow.plotorder) < 5:
+            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.2
+        else:
+            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.5
 
     cmap = cmocean.cm.dense
     cmap1 = plt.cm.nipy_spectral_r
@@ -134,14 +140,19 @@ def precip_depth(snow):
     h.axes.set_title('Accumulated SWI')
 
     # Total basin label
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
+    if len(snow.plotorder) == 1:
         sumorder = snow.plotorder
         swid = 0.45
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) <= 4:
+        sumorder = snow.plotorder[1::]
+        swid = 0.25
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) > 5:
+        sumorder = snow.plotorder[1::]
+        swid = 0.1
+        wid = np.linspace(-0.4,0.4,len(sumorder))
 
-    wid = np.linspace(-0.25,0.25,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         lbl = name
@@ -172,8 +183,13 @@ def precip_depth(snow):
         # more ifs for number subs...
         if len(snow.plotorder) == 5:
             ax[0,1].legend(loc= (0.01,0.65))
+
         elif len(snow.plotorder) == 4:
             ax[0,1].legend(loc= (0.01,0.71))
+
+        # kings
+        elif len(snow.plotorder) > 6:
+            ax[0,1].legend(loc= (0.01,0.5))
 
     # Make SWI-free legend if we need one
     if sum(sum(r)) > 1000:
@@ -224,16 +240,6 @@ def precip_depth(snow):
     cbar.set_label(r'precip [%s]'%(snow.depthlbl))
 
     h2.axes.set_title('Total Precipitation')
-
-    # Total basin label
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
-        sumorder = snow.plotorder
-        swid = 0.45
-
-    wid = np.linspace(-0.25,0.25,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         lbl = name
@@ -323,16 +329,6 @@ def precip_depth(snow):
     cbar.set_label(r'rain [%s]'%(snow.depthlbl))
 
     h2.axes.set_title('Rain')
-    
-    # Total basin label
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
-        sumorder = snow.plotorder
-        swid = 0.45
-
-    wid = np.linspace(-0.25,0.25,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         lbl = name
@@ -382,7 +378,7 @@ def precip_depth(snow):
 
     plt.suptitle('Depth of SWI, Precipitation, and Rain\n%s to %s'
                          %(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                           snow.end_date.date().strftime("%Y-%-m-%-d")))
+                           snow.report_date.date().strftime("%Y-%-m-%-d")))
     plt.tight_layout()
     fig.subplots_adjust(top=0.92)
 

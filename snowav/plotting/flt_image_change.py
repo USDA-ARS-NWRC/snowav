@@ -103,9 +103,11 @@ def flt_image_change(snow):
     if snow.units == 'SI':
         cbar.set_label(r'$\Delta$ SWE [mm]')
 
+    d = snow.flt_end_date + timedelta(hours=1)
+
     h.axes.set_title('Change in SWE from Snow Depth Update\n%s to %s'
                      %(snow.flt_start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.flt_end_date.date().strftime("%Y-%-m-%-d")))
+                       snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
     sumorder  = snow.plotorder[1:]

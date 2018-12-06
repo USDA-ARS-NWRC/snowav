@@ -89,7 +89,7 @@ def accumulated(snow):
     cbar.set_label('[%s]'%(snow.depthlbl))
     h.axes.set_title('Accumulated SWI \n %s to %s'
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.end_date.date().strftime("%Y-%-m-%-d")))
+                       snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     # Total basin label
     if len(snow.plotorder) > 1:
@@ -110,7 +110,9 @@ def accumulated(snow):
                             snow.dplcs)),snow.vollbl)
 
     # Plot the bars
+
     for iters,name in enumerate(sumorder):
+
         if snow.dplcs == 0:
             lbl = '%s = %s %s'%(name,str(int(accum_byelev[name].sum())),
                                 snow.vollbl)
@@ -122,19 +124,10 @@ def accumulated(snow):
             ax1.bar(range(0,len(snow.edges)),accum_byelev[name],
                     color = snow.barcolors[iters],
                     edgecolor = 'k',label = lbl)
-        elif iters == 1:
-            ax1.bar(range(0,len(snow.edges)),accum_byelev[name],
-                    bottom = accum_byelev[sumorder[iters-1]],
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-        elif iters == 2:
+        else:
             ax1.bar(range(0,len(snow.edges)),accum_byelev[name],
-                    bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]]),
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-
-        elif iters == 3:
-            ax1.bar(range(0,len(snow.edges)),accum_byelev[name],
-                    bottom = (accum_byelev[sumorder[iters-1]] + accum_byelev[sumorder[iters-2]] + accum_byelev[sumorder[iters-3]]),
+                    bottom = pd.DataFrame(accum_byelev[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
     plt.tight_layout()
@@ -154,7 +147,10 @@ def accumulated(snow):
     ax1.yaxis.tick_right()
 
     ylims = ax1.get_ylim()
-    ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
+    if snow.basin != 'KINGS':
+        ax1.set_ylim((0,ylims[1] + ylims[1]*0.2))
+    else:
+        ax1.set_ylim((0,ylims[1] + ylims[1]*0.7))
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
@@ -163,8 +159,13 @@ def accumulated(snow):
         # more ifs for number subs...
         if len(snow.plotorder) == 5:
             ax1.legend(loc= (0.01,0.68))
+
         elif len(snow.plotorder) == 4:
             ax1.legend(loc= (0.01,0.74))
+
+        # kings
+        elif len(snow.plotorder) > 6:
+                ax1.legend(loc= (0.01,0.55), fontsize = 9)
 
     if snow.basin == 'BRB':
         ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
@@ -173,6 +174,11 @@ def accumulated(snow):
     elif snow.basin == 'TUOL':
         ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
+
+    elif snow.basin == 'KINGS':
+        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
+
     else:
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)

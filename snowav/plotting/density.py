@@ -46,15 +46,23 @@ def density(snow):
     sns.set_context("notebook")
 
     nf = len(snow.masks)
+
     if nf == 1:
         nr = 1
         nc = 1
-    if nf > 1 and nf <= 4:
+
+    if nf > 1 and nf < 5:
         nr = 2
         nc = 2
-    if nf > 4 and nf <= 6:
+
+    elif nf == 5 or nf == 6:
         nr = 2
         nc = 3
+
+    elif nf > 6:
+        nr = 3
+        nc = 3
+
 
     plt.close(3)
     fig, axs  = plt.subplots(num=3, figsize=snow.figsize, dpi=snow.dpi,
@@ -62,7 +70,6 @@ def density(snow):
 
     axs = np.array(axs)
     axs = axs.ravel()
-
 
     if nf == 5:
         fig.delaxes(axs[5])
@@ -118,7 +125,7 @@ def density(snow):
 
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.1)
-    fig.suptitle(r'Density, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")) )
+    fig.suptitle(r'Density, %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")) )
 
     snow._logger.info('saving figure to %sdensity_subs_%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity_subs_%s.png'%(snow.figs_path,snow.name_append))
@@ -176,7 +183,7 @@ def density(snow):
     cbar.ax.tick_params()
     cbar.set_label('[kg/$m^3$]')
 
-    h.axes.set_title('Density\n%s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title('Density\n%s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     ax1.bar(range(0,len(snow.edges)),value[snow.plotorder[0]],
             color = 'g', edgecolor = 'k')
@@ -278,7 +285,7 @@ def density(snow):
     cbar.set_label('[kg/$m^3$]')
 
     h.axes.set_title('Change in Density\n{} to {}'.format(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                                snow.end_date.date().strftime("%Y-%-m-%-d")))
+                                snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     h1 = ax1.bar(range(0,len(snow.edges)),delta_density_byelev[snow.plotorder[0]].values,color = 'g', edgecolor = 'k')
     plt.tight_layout()
@@ -303,7 +310,7 @@ def density(snow):
     ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
 
     ax1.set_title('Change in Density\n{} to {}'.format(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                                snow.end_date.date().strftime("%Y-%-m-%-d")))
+                                snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()

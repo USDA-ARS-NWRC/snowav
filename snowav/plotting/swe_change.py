@@ -88,14 +88,21 @@ def swe_change(snow):
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.end_date.date().strftime("%Y-%-m-%-d")))
+                       snow.report_date.date().strftime("%Y-%-m-%-d")))
 
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
+    # Total basin label
+    if len(snow.plotorder) == 1:
         sumorder = snow.plotorder
         swid = 0.45
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) <= 4:
+        sumorder = snow.plotorder[1::]
+        swid = 0.25
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) > 5:
+        sumorder = snow.plotorder[1::]
+        swid = 0.1
+        wid = np.linspace(-0.4,0.4,len(sumorder))
 
     wid = np.linspace(-0.25,0.25,len(sumorder))
 

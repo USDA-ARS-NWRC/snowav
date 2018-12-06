@@ -41,14 +41,19 @@ def pixel_swe(snow):
     fig,(ax,ax1) = plt.subplots(num=2, figsize=snow.figsize,
                                 dpi=snow.dpi, nrows = 1, ncols = 2)
 
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
+    if len(snow.plotorder) == 1:
         sumorder = snow.plotorder
         swid = 0.45
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) <= 4:
+        sumorder = snow.plotorder[1::]
+        swid = 0.25
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) > 5:
+        sumorder = snow.plotorder[1::]
+        swid = 0.1
+        wid = np.linspace(-0.4,0.4,len(sumorder))
 
-    wid = np.linspace(-0.3,0.3,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         ax.bar(range(0,len(snow.edges))-wid[iters],
@@ -89,8 +94,8 @@ def pixel_swe(snow):
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
-    ax.set_title('Mean Depth, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
-    ax1.set_title('Mean SWE, %s'%(snow.end_date.date().strftime("%Y-%-m-%-d")))
+    ax.set_title('Mean Depth, %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
+    ax1.set_title('Mean SWE, %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     plt.tight_layout()
     snow._logger.info('saving figure to %smean_swe_depth_%s.png'%(snow.figs_path,snow.name_append))
