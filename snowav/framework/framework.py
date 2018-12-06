@@ -36,42 +36,19 @@ class SNOWAV(object):
         else:
             methods.read_config.read_config(self)
 
-        # If user just wants plots from database, skip processing and just pull
-        # results from the database. This will also attempt to make the figures
-        # if they don't already exist
-        if self.plot_flag is True:
-            # These currently require loading nc files and read_config()
-            # snowav.plotting.accumulated.accumulated(self)
-            # snowav.plotting.current_image.current_image(self)
-            # snowav.plotting.pixel_swe.pixel_swe(self)
-            # snowav.plotting.image_change.image_change(self)
-            # snowav.plotting.swe_change.swe_change(self)
-            # snowav.plotting.precip_depth.precip_depth(self)
+        # Figures only
+        if self.figures_only is True:
 
-            if (not os.path.isfile('{}swe_elev_{}.png'
-                                    .format(self.figs_path,self.name_append))):
-                snowav.plotting.state_by_elev.state_by_elev(self)
+            # Currently these can be made just from pulling from the database.
+            # We are now saving accumulated swi.npy, accumulated precip.npy,
+            # accumulated rain.npy, and swe.npy, so could pull together a
+            # total across runs in the future and make more figs...
+            snowav.plotting.state_by_elev.state_by_elev(self)
+            snowav.plotting.pixel_swe.pixel_swe(self)
+            snowav.plotting.density.density(self)
 
-            # There are two, we just check the first
-            if (not os.path.isfile('{}basin_total_{}.png'
-                                    .format(self.figs_path,self.name_append))):
-                snowav.plotting.basin_total.basin_total(self)
-
-            # There are several, we just check the first
-            if (not os.path.isfile('{}density_subs_{}.png'
-                                    .format(self.figs_path,self.name_append))):
-                snowav.plotting.density.density(self)
-
-            if (not os.path.isfile('{}validation_{}.png'
-                                    .format(self.figs_path,self.name_append))):
-                snowav.plotting.stn_validate.stn_validate(self)
-
-            # Create pdf report
-            if self.report_flag is True:
-                snowav.report.report.report(self)
-
-            # This one still needs editing
-            # snowav.plotting.compare_runs.compare_runs(self)
+            if self.plot_runs is not None:
+                snowav.plotting.compare_runs.compare_runs(self)            
 
         # Otherwise, start the processing steps
         else:
@@ -134,7 +111,14 @@ class SNOWAV(object):
             snowav.plotting.pixel_swe.pixel_swe(self)
             snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
-            snowav.plotting.precip_validate.precip_validate(self)
+
+            if self.plot_runs is not None:
+                snowav.plotting.compare_runs.compare_runs(self)
+
+            if self.precip_figure is True:
+                snowav.plotting.precip_validate.precip_validate(self)
+
+            # snowav.plotting.basin_detail.basin_detail(self)
 
             # The SWI, precip, and rain plot requires process()
             if ((self.exclude_figs is not None) and

@@ -116,7 +116,7 @@ def run():
     #########################################################################
     #                       Database query                                  #
     #########################################################################
-    # snowav -b 'Boise River Basin' -wy 2018 -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/snowav
+    # snowav -b 'basin' -wy wy -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/snowav
 
     # Database query for existing fields
     if args.bid and args.wy:
@@ -145,6 +145,11 @@ def run():
             df = pd.read_sql(q.statement, q.session.connection())
             names = df.run_name.unique()
 
+            # run_name and run_id
+            rid = {}
+            for name in names:
+                rid[name] = df[df['run_name'] == name]['run_id'].values
+
             qry = session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
                                                       (RunMetadata.run_name.in_(names)),
@@ -154,11 +159,29 @@ def run():
 
             session.close()
 
-            print('On database: {},\nAvailable runs for {}: {},\nDate range: {}, {}'.format(
-            args.db,args.bid,names,df['date_time'].min(),df['date_time'].max()))
+            dash = '-'*75
+            print('\n{}'.format(dash))
+            print('On database: {}'.format(args.db))
+            print(dash)
+
+            for name in rid:
+                try:
+                    stime = df[df['run_id'].isin(rid[name])]['date_time'].min().date().strftime("%Y-%-m-%-d")
+                except:
+                    stime = 'nan'
+
+                try:
+                    etime = df[df['run_id'].isin(rid[name])]['date_time'].max().date().strftime("%Y-%-m-%-d")
+                except:
+                    etime  = 'nan'
+
+                print('{:<25s}{:<25s}{:<25s}'.format(name, stime, etime ))
+
+            print('{}\n'.format(dash))
 
         except:
-            print('Failed connecting to database {} for query.'.format(args.db))
+            print('Failed database query in snow.py, format ' +
+                  'snowav -b "Tuolumne" -wy 2018 -db mysql+mysqlconnector://user:password@172.17.0.2/snowav')
 
 if __name__ == '__main__':
     run()
