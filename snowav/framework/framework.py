@@ -39,16 +39,16 @@ class SNOWAV(object):
         # Figures only
         if self.figures_only is True:
 
+            if self.plot_runs is not None:
+                snowav.plotting.compare_runs.compare_runs(self)
+
             # Currently these can be made just from pulling from the database.
             # We are now saving accumulated swi.npy, accumulated precip.npy,
             # accumulated rain.npy, and swe.npy, so could pull together a
             # total across runs in the future and make more figs...
-            snowav.plotting.state_by_elev.state_by_elev(self)
-            snowav.plotting.pixel_swe.pixel_swe(self)
-            snowav.plotting.density.density(self)
-
-            if self.plot_runs is not None:
-                snowav.plotting.compare_runs.compare_runs(self)            
+            # snowav.plotting.state_by_elev.state_by_elev(self)
+            # snowav.plotting.pixel_swe.pixel_swe(self)
+            # snowav.plotting.density.density(self)
 
         # Otherwise, start the processing steps
         else:
@@ -109,7 +109,7 @@ class SNOWAV(object):
             snowav.plotting.swe_change.swe_change(self)
             snowav.plotting.basin_total.basin_total(self)
             snowav.plotting.pixel_swe.pixel_swe(self)
-            snowav.plotting.density.density(self)
+            # snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
             if self.plot_runs is not None:

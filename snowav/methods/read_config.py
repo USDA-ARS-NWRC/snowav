@@ -320,7 +320,7 @@ def read_config(self, external_logger=None, awsm=None):
                  'plot_wy, and plot_variables!')
 
         print('Config file option [results]->figures_only={}, '
-              'creating figures for {}...'.format(self.plot_flag, self.figures_only))
+              'creating figures from database...'.format(self.figures_only))
     else:
         self.plot_flag = False
 
@@ -366,14 +366,20 @@ def read_config(self, external_logger=None, awsm=None):
 
         self.masks = dict()
         for iters, lbl in enumerate(self.plotorder):
+
+            if lbl == 'Cherry Creek':
+                nclbl = 'Cherry'
+            else:
+                nclbl = lbl
+
             if iters > 0:
                 self.masks[lbl] = {'border': blank,
-                                   'mask': ncf[lbl + ' mask'][:],
+                                   'mask': ncf[nclbl + ' mask'][:],
                                    'label': lbl}
             else:
                 self.masks[lbl] = {'border': blank,
                                    'mask': ncf['mask'][:],
-                                   'label': lbl}
+                                   'label': nclbl}
 
         ncf.close()
 
