@@ -37,7 +37,7 @@ def compare_runs(self):
     for i,var in enumerate(self.plot_variables):
 
         plt.close(i)
-        plt.figure(num = i, figsize = (6,4), dpi = 200)
+        plt.figure(num = i, figsize = (6,4), dpi = 300)
         ax = plt.gca()
 
         if 'z' in var:
@@ -100,8 +100,8 @@ def compare_runs(self):
         ax.set_title(title)
         plt.tight_layout()
 
-        snow._logger.info('saving figure to {}compare_{}_{}.png'.format(snow.figs_path,var,snow.name_append))
-        plt.savefig('saving figure to {}compare_{}_{}.png'.format(snow.figs_path,var,snow.name_append))
+        self._logger.info('saving figure to {}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
+        plt.savefig('{}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
 
     # This will need to change if framework.py is updated with different workflow
     # self.session.close()
