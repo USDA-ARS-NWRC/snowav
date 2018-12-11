@@ -22,34 +22,17 @@ import mysql.connector
 mysql -h 172.17.0.2 -P 3306 -u mark -p
 
 '''
-# ws = 'Kings River Basin'
-# watershedid = 7
-# basins = {
-#           'Middle Fork':{'watershed_id':watershedid,
-#                           'basin_id':20,
-#                           'basin_name':'Kings'},
-#           'West Kings':{'watershed_id':watershedid,
-#                           'basin_id':21,
-#                           'basin_name':'Kings'},
-#           'Middle South Fork':{'watershed_id':watershedid,
-#                           'basin_id':22,
-#                           'basin_name':'Kings'},
-#           'South Fork':{'watershed_id':watershedid,
-#                           'basin_id':23,
-#                           'basin_name':'Kings'},
-#           'Mill Creek':{'watershed_id':watershedid,
-#                           'basin_id':24,
-#                           'basin_name':'Kings'},
-#           'North Fork':{'watershed_id':watershedid,
-#                           'basin_id':25,
-#                           'basin_name':'Kings'}
-#
-#                           }
-# basins = {
-#           'Dinkey Creek':{'watershed_id':watershedid,
-#                           'basin_id':26,
-#                           'basin_name':'Kings'}
-#                           }
+# ws = 'San Joaquin River Basin'
+# watershedid = 3
+basins = {
+                'Auberry':{'watershed_id':3,
+                                'basin_id':27,
+                                'basin_name':'Auberry'},
+
+                'Redinger':{'watershed_id':3,
+                                'basin_id':28,
+                                'basin_name':'Redinger'}
+                                }
 
 user = 'mark'
 pwd = 'whatdystm?1'

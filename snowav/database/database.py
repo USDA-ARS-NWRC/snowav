@@ -139,10 +139,15 @@ def delete(self, start_date, end_date, bid, run_name):
                 print('Deleting RunMetadata run_name={}, from {} '
                       'to {}'.format(run_name,start_date.date(),
                       end_date.date()))
-                self.session.query(VariableUnits).\
-                                filter(VariableUnits.run_id == int(r)).delete()
-                self.session.query(RunMetadata).\
-                                filter(RunMetadata.run_id == int(r)).delete()
+
+                q1 = self.session.query(VariableUnits).\
+                                filter(VariableUnits.run_id == int(r)).first()
+                self.session.delete(q1)
+
+                q2 = self.session.query(RunMetadata).\
+                                filter(RunMetadata.run_id == int(r)).first()
+                self.session.delete(q2)
+                
                 self.session.flush()
 
         self.session.commit()

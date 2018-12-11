@@ -46,7 +46,7 @@ class Basin(Base):
     __tablename__ = 'Basin'
 
     watershed_id = Column(Integer,
-                          ForeignKey('Watershed.watershed_id'),
+                          ForeignKey('Watershed.watershed_id', onupdate="cascade"),
                           nullable=False)
     basin_id = Column(Integer, primary_key=True, nullable=False)
     basin_name = Column(String(250), nullable=False)
@@ -59,11 +59,11 @@ class Results(Base):
     __tablename__ = 'Results'
 
     id = Column(Integer, primary_key=True)
-    basin_id = Column(Integer, ForeignKey('Basin.basin_id'), index=True)
-    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'), index=True)
+    basin_id = Column(Integer, ForeignKey('Basin.basin_id', onupdate="cascade"), index=True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id', onupdate="cascade"), index=True)
     date_time = Column(types.DateTime(), nullable=False, index=True)
     variable = Column(String(250), nullable=True, index=True)
-    variable_id = Column(Integer, ForeignKey('VariableUnits.id'), nullable=True)
+    variable_id = Column(Integer, ForeignKey('VariableUnits.id', onupdate="cascade"), nullable=True)
     value = Column(types.Float(), nullable=True)
     elevation = Column(String(250), nullable=True)
 
@@ -80,7 +80,7 @@ class VariableUnits(Base):
     __tablename__ = 'VariableUnits'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    run_id = Column(Integer, ForeignKey('RunMetadata.run_id'),index=True)
+    run_id = Column(Integer, ForeignKey('RunMetadata.run_id', onupdate="cascade"),index=True)
     variable = Column(String(250), nullable=True)
     unit = Column(String(250), nullable=True)
     name = Column(String(250), nullable=True)
@@ -196,13 +196,23 @@ class Basins(object):
                         'basin_id':11,
                         'basin_name':'Main'},
 
+                # Replaced
                 'Jose Creek':{'watershed_id':3,
                               'basin_id':12,
                               'basin_name':'Jose Creek'},
-                              
+
+                # Replaced
                 'Willow Creek':{'watershed_id':3,
                                 'basin_id':13,
                                 'basin_name':'Willow Creek'},
+
+                'Auberry':{'watershed_id':3,
+                                'basin_id':27,
+                                'basin_name':'Auberry'},
+
+                'Redinger':{'watershed_id':3,
+                                'basin_id':28,
+                                'basin_name':'Redinger'},
 
                 # Reynolds
                 'Reynolds Creek':{'watershed_id':8,
