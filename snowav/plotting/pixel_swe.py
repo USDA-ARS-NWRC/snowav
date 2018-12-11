@@ -49,7 +49,7 @@ def pixel_swe(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) > 5:
+    elif len(snow.plotorder) >= 5:
         sumorder = snow.plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))

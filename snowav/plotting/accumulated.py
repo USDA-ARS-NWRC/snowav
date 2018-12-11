@@ -70,11 +70,11 @@ def accumulated(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax.plot(fix1*0,fix1,'k')
-        ax.plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax.plot(fix1*0,fix1,'k')
+    #     ax.plot(fix2*0,fix2,'k')
 
     if snow.basin == 'LAKES':
         ax.set_xlim(snow.imgx)
@@ -175,10 +175,9 @@ def accumulated(snow):
         ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
-    elif snow.basin == 'KINGS':
+    elif snow.basin == 'KINGS' or 'SJ':
         ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
-
     else:
         ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)

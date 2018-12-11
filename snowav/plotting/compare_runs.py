@@ -17,6 +17,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import copy
 import matplotlib.dates as mdates
+import datetime
 
 
 def compare_runs(self):
@@ -40,6 +41,9 @@ def compare_runs(self):
         plt.figure(num = i, figsize = (6,4), dpi = 300)
         ax = plt.gca()
 
+        formatter = mdates.DateFormatter('%b')
+        ax.xaxis.set_major_formatter(formatter)
+
         if 'z' in var:
             lbl = 'mm'
         if ('vol' in var) or 'avail' in var:
@@ -48,8 +52,8 @@ def compare_runs(self):
             lbl = 'kg/m^3'
 
         for iters,run in enumerate(self.plot_runs):
-            qry = self.session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
-                                                      (Results.date_time <= end_date),
+            qry = self.session.query(Results).join(RunMetadata).filter(and_(#(Results.date_time >= start_date),
+                                                      #(Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (RunMetadata.run_name == run),
                                                       (Results.basin_id == Basins.basins[bid]['basin_id'])))
@@ -64,29 +68,29 @@ def compare_runs(self):
                       '{}\n'
                       '{}'.format(start_date,end_date,var,run,bid))
 
-            df.index = df['date_time']
-            df['month'] = df.index.to_series().dt.strftime('%b')
+            df.index = pd.to_datetime(df.date_time)
+            df['month'] = df.index.month
+            df['day'] = df.index.day
+            df['year'] = self.wy
+            i = df['month'] >= 10
+            df.year[i] = self.wy - 1
+            df.index = pd.to_datetime(df[['year','month','day']])
 
-            if var == 'swi_vol':
-                ax.plot(df[df['elevation'] == 'total']['date_time'],
-                        df[df['elevation'] == 'total']['value'].cumsum(),
-                        label = self.plot_labels[iters])
-            else:
-                ax.plot(df[df['elevation'] == 'total']['date_time'],
-                        df[df['elevation'] == 'total']['value'],
-                        label = self.plot_labels[iters])
+            ax.plot(df[df['elevation'] == 'total']['value'],
+                    label = self.plot_labels[iters])
 
             if var == 'swe_vol':
                 title = 'Basin Total SWE'
             if var == 'swi_vol':
                 title = 'Basin Total SWI'
 
-        for i,d in enumerate(self.flight_dates):
-            if i == 0:
-                lb = 'flight update'
-            else:
-                lb = '__nolabel__'
-            ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k',label = lb)
+        if self.flight_dates is not None:
+            for i,d in enumerate(self.flight_dates):
+                if i == 0:
+                    lb = 'flight update'
+                else:
+                    lb = '__nolabel__'
+                ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k',label = lb)
 
         for tick in ax.get_xticklabels():
             tick.set_rotation(30)
@@ -95,7 +99,8 @@ def compare_runs(self):
         ax.xaxis.set_major_formatter(formatter)
         ax.legend()
         ax.set_ylabel('[%s]'%(lbl))
-        ax.set_ylim((-5,2600))
+        # ax.set_ylim((-5,2600))
+        ax.set_xlim((datetime.datetime(self.wy-1,10,1),datetime.datetime(self.wy,9,30)))
 
         ax.set_title(title)
         plt.tight_layout()

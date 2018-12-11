@@ -22,6 +22,15 @@ def basin_total(snow):
 
     '''
 
+    sns.set_style('darkgrid')
+    sns.set_context("notebook")
+
+    plt.close(8)
+    fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
+                                dpi=snow.dpi, nrows = 1, ncols = 2)
+
+    snow.barcolors.insert(0,'black')
+
     # Make df from database
     swe_summary = pd.DataFrame(columns = snow.plotorder)
     swi_summary = pd.DataFrame(columns = snow.plotorder)
@@ -49,15 +58,6 @@ def basin_total(snow):
 
     swi_summary = swi_summary.cumsum()
 
-    sns.set_style('darkgrid')
-    sns.set_context("notebook")
-
-    plt.close(8)
-    fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
-                                dpi=snow.dpi, nrows = 1, ncols = 2)
-
-    snow.barcolors.insert(0,'black')
-
     if snow.basin == 'LAKES' or snow.basin == 'RCEW':
         plotorder = [snow.plotorder[0]]
     else:
@@ -71,6 +71,9 @@ def basin_total(snow):
         for d in snow.flight_dates:
             ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
             ax1.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+
+    # add in other years
+
 
     ax1.yaxis.set_label_position("right")
     ax1.set_xlim((datetime(snow.wy -1 , 10, 1),snow.end_date))

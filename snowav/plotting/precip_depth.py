@@ -120,11 +120,11 @@ def precip_depth(snow):
     for name in snow.masks:
         ax[0,0].contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax[0,0].plot(fix1*0,fix1,'k')
-        ax[0,0].plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax[0,0].plot(fix1*0,fix1,'k')
+    #     ax[0,0].plot(fix2*0,fix2,'k')
 
     if snow.basin == 'LAKES':
         ax[0,0].set_xlim(snow.imgx)
@@ -148,7 +148,7 @@ def precip_depth(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) > 5:
+    elif len(snow.plotorder) >= 5:
         sumorder = snow.plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))
@@ -225,11 +225,11 @@ def precip_depth(snow):
     for name in snow.masks:
         ax[1,0].contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax[1,0].plot(fix1*0,fix1,'k')
-        ax[1,0].plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax[1,0].plot(fix1*0,fix1,'k')
+    #     ax[1,0].plot(fix2*0,fix2,'k')
 
     # Do pretty stuff
     h2.axes.get_xaxis().set_ticks([])
@@ -314,11 +314,11 @@ def precip_depth(snow):
     for name in snow.masks:
         ax[2,0].contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax[2,0].plot(fix1*0,fix1,'k')
-        ax[2,0].plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax[2,0].plot(fix1*0,fix1,'k')
+    #     ax[2,0].plot(fix2*0,fix2,'k')
 
     # Do pretty stuff
     h2.axes.get_xaxis().set_ticks([])

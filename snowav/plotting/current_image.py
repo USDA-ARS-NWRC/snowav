@@ -76,13 +76,13 @@ def current_image(snow):
         ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
         ax1.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax.plot(fix1*0,fix1,'k')
-        ax.plot(fix2*0,fix2,'k')
-        ax1.plot(fix1*0,fix1,'k')
-        ax1.plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax.plot(fix1*0,fix1,'k')
+    #     ax.plot(fix2*0,fix2,'k')
+    #     ax1.plot(fix1*0,fix1,'k')
+    #     ax1.plot(fix2*0,fix2,'k')
 
     # Do pretty stuff for the left plot
     h.axes.get_xaxis().set_ticks([])

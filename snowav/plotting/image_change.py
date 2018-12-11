@@ -73,11 +73,11 @@ def image_change(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax.plot(fix1*0,fix1,'k')
-        ax.plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax.plot(fix1*0,fix1,'k')
+    #     ax.plot(fix2*0,fix2,'k')
 
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
@@ -191,12 +191,11 @@ def image_change(snow):
         ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'SJ':
-        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
     if snow.basin == 'TUOL':
         ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
-
     elif snow.basin == 'KINGS':
         ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)

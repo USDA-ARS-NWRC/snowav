@@ -72,11 +72,11 @@ def swe_change(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax.plot(fix1*0,fix1,'k')
-        ax.plot(fix2*0,fix2,'k')
+    # if snow.basin == 'SJ':
+    #     fix1 = np.arange(1275,1377)
+    #     fix2 = np.arange(1555,1618)
+    #     ax.plot(fix1*0,fix1,'k')
+    #     ax.plot(fix2*0,fix2,'k')
 
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
@@ -99,7 +99,7 @@ def swe_change(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) > 5:
+    elif len(snow.plotorder) >= 5:
         sumorder = snow.plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))

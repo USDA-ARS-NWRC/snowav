@@ -60,9 +60,9 @@ def state_by_elev(snow):
             clr = snow.barcolors[iters - 1]
 
         if snow.dplcs == 0:
-            kaf = str(np.int(sum(melt[name] + nonmelt[name])))
+            kaf = str(np.int(np.nansum(melt[name] + nonmelt[name])))
         else:
-            kaf = str(np.round(sum(melt[name]+ nonmelt[name]),snow.dplcs))
+            kaf = str(np.round(np.nansum(melt[name]+ nonmelt[name]),snow.dplcs))
 
         # Currently only plotting melt + nonmelt
         # If separating nonmelt, consider subplots
