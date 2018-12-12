@@ -21,4 +21,5 @@
 		SUB7_LBL	  & SUB7_SWE		& SUB7_SAV  	& SUB7_PM 		& SUB7_PERSWI		& SUB7_SDEL 		& SUB7_SWI  	& SUB7PRE_PM		& $\sim$SUB7_RAT	\\
 		\bottomrule
 	\end{tabular}
+	\caption{Snow storage and surface water inputs}\label{table:1}
 \end{table}

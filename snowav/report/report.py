@@ -229,18 +229,38 @@ def report(obj):
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
     swe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
-    swe_byelev.index.name = 'Elevation'
+    swevol_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
     dswe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
+
     dswe_byelev.index.name = 'Elevation'
+    swe_byelev.index.name = 'Elevation'
+    swevol_byelev.index.name = 'Elevation'
+
+    sum_flag = True
+
     for sub in obj.plotorder:
 
         swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+
+        sum = r[ (r['date_time']==end_date)
+                                    & (r['variable']=='swe_vol')
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+
+        # If the basin total percents will be 0/nan, omit that table
+        if (np.nansum(sum) < 0.001) or (np.nansum(sum) == np.nan):
+            sum_flag = False
+
+        swevol_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
+                                    & (r['variable']=='swe_vol')
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 0)/np.nansum(sum)*100
+
         sswe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
 
@@ -249,15 +269,26 @@ def report(obj):
     variables['SWE_BYELEV'] = (
                                 r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.report_date.date().strftime("%Y-%-m-%-d"))
-                                + r'\resizebox{\textwidth}{!}{' + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + '}'
+                                + r'\resizebox{\textwidth}{!}{' + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
                                 )
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
                                   obj.report_date.date().strftime("%Y-%-m-%-d"))
-                                + r'\resizebox{\textwidth}{!}{' + dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + '}'
+                                + r'\resizebox{\textwidth}{!}{' + dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} '
                                 )
+
+    print(variables['SWEVOL_BYELEV'])
+    if sum_flag is not True:
+        variables['SWEVOL_BYELEV'] = ' '
+
+    else:
+        variables['SWEVOL_BYELEV'] = (
+                                    r'  \textbf{SWE volume, $\%$ by elevation band, %s}\\ \vspace{0.1cm} \\'
+                                    %(obj.report_date.date().strftime("%Y-%-m-%-d"))
+                                    + r'\resizebox{\textwidth}{!}{' + swevol_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band.} '
+                                    )
 
     variables['TOT_LBL'] = obj.plotorder[0]
 
@@ -323,6 +354,7 @@ def report(obj):
             variables[name + '_FIG'] = ' '
             variables[name + '_TPL'] = ' '
             variables[name + '_FIG_TPL'] = ' '
+            # variables[name] = ' '
 
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))

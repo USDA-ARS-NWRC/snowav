@@ -18,4 +18,5 @@
 		SUB4_LBL	  									& SUB4_SWE		& SUB4_SAV  	& SUB4_PM 		& SUB4_PERSWI		& SUB4_SDEL 		& SUB4_SWI  	& SUB4PRE_PM		& $\sim$SUB4_RAT	\\
 		\bottomrule
 	\end{tabular}
+	\caption{Snow storage and surface water inputs}\label{table:1}
 \end{table}

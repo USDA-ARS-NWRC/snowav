@@ -19,4 +19,5 @@
 		SUB5_LBL	  									& SUB5_SWE		& SUB5_SAV  	& SUB5_PM 		& SUB5_PERSWI		& SUB5_SDEL 		& SUB5_SWI  	& SUB5PRE_PM		& $\sim$SUB5_RAT	\\
 		\bottomrule
 	\end{tabular}
+	\caption{Snow storage and surface water inputs}\label{table:1}
 \end{table}

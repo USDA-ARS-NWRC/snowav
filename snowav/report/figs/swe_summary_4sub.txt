@@ -8,7 +8,7 @@
 
 		\toprule
 
-		\multirow{2}{*} {\bf{Basin} }	& SWE 				& SWE (avail) & SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\ 
+		\multirow{2}{*} {\bf{Basin} }	& SWE 				& SWE (avail) & SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
 																	& [UNITS] 		& [UNITS] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
 		\midrule
 		TOT_LBL												& TOTAL_SWE 	& TOTAL_SAV 	& TOTAL_PM 		& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	& $\sim$TOTAL_RAT	\\
@@ -17,4 +17,5 @@
 		SUB3_LBL	  									& SUB3_SWE		& SUB3_SAV  	& SUB3_PM 		& SUB3_PERSWI		& SUB3_SDEL 		& SUB3_SWI  	& SUB3PRE_PM		& $\sim$SUB3_RAT	\\
 		\bottomrule
 	\end{tabular}
+	\caption{Snow storage and surface water inputs}\label{table:1}
 \end{table}
