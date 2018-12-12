@@ -367,6 +367,7 @@ def read_config(self, external_logger=None, awsm=None):
         self.masks = dict()
         for iters, lbl in enumerate(self.plotorder):
 
+            # Exceptions
             if lbl == 'Cherry Creek':
                 nclbl = 'Cherry'
             else:
@@ -376,10 +377,15 @@ def read_config(self, external_logger=None, awsm=None):
                 self.masks[lbl] = {'border': blank,
                                    'mask': ncf[nclbl + ' mask'][:],
                                    'label': lbl}
+
+                # print(nclbl, 'npix: ', np.nansum(np.nansum( ncf[nclbl + ' mask'][:])))
+                # print(nclbl, 'area: ', np.nansum(np.nansum( ncf[nclbl + ' mask'][:]))*5e-5 )
             else:
                 self.masks[lbl] = {'border': blank,
                                    'mask': ncf['mask'][:],
                                    'label': nclbl}
+                # print(nclbl, 'npix: ', np.nansum(np.nansum( ncf['mask'][:])))
+                # print(nclbl, 'area: ', np.nansum(np.nansum( ncf['mask'][:]))*5e-5 )
 
         ncf.close()
 
@@ -417,7 +423,7 @@ def read_config(self, external_logger=None, awsm=None):
     # Conversion factors and labels
     # Note! If new units are introduced, may need a second look at figure
     # labels, database fields, and writing out variable csv...
-    if self.units == 'KAF':
+    if self.units == 'TAF':
         # KAF, inches, ft
         self.conversion_factor = ((self.pixel**2)
                                  * 0.000000810713194*0.001)
