@@ -98,7 +98,7 @@ def flt_image_change(snow):
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
 
-    if snow.units == 'KAF':
+    if snow.units == 'TAF':
         cbar.set_label(r'$\Delta$ SWE [in]')
     if snow.units == 'SI':
         cbar.set_label(r'$\Delta$ SWE [mm]')
