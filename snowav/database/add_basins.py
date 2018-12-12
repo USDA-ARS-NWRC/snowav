@@ -22,16 +22,33 @@ import mysql.connector
 mysql -h 172.17.0.2 -P 3306 -u mark -p
 
 '''
-# ws = 'San Joaquin River Basin'
-# watershedid = 3
+ws = 'Merced River Basin'
+watershedid = 5
 basins = {
-                'Auberry':{'watershed_id':3,
-                                'basin_id':27,
-                                'basin_name':'Auberry'},
+                'West':{'watershed_id':5,
+                                      'basin_id':36,
+                                      'basin_name':'Merced'},
 
-                'Redinger':{'watershed_id':3,
-                                'basin_id':28,
-                                'basin_name':'Redinger'}
+                'Yosemite':{'watershed_id':5,
+                                      'basin_id':37,
+                                      'basin_name':'Merced'},
+
+                'Upper South Fork':{'watershed_id':5,
+                                      'basin_id':38,
+                                      'basin_name':'Merced'},
+
+                'El Portal':{'watershed_id':5,
+                                      'basin_id':39,
+                                      'basin_name':'Merced'},
+
+                'Lower South Fork':{'watershed_id':5,
+                                      'basin_id':40,
+                                      'basin_name':'Merced'},
+
+                'Pohono':{'watershed_id':5,
+                                      'basin_id':41,
+                                      'basin_name':'Merced'}
+
                                 }
 
 user = 'mark'

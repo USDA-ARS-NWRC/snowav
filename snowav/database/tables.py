@@ -232,9 +232,61 @@ class Basins(object):
                                       'basin_id':17,
                                       'basin_name':'Merced'},
 
+                'West':{'watershed_id':5,
+                                      'basin_id':36,
+                                      'basin_name':'Merced'},
+
+                'Yosemite':{'watershed_id':5,
+                                      'basin_id':37,
+                                      'basin_name':'Merced'},
+
+                'Upper South Fork':{'watershed_id':5,
+                                      'basin_id':38,
+                                      'basin_name':'Merced'},
+
+                'El Portal':{'watershed_id':5,
+                                      'basin_id':39,
+                                      'basin_name':'Merced'},
+
+                'Lower South Fork':{'watershed_id':5,
+                                      'basin_id':40,
+                                      'basin_name':'Merced'},
+
+                'Pohono':{'watershed_id':5,
+                                      'basin_id':41,
+                                      'basin_name':'Merced'},
+
                 # Kaweah
                 'Kaweah River Basin':{'watershed_id':6,
                                       'basin_id':18,
+                                      'basin_name':'Kaweah'},
+
+                'North Fork':{'watershed_id':6,
+                                      'basin_id':29,
+                                      'basin_name':'Kaweah'},
+
+                'Marble Fork':{'watershed_id':6,
+                                      'basin_id':30,
+                                      'basin_name':'Kaweah'},
+
+                'East Fork':{'watershed_id':6,
+                                      'basin_id':31,
+                                      'basin_name':'Kaweah'},
+
+                'South Fork':{'watershed_id':6,
+                                      'basin_id':32,
+                                      'basin_name':'Kaweah'},
+
+                'Middle Fork':{'watershed_id':6,
+                                      'basin_id':33,
+                                      'basin_name':'Kaweah'},
+
+                'Lake Kaweah':{'watershed_id':6,
+                                      'basin_id':34,
+                                      'basin_name':'Kaweah'},
+
+                'Kaweah River':{'watershed_id':6,
+                                      'basin_id':35,
                                       'basin_name':'Kaweah'},
 
                 # Kings
