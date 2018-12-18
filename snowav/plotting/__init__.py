@@ -15,3 +15,5 @@ from . import basin_detail
 from . import write_summary
 from . import compare_runs
 from . import precip_depth
+from . import point_values
+from . import air_temp
