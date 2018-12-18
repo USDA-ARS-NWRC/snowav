@@ -197,6 +197,10 @@ def precip_depth(snow):
         if snow.basin == 'SJ':
             ax[0,0].legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
                       loc=2, borderaxespad=0. )
+
+        elif snow.basin == 'KAWEAH':
+            ax[0,0].legend(handles=patches, bbox_to_anchor=(0.1, 0.05), loc=2, borderaxespad=0. )
+
         else:
             ax[0,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                       loc=2, borderaxespad=0. )

@@ -58,40 +58,36 @@ def state_by_elev(snow):
     sns.set_context("notebook")
 
     plt.close(7)
-    fig, (ax,ax1) = plt.subplots(num=7, nrows = 2, ncols = 1, figsize=(8,8), dpi=snow.dpi)
+    fig, (ax,ax1) = plt.subplots(num=7, nrows = 2, ncols = 1, figsize=(7,6), dpi=snow.dpi)
     # ax = plt.gca()
 
     for iters,name in enumerate(sumorder):
 
         if snow.dplcs == 0:
             kaf = str(np.int(np.nansum(melt[name] + nonmelt[name])))
+            ukaf = str(np.int(np.nansum(nonmelt[name])))
         else:
             kaf = str(np.round(np.nansum(melt[name] + nonmelt[name]),snow.dplcs))
-
-        # ax.bar(range(0,len(snow.edges)),
-        #         nonmelt[name],
-        #         color = clr,
-        #         label = name + ': {} {}'.format(kaf,snow.vollbl))
-
+            ukaf = str(np.round(np.nansum(nonmelt[name]),snow.dplcs))
 
         if iters == 0:
             ax.bar(range(0,len(snow.edges)),nonmelt[name],
                     color = snow.barcolors[iters],
-                    edgecolor = 'k',label = name)
+                    edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
             ax1.bar(range(0,len(snow.edges)),melt[name] + nonmelt[name],
                     color = snow.barcolors[iters],
-                    edgecolor = 'k',label = name)
+                    edgecolor = 'k',label = name + ': {} {}'.format(kaf,snow.vollbl))
 
         else:
             ax.bar(range(0,len(snow.edges)),nonmelt[name],
                     bottom = pd.DataFrame(nonmelt[sumorder[0:iters]]).sum(axis = 1).values,
-                    color = snow.barcolors[iters], edgecolor = 'k',label = name)
+                    color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
             ax1.bar(range(0,len(snow.edges)),melt[name] + nonmelt[name],
                     bottom = pd.DataFrame(melt[sumorder[0:iters]]).sum(axis = 1).values +
                              pd.DataFrame(nonmelt[sumorder[0:iters]]).sum(axis = 1).values,
-                    color = snow.barcolors[iters], edgecolor = 'k',label = name)
+                    color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(kaf,snow.vollbl))
 
         # ax1.bar(range(0,len(snow.edges)),
         #         melt[name] + nonmelt[name],
@@ -114,6 +110,7 @@ def state_by_elev(snow):
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(loc = 2, fontsize = 10)
+    ax1.legend(loc = 2, fontsize = 10)
     ax.set_ylim((0,ylim))
     ax1.set_ylim((0,ylim))
     ax.set_ylabel('unavailable SWE volume [{}]'.format(snow.units))
@@ -124,8 +121,8 @@ def state_by_elev(snow):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]-1))
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]-1))
+    ax.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.1)
     fig.suptitle('SWE, %s'%snow.report_date.date().strftime("%Y-%-m-%-d"))

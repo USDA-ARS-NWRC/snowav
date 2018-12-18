@@ -1,6 +1,6 @@
 \begin{figure}[htbp]
 \begin{centering}
 	\includegraphics[width=0.8\textwidth]{FIG_PATHELEV_FIG}
-	\caption{Current SWE per elevation band for each sub basin.}
+	\caption{Current SWE per elevation band for each sub basin, separated by snow storage that is unavailable for melt based on the cold content (top), and the total storage (bottom).}
 \end{centering}
 \end{figure}

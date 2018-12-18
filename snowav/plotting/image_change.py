@@ -164,40 +164,38 @@ def image_change(snow):
     ax1.yaxis.tick_right()
 
     patches = [mpatches.Patch(color='grey', label='snow free')]
+
+    # Make legend/box defaults and adjust as needed
+    pbbx = 0.05
+    legx = 0.01
+    legy = 0.71
+    btx = 0.31
+    bty = 0.95
+
     if snow.basin == 'SJ':
-        ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                  loc=2, borderaxespad=0. )
+        pbbx = 0.3
+        legy = 0.69
 
-    elif snow.basin == 'RCEW':
-        ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
-                  loc=2, borderaxespad=0. )
-    else:
-        ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                  loc=2, borderaxespad=0. )
+    if snow.basin in ['KAWEAH', 'RCEW']:
+        pbbx = 0.1
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax1.legend(loc= (0.01,0.68))
+    if snow.basin in ['KINGS']:
+        legy = 0.5
 
-        elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.745))
+    if snow.basin in ['LAKES']:
+        btx = 0.26
 
-        # kings
-        elif len(snow.plotorder) > 6:
-                ax1.legend(loc= (0.01,0.5))
+    if snow.basin in ['BRB']:
+        legy = 0.745
+        btx = 0.26
 
-    if snow.basin == 'BRB' or snow.basin == 'LAKES':
-        ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
-    if snow.basin == 'SJ':
-        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-    if snow.basin == 'TUOL':
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
-    elif snow.basin == 'KINGS':
-        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
+    # snow-free
+    ax.legend(handles=patches, bbox_to_anchor=(pbbx, 0.05),
+              loc=2, borderaxespad=0. )
+
+    # basin total and legend
+    ax1.legend(loc=(legx,legy))
+    ax1.text(btx,bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()

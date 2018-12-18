@@ -145,6 +145,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
     self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
     self.precip_figure = ucfg.cfg['validate']['precip_figure']
+    self.val_client = ucfg.cfg['validate']['client']
 
     # This is being used to combine 2017 HRRR data
     self.offset = int(ucfg.cfg['validate']['offset'])
@@ -307,11 +308,12 @@ def read_config(self, external_logger=None, awsm=None):
 
     # If these fields are specified in the config_file, plot_flag will be set
     # to False, no processing occurs, and no report is generated
+    self.plot_labels = ucfg.cfg['results']['plot_labels']
+    self.plot_wy = ucfg.cfg['results']['plot_wy']
+    self.plot_variables = ucfg.cfg['results']['plot_variables']
+
     if self.figures_only is True:
         self.plot_flag = True
-        self.plot_labels = ucfg.cfg['results']['plot_labels']
-        self.plot_wy = ucfg.cfg['results']['plot_wy']
-        self.plot_variables = ucfg.cfg['results']['plot_variables']
 
         if ( (self.plot_labels is None) or
            (self.plot_wy is None) or
@@ -414,8 +416,8 @@ def read_config(self, external_logger=None, awsm=None):
         sr = 0
 
     if self.basin == 'LAKES':
-        self.imgx = (1200,1375)
-        self.imgy = (425,225)
+        self.imgx = (1250,1475)
+        self.imgy = (450,225)
 
     # Right now this is a placeholder, could edit by basin...
     self.xlims = (0,len(self.edges))

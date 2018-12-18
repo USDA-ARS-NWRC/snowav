@@ -42,6 +42,7 @@ def basin_total(snow):
                                     snow.run_name,
                                     bid,
                                     'swe_vol')
+
         r2 = database.database.query(snow,
                                     datetime(snow.wy-1,10,1),
                                     snow.end_date,

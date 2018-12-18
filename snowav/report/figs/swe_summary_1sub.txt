@@ -1,34 +1,20 @@
 \begin{table}[h!]
 	% \caption*{\textbf{Snow Storage and Surface Water Inputs}}
 	\centering
-	\begin{tabular}{l c c c | c c | c c c }
+	\begin{tabular}{l c c c c c c c c }
 
 		% \toprule
 		& \multicolumn{3}{c }{\textbf{Current}} & \multicolumn{2}{c}{\textbf{Report Period}} & \multicolumn{3}{ c }{\textbf{Water Year}}\\
 
 		\toprule
 
-		\multirow{2}{*} {\bf{Basin} }	& SWE 				& SWE (avail) & SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
-																	& [UNITS] 		& [UNITS] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
+		\multirow{2}{*} {\bf{Basin} }	& SWE 			& SWE (avail) & SWE 		 	& SWI 		& $\Delta$SWE & SWI 			& Precip 			& Rain 						\\
+																	& [UNITS] 	& [UNITS] 		& [DEPLBL] 	& [UNITS]	& [UNITS] 		& [UNITS]		& [DEPLBL]		& [$\%$ precip]		\\
 		\midrule
-		TOT_LBL												& TOTAL_SWE 	& TOTAL_SAV 	& TOTAL_PM 		& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	& $\sim$TOTAL_RAT	\\
+		TOT_LBL												& TOTAL_SWE & TOTAL_SAV 	& TOTAL_PM 	& PER_SWI & TOTAL_SDEL 	& TOTAL_SWI & TOTALPRE_PM & $\sim$TOTAL_RAT	\\
 
 		\bottomrule
-		\caption{Snow storage and surface water inputs}\label{table:1}
 	\end{tabular}
 \end{table}
 
-
-%\begin{table}[h!]
-%	\caption*{\textbf{Snow Storage and Surface Water Inputs}}
-%	\centering
-%	\begin{tabular}{l c c c c c c }
-%		\toprule
-
-%		\multirow{2}{*} {\bf{Basin} }	& SWE & SWE (avail) & SWE & $\Delta$SWE & SWI \\ & [UNITS] & [UNITS] & [DEPLBL] & [UNITS] & [UNITS]\\
-
-%		\midrule
-%		TOT_LBL			& TOTAL_SWE 	& TOTAL_SAV & TOTAL_PM 	& TOTAL_SDEL & TOTAL_SWI  \\
-%		\bottomrule
-%	\end{tabular}
-%\end{table}
+\textbf{Table 1:} Snow storage and surface water inputs.

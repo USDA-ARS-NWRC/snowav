@@ -76,13 +76,13 @@ def report(obj):
     variables['TOTAL_SDEL'] = end_swe - start_swe
 
     if float(end_swe) - float(start_swe) > 0:
-        variables['SIGN'] = '$+$'
+        variables['SIGN'] = r'$+$'
 
     if float(end_swe) - float(start_swe) == 0.0:
         variables['SIGN'] = ''
 
     if float(end_swe) - float(start_swe) < 0.0:
-        variables['SIGN'] = '$\neg$'
+        variables['SIGN'] = r'-'
 
     variables['TOTAL_PM'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
@@ -229,6 +229,7 @@ def report(obj):
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
     swe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
+    depth_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     swevol_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
     dswe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
@@ -238,6 +239,11 @@ def report(obj):
     swevol_byelev.index.name = 'Elevation'
 
     sum_flag = True
+
+    if obj.basin in ['KINGS']:
+        spacecmd = r'\resizebox{\textwidth}{!}{'
+    else:
+        spacecmd = r'{'
 
     for sub in obj.plotorder:
 
@@ -249,46 +255,64 @@ def report(obj):
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
 
-        # If the basin total percents will be 0/nan, omit that table
-        if (np.nansum(sum) < 0.001) or (np.nansum(sum) == np.nan):
-            sum_flag = False
-
-        swevol_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
+        swevol_byelev.loc[obj.edges,sub] = (r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 0)/np.nansum(sum)*100
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1]/np.nansum(sum)*100).round(1)
 
         sswe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
 
+        depth_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
+                                    & (r['variable']=='depth')
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
+
+        # If the basin total percents will be 0/nan, omit that table
+        if ((sub == obj.plotorder[0]) and
+            ((np.nansum(sum) < 0.001) or (np.nansum(sum) == np.nan))):
+            sum_flag = False
 
 
     colstr = 'l' + 'r'*len(obj.plotorder)
 
     variables['SWE_BYELEV'] = (
                                 r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.report_date.date().strftime("%Y-%-m-%-d"))
-                                + r'\resizebox{\textwidth}{!}{' + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
+                                %(obj.depthlbl,obj.report_date.date().strftime("%Y-%-m-%-d")) +
+                                spacecmd + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                r'} \\ \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
                                 )
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                 %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
-                                  obj.report_date.date().strftime("%Y-%-m-%-d"))
-                                + r'\resizebox{\textwidth}{!}{' + dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} '
+                                  obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                  dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                  r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
+                                  r'\\ \clearpage'
                                 )
 
-    print(variables['SWEVOL_BYELEV'])
     if sum_flag is not True:
         variables['SWEVOL_BYELEV'] = ' '
 
     else:
         variables['SWEVOL_BYELEV'] = (
-                                    r'  \textbf{SWE volume, $\%$ by elevation band, %s}\\ \vspace{0.1cm} \\'
-                                    %(obj.report_date.date().strftime("%Y-%-m-%-d"))
-                                    + r'\resizebox{\textwidth}{!}{' + swevol_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) + r'} \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band.} '
+                                    r'  \textbf{SWE volume, percent of basin total by elevation band, %s}\\ \vspace{0.1cm} \\'
+                                    %(obj.report_date.date().strftime("%Y-%-m-%-d"))+
+                                    spacecmd + swevol_byelev[obj.plotorder].round(1).to_latex(na_rep='-', column_format=colstr) +
+                                    r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band (totals may not add to 100 due to rounding).} '
                                     )
+        variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace('inf','-')
+
+    variables['DEPTH_BYELEV'] = (
+                                r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
+                                %(obj.depthlbl,
+                                  obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                  depth_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                  r'} \\ \footnotesize{\textbf{Table 5:} Mean snow depth by elevation band.} ' +
+                                  r'\\ \clearpage'
+                                )
 
     variables['TOT_LBL'] = obj.plotorder[0]
 
@@ -359,6 +383,7 @@ def report(obj):
     # Make the report
     env = make_env(loader = FileSystemLoader(obj.templ_path))
     tpl = env.get_template(obj.tex_file)
+    # print(tpl.render(variables))
     pdf = build_pdf(tpl.render(variables))
     # To see what's in latex  >>> print(tpl.render(variables))
 

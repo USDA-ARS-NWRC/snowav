@@ -106,17 +106,22 @@ def current_image(snow):
     h.axes.set_title('SWE \n %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
     fig.subplots_adjust(top=0.95,bottom=0.05,
                         right = 0.92, left = 0.05, wspace = 0.12)
+
     if snow.basin == 'LAKES':
         plt.tight_layout()
 
     patches = [mpatches.Patch(color='grey', label='snow free')]
-    if snow.basin == 'SJ':
-        ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05), loc=2, borderaxespad=0. )
-    else:
-        ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
 
-    if snow.basin == 'RCEW':
-        ax.legend(handles=patches, bbox_to_anchor=(-0.2, 0.05), loc=2, borderaxespad=0. )
+    # Make legend/box defaults and adjust as needed
+    pbbx = 0.3
+    pbby = 0.05
+
+    if snow.basin in ['KAWEAH', 'RCEW']:
+        pbbx = 0.1
+
+    # snow-free
+    ax.legend(handles=patches, bbox_to_anchor=(pbbx, pbby),
+              loc=2, borderaxespad=0. )
 
     snow._logger.info('saving figure to %sresults_%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sresults_%s.png'%(snow.figs_path,snow.name_append))
