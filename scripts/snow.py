@@ -141,7 +141,9 @@ def run():
 
             # Get available run_names for the watershed
             wid =  Basins.basins[args.bid]['watershed_id']
-            q = session.query(RunMetadata).filter(RunMetadata.watershed_id == wid)
+            q = session.query(RunMetadata).join(Results).filter(and_(RunMetadata.watershed_id == wid),
+                                                                    (Results.date_time >= start_date),
+                                                                    (Results.date_time <= end_date),                                    )
             df = pd.read_sql(q.statement, q.session.connection())
             names = df.run_name.unique()
 
@@ -157,9 +159,14 @@ def run():
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 
+            qry2 = session.query(RunMetadata).join(Results).filter(and_((Results.date_time >= start_date),
+                                                      (Results.date_time <= end_date),
+                                                      (RunMetadata.run_name.in_(names)) ))
+            df2 = pd.read_sql(qry2.statement, qry2.session.connection())
+
             session.close()
 
-            dash = '-'*75
+            dash = '-'*100
             print('\n{}'.format(dash))
             print('On database: {}'.format(args.db))
             print(dash)
@@ -178,6 +185,8 @@ def run():
                 print('{:<25s}{:<25s}{:<25s}'.format(name, stime, etime ))
 
             print('{}\n'.format(dash))
+            # print(name)
+            # print(df2[df2['run_name'] == name]['data_location'].values)
 
         except:
             print('Failed database query in snow.py, format ' +

@@ -25,10 +25,10 @@ snowav -b 'basin' -wy wy -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/
 
 '''
 
-# run_name = 'test'
-start_date = datetime.datetime(2017,10,1)
-end_date = datetime.datetime(2018,9,30)
-bid = 'Boise River Basin'
+# run_name = 'kings_wy2019_devel'
+# start_date = datetime.datetime(2018,10,1)
+# end_date = datetime.datetime(2018,10,30)
+# basins = ['Middle Fork','West Kings','Dinkey Creek','Middle South Fork','South Fork','Mill Creek','North Fork']
 
 user = 'mark'
 pwd = 'whatdystm?1'
@@ -42,45 +42,46 @@ Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-wid =  Basins.basins[bid]['watershed_id']
+for bid in basins:
+    wid =  Basins.basins[bid]['watershed_id']
 
-qry = session.query(Results).join(RunMetadata).filter(and_(
-                (Results.date_time >= start_date),
-                (Results.date_time <= end_date),
-                (RunMetadata.run_name == run_name),
-                (Results.basin_id == Basins.basins[bid]['basin_id'])))
+    qry = session.query(Results).join(RunMetadata).filter(and_(
+                    (Results.date_time >= start_date),
+                    (Results.date_time <= end_date),
+                    (RunMetadata.run_name == run_name),
+                    (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
-df = pd.read_sql(qry.statement, qry.session.connection())
+    df = pd.read_sql(qry.statement, qry.session.connection())
 
-# Delete Results by date range, run_id, and basin
-for r in df.run_id.unique():
-    session.query(Results).filter(and_(
-        (Results.date_time >= start_date),
-        (Results.date_time <= end_date),
-        (Results.run_id == int(r)),
-        (Results.basin_id == Basins.basins[bid]['basin_id']))).delete()
+    # Delete Results by date range, run_id, and basin
+    for r in df.run_id.unique():
+        session.query(Results).filter(and_(
+            (Results.date_time >= start_date),
+            (Results.date_time <= end_date),
+            (Results.run_id == int(r)),
+            (Results.basin_id == Basins.basins[bid]['basin_id']))).delete()
 
-    session.flush()
+        session.flush()
 
-# Query Metadata to see what's remaining
-qry = session.query(RunMetadata).join(Results).filter(and_(RunMetadata.watershed_id == wid),
-                                                    (RunMetadata.run_name == run_name),
-                                                    (Results.date_time >= start_date),
-                                                    (Results.date_time <= end_date))
+    # Query Metadata to see what's remaining
+    qry = session.query(RunMetadata).join(Results).filter(and_(RunMetadata.watershed_id == wid),
+                                                        (RunMetadata.run_name == run_name),
+                                                        (Results.date_time >= start_date),
+                                                        (Results.date_time <= end_date))
 
 
-df = pd.read_sql(qry.statement, qry.session.connection())
+    df = pd.read_sql(qry.statement, qry.session.connection())
 
-# run_name and run_id
-rid = {}
-rid[run_name] = df[df['run_name'] == run_name]['run_id'].values
+    # run_name and run_id
+    rid = {}
+    rid[run_name] = df[df['run_name'] == run_name]['run_id'].values
 
-# Toggling
+    # Toggling
 
-for n in rid[run_name]:
-    qry = session.query(RunMetadata).filter(RunMetadata.run_id == int(n)).first()
-    session.delete(qry)
-    session.commit()
+    for n in rid[run_name]:
+        qry = session.query(RunMetadata).filter(RunMetadata.run_id == int(n)).first()
+        session.delete(qry)
+        session.commit()
 
 # for n in rid[run_name]:
 #     qry = session.query(VariableUnits).filter(VariableUnits.run_id == int(n)).first()

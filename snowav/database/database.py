@@ -129,15 +129,14 @@ def delete(self, start_date, end_date, bid, run_name):
 
             self.session.flush()
 
-        # Query again, if no results from those run_id exist still, also remove
-        # the metadata and variableUnits
-        qry2 = self.session.query(Results).filter(Results.run_id == int(r))
-        df2 = pd.read_sql(qry2.statement, qry2.session.connection())
+            # Query again, if no results from those run_id exist still, also remove
+            # the metadata and variableUnits
+            qry2 = self.session.query(Results).filter(Results.run_id == int(r))
+            df2 = pd.read_sql(qry2.statement, qry2.session.connection())
 
-        if df2.empty:
-            for r in df.run_id.unique():
-                print('Deleting RunMetadata run_name={}, from {} '
-                      'to {}'.format(run_name,start_date.date(),
+            if df2.empty:
+                print('Deleting RunMetadata run_name={}, run_id={}, from {} '
+                      'to {}'.format(run_name,str(r),start_date.date(),
                       end_date.date()))
 
                 q1 = self.session.query(VariableUnits).\
@@ -147,7 +146,7 @@ def delete(self, start_date, end_date, bid, run_name):
                 q2 = self.session.query(RunMetadata).\
                                 filter(RunMetadata.run_id == int(r)).first()
                 self.session.delete(q2)
-                
+
                 self.session.flush()
 
         self.session.commit()
