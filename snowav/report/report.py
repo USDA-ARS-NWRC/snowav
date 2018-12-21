@@ -252,9 +252,11 @@ def report(obj):
     depth_byelev.index.name = 'Elevation'
 
     sum_flag = True
+    print(obj.basin)
 
-    if obj.basin in ['KINGS', 'SJ']:
+    if obj.basin in ['KINGS', 'SJ', 'KAWEAH','MERCED']:
         spacecmd = r'\resizebox{\textwidth}{!}{'
+        print(spacecmd)
     else:
         spacecmd = r'{'
 
@@ -298,7 +300,7 @@ def report(obj):
                                 spacecmd + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                 r'} \\ \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
                                 )
-    variables['SWE_BYELEV'] = variables['SWE_BYELEV'].replace(r'\toprule','')
+    # variables['SWE_BYELEV'] = variables['SWE_BYELEV'].replace(r'\toprule','')
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
@@ -308,7 +310,8 @@ def report(obj):
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
                                   r'\\ \clearpage'
                                 )
-    variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
+    print(variables['DSWE_BYELEV'])
+    # variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
 
     if sum_flag is not True:
         variables['SWEVOL_BYELEV'] = ' '
@@ -321,7 +324,7 @@ def report(obj):
                                     r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band (totals may not add to 100 due to rounding).} '
                                     )
         variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace('inf','-')
-        variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace(r'\toprule','')
+        # variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace(r'\toprule','')
 
     # variables['DEPTH_BYELEV'] = (
     #                             r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
