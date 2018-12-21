@@ -81,27 +81,26 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
     sns.set_style('darkgrid')
     sns.set_context('notebook')
 
-    plt.close(16)
+    plt.close(30)
 
     if len(stns) <= 6:
-        fig, axs = plt.subplots(num=16, figsize=(10,10), nrows=3, ncols=2)
+        fig, axs = plt.subplots(num=30, figsize=(10,10), nrows=3, ncols=2)
+        fig1, axs1 = plt.subplots(num=31, figsize=(10,10), nrows=3, ncols=2)
 
     if (len(stns) > 6) and (len(stns) <= 9):
-        fig, axs = plt.subplots(num=16, figsize=(10,10), nrows=3, ncols=3)
+        fig, axs = plt.subplots(num=30, figsize=(10,10), nrows=3, ncols=3)
+        fig1, axs1 = plt.subplots(num=31, figsize=(10,10), nrows=3, ncols=3)
 
     if (len(stns) > 9) and (len(stns) <= 12):
-        fig, axs = plt.subplots(num=16, figsize=(10,10), nrows=4, ncols=3)
+        fig, axs = plt.subplots(num=30, figsize=(10,10), nrows=4, ncols=3)
+        fig1, axs1 = plt.subplots(num=31, figsize=(10,10), nrows=4, ncols=3)
 
     axs = axs.flatten()
+    axs1 = axs1.flatten()
     z = {}
-
-    # plt.close(17)
-    # fig1 = plt.figure(num=17, figsize=(10,10), dpi = 250)
-    # ax1 = plt.gca()
 
     for iters,stn in enumerate(stns):
 
-        # for n,m in zip(px,py):
         iswe = 0
 
         for rname in rundirs:
@@ -119,14 +118,8 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
 
             xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
             yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
-
-            print('air 122, ', stn,dem[yind,xind])
             z[stn] = dem[yind,xind]
-
             swe = pd.Series(val[0:23,yind,xind].flatten(),index=nctvec)
-
-            # ax1.imshow(val[0,:,:])
-            # ax1.plot(xind,yind,'ro',markersize=5)
 
             try:
                 mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values
@@ -144,6 +137,9 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
         axs[iters].plot(mod[stn],'b',linewidth = 0.75,label='model')
         axs[iters].set_title(lbls[iters])
         # axs[iters].set_xlim((datetime(wy - 1, 10, 1),end_date))
+
+        mask = pd.notna(meas[stn])
+        axs1[iters].plot(meas[stn][mask].values,mod[stn][mask].values,'ko',markersize=5)
 
     if len(stns) <= 6:
         for n in (1,3,5):
@@ -177,16 +173,6 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
 
     # Plot
     meas = meas.replace('[]',np.nan)
-    # maxm = np.nanmax(meas.max().values)
-    # maxi = np.nanmax(mod.max().values)
-    #
-    # if maxm > maxi:
-    #     maxswe = maxm
-    # else:
-    #     maxswe = maxi
-
-    # for iters in range(0,len(stns)):
-    #     axs[iters].set_ylim((-0.1,maxswe + maxswe*0.05))
 
     for iters in range(0,len(stns)):
         axs[iters].set_xlim((start_date,end_date))
@@ -197,22 +183,9 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
     plt.suptitle('Validation at Measured Sites')
     plt.subplots_adjust(top=0.92)
 
-    # plt.show()
-    # print(meas,mod)
-
     # snow._logger.info('saving figure to {}air_temp_{}.png'.format(snow.figs_path,snow.name_append))
     plt.savefig('{}air_temp_{}.png'.format(figs_path,name_append))
+    # plt.show()
 
-###############################################################################
-
-    mask = pd.notna(meas[stn])
-
-    plt.close(20)
-
-    f, ax = plt.subplots(num=20,figsize=(6, 6))
-
-    sns.kdeplot(meas[stn][mask], mod[stn], ax=ax)
-    sns.rugplot(meas[stn][mask], color="g", ax=ax)
-    sns.rugplot(mod[stn][mask], vertical=True, ax=ax)
-
-    plt.savefig('{}air_temp_test{}.png'.format(figs_path,name_append))
+    # mask = pd.notna(meas[stn])
+    # plt.savefig('{}air_temp_test{}.png'.format(figs_path,name_append))

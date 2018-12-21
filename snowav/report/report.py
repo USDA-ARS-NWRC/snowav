@@ -10,6 +10,7 @@ from snowav import database
 from snowav.database.tables import Basins, Watersheds
 import pandas as pd
 import os
+from datetime import timedelta
 
 
 def report(obj):
@@ -59,10 +60,11 @@ def report(obj):
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
                                 & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
-    variables['TOTAL_SAV'] =r[  (r['basin_id']==bid)
+    variables['TOTAL_SAV'] = r[  (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
                                 & (r['variable']=='swe_avail')]['value'].values[0].round(decimals = 1)
+    variables['TOTAL_PVOL'] = '-'
 
     start_swe = r[ (r['basin_id']==bid)
                     & (r['date_time']==start_date)
@@ -120,6 +122,7 @@ def report(obj):
         PREPM = 'SUB' + str(n) + 'PRE_PM'
         RAIN = 'SUB' + str(n) + 'RAI'
         RATIO = 'SUB' + str(n) + '_RAT'
+        PVOL = 'SUB' + str(n) + '_PVOL'
 
         swival = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
                      & (r['date_time']>=wy_start)
@@ -163,6 +166,11 @@ def report(obj):
                     & (r['elevation']=='total')
                     & (r['variable']=='rain_z')]['value'].sum()
 
+        if (end_swe > 0) and (variables['TOTAL_SWE'] > 0):
+            pvol = end_swe/variables['TOTAL_SWE']*100
+        else:
+            pvol = '-'
+
         if prepmval != 0.0:
             ratval = str(int((rainval/prepmval)*100))
         else:
@@ -176,7 +184,8 @@ def report(obj):
         variables[PM] = pmval
         variables[PREPM] = prepmval
         variables[RAIN] = rainval
-        variables[RATIO]  = ratval
+        variables[RATIO] = ratval
+        variables[PVOL] = pvol
 
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
@@ -202,11 +211,11 @@ def report(obj):
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
     variables['SWI_FIG'] = 'swi_%s.png'%(obj.name_append)
-    variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
+    # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
     variables['CHANGES_FIG'] = 'swe_change_%s.png'%(obj.name_append)
     variables['DFLT_FIG'] = 'dflt_swe_change_%s.png'%(obj.name_append)
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth_%s.png'%(obj.name_append)
-    variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
+    # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total_%s.png'%(obj.name_append)
     variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
     variables['HYP_FIG'] = 'hypsometry_%s.png'%(obj.name_append)
@@ -217,6 +226,8 @@ def report(obj):
     variables['DENSITY_SWE_FIG'] = 'density_swe_%s.png'%(obj.name_append)
     variables['PDEP_FIG'] = 'precip_depth_%s.png'%(obj.name_append)
     variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
+    variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
+    variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
     variables['ASOLOGO'] = obj.figs_tpl_path + 'ASO.jpg'
     variables['USDALOGO'] = obj.figs_tpl_path + 'USDA.png'
@@ -231,16 +242,18 @@ def report(obj):
     swe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     depth_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     swevol_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
+    # swepercent_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
     dswe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
 
     dswe_byelev.index.name = 'Elevation'
     swe_byelev.index.name = 'Elevation'
     swevol_byelev.index.name = 'Elevation'
+    depth_byelev.index.name = 'Elevation'
 
     sum_flag = True
 
-    if obj.basin in ['KINGS']:
+    if obj.basin in ['KINGS', 'SJ']:
         spacecmd = r'\resizebox{\textwidth}{!}{'
     else:
         spacecmd = r'{'
@@ -267,6 +280,8 @@ def report(obj):
                                     & (r['variable']=='depth')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
 
+        # print(depth_byelev)
+
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
         # If the basin total percents will be 0/nan, omit that table
@@ -283,6 +298,7 @@ def report(obj):
                                 spacecmd + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                 r'} \\ \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
                                 )
+    variables['SWE_BYELEV'] = variables['SWE_BYELEV'].replace(r'\toprule','')
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
@@ -292,6 +308,7 @@ def report(obj):
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
                                   r'\\ \clearpage'
                                 )
+    variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
 
     if sum_flag is not True:
         variables['SWEVOL_BYELEV'] = ' '
@@ -304,15 +321,16 @@ def report(obj):
                                     r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band (totals may not add to 100 due to rounding).} '
                                     )
         variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace('inf','-')
+        variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace(r'\toprule','')
 
-    variables['DEPTH_BYELEV'] = (
-                                r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,
-                                  obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                  depth_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
-                                  r'} \\ \footnotesize{\textbf{Table 5:} Mean snow depth by elevation band.} ' +
-                                  r'\\ \clearpage'
-                                )
+    # variables['DEPTH_BYELEV'] = (
+    #                             r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
+    #                             %(obj.depthlbl,
+    #                               obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+    #                               depth_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+    #                               r'} \\ \footnotesize{\textbf{Table 5:} Mean snow depth by elevation band.} ' +
+    #                               r'\\ \clearpage'
+    #                             )
 
     variables['TOT_LBL'] = obj.plotorder[0]
 
@@ -334,14 +352,16 @@ def report(obj):
     section_dict = {'SUMMARY':obj.summary_file,
                     'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt',
                     'SWI_FIG_TPL':obj.figs_tpl_path + 'swi_fig_tpl.txt',
-                    'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
-                    'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
+                    # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
+                    # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
                     'MULTITOT_FIG_TPL':obj.figs_tpl_path + 'multitot_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt',
-                    'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt'
+                    'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt',
+                    'COLD_FIG_TPL':obj.figs_tpl_path + 'cold_fig_tpl.txt',
+                    'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt'
                     }
 
     # Define and load summary tables depending on number of subbasins

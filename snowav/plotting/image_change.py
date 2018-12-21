@@ -12,6 +12,7 @@ import matplotlib.patches as mpatches
 import pandas as pd
 from snowav import database
 from snowav.database.tables import Basins
+from snowav.plotting.plotlims import plotlims as plotlims
 
 def image_change(snow):
     '''
@@ -55,6 +56,9 @@ def image_change(snow):
     cmap = copy.copy(mymap)
     cmap.set_bad('white',1.)
 
+    # Get basin-specific lims
+    lims = plotlims(snow.basin, snow.plotorder)
+
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
@@ -73,12 +77,6 @@ def image_change(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    # if snow.basin == 'SJ':
-    #     fix1 = np.arange(1275,1377)
-    #     fix2 = np.arange(1555,1618)
-    #     ax.plot(fix1*0,fix1,'k')
-    #     ax.plot(fix2*0,fix2,'k')
-
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
@@ -91,31 +89,23 @@ def image_change(snow):
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
                        snow.report_date.date().strftime("%Y-%-m-%-d")))
 
-    # Plot the bar in order
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-        swid = 0.25
-    else:
-        sumorder = snow.plotorder
-        swid = 0.45
-
     if snow.dplcs == 0:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(int(delta_swe_byelev[snow.plotorder[0]].sum())),
                              snow.vollbl)
     else:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
                                           snow.dplcs)),snow.vollbl)
 
-    for iters,name in enumerate(sumorder):
+    for iters,name in enumerate(lims.sumorder):
 
         if snow.dplcs == 0:
-            lbl = '%s = %s %s'%(name,
+            lbl = '{}: {} {}'.format(name,
                                 str(int(delta_swe_byelev[name].sum())),
                                 snow.vollbl)
         else:
-            lbl = '%s = %s %s'%(name,
+            lbl = '{}: {} {}'.format(name,
                                 str(np.round(delta_swe_byelev[name].sum(),
                                 snow.dplcs)),snow.vollbl)
 
@@ -126,7 +116,7 @@ def image_change(snow):
 
         else:
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = pd.DataFrame(delta_swe_byelev[sumorder[0:iters]]).sum(axis = 1).values,
+                    bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
     plt.tight_layout()
@@ -154,8 +144,8 @@ def image_change(snow):
     if ylims[0] == 0:
         ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
 
-    ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
-    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
+    ax1.set_xlabel('elevation [%s]'.format(snow.elevlbl))
     ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
@@ -163,43 +153,19 @@ def image_change(snow):
     ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
 
-    patches = [mpatches.Patch(color='grey', label='snow free')]
-
-    # Make legend/box defaults and adjust as needed
-    pbbx = 0.05
-    legx = 0.01
-    legy = 0.71
-    btx = 0.31
-    bty = 0.95
-
-    if snow.basin == 'SJ':
-        pbbx = 0.3
-        legy = 0.69
-
-    if snow.basin in ['KAWEAH', 'RCEW']:
-        pbbx = 0.1
-
-    if snow.basin in ['KINGS']:
-        legy = 0.5
-
-    if snow.basin in ['LAKES']:
-        btx = 0.26
-
-    if snow.basin in ['BRB']:
-        legy = 0.745
-        btx = 0.26
-
     # snow-free
-    ax.legend(handles=patches, bbox_to_anchor=(pbbx, 0.05),
-              loc=2, borderaxespad=0. )
+    patches = [mpatches.Patch(color='grey', label='snow free')]
+    if sum(sum(ixf)) > 1000:
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0.)
 
     # basin total and legend
-    ax1.legend(loc=(legx,legy))
-    ax1.text(btx,bty,tlbl,horizontalalignment='center',
+    ax1.legend(loc=(lims.legx,lims.legy))
+    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving figure to %sswe_change_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswe_change_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving figure to {}swe_change_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}swe_change_{}.png'.format(snow.figs_path,snow.name_append))

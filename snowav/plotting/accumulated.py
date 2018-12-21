@@ -10,23 +10,41 @@ import cmocean
 import matplotlib.patches as mpatches
 from snowav import database
 from snowav.database.tables import Basins
+from snowav.plotting.plotlims import plotlims as plotlims
 import pandas as pd
 
 
 def accumulated(snow):
     '''
-    Issues:
-    - matplotlib, multiple colormaps, and qMin/qMax do not play nice
+    Figure: 0
+
+    outputs['swi_z'] (trimmed to ixe,ixs)
+    depth_factor
+    edges
+    plotorder
+    figsize
+    start_date
+    end_date
+    report_date
+    run_name
+    session (to database)
+    masks
+    imgx (lakes)
+    imgy (lakes)
+    depthlbl
+    vollbl
+    figs_path
+    name_append
+    xlims
 
     '''
 
     # Calculate accumulated swi during the specified period
-    accum = np.zeros((snow.nrows,snow.ncols))
+    accum = np.zeros((len(snow.outputs['swi_z'][0][:,0]),
+                      len(snow.outputs['swi_z'][0][0,:])))
 
     for n in range(snow.ixs,snow.ixe):
-        accum = accum + snow.outputs['swi_z'][n]
-
-    accum = np.multiply(accum,snow.depth_factor)
+        accum = accum + np.multiply(snow.outputs['swi_z'][n],snow.depth_factor)
 
     # Make df from database
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
@@ -39,15 +57,16 @@ def accumulated(snow):
             v = r[r['elevation'] == str(elev)]
             accum_byelev.loc[elev,bid] = np.nansum(v['value'].values)
 
+    #######################################
+    #            plot set up              #
+    #######################################
+
     qMin,qMax = np.nanpercentile(accum,[0,99.8])
     clims = (0,qMax)
     colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
     colors2 = plt.cm.binary(np.linspace(0, 1, 1))
     colors = np.vstack((colors2, colors1))
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-
-    sns.set_style('darkgrid')
-    sns.set_context("notebook")
 
     # White background
     pmask = snow.masks[snow.plotorder[0]]['mask']
@@ -56,25 +75,25 @@ def accumulated(snow):
     mymap.set_bad('white',1.)
 
     # Now set SWI-free to some color
-    r = ~np.isnan(accum)
-    r[r] &= accum[r] < 0.05
-    accum[r] = -1
+    zs = ~np.isnan(accum)
+    zs[zs] &= accum[zs] < 0.02
+    accum[zs] = -1
     mymap.set_under('grey',1.)
 
+    # Get basin-specific lims
+    lims = plotlims(snow.basin, snow.plotorder)
+
+    sns.set_style('darkgrid')
+    sns.set_context("notebook")
+
     plt.close(0)
-    fig,(ax,ax1) = plt.subplots(num=0, figsize = snow.figsize,
-                                dpi=snow.dpi, nrows = 1, ncols = 2)
-    h = ax.imshow(accum, clim = clims, cmap = mymap)
+    fig,(ax,ax1) = plt.subplots(num=0, figsize=snow.figsize,
+                                dpi=snow.dpi, nrows=1, ncols=2)
+    h = ax.imshow(accum, clim=clims, cmap=mymap)
 
     # Basin boundaries
     for name in snow.masks:
-        ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
-
-    # if snow.basin == 'SJ':
-    #     fix1 = np.arange(1275,1377)
-    #     fix2 = np.arange(1555,1618)
-    #     ax.plot(fix1*0,fix1,'k')
-    #     ax.plot(fix2*0,fix2,'k')
+        ax.contour(snow.masks[name]['mask'], cmap='Greys',linewidths=1)
 
     if snow.basin == 'LAKES':
         ax.set_xlim(snow.imgx)
@@ -86,38 +105,28 @@ def accumulated(snow):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="4%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label('[%s]'%(snow.depthlbl))
-    h.axes.set_title('Accumulated SWI \n %s to %s'
-                     %(snow.start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.report_date.date().strftime("%Y-%-m-%-d")))
+    cbar.set_label('[{}]'.format(snow.depthlbl))
+    h.axes.set_title('Accumulated SWI \n {} to {}'.format(
+                                snow.start_date.date().strftime("%Y-%-m-%-d"),
+                                snow.report_date.date().strftime("%Y-%-m-%-d")))
 
-    # Total basin label
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
-    else:
-        sumorder = snow.plotorder
-
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
-
-    if snow.dplcs == 0:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+    # Decimal places
+    if accum_byelev[snow.plotorder[0]].sum() < 9.9:
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(int(accum_byelev[snow.plotorder[0]].sum())),
                              snow.vollbl)
     else:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(np.round(accum_byelev[snow.plotorder[0]].sum(),
                             snow.dplcs)),snow.vollbl)
 
     # Plot the bars
-
-    for iters,name in enumerate(sumorder):
-
-        if snow.dplcs == 0:
-            lbl = '%s = %s %s'%(name,str(int(accum_byelev[name].sum())),
+    for iters,name in enumerate(lims.sumorder):
+        if accum_byelev[snow.plotorder[0]].sum() < 9.9:
+            lbl = '{}: {} {}'.format(name,str(int(accum_byelev[name].sum())),
                                 snow.vollbl)
         else:
-            lbl = '%s = %s %s'%(name,str(np.round(accum_byelev[name].sum(),
+            lbl = '{}: {} {}'.format(name,str(np.round(accum_byelev[name].sum(),
                                 snow.dplcs)),snow.vollbl)
 
         if iters == 0:
@@ -127,10 +136,11 @@ def accumulated(snow):
 
         else:
             ax1.bar(range(0,len(snow.edges)),accum_byelev[name],
-                    bottom = pd.DataFrame(accum_byelev[sumorder[0:iters]]).sum(axis = 1).values,
+                    bottom = pd.DataFrame(accum_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
     plt.tight_layout()
+
     xts = ax1.get_xticks()
     edges_lbl = []
     for i in xts[0:len(xts)-1]:
@@ -140,8 +150,8 @@ def accumulated(snow):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
-    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
+    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
@@ -155,44 +165,17 @@ def accumulated(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax1.legend(loc= (0.01,0.68))
-
-        elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.01,0.74))
-
-        # kings
-        elif len(snow.plotorder) > 6:
-                ax1.legend(loc= (0.01,0.55), fontsize = 9)
-
-    if snow.basin == 'BRB':
-        ax1.text(0.27,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-
-    elif snow.basin == 'TUOL':
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-
-    elif snow.basin == 'KINGS' or 'SJ':
-        ax1.text(0.31,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-    else:
-        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
-
-    # Make SWI-free legend if we need one
-    if sum(sum(r)) > 1000:
+    # If there is meaningful snow-free area, include path and label
+    if sum(sum(zs)) > 1000:
         patches = [mpatches.Patch(color='grey', label='no SWI')]
-        if snow.basin == 'SJ':
-            ax.legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        elif snow.basin == 'KAWEAH':
-            ax.legend(handles=patches, bbox_to_anchor=(0.1, 0.05), loc=2, borderaxespad=0. )
-        else:
-            ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                      loc=2, borderaxespad=0. )
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0. )
 
-    snow._logger.info('saving figure to %sswi_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswi_%s.png'%(snow.figs_path,snow.name_append))
+    # basin total and legend
+    ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
+    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
+
+    snow._logger.info('saving figure to{}sswi_{}.png'.format(snow.figs_path,
+                                                             snow.name_append))
+    plt.savefig('{}swi_{}.png'.format(snow.figs_path,snow.name_append))

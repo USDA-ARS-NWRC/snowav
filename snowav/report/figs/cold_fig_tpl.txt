@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHCOLD_FIG}
+	\caption{Snowpack cold content (left), and volume of snow that is unavailable for melt, based on the cold content, by elevation band (right). Snow that requires enough additional energy inputs to reach $0^{\circ}$C that it is unavailable for melt appears as blue in the left panel. Zero storage in the right panel indicates that the snowpack is ripe.}
+\end{centering}
+\end{figure}

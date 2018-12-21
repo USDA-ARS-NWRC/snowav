@@ -1,5 +1,4 @@
 \begin{table}[h!]
-	% \caption*{\textbf{Snow Storage and Surface Water Inputs}}
 	\centering
 	\begin{tabular}{l c c c | c c | c c c }
 
@@ -8,17 +7,17 @@
 
 		\toprule
 
-		\multirow{2}{*} {\bf{Basin} }	& SWE 				& SWE (avail) & SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
-																	& [UNITS] 		& [UNITS] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
+		\multirow{2}{*} {\bf{Basin} }	& SWE			& SWE 						& SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
+																	& [UNITS] & [$\%$ total] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
 		\midrule
-		TOT_LBL			& TOTAL_SWE 	& TOTAL_SAV 	& TOTAL_PM 		& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	& $\sim$TOTAL_RAT	\\
-		SUB1_LBL	  & SUB1_SWE		& SUB1_SAV 	 	& SUB1_PM 		& SUB1_PERSWI 	& SUB1_SDEL			& SUB1_SWI  	& SUB1PRE_PM    & $\sim$SUB1_RAT	\\
-		SUB2_LBL	  & SUB2_SWE		& SUB2_SAV  	& SUB2_PM 		& SUB2_PERSWI		& SUB2_SDEL 		& SUB2_SWI 		& SUB2PRE_PM		& $\sim$SUB2_RAT	\\
-		SUB3_LBL	  & SUB3_SWE		& SUB3_SAV  	& SUB3_PM 		& SUB3_PERSWI		& SUB3_SDEL 		& SUB3_SWI  	& SUB3PRE_PM		& $\sim$SUB3_RAT	\\
-		SUB4_LBL	  & SUB4_SWE		& SUB4_SAV  	& SUB4_PM 		& SUB4_PERSWI		& SUB4_SDEL 		& SUB4_SWI  	& SUB4PRE_PM		& $\sim$SUB4_RAT	\\
-		SUB5_LBL	  & SUB5_SWE		& SUB5_SAV  	& SUB5_PM 		& SUB5_PERSWI		& SUB5_SDEL 		& SUB5_SWI  	& SUB5PRE_PM		& $\sim$SUB5_RAT	\\
-		SUB6_LBL	  & SUB6_SWE		& SUB6_SAV  	& SUB6_PM 		& SUB6_PERSWI		& SUB6_SDEL 		& SUB6_SWI  	& SUB6PRE_PM		& $\sim$SUB6_RAT	\\
+		TOT_LBL			& TOTAL_SWE 	& TOTAL_PVOL & TOTAL_PM 	& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	& $\sim$TOTAL_RAT	\\
+		SUB1_LBL	  & SUB1_SWE		& SUB1_PVOL  & SUB1_PM 		& SUB1_PERSWI 	& SUB1_SDEL			& SUB1_SWI  	& SUB1PRE_PM    & $\sim$SUB1_RAT	\\
+		SUB2_LBL	  & SUB2_SWE		& SUB2_PVOL  & SUB2_PM 		& SUB2_PERSWI		& SUB2_SDEL 		& SUB2_SWI 		& SUB2PRE_PM		& $\sim$SUB2_RAT	\\
+		SUB3_LBL	  & SUB3_SWE		& SUB3_PVOL  & SUB3_PM 		& SUB3_PERSWI		& SUB3_SDEL 		& SUB3_SWI  	& SUB3PRE_PM		& $\sim$SUB3_RAT	\\
+		SUB4_LBL	  & SUB4_SWE		& SUB4_PVOL  & SUB4_PM 		& SUB4_PERSWI		& SUB4_SDEL 		& SUB4_SWI  	& SUB4PRE_PM		& $\sim$SUB4_RAT	\\
+		SUB5_LBL	  & SUB5_SWE		& SUB5_PVOL  & SUB5_PM 		& SUB5_PERSWI		& SUB5_SDEL 		& SUB5_SWI  	& SUB5PRE_PM		& $\sim$SUB5_RAT	\\
+		SUB6_LBL	  & SUB6_SWE		& SUB6_PVOL  & SUB6_PM 		& SUB6_PERSWI		& SUB6_SDEL 		& SUB6_SWI  	& SUB6PRE_PM		& $\sim$SUB6_RAT	\\
 		\bottomrule
 	\end{tabular}
-	\caption{Snow storage and surface water inputs}\label{table:1}
+	\caption{Snow storage and surface water inputs.}\label{table:1}
 \end{table}

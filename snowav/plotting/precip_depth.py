@@ -94,7 +94,7 @@ def precip_depth(snow):
     sns.set_context("notebook")
 
     plt.close(0)
-    fig, ax = plt.subplots(num=0, figsize = (12,12),
+    fig, ax = plt.subplots(num=0, figsize = (12,10),
                                 dpi=snow.dpi, nrows = 3, ncols = 2)
 
     ################################################

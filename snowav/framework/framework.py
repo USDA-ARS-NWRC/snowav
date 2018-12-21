@@ -106,43 +106,45 @@ class SNOWAV(object):
             snowav.plotting.current_image.current_image(self)
             snowav.plotting.state_by_elev.state_by_elev(self)
             snowav.plotting.image_change.image_change(self)
+            snowav.plotting.cold_content.cold_content(self)
+            snowav.plotting.swe_volume.swe_volume(self)
             snowav.plotting.swe_change.swe_change(self)
             snowav.plotting.basin_total.basin_total(self)
             snowav.plotting.pixel_swe.pixel_swe(self)
             # snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
-            if ((self.basin in ['TUOL', 'SJ']) and
-               ((self.exclude_figs is not None) and
-               ('AIR_TEMP' not in self.exclude_figs))):
+            # if ((self.basin in ['TUOL', 'SJ']) and
+            #    ((self.exclude_figs is not None) and
+            #    ('AIR_TEMP' not in self.exclude_figs))):
+            #
+            #     snowav.plotting.air_temp.air_temp(self.run_dirs,
+            #                                       self.dem,
+            #                                       self.pre_val_stns,
+            #                                       self.pre_val_lbls,
+            #                                       self.val_client,
+            #                                       self.wy,
+            #                                       self.end_date,
+            #                                       self.figs_path,
+            #                                       self.name_append,
+            #                                       self.start_date)
+            #
+            # if ((self.exclude_figs is not None) and
+            #     ('POINT' not in self.exclude_figs)):
+            #     ncpath = self.run_dirs[0].split('output')[0] + '/snow.nc'
+            #     snowav.plotting.point_values.point_values(self.outputs,
+            #                                               'swe_z',
+            #                                               ncpath,
+            #                                               10,
+            #                                               10,
+            #                                               self.figs_path,
+            #                                               self.name_append)
 
-                snowav.plotting.air_temp.air_temp(self.run_dirs,
-                                                  self.dem,
-                                                  self.pre_val_stns,
-                                                  self.pre_val_lbls,
-                                                  self.val_client,
-                                                  self.wy,
-                                                  self.end_date,
-                                                  self.figs_path,
-                                                  self.name_append,
-                                                  self.start_date)
+            # if self.plot_runs is not None:
+            #     snowav.plotting.compare_runs.compare_runs(self)
 
-            if ((self.exclude_figs is not None) and
-                ('POINT' not in self.exclude_figs)):
-                ncpath = self.run_dirs[0].split('output')[0] + '/snow.nc'
-                snowav.plotting.point_values.point_values(self.outputs,
-                                                          'swe_z',
-                                                          ncpath,
-                                                          10,
-                                                          10,
-                                                          self.figs_path,
-                                                          self.name_append)
-
-            if self.plot_runs is not None:
-                snowav.plotting.compare_runs.compare_runs(self)
-
-            if self.precip_figure is True:
-                snowav.plotting.precip_validate.precip_validate(self)
+            # if self.precip_figure is True:
+            #     snowav.plotting.precip_validate.precip_validate(self)
 
             # snowav.plotting.basin_detail.basin_detail(self)
 

@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHSWE_FIG}
+	\caption{Current SWE as a depth (left), and volume by elevation band (right).}
+\end{centering}
+\end{figure}

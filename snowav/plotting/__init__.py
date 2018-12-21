@@ -17,3 +17,6 @@ from . import compare_runs
 from . import precip_depth
 from . import point_values
 from . import air_temp
+from . import cold_content
+from . import swe_volume
+from . import plotlims

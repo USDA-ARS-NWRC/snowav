@@ -347,10 +347,13 @@ def read_config(self, external_logger=None, awsm=None):
 
         self.nrows = len(self.dem[:,0])
         self.ncols = len(self.dem[0,:])
+
         blank = np.zeros((self.nrows,self.ncols))
 
         self.masks = dict()
         for lbl,mask in zip(self.plotorder,maskpaths):
+            if lbl == 'Willow Creek':
+                sr = 0
             self.masks[lbl] = {'border': blank,
                                'mask': np.genfromtxt(mask,skip_header=sr),
                                'label': lbl}

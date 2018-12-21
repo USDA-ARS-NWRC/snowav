@@ -53,7 +53,7 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\begin{tikzpicture}[remember picture,overlay]
 	% \node [shift={(-18.2cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
 	\node [shift={(-19cm,-2.0cm)}] at (current page.north east) {\includegraphics[height=2.85cm]{\VAR{ASOLOGO}}};
-  \node [shift={(-2.2cm,-1.75cm)}] at (current page.north east) {\includegraphics[height=1.5cm]{\VAR{ARSLOGO}}};
+  \node [shift={(-2.2cm,-1.75cm)}] at (current page.north east) {\includegraphics[height=1.65cm]{\VAR{ARSLOGO}}};
 
 	\end{tikzpicture}
 }
@@ -89,35 +89,36 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 
 \vspace{1cm}
 
-\VAR{DEPTH_BYELEV}
-
+% \VAR{DEPTH_BYELEV}
 
 % SWE and cold content
-\VAR{RESULTS_FIG_TPL}
+% \VAR{RESULTS_FIG_TPL}
+\clearpage
+% SWE
+\VAR{SWE_FIG_TPL}
+
+\VAR{COLD_FIG_TPL}
+
+\clearpage
+
+% Mean SWE and depth by elevation
+\VAR{MEAN_FIG_TPL}
 
 % Change in SWE
 \VAR{CHANGES_FIG_TPL}
 
 \clearpage
 
-% SWE elevation
-\VAR{ELEV_FIG_TPL}
-
-% Mean SWE and depth by elevation
-\VAR{MEAN_FIG_TPL}
-
-\clearpage
-
 % SWI
 \VAR{SWI_FIG_TPL}
 
-% WY total SWE and SWI
-\VAR{TOTALS_FIG_TPL}
+% SWI, precip, rain
+\VAR{PDEP_FIG_TPL}
 
 \clearpage
 
-% SWI, precip, rain
-\VAR{PDEP_FIG_TPL}
+% WY total SWE and SWI
+\VAR{TOTALS_FIG_TPL}
 
 % Multi-year total SWE and SWI
 \VAR{MULTITOT_FIG_TPL}
@@ -137,7 +138,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \VAR{FORE_DATE}
 	\setlength\itemsep{0.05em}
 	\footnotesize{
 		\item[] SWE: Snow Water Equivalent
-		\item[] SWE (avail): volume of SWE at 0$^{\circ}$C, which will melt with any additional energy inputs
 		\item[] $\Delta$SWE: change in SWE during the reporting period
 		\item[] SWI: Surface Water Inputs, total of all water inputs to the basin (combination of snowmelt that exits the base of the snowpack and rain on bare ground)
 		\item[] Rain: approximate percent of precipitation that fell as rain

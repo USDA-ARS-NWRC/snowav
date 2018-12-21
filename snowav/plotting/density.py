@@ -40,88 +40,42 @@ def density(snow):
     value = copy.deepcopy(density_byelev)
     lim = np.nanmax(value[snow.plotorder[0]])
     ylim = (0,600)
-    color = 'xkcd:windows blue'
+    # color = 'xkcd:windows blue'
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
     nf = len(snow.masks)
 
-    if nf == 1:
-        nr = 1
-        nc = 1
-
-    if nf > 1 and nf < 5:
-        nr = 2
-        nc = 2
-
-    elif nf == 5 or nf == 6:
-        nr = 2
-        nc = 3
-
-    elif nf > 6:
-        nr = 3
-        nc = 3
-
-
     plt.close(3)
-    fig, axs  = plt.subplots(num=3, figsize=snow.figsize, dpi=snow.dpi,
-                                nrows = nr, ncols = nc)
-
-    axs = np.array(axs)
-    axs = axs.ravel()
-
-    if nf == 5:
-        fig.delaxes(axs[5])
+    fig = plt.figure(num=3, figsize=snow.figsize, dpi=snow.dpi)
+    ax = plt.gca()
 
     for iters,name in enumerate(snow.plotorder):
+        ax.plot(range(0,len(snow.edges)),value[name],
+                color = snow.barcolors[iters],
+                label = name)
 
-        axs[iters].bar(range(0,len(snow.edges)),value[name], color = color)
+    ax.legend(loc = 2, fontsize = 10)
+    xts = ax.get_xticks()
+    if len(xts) < 6:
+        dxt = xts[1] - xts[0]
+        xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
+        ax.set_xticks(xts)
 
-        xts = axs[iters].get_xticks()
-        if len(xts) < 6:
-            dxt = xts[1] - xts[0]
-            xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
-            axs[iters].set_xticks(xts)
+    edges_lbl = []
+    for i in xts[0:len(xts)-1]:
+        edges_lbl.append(str(int(snow.edges[int(i)])))
 
-        edges_lbl = []
-        for i in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(snow.edges[int(i)])))
+    ax.set_ylabel(r'$\rho$ [kg/$m^3$]')
+    ax.set_xlabel('elevation [%s]'%(snow.elevlbl))
 
-        axs[iters].set_xticklabels(str(i) for i in edges_lbl)
+    ax.set_ylim((ylim))
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(30)
 
-        if iters == 0:
-            axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]')
-
-        if iters > nc - 1:
-            axs[iters].set_xlabel('elevation [%s]'%(snow.elevlbl))
-
-        # Put yaxis on right
-        if iters == nc - 1 or iters == nf -1 :
-            axs[iters].yaxis.set_label_position("right")
-            axs[iters].yaxis.tick_right()
-            axs[iters].set_ylabel(r'$\rho$ [kg/$m^3$]')
-
-        if iters == 1 and nc == 3:
-            axs[iters].set_yticklabels([])
-
-        if iters <= nc - 1 and nf != 1:
-            axs[iters].set_xticklabels([])
-
-        axs[iters].set_ylim((ylim))
-        for tick in axs[iters].get_xticklabels():
-            tick.set_rotation(30)
-
-        axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
-
-        axs[iters].text(0.5, 0.92, name, horizontalalignment = 'center',
-                        transform=axs[iters].transAxes,
-                        fontsize = 10)
-
-    # for n in range(0,len(axs)):
-    #     axs[n].set_xticks(xts)
-    #     # axs[n].set_xlim(snow.xlims)
-    #     axs[iters].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax.set_xticklabels(str(i) for i in edges_lbl)
 
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.1)
@@ -163,12 +117,6 @@ def density(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    if snow.basin == 'SJ':
-        fix1 = np.arange(1275,1377)
-        fix2 = np.arange(1555,1618)
-        ax.plot(fix1*0,fix1,'k')
-        ax.plot(fix2*0,fix2,'k')
-
     if snow.basin == 'LAKES':
         ax.set_xlim(snow.imgx)
         ax.set_ylim(snow.imgy)
@@ -201,7 +149,7 @@ def density(snow):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1] + 0.5))
+    # ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1] + 0.5))
 
     ax1.set_ylabel('density - per elevation band')
     ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
@@ -220,7 +168,7 @@ def density(snow):
         else:
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
 
-    plt.tight_layout()
+    # plt.tight_layout()
     snow._logger.info('saving figure to %sdensity_%s.png'%(snow.figs_path,snow.name_append))
     plt.savefig('%sdensity_%s.png'%(snow.figs_path,snow.name_append))
 
@@ -335,43 +283,43 @@ def density(snow):
     ###############################
     # 3rd density fig
     ###############################
-
-    nsub = 100
-    depth  = copy.deepcopy(snow.outputs['depth'][snow.ixe])
-    density = cvalue
-    swe = copy.deepcopy(snow.outputs['swe_z'][snow.ixe])
-
-    depths = np.reshape(depth,(1,len(depth[:,0])*len(depth[0,:])))
-    densitys = np.reshape(density,(1,len(depth[:,0])*len(density[0,:])))
-    swesats = np.reshape(swe,(1,len(swe[:,0])*len(swe[0,:])))
-    densitys = densitys[0,:]
-    depths = depths[0,:]
-    swesats = swesats[0,:]
-    depthsub = depths[::nsub]
-    densitysub = densitys[::nsub]
-    swesub = swesats[::nsub]
-
-    z = snow.dem
-    zs = np.reshape(z,(1,len(z[:,0])*len(z[0,:])))
-    zs = zs[0,:]
-    zsub = zs[::100]
-
-    cm = cc.m_bgy
-
-    plt.close(20)
-    fig = plt.figure(num=20, figsize = (6,4), dpi=snow.dpi)
-    ax = plt.gca()
-    h = ax.scatter(swesub,densitysub,c=zsub,vmin=5000,vmax=12500 ,cmap=cm,s=5)
-
-    ax.set_ylabel(r'$\rho$ [kg/$m^3$]')
-    ax.set_xlabel('SWE [in]')
-
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="4%", pad=0.2)
-    cbar = plt.colorbar(h, cax = cax)
-    cbar.ax.tick_params()
-    cbar.set_label('elevation [ft]')
-    plt.tight_layout()
-
-    snow._logger.info('saving figure to %sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))
+    #
+    # nsub = 100
+    # depth  = copy.deepcopy(snow.outputs['depth'][snow.ixe])
+    # density = cvalue
+    # swe = copy.deepcopy(snow.outputs['swe_z'][snow.ixe])
+    #
+    # depths = np.reshape(depth,(1,len(depth[:,0])*len(depth[0,:])))
+    # densitys = np.reshape(density,(1,len(depth[:,0])*len(density[0,:])))
+    # swesats = np.reshape(swe,(1,len(swe[:,0])*len(swe[0,:])))
+    # densitys = densitys[0,:]
+    # depths = depths[0,:]
+    # swesats = swesats[0,:]
+    # depthsub = depths[::nsub]
+    # densitysub = densitys[::nsub]
+    # swesub = swesats[::nsub]
+    #
+    # z = snow.dem
+    # zs = np.reshape(z,(1,len(z[:,0])*len(z[0,:])))
+    # zs = zs[0,:]
+    # zsub = zs[::100]
+    #
+    # cm = cc.m_bgy
+    #
+    # plt.close(20)
+    # fig = plt.figure(num=20, figsize = (6,4), dpi=snow.dpi)
+    # ax = plt.gca()
+    # h = ax.scatter(swesub,densitysub,c=zsub,vmin=5000,vmax=12500 ,cmap=cm,s=5)
+    #
+    # ax.set_ylabel(r'$\rho$ [kg/$m^3$]')
+    # ax.set_xlabel('SWE [in]')
+    #
+    # divider = make_axes_locatable(ax)
+    # cax = divider.append_axes("right", size="4%", pad=0.2)
+    # cbar = plt.colorbar(h, cax = cax)
+    # cbar.ax.tick_params()
+    # cbar.set_label('elevation [ft]')
+    # plt.tight_layout()
+    #
+    # snow._logger.info('saving figure to %sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))
+    # plt.savefig('%sdensity_swe_%s.png'%(snow.figs_path,snow.name_append))
