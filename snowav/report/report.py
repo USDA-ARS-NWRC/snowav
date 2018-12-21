@@ -253,7 +253,7 @@ def report(obj):
 
     sum_flag = True
 
-    if obj.basin in ['KINGS', 'SJ']:
+    if obj.basin in ['KINGS', 'SJ', 'KAWEAH','MERCED']:
         spacecmd = r'\resizebox{\textwidth}{!}{'
     else:
         spacecmd = r'{'

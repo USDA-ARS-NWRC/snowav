@@ -52,110 +52,110 @@ class SNOWAV(object):
 
         # Otherwise, start the processing steps
         else:
-            # Do any values in this date already already exist?
-            database.database.check_fields(self,
-                                           self.start_date,
-                                           self.end_date,
-                                           self.plotorder[0],
-                                           self.run_name,
-                                           'swe_z')
-
-            # Process results and put on the database
-            if (self.pflag is True) and (self.write_db is False):
-                print('There are existing fields on the database between '
-                      '{} and {} with run_name={}, and config file option '
-                      '[results] -> overwrite=False\n'
-                      'Using iSnobal outputs specified in run_dirs for '
-                      'spatial figures, loading processed results '
-                      'from the database'.format(self.start_date.date(),
-                                                      self.end_date.date(),
-                                                      self.run_name))
-
-                # We still send to process() in order to get spatial sums for SWI,
-                # precip, etc., but do not insert onto database
-                snowav.methods.process.process(self)
-
-            elif (self.pflag is True) and (self.write_db is True):
-                print('There are existing fields on the database between '
-                      '{} and {} with run_name={}, and config file option '
-                      '[results] -> overwrite=True, '
-                      'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
-                                                      self.end_date.date(),
-                                                      self.run_name))
-
-                # Delete existing fields
-                for bid in self.plotorder:
-                    database.database.delete(self, self.start_date,
-                                             self.end_date, bid, self.run_name)
-
-                # Process and put on database
-                database.database.run_metadata(self)
-                snowav.methods.process.process(self)
-
-            else:
-                # Process and put on database
-                database.database.run_metadata(self)
-                snowav.methods.process.process(self)
-
-            # Write out variables from database to csv if desired
-            if self.write_csv_flag is True:
-                database.database.write_csv(self)
-
-            # Plots
-            snowav.plotting.accumulated.accumulated(self)
-            snowav.plotting.current_image.current_image(self)
-            snowav.plotting.state_by_elev.state_by_elev(self)
-            snowav.plotting.image_change.image_change(self)
-            snowav.plotting.cold_content.cold_content(self)
-            snowav.plotting.swe_volume.swe_volume(self)
-            snowav.plotting.swe_change.swe_change(self)
-            snowav.plotting.basin_total.basin_total(self)
-            snowav.plotting.pixel_swe.pixel_swe(self)
-            # snowav.plotting.density.density(self)
-            snowav.plotting.stn_validate.stn_validate(self)
-
-            # if ((self.basin in ['TUOL', 'SJ']) and
-            #    ((self.exclude_figs is not None) and
-            #    ('AIR_TEMP' not in self.exclude_figs))):
+            # # Do any values in this date already already exist?
+            # database.database.check_fields(self,
+            #                                self.start_date,
+            #                                self.end_date,
+            #                                self.plotorder[0],
+            #                                self.run_name,
+            #                                'swe_z')
             #
-            #     snowav.plotting.air_temp.air_temp(self.run_dirs,
-            #                                       self.dem,
-            #                                       self.pre_val_stns,
-            #                                       self.pre_val_lbls,
-            #                                       self.val_client,
-            #                                       self.wy,
-            #                                       self.end_date,
-            #                                       self.figs_path,
-            #                                       self.name_append,
-            #                                       self.start_date)
+            # # Process results and put on the database
+            # if (self.pflag is True) and (self.write_db is False):
+            #     print('There are existing fields on the database between '
+            #           '{} and {} with run_name={}, and config file option '
+            #           '[results] -> overwrite=False\n'
+            #           'Using iSnobal outputs specified in run_dirs for '
+            #           'spatial figures, loading processed results '
+            #           'from the database'.format(self.start_date.date(),
+            #                                           self.end_date.date(),
+            #                                           self.run_name))
             #
+            #     # We still send to process() in order to get spatial sums for SWI,
+            #     # precip, etc., but do not insert onto database
+            #     snowav.methods.process.process(self)
+            #
+            # elif (self.pflag is True) and (self.write_db is True):
+            #     print('There are existing fields on the database between '
+            #           '{} and {} with run_name={}, and config file option '
+            #           '[results] -> overwrite=True, '
+            #           'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
+            #                                           self.end_date.date(),
+            #                                           self.run_name))
+            #
+            #     # Delete existing fields
+            #     for bid in self.plotorder:
+            #         database.database.delete(self, self.start_date,
+            #                                  self.end_date, bid, self.run_name)
+            #
+            #     # Process and put on database
+            #     database.database.run_metadata(self)
+            #     snowav.methods.process.process(self)
+            #
+            # else:
+            #     # Process and put on database
+            #     database.database.run_metadata(self)
+            #     snowav.methods.process.process(self)
+            #
+            # # Write out variables from database to csv if desired
+            # if self.write_csv_flag is True:
+            #     database.database.write_csv(self)
+            #
+            # # Plots
+            # snowav.plotting.accumulated.accumulated(self)
+            # snowav.plotting.current_image.current_image(self)
+            # snowav.plotting.state_by_elev.state_by_elev(self)
+            # snowav.plotting.image_change.image_change(self)
+            # snowav.plotting.cold_content.cold_content(self)
+            # snowav.plotting.swe_volume.swe_volume(self)
+            # snowav.plotting.swe_change.swe_change(self)
+            # snowav.plotting.basin_total.basin_total(self)
+            # snowav.plotting.pixel_swe.pixel_swe(self)
+            # # snowav.plotting.density.density(self)
+            # snowav.plotting.stn_validate.stn_validate(self)
+            #
+            # # if ((self.basin in ['TUOL', 'SJ']) and
+            # #    ((self.exclude_figs is not None) and
+            # #    ('AIR_TEMP' not in self.exclude_figs))):
+            # #
+            # #     snowav.plotting.air_temp.air_temp(self.run_dirs,
+            # #                                       self.dem,
+            # #                                       self.pre_val_stns,
+            # #                                       self.pre_val_lbls,
+            # #                                       self.val_client,
+            # #                                       self.wy,
+            # #                                       self.end_date,
+            # #                                       self.figs_path,
+            # #                                       self.name_append,
+            # #                                       self.start_date)
+            # #
+            # # if ((self.exclude_figs is not None) and
+            # #     ('POINT' not in self.exclude_figs)):
+            # #     ncpath = self.run_dirs[0].split('output')[0] + '/snow.nc'
+            # #     snowav.plotting.point_values.point_values(self.outputs,
+            # #                                               'swe_z',
+            # #                                               ncpath,
+            # #                                               10,
+            # #                                               10,
+            # #                                               self.figs_path,
+            # #                                               self.name_append)
+            #
+            # # if self.plot_runs is not None:
+            # #     snowav.plotting.compare_runs.compare_runs(self)
+            #
+            # # if self.precip_figure is True:
+            # #     snowav.plotting.precip_validate.precip_validate(self)
+            #
+            # # snowav.plotting.basin_detail.basin_detail(self)
+            #
+            # # The SWI, precip, and rain plot requires process()
             # if ((self.exclude_figs is not None) and
-            #     ('POINT' not in self.exclude_figs)):
-            #     ncpath = self.run_dirs[0].split('output')[0] + '/snow.nc'
-            #     snowav.plotting.point_values.point_values(self.outputs,
-            #                                               'swe_z',
-            #                                               ncpath,
-            #                                               10,
-            #                                               10,
-            #                                               self.figs_path,
-            #                                               self.name_append)
-
-            # if self.plot_runs is not None:
-            #     snowav.plotting.compare_runs.compare_runs(self)
-
-            # if self.precip_figure is True:
-            #     snowav.plotting.precip_validate.precip_validate(self)
-
-            # snowav.plotting.basin_detail.basin_detail(self)
-
-            # The SWI, precip, and rain plot requires process()
-            if ((self.exclude_figs is not None) and
-                ('PRECIP_DEPTH' not in self.exclude_figs)):
-                snowav.plotting.precip_depth.precip_depth(self)
-
-            # Make flight difference figure in options in config file
-            if self.flt_flag is True:
-                snowav.plotting.flt_image_change.flt_image_change(self)
+            #     ('PRECIP_DEPTH' not in self.exclude_figs)):
+            #     snowav.plotting.precip_depth.precip_depth(self)
+            #
+            # # Make flight difference figure in options in config file
+            # if self.flt_flag is True:
+            #     snowav.plotting.flt_image_change.flt_image_change(self)
 
             # Create pdf report
             if self.report_flag is True:
