@@ -57,6 +57,7 @@ def basin_total(snow):
             swe_summary.loc[d,bid] = v['value'].values[iter]
             swi_summary.loc[d,bid] = v2['value'].values[iter]
 
+    swi_summary.sort_index(inplace=True)
     swi_summary = swi_summary.cumsum()
 
     if snow.basin == 'LAKES' or snow.basin == 'RCEW':
