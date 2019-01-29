@@ -252,11 +252,9 @@ def report(obj):
     depth_byelev.index.name = 'Elevation'
 
     sum_flag = True
-    print(obj.basin)
 
     if obj.basin in ['KINGS', 'SJ', 'KAWEAH','MERCED']:
         spacecmd = r'\resizebox{\textwidth}{!}{'
-        print(spacecmd)
     else:
         spacecmd = r'{'
 
@@ -281,8 +279,6 @@ def report(obj):
         depth_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='depth')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
-
-        # print(depth_byelev)
 
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
@@ -310,7 +306,7 @@ def report(obj):
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
                                   r'\\ \clearpage'
                                 )
-    print(variables['DSWE_BYELEV'])
+
     # variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
 
     if sum_flag is not True:
