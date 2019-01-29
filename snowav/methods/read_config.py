@@ -464,7 +464,9 @@ def read_config(self, external_logger=None, awsm=None):
                  'brb/devel/wy2018/hrrr_comparison/run20171001_20180107/',
                  'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
 
-        for rd in self.run_dirs:
+        lrdirs = copy.deepcopy(self.run_dirs)
+        for rd in lrdirs:
+
             if self.filetype == 'ipw':
                 path = rd
 
@@ -478,6 +480,7 @@ def read_config(self, external_logger=None, awsm=None):
             # If the run_dirs isn't empty use it, otherwise remove
             if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
                and not (os.path.isfile(path))):
+
                 try:
                     output = iSnobalReader(path,
                                            self.filetype,
@@ -485,26 +488,32 @@ def read_config(self, external_logger=None, awsm=None):
                                            embands = [6,7,8,9],
                                            wy = self.wy)
 
-                    if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                        self.outputs['dates'] = np.append(
-                                self.outputs['dates'],output.dates-relativedelta(years=1) )
+                    if output.dates <= self.end_date:
+
+                        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                            self.outputs['dates'] = np.append(
+                                    self.outputs['dates'],output.dates-relativedelta(years=1) )
+                        else:
+                            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+
+                        self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+                        # Make a dict for wyhr-rundir lookup
+                        for t in output.time:
+                            self.rundirs_dict[int(t)] = rd
+
+                        for n in range(0,len(output.em_data[8])):
+                            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                            self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                            self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                            self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                            self.outputs['density'].append(output.snow_data[1][n,:,:])
+
                     else:
-                        self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+                        self.run_dirs.remove(rd)
 
-                    self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-                    # Make a dict for wyhr-rundir lookup
-                    for t in output.time:
-                        self.rundirs_dict[int(t)] = rd
-
-                    for n in range(0,len(output.em_data[8])):
-                        self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                        self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                        self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                        self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                        self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                        self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                        self.outputs['density'].append(output.snow_data[1][n,:,:])
                 except:
                     print('Failure loading file in {}, attempting to skip...'.format(path))
 
