@@ -2,8 +2,10 @@ import netCDF4 as nc
 import numpy as np
 from matplotlib import pyplot as plt
 
-file = '/data/snowdrift/kaweah/ops/wy2019/ops/runs/run20181218/snow.nc'
-out = '/home/markrobertson/wkspace/kaweah_20181218_swe.asc'
+basin = 'kaweah'
+
+file = '/data/snowdrift/{}/ops/wy2019/ops/runs/run20181220/snow.nc'.format(basin)
+out = '/home/markrobertson/wkspace/{}_20181220_swe.asc'.format(basin)
 
 snow = nc.Dataset(file,'r')
 

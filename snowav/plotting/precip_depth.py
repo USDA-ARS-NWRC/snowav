@@ -193,7 +193,7 @@ def precip_depth(snow):
 
         # kings
         elif len(snow.plotorder) > 6:
-            ax[0,1].legend(loc= (0.01,0.40))
+            ax[0,1].legend(loc= (0.01,0.45))
 
     # Make SWI-free legend if we need one
     if sum(sum(r)) > 1000:
