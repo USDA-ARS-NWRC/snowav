@@ -1,5 +1,6 @@
 
 import os
+from sys import exit
 import snowav
 from snowav import methods
 from snowav import database
@@ -37,9 +38,10 @@ class SNOWAV(object):
             methods.read_config.read_config(self)
 
         if self.report_only is True:
-            print('Only generating report')
             snowav.report.report.report(self)
-            print(x)
+            print('Config option [Results] -> report_only=True, ' +
+                  'report generated with existing figures.')
+            exit()
 
         # Figures only
         if self.figures_only is True:
