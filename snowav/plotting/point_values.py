@@ -12,40 +12,29 @@ import copy
 from datetime import date
 import os
 
-def point_values(outputs, value, ncpath, x, y, savepath, append):
-    '''
-    Args
-        outputs: dict of nc outputs from all the run_dirs (snow.outputs)
-        value: value to plot ('swe_z', 'depth', etc)
-        ncpath: path to one of the nc from run_dirs, used for x,y coordinates
-        savepath: base figure save path (self.figs_path)
-        append: name to append to file (self.name_append)
-
+def point_values(output, imagexy, pointxy, savepath, filename):
     '''
 
-    # outputs['swe_z']
+    Inputs:
+        output: array of output values (self.outputs from read_config.py,
+            generated from iSnobalReader)
+        imagexy: array of x and y coordinates for the image
+        pointxy: array of x and y points to extract
+        savepath: path to save csv file
+        filename: name for csv file
 
-    ncf = nc.Dataset(ncpath, 'r')
+    '''
+
+
+    ncpath = rname.split('output')[0]
+    ncf = nc.Dataset(os.path.join(ncpath,'snow.nc'), 'r')
+    nctvec = ncf.variables['time'][:]
+    vswe = ncf.variables['specific_mass']
     ncxvec = ncf.variables['x'][:]
     ncyvec = ncf.variables['y'][:]
-
-    ll = utm.from_latlon(x,y)
+    ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
     # ll      = utm.from_latlon(37.641922,-119.055443)
-    # xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
-    # yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
-    xind = 1000
-    yind = 500
 
-    pt = np.array([])
-    for n in range(0,len(outputs['swe_z'][:])):
-        np.append(pt,outputs['swe_z'][n][xind,yind])
-
-    fig = plt.figure(num=15, figsize=(8,6))
-    ax = plt.gca()
-
-    ax.plot(pt)
-
-    # plt.show()
-
-    # snow._logger.info('saving figure to {}point_validation_{}.png'.format(savepath,append))
-    plt.savefig('{}point_validation_{}.png'.format(savepath,append))
+    xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
+    yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
+    swe = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)

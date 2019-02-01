@@ -12,6 +12,7 @@ import matplotlib.patches as mpatches
 import pandas as pd
 from snowav import database
 from snowav.database.tables import Basins
+from snowav.plotting.plotlims import plotlims as plotlims
 
 def precip_depth(snow):
     '''
@@ -29,16 +30,16 @@ def precip_depth(snow):
     precip = np.multiply(snow.precip_total, snow.depth_factor)
     rain = np.multiply(snow.rain_total, snow.depth_factor)
 
-    lims = [0.1,99.9]
-    if np.nanpercentile(accum,lims)[1] > np.nanpercentile(precip,lims)[1]:
-        z,qMax = np.nanpercentile(accum,lims)
+    mm = [0.1,99.9]
+    if np.nanpercentile(accum,mm)[1] > np.nanpercentile(precip,mm)[1]:
+        z,qMax = np.nanpercentile(accum,mm)
     else:
-        z,qMax = np.nanpercentile(precip,lims)
+        z,qMax = np.nanpercentile(precip,mm)
 
-    if np.nanpercentile(accum,lims)[0] < np.nanpercentile(precip,lims)[0]:
-        qMin,z = np.nanpercentile(accum,lims)
+    if np.nanpercentile(accum,mm)[0] < np.nanpercentile(precip,mm)[0]:
+        qMin,z = np.nanpercentile(accum,mm)
     else:
-        qMin,z = np.nanpercentile(precip,lims)
+        qMin,z = np.nanpercentile(precip,mm)
 
     clims = (qMin,qMax)
 
@@ -101,6 +102,9 @@ def precip_depth(snow):
     #           SWI                                #
     ################################################
 
+    # Get basin-specific lims
+    lims = plotlims(snow.basin, snow.plotorder)
+
     # White background plasma_r cmocean.cm.thermal
     mymap = copy.deepcopy(cmap)
     pmask = snow.masks[snow.plotorder[0]]['mask']
@@ -139,7 +143,6 @@ def precip_depth(snow):
     cbar.set_label('SWI [%s]'%(snow.depthlbl))
     h.axes.set_title('Accumulated SWI')
 
-    # Total basin label
     if len(snow.plotorder) == 1:
         sumorder = snow.plotorder
         swid = 0.45
@@ -148,11 +151,14 @@ def precip_depth(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) >= 5:
+    elif len(snow.plotorder) == 5:
+        sumorder = snow.plotorder[1::]
+        swid = 0.2
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) > 5:
         sumorder = snow.plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))
-
 
     for iters,name in enumerate(sumorder):
         lbl = name
@@ -179,35 +185,17 @@ def precip_depth(snow):
 
     ax[0,1].set_ylim((0,yMax))
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax[0,1].legend(loc= (0.01,0.65))
-
-        elif len(snow.plotorder) == 4:
-            ax[0,1].legend(loc= (0.01,0.71))
-
-        # kings
-        elif len(snow.plotorder) in (5,6):
-            ax[0,1].legend(loc= (0.01,0.50))
-
-        # kings
-        elif len(snow.plotorder) > 6:
-            ax[0,1].legend(loc= (0.01,0.45))
-
-    # Make SWI-free legend if we need one
+    # If there is meaningful snow-free area, include path and label
     if sum(sum(r)) > 1000:
         patches = [mpatches.Patch(color='grey', label='no SWI')]
-        if snow.basin == 'SJ':
-            ax[0,0].legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                      loc=2, borderaxespad=0. )
+        ax[0,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0. )
 
-        elif snow.basin == 'KAWEAH':
-            ax[0,0].legend(handles=patches, bbox_to_anchor=(0.1, 0.05), loc=2, borderaxespad=0. )
-
-        else:
-            ax[0,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                      loc=2, borderaxespad=0. )
+    # basin total and legend
+    if len(snow.plotorder) > 1:
+        ax[0,1].legend(loc=(lims.legx,lims.legy2),markerscale = 0.5)
+    # ax[0,1].text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+    #          transform=ax1.transAxes,fontsize = 10)
 
     ################################################
     #           Precip                             #
@@ -288,12 +276,12 @@ def precip_depth(snow):
             ax[1,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                       loc=2, borderaxespad=0. )
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax[1,1].legend(loc= (0.01,0.65))
-        elif len(snow.plotorder) == 4:
-            ax[1,1].legend(loc= (0.01,0.71))
+    # if snow.basin != 'LAKES' and snow.basin != 'RCEW':
+    #     # more ifs for number subs...
+    #     if len(snow.plotorder) == 5:
+    #         ax[1,1].legend(loc= (0.01,0.65))
+    #     elif len(snow.plotorder) == 4:
+    #         ax[1,1].legend(loc= (0.01,0.71))
 
     ################################################
     #           rain                                #
@@ -377,12 +365,12 @@ def precip_depth(snow):
             ax[2,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                       loc=2, borderaxespad=0. )
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax[2,1].legend(loc= (0.01,0.65))
-        elif len(snow.plotorder) == 4:
-            ax[2,1].legend(loc= (0.01,0.71))
+    # if snow.basin != 'LAKES' and snow.basin != 'RCEW':
+    #     # more ifs for number subs...
+    #     if len(snow.plotorder) == 5:
+    #         ax[2,1].legend(loc= (0.01,0.65))
+    #     elif len(snow.plotorder) == 4:
+    #         ax[2,1].legend(loc= (0.01,0.71))
 
     plt.suptitle('Depth of SWI, Precipitation, and Rain\n%s to %s'
                          %(snow.start_date.date().strftime("%Y-%-m-%-d"),

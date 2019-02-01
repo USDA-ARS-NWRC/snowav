@@ -58,12 +58,16 @@ def current_image(snow):
     # If these attributes are included in config, put labels on ax
     if (snow.annot_x is not None) and (snow.annot_y is not None):
         for i, name in enumerate(snow.plotorder[1::]):
-            if name in ['Willow Creek','South Fork']:
-                n = '{}\n{}'.format(name.split(' ')[0],name.split(' ')[1])
+            if name in ['Willow Creek','South Fork',
+                        'Upper South Fork','Lower South Fork']:
+                if len(name.split(' ')) == 2:
+                    n = '{}\n{}'.format(name.split(' ')[0],name.split(' ')[1])
+                else:
+                    n = '{}\n{} {}'.format(name.split(' ')[0],name.split(' ')[1],name.split(' ')[2])
             else:
                 n = name
 
-            ax.annotate(n, xy=(snow.annot_x[i], snow.annot_y[i]))
+            ax.annotate(n, xy=(snow.annot_x[i], snow.annot_y[i]), size = 8)
 
     if snow.basin == 'LAKES':
         ax.set_xlim(snow.imgx)

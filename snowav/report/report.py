@@ -43,37 +43,37 @@ def report(obj):
 
     r = database.database.query(obj, wy_start, obj.end_date, obj.run_name,
                                 bid = obj.plotorder)
-
+                                
     # Initialize variables to pass to latex file
     variables = {}
     variables['TOTAL_SWI'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']>=wy_start)
                                 & (r['date_time']<=end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = 1)
+                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = int(obj.dplcs))
     variables['PER_SWI'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']>=start_date)
                                 & (r['date_time']<=end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = 1)
+                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = int(obj.dplcs))
     variables['TOTAL_SWE'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+                                & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
     variables['TOTAL_SAV'] = r[  (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='swe_avail')]['value'].values[0].round(decimals = 1)
-    variables['TOTAL_PVOL'] = '-'
+                                & (r['variable']=='swe_avail')]['value'].values[0].round(decimals = int(obj.dplcs))
+    variables['TOTAL_PVOL'] = '100'
 
     start_swe = r[ (r['basin_id']==bid)
                     & (r['date_time']==start_date)
                     & (r['elevation']=='total')
-                    & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+                    & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
     end_swe = r[ (r['basin_id']==bid)
                  & (r['date_time']==end_date)
                  & (r['elevation']=='total')
-                 & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = 1)
+                 & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
 
     variables['TOTAL_SDEL'] = end_swe - start_swe
 
@@ -89,17 +89,17 @@ def report(obj):
     variables['TOTAL_PM'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']==end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='swe_z')]['value'].values[0].round(decimals = 1)
+                                & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
     variables['TOTALPRE_PM'] = r[ (r['basin_id']==bid)
                                 & (r['date_time']>=wy_start)
                                 & (r['date_time']<=end_date)
                                 & (r['elevation']=='total')
-                                & (r['variable']=='precip_z')]['value'].sum().round(decimals = 1)
+                                & (r['variable']=='precip_z')]['value'].sum().round(decimals = int(obj.dplcs))
     total_rai = r[ (r['basin_id']==bid)
                     & (r['date_time']>=wy_start)
                     & (r['date_time']<=end_date)
                     & (r['elevation']=='total')
-                    & (r['variable']=='rain_z')]['value'].sum().round(decimals = 1)
+                    & (r['variable']=='rain_z')]['value'].sum().round(decimals = int(obj.dplcs))
 
     if variables['TOTALPRE_PM'] != 0.0:
         variables['TOTAL_RAT'] = str(int((total_rai/variables['TOTALPRE_PM'])*100))
@@ -262,23 +262,23 @@ def report(obj):
 
         swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
         sum = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
         swevol_byelev.loc[obj.edges,sub] = (r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1]/np.nansum(sum)*100).round(1)
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1]/np.nansum(sum)*100).round(decimals = int(obj.dplcs))
 
         sswe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='swe_z')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
         depth_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='depth')
-                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = 1)
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
         dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 

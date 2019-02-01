@@ -11,6 +11,7 @@ import matplotlib.patches as mpatches
 from snowav import database
 from snowav.database.tables import Basins
 import pandas as pd
+from snowav.plotting.plotlims import plotlims as plotlims
 
 
 def swe_volume(snow):
@@ -67,18 +68,22 @@ def swe_volume(snow):
 
     h.axes.set_title('SWE \n %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
 
+    # Get basin-specific lims
+    lims = plotlims(snow.basin, snow.plotorder)
+
     patches = [mpatches.Patch(color='grey', label='snow free')]
 
-    # Make legend/box defaults and adjust as needed
-    pbbx = 0.15
-    pbby = 0.05
+    # If there is meaningful snow-free area, include path and label
+    if sum(sum(ixz)) > 1000:
+        patches = [mpatches.Patch(color='grey', label='snow free')]
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0. )
 
-    if snow.basin in ['KAWEAH', 'RCEW']:
-        pbbx = 0.1
+    # basin total and legend
+    ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
-    # snow-free
-    ax.legend(handles=patches, bbox_to_anchor=(pbbx, pbby),
-              loc=2, borderaxespad=0. )
+    # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+    #          transform=ax1.transAxes,fontsize = 10)
 
     swe = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 

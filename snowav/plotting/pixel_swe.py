@@ -49,7 +49,11 @@ def pixel_swe(snow):
         sumorder = snow.plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) >= 5:
+    elif len(snow.plotorder) == 5:
+        sumorder = snow.plotorder[1::]
+        swid = 0.2
+        wid = np.linspace(-0.3,0.3,len(sumorder))
+    elif len(snow.plotorder) > 5:
         sumorder = snow.plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))
@@ -64,14 +68,20 @@ def pixel_swe(snow):
                 swe_byelev[name],
                 color = snow.barcolors[iters], width = swid, edgecolor = 'k',label = name)
 
-    plt.tight_layout()
-    xts = ax1.get_xticks()
-    edges_lbl = []
-    for i in xts[0:len(xts)-1]:
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    # ax.xaxis.set_major_locator(snow.edges)
+    # print(snow.edges)
+    ax.xaxis.set_ticks(range(0,len(snow.edges)))
+    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
 
-    ax.set_xticklabels(str(i) for i in edges_lbl)
-    ax1.set_xticklabels(str(i) for i in edges_lbl)
+    plt.tight_layout()
+    # xts = ax1.get_xticks()
+    # edges_lbl = []
+    # for i in snow.edges:
+    #     edges_lbl.append(str(i))
+
+    ax.set_xticklabels([str(i) for i in snow.edges])
+    ax1.set_xticklabels([str(i) for i in snow.edges])
+
     for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
         tick.set_rotation(30)
         tick1.set_rotation(30)
@@ -89,7 +99,9 @@ def pixel_swe(snow):
     ax.set_xlabel('elevation [ft]')
     ax1.set_ylabel('mean SWE [%s]'%(snow.depthlbl))
     ax1.set_xlabel('elevation [ft]')
-    ax.legend(loc='upper left')
+
+    if len(snow.plotorder) > 1:
+        ax.legend(loc='upper left')
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()

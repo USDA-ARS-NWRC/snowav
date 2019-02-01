@@ -11,6 +11,7 @@ import matplotlib.patches as mpatches
 from snowav import database
 from snowav.database.tables import Basins
 import pandas as pd
+from snowav.plotting.plotlims import plotlims as plotlims
 
 
 def cold_content(snow):
@@ -64,18 +65,22 @@ def cold_content(snow):
     cbar.set_label('[MJ/$m^3$]')
     cbar.ax.tick_params()
 
+    # Get basin-specific lims
+    lims = plotlims(snow.basin, snow.plotorder)
+
     patches = [mpatches.Patch(color='grey', label='snow free')]
 
-    # Make legend/box defaults and adjust as needed
-    pbbx = 0.15
-    pbby = 0.05
+    # If there is meaningful snow-free area, include path and label
+    if sum(sum(ixz)) > 1000:
+        patches = [mpatches.Patch(color='grey', label='snow free')]
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0. )
 
-    if snow.basin in ['KAWEAH', 'RCEW']:
-        pbbx = 0.1
+    # basin total and legend
+    ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
-    # snow-free
-    ax.legend(handles=patches, bbox_to_anchor=(pbbx, pbby),
-              loc=2, borderaxespad=0. )
+    # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+    #          transform=ax1.transAxes,fontsize = 10)
 
     nonmelt = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
@@ -119,15 +124,16 @@ def cold_content(snow):
                     bottom = pd.DataFrame(nonmelt[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
+    plt.tight_layout()
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     xts = ax1.get_xticks()
-    if len(xts) < 6:
-        dxt = xts[1] - xts[0]
-        xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
-        ax1.set_xticks(xts)
-
     edges_lbl = []
     for i in xts[0:len(xts)-1]:
         edges_lbl.append(str(int(snow.edges[int(i)])))
+
+    ax1.set_xticklabels(str(i) for i in edges_lbl)
+    for tick in ax1.get_xticklabels():
+        tick.set_rotation(30)
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))

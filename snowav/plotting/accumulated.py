@@ -171,10 +171,19 @@ def accumulated(snow):
         ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
 
-    # basin total and legend
-    ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
-    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
+    # fix so that legend isn't obscured
+    if accum_byelev.iloc[0,:].sum() > np.nanmax(accum_byelev.sum())*0.9:
+
+        if len(snow.plotorder) > 1:
+            ax1.legend(loc=1,markerscale = 0.5)
+
+    else:
+
+        if len(snow.plotorder) > 1:
+            ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
+
+        ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+                 transform=ax1.transAxes,fontsize = 10)
 
     snow._logger.info('saving figure to{}sswi_{}.png'.format(snow.figs_path,
                                                              snow.name_append))

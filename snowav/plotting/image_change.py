@@ -83,7 +83,7 @@ def image_change(snow):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label(r'$\Delta$ SWE [%s]'%(snow.depthlbl))
+    cbar.set_label(r'$\Delta$ SWE [{}]'.format(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
                      %(snow.start_date.date().strftime("%Y-%-m-%-d"),
@@ -145,7 +145,7 @@ def image_change(snow):
         ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
 
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
-    ax1.set_xlabel('elevation [%s]'.format(snow.elevlbl))
+    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
@@ -160,7 +160,9 @@ def image_change(snow):
                   loc=2, borderaxespad=0.)
 
     # basin total and legend
-    ax1.legend(loc=(lims.legx,lims.legy))
+    if len(snow.plotorder) > 1:
+        ax1.legend(loc=(lims.legx,lims.legy))
+
     ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 

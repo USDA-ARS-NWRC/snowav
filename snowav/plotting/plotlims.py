@@ -19,24 +19,44 @@ def plotlims(basin,plotorder):
 
     class lims:
 
+        # snow-free patch label
         pbbx = 0.05
+
+        # legend x,y
         legx = 0.01
         legy = 0.71
+
+        # second legend x,y for precip_depth
+        legy2 = 0.71
+
         btx = 0.31
         bty = 0.95
 
-        if basin == 'SJ':
+        if basin == ['SJ']:
             pbbx = 0.3
             legy = 0.69
+            legy2 = 0.65
 
-        if basin in [ 'RCEW']:
+        if basin in ['RCEW']:
             pbbx = 0.1
 
-        if basin in ['KINGS', 'MERCED', 'KAWEAH']:
+        if basin in ['KINGS']:
             legy = 0.5
+            legy2 = 0.39
+
+        if basin in ['MERCED']:
+            legy = 0.54
+            legy2 = 0.42
+
+        if basin in ['KAWEAH']:
+            legy = 0.5
+            legy2 = 0.39            
+            pbbx = 0.45
 
         if basin in ['LAKES']:
             btx = 0.26
+            legy = 0.85
+            legy2 = 0.88
 
         if basin in ['BRB','TUOL']:
             legy = 0.74
