@@ -273,6 +273,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.mysql = ucfg.cfg['results']['mysql']
     self.sqlite = ucfg.cfg['results']['sqlite']
     self.write_csv = ucfg.cfg['results']['write_csv']
+    self.report_only = ucfg.cfg['results']['report_only']
 
     if type(self.write_csv) != list and self.write_csv != None:
         self.write_csv = [self.write_csv]
@@ -481,41 +482,43 @@ def read_config(self, external_logger=None, awsm=None):
             if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
                and not (os.path.isfile(path))):
 
-                try:
+                d = path.split('runs/run')[-1]
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:]))
+
+                # Only load the rundirs that we need
+                if ((self.start_date is not None) and
+                   (folder_date.date() >= self.start_date.date()) and
+                   (folder_date.date() <= self.end_date.date())):
+
                     output = iSnobalReader(path,
                                            self.filetype,
                                            snowbands = [0,1,2],
                                            embands = [6,7,8,9],
                                            wy = self.wy)
 
-                    if output.dates <= self.end_date:
-
-                        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                            self.outputs['dates'] = np.append(
-                                    self.outputs['dates'],output.dates-relativedelta(years=1) )
-                        else:
-                            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
-
-                        self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-                        # Make a dict for wyhr-rundir lookup
-                        for t in output.time:
-                            self.rundirs_dict[int(t)] = rd
-
-                        for n in range(0,len(output.em_data[8])):
-                            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                            self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                            self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                            self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                            self.outputs['density'].append(output.snow_data[1][n,:,:])
-
+                    if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                        self.outputs['dates'] = np.append(
+                                self.outputs['dates'],output.dates-relativedelta(years=1) )
                     else:
-                        self.run_dirs.remove(rd)
+                        self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
 
-                except:
-                    print('Failure loading file in {}, attempting to skip...'.format(path))
+                    self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+                    # Make a dict for wyhr-rundir lookup
+                    for t in output.time:
+                        self.rundirs_dict[int(t)] = rd
+
+                    for n in range(0,len(output.em_data[8])):
+                        self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                        self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                        self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                        self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                        self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.outputs['density'].append(output.snow_data[1][n,:,:])
+
+                else:
+                    self.run_dirs.remove(rd)
 
             else:
                 self.run_dirs.remove(rd)
@@ -542,7 +545,6 @@ def read_config(self, external_logger=None, awsm=None):
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
             print('ERROR! [Outputs] -> start_date or end_date outside of '
                   'range in [runs] -> run_dirs')
-            print( self.outputs['dates'][0].date(),self.outputs['dates'][-1].date())
             return
 
         self.report_date = self.end_date + timedelta(hours=1)
