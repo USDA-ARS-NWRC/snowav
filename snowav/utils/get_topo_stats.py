@@ -17,14 +17,14 @@ def get_topo_stats(fp, filetype='netcdf'):
     if filetype == 'netcdf':
         ds = nc.Dataset(fp, 'r')
         # ts['units'] = ds.variables['y'].units
-        y = ds.variables['y'][:]
-        x = ds.variables['x'][:]
-        ts['nx'] = len(x)
-        ts['ny'] = len(y)
-        ts['du'] = y[1] - y[0]
-        ts['dv'] = x[1] - x[0]
-        ts['v'] = x[0]
-        ts['u'] = y[0]
+        ts['y'] = ds.variables['y'][:]
+        ts['x'] = ds.variables['x'][:]
+        ts['nx'] = len(ts['x'])
+        ts['ny'] = len(ts['y'])
+        ts['du'] = ts['y'][1] - ts['y'][0]
+        ts['dv'] = ts['x'][1] - ts['x'][0]
+        ts['v'] = ts['x'][0]
+        ts['u'] = ts['y'][0]
         ds.close()
 
     if filetype == 'ipw':

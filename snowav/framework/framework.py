@@ -121,6 +121,16 @@ class SNOWAV(object):
             # snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
+            # Write out current model SWE values at snow course locations
+            if self.write_stn_csv_flag is True:
+                snowav.plotting.point_values.point_values(
+                    self.outputs['swe_z'][-1],
+                    self.stns_csv,
+                    (self.snow_x, self.snow_y),
+                    '{}point_vals_{}_{}.csv'.format(self.figs_path,
+                        self.end_date.date().strftime("%Y%m%d"),
+                        self.name_append))
+
             # if ((self.basin in ['TUOL', 'SJ']) and
             #    ((self.exclude_figs is not None) and
             #    ('AIR_TEMP' not in self.exclude_figs))):

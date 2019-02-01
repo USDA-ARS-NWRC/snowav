@@ -275,6 +275,11 @@ def read_config(self, external_logger=None, awsm=None):
     self.write_csv = ucfg.cfg['results']['write_csv']
     self.report_only = ucfg.cfg['results']['report_only']
 
+    self.write_stn_csv_flag = ucfg.cfg['results']['write_stn_csv']
+    if self.write_stn_csv_flag is True:
+        self.stns_csv = pd.read_csv(ucfg.cfg['results']['stn_csv_file'])
+        self.stns_csv.set_index('name')
+
     if type(self.write_csv) != list and self.write_csv != None:
         self.write_csv = [self.write_csv]
 
@@ -407,6 +412,8 @@ def read_config(self, external_logger=None, awsm=None):
         fp = os.path.join(self.run_dirs[0], os.listdir(self.run_dirs[0])[0])
 
     topo = ts.get_topo_stats(fp, filetype = self.filetype)
+    self.snow_x = topo['x']
+    self.snow_y = topo['y']
 
     self.pixel = int(topo['dv'])
     self.edges = np.arange(self.elev_bins[0],
