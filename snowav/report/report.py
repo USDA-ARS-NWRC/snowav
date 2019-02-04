@@ -43,7 +43,7 @@ def report(obj):
 
     r = database.database.query(obj, wy_start, obj.end_date, obj.run_name,
                                 bid = obj.plotorder)
-                                
+
     # Initialize variables to pass to latex file
     variables = {}
     variables['TOTAL_SWI'] = r[ (r['basin_id']==bid)
@@ -204,20 +204,21 @@ def report(obj):
     variables['UNITS'] = obj.vollbl
     variables['VOLLBL'] = obj.vollbl
     variables['DEPLBL'] = obj.depthlbl
-    variables['START_DATE'] = obj.start_date.date().strftime("%B %-d")
+    variables['START_DATE'] = obj.report_start.date().strftime("%B %-d")
     variables['END_DATE'] = obj.report_date.date().strftime("%B %-d")
     variables['FORE_DATE'] = ''
     variables['SWE_IN'] = variables['TOTAL_PM']
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
+
+    # Figures
     variables['SWI_FIG'] = 'swi_%s.png'%(obj.name_append)
-    # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
     variables['CHANGES_FIG'] = 'swe_change_%s.png'%(obj.name_append)
     variables['DFLT_FIG'] = 'dflt_swe_change_%s.png'%(obj.name_append)
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth_%s.png'%(obj.name_append)
-    # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total_%s.png'%(obj.name_append)
-    variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
+    variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_%s.png'%(obj.name_append)
+    # variables['MULTITOTSWI_FIG'] = 'compare_swi_vol_%s.png'%(obj.name_append)
     variables['HYP_FIG'] = 'hypsometry_%s.png'%(obj.name_append)
     variables['MEAN_FIG'] = 'mean_swe_depth_%s.png'%(obj.name_append)
     variables['DETAIL_FIG'] = 'mean_detail_%s.png'%(obj.name_append)
@@ -228,6 +229,11 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
+    # variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
+    # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
+    # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
+
+    # Logos
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
     variables['ASOLOGO'] = obj.figs_tpl_path + 'ASO.jpg'
     variables['USDALOGO'] = obj.figs_tpl_path + 'USDA.png'
@@ -239,12 +245,17 @@ def report(obj):
     variables['FRIANTLOGO'] = obj.figs_tpl_path + 'FRIANT.jpg'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
-    swe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
-    depth_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
-    swevol_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
-    # swepercent_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
-    sswe_byelev = pd.DataFrame(index = obj.edges, columns = obj.plotorder)
-    dswe_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
+    # dfind = [str(i) for i in obj.edges] + ['total']
+    # dfind = obj.edges
+    dfind = [str(i) for i in obj.edges]
+    swe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    swe_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
+    depth_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    swevol_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    sswe_byelev = pd.DataFrame(index = dfind, columns = obj.plotorder)
+    sswe_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
+    # dswe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    dswe_byelev = pd.DataFrame(np.nan, index = [str(i) for i in obj.edges] + ['total'], columns = obj.plotorder)
 
     dswe_byelev.index.name = 'Elevation'
     swe_byelev.index.name = 'Elevation'
@@ -260,33 +271,42 @@ def report(obj):
 
     for sub in obj.plotorder:
 
-        swe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==end_date)
+        swe_byelev.loc[dfind,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
+        swe_total.loc['total',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
+                                    & (r['date_time']==end_date)
+                                    & (r['elevation']=='total')
+                                    & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
 
         sum = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
-        swevol_byelev.loc[obj.edges,sub] = (r[ (r['date_time']==end_date)
+        swevol_byelev.loc[dfind,sub] = (r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1]/np.nansum(sum)*100).round(decimals = int(obj.dplcs))
 
-        sswe_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
+        sswe_byelev.loc[dfind,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
+        sswe_total.loc['total',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
+                                    & (r['date_time']==start_date)
+                                    & (r['elevation']=='total')
+                                    & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
 
-        depth_byelev.loc[obj.edges,sub] = r[ (r['date_time']==start_date)
+        depth_byelev.loc[dfind,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='depth')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
-
-        dswe_byelev.loc[obj.edges,sub] = swe_byelev[sub].values - sswe_byelev[sub].values
 
         # If the basin total percents will be 0/nan, omit that table
         if ((sub == obj.plotorder[0]) and
             ((np.nansum(sum) < 0.001) or (np.nansum(sum) == np.nan))):
             sum_flag = False
 
+    swe_byelev = swe_byelev.append(swe_total)
+    sswe_byelev = sswe_byelev.append(sswe_total)
+    dswe_byelev = swe_byelev - sswe_byelev
 
     colstr = 'l' + 'r'*len(obj.plotorder)
 
@@ -300,7 +320,7 @@ def report(obj):
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                %(obj.depthlbl,obj.start_date.date().strftime("%Y-%-m-%-d"),
+                                %(obj.depthlbl,obj.report_start.date().strftime("%Y-%-m-%-d"),
                                   obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
                                   dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
@@ -351,16 +371,17 @@ def report(obj):
     section_dict = {'SUMMARY':obj.summary_file,
                     'CHANGES_FIG_TPL':obj.figs_tpl_path + 'changes_fig_tpl.txt',
                     'SWI_FIG_TPL':obj.figs_tpl_path + 'swi_fig_tpl.txt',
-                    # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
-                    # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
-                    'MULTITOT_FIG_TPL':obj.figs_tpl_path + 'multitot_fig_tpl.txt',
+                    'MULTITOTSWE_FIG_TPL':obj.figs_tpl_path + 'multitotswe_fig_tpl.txt',
+                    # 'MULTITOTSWI_FIG_TPL':obj.figs_tpl_path + 'multitotswi_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt',
                     'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt',
                     'COLD_FIG_TPL':obj.figs_tpl_path + 'cold_fig_tpl.txt',
                     'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt'
+                    # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
+                    # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     }
 
     # Define and load summary tables depending on number of subbasins
@@ -387,9 +408,9 @@ def report(obj):
         variables[rep] = var
 
     # Remove if not BRB
-    if (obj.basin != 'BRB') or (obj.basin_total_flag is False):
-        variables['MULTITOT_FIG'] = ' '
-        variables['MULTITOT_FIG_TPL'] = ' '
+    if (obj.basin not in ['BRB', 'TUOL']) or (obj.basin_total_flag is False):
+        variables['MULTITOTSWE_FIG'] = ' '
+        variables['MULTITOTSWE_FIG_TPL'] = ' '
 
     # If figs are listed in exclude, replace with empty string in latex file
     if obj.exclude_figs != None:

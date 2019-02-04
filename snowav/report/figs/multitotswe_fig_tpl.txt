@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.7\textwidth]{FIG_PATHMULTITOTSWE_FIG}
+	\caption{Multi-year SWE volumes.}
+\end{centering}
+\end{figure}

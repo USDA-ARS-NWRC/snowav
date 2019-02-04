@@ -1,6 +1,0 @@
-\begin{figure}[htbp]
-\begin{centering}
-	\includegraphics[width=0.88\textwidth]{FIG_PATHMULTITOT_FIG}
-	\caption{Total basin SWE and SWI, with results from previous years.}
-\end{centering}
-\end{figure}

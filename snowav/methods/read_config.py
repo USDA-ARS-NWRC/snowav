@@ -153,12 +153,12 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #           basin total                            #
     ####################################################
-    if ucfg.cfg['basin total']['summary_swe'] != None:
-        self.summary_swe = ucfg.cfg['basin total']['summary_swe']
-        self.summary_swi = ucfg.cfg['basin total']['summary_swi']
-        self.basin_total_flag = True
-    else:
-        self.basin_total_flag = False
+    # if ucfg.cfg['basin total']['summary_swe'] != None:
+    #     self.summary_swe = ucfg.cfg['basin total']['summary_swe']
+    #     self.summary_swi = ucfg.cfg['basin total']['summary_swi']
+    #     self.basin_total_flag = True
+    # else:
+    #     self.basin_total_flag = False
 
     if ucfg.cfg['basin total']['netcdf']:
         self.ncvars = ucfg.cfg['Basin Total']['netcdf'].split(',')
@@ -306,17 +306,21 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.run_name = ucfg.cfg['results']['run_name']
     self.write_db = ucfg.cfg['results']['write_db']
-    self.plot_runs = ucfg.cfg['results']['plot_runs']
     self.figures_only = ucfg.cfg['results']['figures_only']
 
     # Establish database connection, create if necessary
     database.database.connect(self)
 
-    # If these fields are specified in the config_file, plot_flag will be set
-    # to False, no processing occurs, and no report is generated
+    # If these are filled out, compare_runs.py gets called
+    self.plot_runs = ucfg.cfg['results']['plot_runs']
     self.plot_labels = ucfg.cfg['results']['plot_labels']
     self.plot_wy = ucfg.cfg['results']['plot_wy']
     self.plot_variables = ucfg.cfg['results']['plot_variables']
+
+    if (self.plot_runs is not None) and (self.plot_labels is not None):
+        self.basin_total_flag = True
+    else:
+        self.basin_total_flag = False
 
     if self.figures_only is True:
         self.plot_flag = True
@@ -493,9 +497,16 @@ def read_config(self, external_logger=None, awsm=None):
                 folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:]))
 
                 # Only load the rundirs that we need
-                if ((self.start_date is not None) and
-                   (folder_date.date() >= self.start_date.date()) and
-                   (folder_date.date() <= self.end_date.date())):
+                # If we do this, stn_validate isn't right...
+                # if ((self.start_date is not None) and
+                #    (folder_date.date() >= self.start_date.date()) and
+                #    (folder_date.date() <= self.end_date.date())):
+                if (
+                    (
+                    (self.start_date is not None) and
+                    (folder_date.date() <= self.end_date.date()) ) 
+                    or (self.start_date is None)
+                    ):
 
                     output = iSnobalReader(path,
                                            self.filetype,
@@ -554,7 +565,15 @@ def read_config(self, external_logger=None, awsm=None):
                   'range in [runs] -> run_dirs')
             return
 
+        # Since model outputs at 23:00, step the figure and report dates to
+        # show 00:00 the next day (unless start of water year)
+        if self.start_date.date() == datetime.datetime(self.wy,10,1):
+            self.report_start = self.start_date
+        else:
+            self.report_start = self.start_date + timedelta(hours=1)
         self.report_date = self.end_date + timedelta(hours=1)
+
+
         parts = self.report_name.split('.')
         self.report_name = ( parts[0]
                            + self.report_date.date().strftime("%Y%m%d")
