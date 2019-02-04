@@ -32,7 +32,7 @@ def point_values(output, stn_df, imgxy, filename):
 
     # dataframe and constants
     c = 1.0/25.4
-    cols = ['x','y','xind','yind','swe','median swe']
+    cols = ['x','y','xind','yind','swe [in]','median swe [in]']
     stns = stn_df['name']
     pixel_swe = pd.DataFrame(index=stns, columns=cols)
 
@@ -65,9 +65,9 @@ def point_values(output, stn_df, imgxy, filename):
             for m in range(-1,1):
                 val = np.append(val,output[yind+n,xind+m]*c)
                 if n == 0 and m == 0:
-                    pixel_swe.loc[sta,'swe'] = np.round(float(output[yind+n,xind+m]*c),decimals = 2)
+                    pixel_swe.loc[sta,'swe [in]'] = np.round(float(output[yind+n,xind+m]*c),decimals = 2)
 
-        pixel_swe.loc[sta,'median swe'] = np.round(np.nanmedian(val),decimals = 2)
+        pixel_swe.loc[sta,'median swe [in]'] = np.round(np.nanmedian(val),decimals = 2)
 
         # a.plot(xind,yind,'gx',markersize = 10)
 
