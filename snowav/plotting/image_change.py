@@ -86,7 +86,7 @@ def image_change(snow):
     cbar.set_label(r'$\Delta$ SWE [{}]'.format(snow.depthlbl))
 
     h.axes.set_title('Change in SWE \n %s to %s'
-                     %(snow.start_date.date().strftime("%Y-%-m-%-d"),
+                     %(snow.report_start.date().strftime("%Y-%-m-%-d"),
                        snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     if snow.dplcs == 0:

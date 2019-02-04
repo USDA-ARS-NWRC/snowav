@@ -373,7 +373,7 @@ def precip_depth(snow):
     #         ax[2,1].legend(loc= (0.01,0.71))
 
     plt.suptitle('Depth of SWI, Precipitation, and Rain\n%s to %s'
-                         %(snow.start_date.date().strftime("%Y-%-m-%-d"),
+                         %(snow.report_start.date().strftime("%Y-%-m-%-d"),
                            snow.report_date.date().strftime("%Y-%-m-%-d")))
     plt.tight_layout()
     fig.subplots_adjust(top=0.92)

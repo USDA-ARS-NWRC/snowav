@@ -107,7 +107,7 @@ def accumulated(snow):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[{}]'.format(snow.depthlbl))
     h.axes.set_title('Accumulated SWI \n {} to {}'.format(
-                                snow.start_date.date().strftime("%Y-%-m-%-d"),
+                                snow.report_start.date().strftime("%Y-%-m-%-d"),
                                 snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     # Decimal places
