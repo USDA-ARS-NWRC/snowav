@@ -38,7 +38,7 @@ def compare_runs(self):
     for i,var in enumerate(self.plot_variables):
 
         plt.close(i)
-        plt.figure(num = i, figsize = (6,4), dpi = 300)
+        plt.figure(num = i, figsize = self.figsize, dpi = self.dpi)
         ax = plt.gca()
 
         formatter = mdates.DateFormatter('%b')
@@ -76,8 +76,12 @@ def compare_runs(self):
             df.year[i] = self.wy - 1
             df.index = pd.to_datetime(df[['year','month','day']])
 
-            ax.plot(df[df['elevation'] == 'total']['value'],
-                    label = self.plot_labels[iters])
+            if var == 'swi_vol':
+                ax.plot(df[df['elevation'] == 'total']['value'].cumsum(),
+                        label = self.plot_labels[iters])
+            else:
+                ax.plot(df[df['elevation'] == 'total']['value'],
+                        label = self.plot_labels[iters])
 
             if var == 'swe_vol':
                 title = 'Basin Total SWE'
