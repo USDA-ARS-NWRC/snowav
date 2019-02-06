@@ -59,7 +59,8 @@ def current_image(snow):
     if (snow.annot_x is not None) and (snow.annot_y is not None):
         for i, name in enumerate(snow.plotorder[1::]):
             if name in ['Willow Creek','South Fork',
-                        'Upper South Fork','Lower South Fork']:
+                        'Upper South Fork','Lower South Fork',
+                        'Middle South Fork']:
                 if len(name.split(' ')) == 2:
                     n = '{}\n{}'.format(name.split(' ')[0],name.split(' ')[1])
                 else:
