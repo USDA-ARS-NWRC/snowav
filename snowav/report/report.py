@@ -248,18 +248,23 @@ def report(obj):
     # dfind = [str(i) for i in obj.edges] + ['total']
     # dfind = obj.edges
     dfind = [str(i) for i in obj.edges]
+    # bmeanstr = 'basin mean'
+
     swe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
-    swe_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
+    swe_total = pd.DataFrame(np.nan, index = ['basin mean'], columns = obj.plotorder)
     depth_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
-    swevol_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    sweper_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    swevol_byelev = pd.DataFrame(np.nan, index = [str(i) for i in obj.edges] + ['total'], columns = obj.plotorder)
+    # swevol_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
     sswe_byelev = pd.DataFrame(index = dfind, columns = obj.plotorder)
-    sswe_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
+    sswe_total = pd.DataFrame(np.nan, index = ['basin mean'], columns = obj.plotorder)
     # dswe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
     dswe_byelev = pd.DataFrame(np.nan, index = [str(i) for i in obj.edges] + ['total'], columns = obj.plotorder)
 
     dswe_byelev.index.name = 'Elevation'
     swe_byelev.index.name = 'Elevation'
     swevol_byelev.index.name = 'Elevation'
+    sweper_byelev.index.name = 'Elevation'
     depth_byelev.index.name = 'Elevation'
 
     sum_flag = True
@@ -274,23 +279,28 @@ def report(obj):
         swe_byelev.loc[dfind,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
-        swe_total.loc['total',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
+        swe_total.loc['basin mean',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
                                     & (r['date_time']==end_date)
                                     & (r['elevation']=='total')
                                     & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
+
+        swevol_byelev.loc[[str(i) for i in obj.edges] + ['total'],sub] = r[ (r['date_time']==end_date)
+                                    & (r['variable']=='swe_vol')
+                                    & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values.round(decimals = int(obj.dplcs))
+
 
         sum = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
 
-        swevol_byelev.loc[dfind,sub] = (r[ (r['date_time']==end_date)
+        sweper_byelev.loc[dfind,sub] = (r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1]/np.nansum(sum)*100).round(decimals = int(obj.dplcs))
 
         sswe_byelev.loc[dfind,sub] = r[ (r['date_time']==start_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
-        sswe_total.loc['total',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
+        sswe_total.loc['basin mean',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
                                     & (r['date_time']==start_date)
                                     & (r['elevation']=='total')
                                     & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
@@ -305,6 +315,7 @@ def report(obj):
             sum_flag = False
 
     swe_byelev = swe_byelev.append(swe_total)
+    # swevol_byelev = swevol_byelev.append(swevol_total)
     sswe_byelev = sswe_byelev.append(sswe_total)
     dswe_byelev = swe_byelev - sswe_byelev
 
@@ -315,6 +326,13 @@ def report(obj):
                                 %(obj.depthlbl,obj.report_date.date().strftime("%Y-%-m-%-d")) +
                                 spacecmd + swe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                 r'} \\ \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}'
+                                )
+
+    variables['SWEVOL_BYELEV'] = (
+                                r'  \textbf{SWE volume by elevation [%s], %s}\\ \vspace{0.1cm} \\'
+                                %(obj.vollbl,obj.report_date.date().strftime("%Y-%-m-%-d")) +
+                                spacecmd + swevol_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                r'} \\ \footnotesize{\textbf{Table 5:} Volume of SWE by elevation band.}'
                                 )
     # variables['SWE_BYELEV'] = variables['SWE_BYELEV'].replace(r'\toprule','')
 
@@ -330,17 +348,17 @@ def report(obj):
     # variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
 
     if sum_flag is not True:
-        variables['SWEVOL_BYELEV'] = ' '
+        variables['SWEPER_BYELEV'] = ' '
 
     else:
-        variables['SWEVOL_BYELEV'] = (
+        variables['SWEPER_BYELEV'] = (
                                     r'  \textbf{SWE volume, percent of basin total by elevation band, %s}\\ \vspace{0.1cm} \\'
                                     %(obj.report_date.date().strftime("%Y-%-m-%-d"))+
-                                    spacecmd + swevol_byelev[obj.plotorder].round(1).to_latex(na_rep='-', column_format=colstr) +
+                                    spacecmd + sweper_byelev[obj.plotorder].round(1).to_latex(na_rep='-', column_format=colstr) +
                                     r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band (totals may not add to 100 due to rounding).} '
                                     )
-        variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace('inf','-')
-        # variables['SWEVOL_BYELEV'] = variables['SWEVOL_BYELEV'].replace(r'\toprule','')
+        variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
+        # variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace(r'\toprule','')
 
     # variables['DEPTH_BYELEV'] = (
     #                             r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
