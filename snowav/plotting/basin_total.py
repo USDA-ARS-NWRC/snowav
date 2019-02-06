@@ -117,68 +117,68 @@ def basin_total(snow):
     ########################################
 
     # This needs to be improved...
-    if snow.basin_total_flag is False:
-        snow._logger.info('No basin total summary files specified in config file, '
-              + 'skipping...')
-        return
-
-    if snow.basin == 'BRB':
-        main = 'Boise River Basin'
-        multiswe = pd.read_csv(snow.summary_swe)
-        multiswi = pd.read_csv(snow.summary_swi)
-        multiswe['date'] = pd.to_datetime(multiswe['date'])
-        multiswi['date'] = pd.to_datetime(multiswi['date'])
-
-        multiswi.wy17 = multiswi.wy17.cumsum()
-        multiswe.loc[range(0,len(swe_summary[main])),'wy18'] = swe_summary[main].values.copy()
-        multiswi.loc[range(0,len(swi_summary[main])),'wy18'] = swi_summary[main].values.copy()
-
-        if snow.units == 'SI':
-            multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
-            multiswi.wy17 = np.multiply(multiswi.wy17,0.00123348)
-            multiswe.wy16 = np.multiply(multiswe.wy16,0.00123348)
-            multiswi.wy16 = np.multiply(multiswi.wy16,0.00123348)
-            multiswe.wy15 = np.multiply(multiswe.wy15,0.00123348)
-            multiswi.wy15 = np.multiply(multiswi.wy15,0.00123348)
-
-        plt.close(8)
-        fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
-                                    dpi=snow.dpi, nrows = 1, ncols = 2)
-
-        ax.plot(multiswe['date'], multiswe['wy13'], color = 'c',label = 'wy2013')
-        ax.plot(multiswe['date'], multiswe['wy15'], color = 'g',label = 'wy2015')
-        ax.plot(multiswe['date'], multiswe['wy16'], color = 'r',label = 'wy2016')
-        ax.plot(multiswe['date'], multiswe['wy17'], color = 'k',label = 'wy2017')
-        ax.plot(multiswe['date'], multiswe['wy18'], color = 'b', label = 'wy2018')
-        #
-        ax1.plot(multiswi['date'], multiswi['wy13'], color = 'c',label = 'wy2013')
-        ax1.plot(multiswi['date'], multiswi['wy15'], color = 'g',label = 'wy2015')
-        ax1.plot(multiswi['date'], multiswi['wy16'], color = 'r',label = 'wy2016')
-        ax1.plot(multiswi['date'], multiswi['wy17'], color = 'k',label = 'wy2017')
-        ax1.plot(multiswi['date'], multiswi['wy18'], color = 'b', label = 'wy2018')
-
-        formatter = DateFormatter('%b')
-        ax.xaxis.set_major_formatter(formatter)
-        ax1.xaxis.set_major_formatter(formatter)
-
-        ax1.yaxis.set_label_position("right")
-        ax1.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
-        ax.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
-        ax1.tick_params(axis='y')
-        ax1.yaxis.tick_right()
-        ax.legend(loc='upper left')
-
-        for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
-            tick.set_rotation(30)
-            tick1.set_rotation(30)
-
-        ax.set_ylabel('[%s]'%(snow.vollbl))
-        ax1.set_ylabel('[%s]'%(snow.vollbl))
-        ax.axes.set_title('Water Year SWE')
-        ax1.axes.set_title('Accumulated Basin SWI')
-
-        ax.set_ylim((-0.1,ax1.get_ylim()[1]))
-        plt.tight_layout()
-
-        snow._logger.info('saving figure to %sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))
-        plt.savefig('%sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))
+    # if snow.basin_total_flag is False:
+    #     snow._logger.info('No basin total summary files specified in config file, '
+    #           + 'skipping...')
+    #     return
+    #
+    # if snow.basin == 'BRB':
+    #     main = 'Boise River Basin'
+    #     multiswe = pd.read_csv(snow.summary_swe)
+    #     multiswi = pd.read_csv(snow.summary_swi)
+    #     multiswe['date'] = pd.to_datetime(multiswe['date'])
+    #     multiswi['date'] = pd.to_datetime(multiswi['date'])
+    #
+    #     multiswi.wy17 = multiswi.wy17.cumsum()
+    #     multiswe.loc[range(0,len(swe_summary[main])),'wy18'] = swe_summary[main].values.copy()
+    #     multiswi.loc[range(0,len(swi_summary[main])),'wy18'] = swi_summary[main].values.copy()
+    #
+    #     if snow.units == 'SI':
+    #         multiswe.wy17 = np.multiply(multiswe.wy17,0.00123348)
+    #         multiswi.wy17 = np.multiply(multiswi.wy17,0.00123348)
+    #         multiswe.wy16 = np.multiply(multiswe.wy16,0.00123348)
+    #         multiswi.wy16 = np.multiply(multiswi.wy16,0.00123348)
+    #         multiswe.wy15 = np.multiply(multiswe.wy15,0.00123348)
+    #         multiswi.wy15 = np.multiply(multiswi.wy15,0.00123348)
+    #
+    #     plt.close(8)
+    #     fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
+    #                                 dpi=snow.dpi, nrows = 1, ncols = 2)
+    #
+    #     ax.plot(multiswe['date'], multiswe['wy13'], color = 'c',label = 'wy2013')
+    #     ax.plot(multiswe['date'], multiswe['wy15'], color = 'g',label = 'wy2015')
+    #     ax.plot(multiswe['date'], multiswe['wy16'], color = 'r',label = 'wy2016')
+    #     ax.plot(multiswe['date'], multiswe['wy17'], color = 'k',label = 'wy2017')
+    #     ax.plot(multiswe['date'], multiswe['wy18'], color = 'b', label = 'wy2018')
+    #     #
+    #     ax1.plot(multiswi['date'], multiswi['wy13'], color = 'c',label = 'wy2013')
+    #     ax1.plot(multiswi['date'], multiswi['wy15'], color = 'g',label = 'wy2015')
+    #     ax1.plot(multiswi['date'], multiswi['wy16'], color = 'r',label = 'wy2016')
+    #     ax1.plot(multiswi['date'], multiswi['wy17'], color = 'k',label = 'wy2017')
+    #     ax1.plot(multiswi['date'], multiswi['wy18'], color = 'b', label = 'wy2018')
+    #
+    #     formatter = DateFormatter('%b')
+    #     ax.xaxis.set_major_formatter(formatter)
+    #     ax1.xaxis.set_major_formatter(formatter)
+    #
+    #     ax1.yaxis.set_label_position("right")
+    #     ax1.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
+    #     ax.set_xlim((datetime(snow.wy-1, 10, 1),datetime(snow.wy, 8, 1)))
+    #     ax1.tick_params(axis='y')
+    #     ax1.yaxis.tick_right()
+    #     ax.legend(loc='upper left')
+    #
+    #     for tick,tick1 in zip(ax.get_xticklabels(),ax1.get_xticklabels()):
+    #         tick.set_rotation(30)
+    #         tick1.set_rotation(30)
+    #
+    #     ax.set_ylabel('[%s]'%(snow.vollbl))
+    #     ax1.set_ylabel('[%s]'%(snow.vollbl))
+    #     ax.axes.set_title('Water Year SWE')
+    #     ax1.axes.set_title('Accumulated Basin SWI')
+    #
+    #     ax.set_ylim((-0.1,ax1.get_ylim()[1]))
+    #     plt.tight_layout()
+    #
+    #     snow._logger.info('saving figure to %sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))
+    #     plt.savefig('%sbasin_total_multiyr_%s.png'%(snow.figs_path,snow.name_append))
