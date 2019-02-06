@@ -127,9 +127,8 @@ class SNOWAV(object):
                     self.outputs['swe_z'][-1],
                     self.stns_csv,
                     (self.snow_x, self.snow_y),
-                    '{}point_vals_{}_{}.csv'.format(self.figs_path,
-                        self.end_date.date().strftime("%Y%m%d"),
-                        self.name_append))
+                    '{}model_pixel_swe_{}.csv'.format(self.figs_path,
+                        self.end_date.date().strftime("%Y%m%d")))
 
             # if ((self.basin in ['TUOL', 'SJ']) and
             #    ((self.exclude_figs is not None) and
