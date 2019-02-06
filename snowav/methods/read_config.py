@@ -504,7 +504,7 @@ def read_config(self, external_logger=None, awsm=None):
                 if (
                     (
                     (self.start_date is not None) and
-                    (folder_date.date() <= self.end_date.date()) ) 
+                    (folder_date.date() <= self.end_date.date()) )
                     or (self.start_date is None)
                     ):
 
@@ -567,7 +567,7 @@ def read_config(self, external_logger=None, awsm=None):
 
         # Since model outputs at 23:00, step the figure and report dates to
         # show 00:00 the next day (unless start of water year)
-        if self.start_date.date() == datetime.datetime(self.wy,10,1):
+        if self.start_date.date() <= datetime.datetime(self.wy,10,2).date():
             self.report_start = self.start_date
         else:
             self.report_start = self.start_date + timedelta(hours=1)
