@@ -32,7 +32,7 @@ def plotlims(basin,plotorder):
         btx = 0.31
         bty = 0.95
 
-        if basin == ['SJ']:
+        if basin in ['SJ']:
             pbbx = 0.3
             legy = 0.69
             legy2 = 0.65
@@ -50,7 +50,7 @@ def plotlims(basin,plotorder):
 
         if basin in ['KAWEAH']:
             legy = 0.5
-            legy2 = 0.39            
+            legy2 = 0.39
             pbbx = 0.45
 
         if basin in ['LAKES']:
@@ -69,5 +69,8 @@ def plotlims(basin,plotorder):
         else:
             sumorder = plotorder
             swid = 0.45
+
+        if ['Main'] in sumorder:
+            sumorder.replace('Main','Mammoth')
 
     return lims
