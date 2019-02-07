@@ -167,19 +167,23 @@ def precip_depth(snow):
                 color = snow.barcolors[iters], width = swid,
                                                 edgecolor = 'k',
                                                 label = lbl)
-        ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
-    xts = ax[0,1].get_xticks()
+    ax[0,1].xaxis.set_ticks(range(0,len(snow.edges)))
+    #plt.tight_layout()
+    ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax[0,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[0,1].get_xticklabels():
         tick.set_rotation(30)
 
+    ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     ax[0,1].set_ylabel('SWI [%s]'%(snow.depthlbl))
-    ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    #ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[0,1].yaxis.set_label_position("right")
     ax[0,1].yaxis.tick_right()
 
@@ -246,16 +250,21 @@ def precip_depth(snow):
                                                 label = lbl)
         ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
-    xts = ax[1,1].get_xticks()
+    ax[1,1].xaxis.set_ticks(range(0,len(snow.edges)))
+    #plt.tight_layout()
+    ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax[1,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[1,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
+    #ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[1,1].set_ylim((0,yMax))
     ax[1,1].set_ylabel(r'precip [%s]'%(snow.depthlbl))
     ax[1,1].yaxis.set_label_position("right")
@@ -335,16 +344,22 @@ def precip_depth(snow):
                                                 label = lbl)
         ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
 
-    xts = ax[2,1].get_xticks()
+    # plt.tight_layout()
+    ax[2,1].xaxis.set_ticks(range(0,len(snow.edges)))
+    #plt.tight_layout()
+    ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax[2,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[2,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
+    #ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[2,1].set_ylim((0,yMax))
     ax[2,1].set_ylabel(r'rain [%s]'%(snow.depthlbl))
     ax[2,1].set_xlabel('elevation [%s]'%(snow.elevlbl))
@@ -375,7 +390,7 @@ def precip_depth(snow):
     plt.suptitle('Depth of SWI, Precipitation, and Rain\n%s to %s'
                          %(snow.report_start.date().strftime("%Y-%-m-%-d"),
                            snow.report_date.date().strftime("%Y-%-m-%-d")))
-    plt.tight_layout()
+    #plt.tight_layout()
     fig.subplots_adjust(top=0.92)
 
     snow._logger.info('saving figure to %sprecip_depth_%s.png'%(snow.figs_path,snow.name_append))

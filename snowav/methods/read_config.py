@@ -563,14 +563,16 @@ def read_config(self, external_logger=None, awsm=None):
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
             print('ERROR! [Outputs] -> start_date or end_date outside of '
                   'range in [runs] -> run_dirs')
+            print(self.start_date.date(), self.outputs['dates'][0].date(), self.end_date.date() , self.outputs['dates'][-1].date())
             return
 
         # Since model outputs at 23:00, step the figure and report dates to
         # show 00:00 the next day (unless start of water year)
-        if self.start_date.date() <= datetime.datetime(self.wy,10,2).date():
+        if self.start_date == datetime.datetime(self.wy-1,10,1,23,0,0):
             self.report_start = self.start_date
         else:
             self.report_start = self.start_date + timedelta(hours=1)
+
         self.report_date = self.end_date + timedelta(hours=1)
 
 

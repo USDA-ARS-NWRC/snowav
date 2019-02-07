@@ -119,10 +119,13 @@ def image_change(snow):
                     bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
+
+    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
     plt.tight_layout()
-    xts = ax1.get_xticks()
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
@@ -166,7 +169,7 @@ def image_change(snow):
     ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
-    plt.tight_layout()
+    # plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
     snow._logger.info('saving figure to {}swe_change_{}.png'.format(snow.figs_path,snow.name_append))

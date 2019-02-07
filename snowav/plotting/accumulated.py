@@ -139,20 +139,23 @@ def accumulated(snow):
                     bottom = pd.DataFrame(accum_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
+    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
     plt.tight_layout()
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
-    xts = ax1.get_xticks()
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    #ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
@@ -162,7 +165,7 @@ def accumulated(snow):
     else:
         ax1.set_ylim((0,ylims[1] + ylims[1]*0.7))
 
-    plt.tight_layout()
+    #plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
     # If there is meaningful snow-free area, include path and label
@@ -185,6 +188,6 @@ def accumulated(snow):
         ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
                  transform=ax1.transAxes,fontsize = 10)
 
-    snow._logger.info('saving figure to{}sswi_{}.png'.format(snow.figs_path,
+    snow._logger.info('saving figure to{}swi_{}.png'.format(snow.figs_path,
                                                              snow.name_append))
     plt.savefig('{}swi_{}.png'.format(snow.figs_path,snow.name_append))

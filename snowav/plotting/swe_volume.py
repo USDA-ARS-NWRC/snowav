@@ -127,20 +127,21 @@ def swe_volume(snow):
                     bottom = pd.DataFrame(swe[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
-    plt.tight_layout()
 
-    xts = ax1.get_xticks()
-    if len(xts) < 6:
-        dxt = xts[1] - xts[0]
-        xts = np.arange(xts[0],xts[-1] + 1 ,dxt/2)
-        ax1.set_xticks(xts)
+    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
+    plt.tight_layout()
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     edges_lbl = []
-    for i in xts[0:len(xts)-1]:
+    for i in range(0,len(snow.edges)):
         edges_lbl.append(str(int(snow.edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
+    for tick in ax1.get_xticklabels():
+        tick.set_rotation(30)
+
+    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.yaxis.set_label_position("right")
