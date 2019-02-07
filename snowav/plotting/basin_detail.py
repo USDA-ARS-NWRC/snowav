@@ -5,7 +5,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
-from smrf import ipw
+from spatialnc import ipw
 from shutil import copyfile
 import os
 import pandas as pd

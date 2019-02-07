@@ -1,7 +1,7 @@
 
 import os
 import netCDF4 as nc
-from smrf import ipw
+from spatialnc import ipw
 
 def get_topo_stats(fp, filetype='netcdf'):
     """

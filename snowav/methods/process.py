@@ -1,6 +1,6 @@
 
 import numpy as np
-from smrf import ipw
+from spatialnc import ipw
 import os
 import copy
 import pandas as pd

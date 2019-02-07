@@ -1,6 +1,6 @@
 
 import numpy as np
-from smrf import ipw
+from spatialnc import ipw
 from shutil import copyfile
 import os
 import copy
