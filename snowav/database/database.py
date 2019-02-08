@@ -107,8 +107,8 @@ def delete(self, start_date, end_date, bid, run_name):
 
     '''
     try:
-        print('Deleting records from bid={}, run_name={}, from {} '
-              'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
+        # print('Deleting records from bid={}, run_name={}, from {} '
+        #       'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
         # Since we know run_name, but not run_id, get the run_id
         qry = self.session.query(Results).join(RunMetadata).filter(and_(
@@ -135,9 +135,9 @@ def delete(self, start_date, end_date, bid, run_name):
             df2 = pd.read_sql(qry2.statement, qry2.session.connection())
 
             if df2.empty:
-                print('Deleting RunMetadata run_name={}, run_id={}, from {} '
-                      'to {}'.format(run_name,str(r),start_date.date(),
-                      end_date.date()))
+                # print('Deleting RunMetadata run_name={}, run_id={}, from {} '
+                #       'to {}'.format(run_name,str(r),start_date.date(),
+                #       end_date.date()))
 
                 q1 = self.session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).first()
@@ -416,7 +416,7 @@ def connect(self):
                 Base.metadata.create_all(engine)
                 DBSession = sessionmaker(bind=engine)
                 self.session = DBSession()
-                print('Using {} for results...'.format(db_engine))
+                # print('Using {} for results...'.format(db_engine))
 
             except:
                 print('Failed trying to make database connection '

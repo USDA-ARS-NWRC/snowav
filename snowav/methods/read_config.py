@@ -36,8 +36,12 @@ def read_config(self, external_logger=None, awsm=None):
             directory being created in awsm
 
     '''
-    print('Reading SNOWAV config file...')
-    ucfg = get_user_config(self.config_file, modules = 'snowav')
+    # print('Reading SNOWAV config file...')
+    if awsm is None:
+        ucfg = get_user_config(self.config_file, modules = 'snowav')
+
+    else:
+        ucfg = awsm
 
     # find path to snowav code directory
     self.snowav_path = get_snowav_path()

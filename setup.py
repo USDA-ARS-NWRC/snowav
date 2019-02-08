@@ -95,7 +95,8 @@ setup(
     setup_requires=setup_requirements,
 
     entry_points={
-       'console_scripts': ['snowav = scripts.snow:run',],
+       'console_scripts': ['snowav = scripts.snow:run',
+	   					   'snowav_airflow = scripts.snowav_airflow:run'],
     }
 
 )

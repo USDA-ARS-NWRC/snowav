@@ -16,52 +16,56 @@ import mysql.connector
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from snowav import database
 
-def run():
+def run(config_instance = None):
 
-    parser = argparse.ArgumentParser(description="Examine and auto populate")
+    if config_instance is None:
+        parser = argparse.ArgumentParser(description="Examine and auto populate")
 
-    parser.add_argument('-f', '--config_file', dest='config_file', type=str,
-                        help='Path to snowav configuration file.')
+        parser.add_argument('-f', '--config_file', dest='config_file', type=str,
+                            help='Path to snowav configuration file.')
 
-    parser.add_argument('-b', '--bid', dest='bid', type=str,
-                        help='Basin id, options in snowav/database/tables.py, '
-                        'for a database query of existing fields. If -wy and '
-                        '-b are passed, will check database.')
+        parser.add_argument('-b', '--bid', dest='bid', type=str,
+                            help='Basin id, options in snowav/database/tables.py, '
+                            'for a database query of existing fields. If -wy and '
+                            '-b are passed, will check database.')
 
-    parser.add_argument('-wy', '--wy', dest='wy', type=int,
-                        help='Water year, for a database query of existing '
-                        'fields. If -wy and -b are passed, will check database.')
+        parser.add_argument('-wy', '--wy', dest='wy', type=int,
+                            help='Water year, for a database query of existing '
+                            'fields. If -wy and -b are passed, will check database.')
 
-    parser.add_argument('-db', '--db', dest='db', type=str,
-                        help='Path to snowav database, for a database query of '
-                        'existing fields. If -wy and -b are passed, will '
-                        'check database.')
+        parser.add_argument('-db', '--db', dest='db', type=str,
+                            help='Path to snowav database, for a database query of '
+                            'existing fields. If -wy and -b are passed, will '
+                            'check database.')
 
-    parser.add_argument('-create', '--create', dest='create', type=str,
-                        help='Flag for initial database creation for docker.')
+        parser.add_argument('-create', '--create', dest='create', type=str,
+                            help='Flag for initial database creation for docker.')
 
-    parser.add_argument('-user', '--user', dest = 'user', type=str,
-                        help='Flag for initial database creation for docker.')
+        parser.add_argument('-user', '--user', dest = 'user', type=str,
+                            help='Flag for initial database creation for docker.')
 
-    parser.add_argument('-pwd', '--pwd', dest = 'pwd', type=str,
-                        help='Flag for initial database creation for docker.')
+        parser.add_argument('-pwd', '--pwd', dest = 'pwd', type=str,
+                            help='Flag for initial database creation for docker.')
 
-    parser.add_argument('-host', '--host', dest = 'host', type=str,
-                        help='Flag for initial database creation for docker.')
+        parser.add_argument('-host', '--host', dest = 'host', type=str,
+                            help='Flag for initial database creation for docker.')
 
-    parser.add_argument('-port', '--port', dest = 'port', type=str,
-                        help='Flag for initial database creation for docker.')
+        parser.add_argument('-port', '--port', dest = 'port', type=str,
+                            help='Flag for initial database creation for docker.')
 
-    args = parser.parse_args()
+        args = parser.parse_args()
 
-    #########################################################################
-    #                       SNOWAV run                                      #
-    #########################################################################
+        #########################################################################
+        #                       SNOWAV run                                      #
+        #########################################################################
 
-    # If config file is passed, do standard snowav processing, figs, and report
-    if args.config_file:
-        snowav.framework.framework.SNOWAV(config_file = args.config_file)
+        # If config file is passed, do standard snowav processing, figs, and report
+        if args.config_file:
+            snowav.framework.framework.SNOWAV(config_file = args.config_file)
 
+    else:
+        args = None
+        snowav.framework.framework.SNOWAV(awsm = config_instance)
     #########################################################################
     #                       Database creation                               #
     #########################################################################

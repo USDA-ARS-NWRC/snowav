@@ -21,21 +21,16 @@ class SNOWAV(object):
 
         '''
 
-        if os.path.isfile(config_file):
+        if awsm is None and os.path.isfile(config_file):
             self.config_file = config_file
-
-        else:
-            self.config_file = config_file
-            print('SNOWAV config file does not exist!')
-            return
-
-        # Read config file
-        if external_logger is not None:
-            methods.read_config.read_config(self,
-                                            external_logger = external_logger,
-                                            awsm = awsm)
-        else:
             methods.read_config.read_config(self)
+
+        elif awsm is not None:
+            methods.read_config.read_config(self, awsm = awsm)
+            
+        else:
+            print('No config instance passed, or config file does not exist!')
+            return
 
         if self.report_only is True:
             snowav.report.report.report(self)
