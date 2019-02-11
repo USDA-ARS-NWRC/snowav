@@ -6,7 +6,7 @@ from inicheck.output import print_config_report, generate_config
 from inicheck.tools import cast_all_variables
 from smrf.utils import utils, io
 # from awsm.framework.framework import run_awsm
-from snowav.scripts import snow
+from scripts import snow
 from datetime import datetime
 from datetime import timedelta
 import sys
@@ -61,7 +61,7 @@ def run():
     # new_config = cast_all_variables(new_config, new_config.mcfg)
 
     # run_awsm(new_config)
-    snow(config_instance = new_config)
+    snow.run(config_instance = new_config)
 
 
 if __name__ == '__main__':

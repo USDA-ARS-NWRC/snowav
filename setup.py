@@ -78,7 +78,7 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
-    scripts=['./scripts/snow.py'],
+    scripts=['./scripts/snow.py', './scripts/snowav_airflow.py'],
     install_requires=requirements,
     license="CC0 1.0",
     zip_safe=False,
