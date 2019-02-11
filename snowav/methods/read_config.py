@@ -483,15 +483,7 @@ def read_config(self, external_logger=None, awsm=None):
         lrdirs = copy.deepcopy(self.run_dirs)
         for rd in lrdirs:
 
-            if self.filetype == 'ipw':
-                path = rd
-
-            if self.filetype == 'netcdf':
-                # split on the last instance of 'output', not very robust
-                if 'output' in rd:
-                    path = rd.rsplit('output',1)[0]
-                else:
-                    path = rd
+            path = rd
 
             # If the run_dirs isn't empty use it, otherwise remove
             if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
