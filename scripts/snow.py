@@ -15,6 +15,7 @@ import urllib.parse
 import mysql.connector
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from snowav import database
+from sys import exit
 
 def run(config_instance = None):
 
@@ -66,6 +67,7 @@ def run(config_instance = None):
     else:
         args = None
         snowav.framework.framework.SNOWAV(awsm = config_instance)
+        exit()
     #########################################################################
     #                       Database creation                               #
     #########################################################################
