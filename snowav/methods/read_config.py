@@ -415,7 +415,7 @@ def read_config(self, external_logger=None, awsm=None):
             fp = os.path.abspath(self.run_dirs[0].rsplit('output/',1)[0] + 'snow.nc')
         else:
             fp = os.path.join(self.run_dirs[0],'snow.nc')
-        print(fp)
+        print(self.run_dirs,fp)
 
     # if self.filetype == 'ipw':
     #     fp = os.path.join(self.run_dirs[0], os.listdir(self.run_dirs[0])[0])

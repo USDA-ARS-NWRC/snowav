@@ -26,8 +26,9 @@ class SNOWAV(object):
             methods.read_config.read_config(self)
 
         elif awsm is not None:
+            self.config_file = awsm.filename
             methods.read_config.read_config(self, awsm = awsm)
-            
+
         else:
             print('No config instance passed, or config file does not exist!')
             return
