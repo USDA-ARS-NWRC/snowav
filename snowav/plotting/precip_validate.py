@@ -93,7 +93,8 @@ def precip_validate(snow):
 
     for rname in rundirs:
 
-        ncpath = rname.split('output')[0]
+        # ncpath = rname.split('output')[0]
+        ncpath = rname
         path = ncpath.replace('runs', 'data')
         path = path.replace('run','data')
 

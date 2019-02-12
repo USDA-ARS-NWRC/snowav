@@ -217,7 +217,7 @@ def run_metadata(self):
     rdir_strlim = 1200
     trdir = ','.join(self.run_dirs)
     if len(trdir) > rdir_strlim:
-        trdir = self.run_dirs[0].split('output')[0]
+        trdir = self.run_dirs[0]
 
     values = {
               'run_id':self.runid,

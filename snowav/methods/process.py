@@ -79,7 +79,8 @@ def process(self):
         hr = int(self.outputs['time'][iters])
         sf = self.rundirs_dict[hr].replace('runs','data')
         sf = sf.replace('run','data')
-        ppt_path = sf.split('output')[0] + '/smrfOutputs/precip.nc'
+        # ppt_path = sf.split('output')[0] + '/smrfOutputs/precip.nc'
+        ppt_path = sf + '/smrfOutputs/precip.nc'
         percent_snow_path = ppt_path.replace('precip','percent_snow')
 
         precip = np.zeros((self.nrows,self.ncols))

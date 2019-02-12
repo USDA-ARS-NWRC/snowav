@@ -115,8 +115,9 @@ def stn_validate(snow):
                 iswe = snow.offset
 
             for rname in rundirs:
-                ncpath = rname.split('output')[0]
-                ncf = nc.Dataset(os.path.join(ncpath,'snow.nc'), 'r')
+                # ncpath = rname.split('output')[0]
+
+                ncf = nc.Dataset(os.path.join(rname,'snow.nc'), 'r')
                 nctvec = ncf.variables['time'][:]
                 vswe = ncf.variables['specific_mass']
                 ncxvec = ncf.variables['x'][:]
