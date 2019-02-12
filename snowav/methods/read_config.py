@@ -85,13 +85,13 @@ def read_config(self, external_logger=None, awsm=None):
     if awsm is None:
         self.start_date = ucfg.cfg['outputs']['start_date']
         self.end_date = ucfg.cfg['outputs']['end_date']
-        
+
     else:
 
         # define some formats
         fmt_cfg = '%Y-%m-%d 23:00'
-        end_date = (datetime.now() - timedelta(hours=24)).date()
-        end_date.strftime(fmt_cfg)
+        end_date = (datetime.datetime.now() - timedelta(hours=24)).date()
+        end_date = pd.to_datetime(end_date.strftime(fmt_cfg))
 
         self.start_date = ucfg.cfg['outputs']['start_date']
         self.end_date = end_date
