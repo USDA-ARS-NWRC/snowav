@@ -85,6 +85,10 @@ def read_config(self, external_logger=None, awsm=None):
     if awsm is None:
         self.start_date = ucfg.cfg['outputs']['start_date']
         self.end_date = ucfg.cfg['outputs']['end_date']
+    else:
+        self.start_date = awsm.start_date
+        self.end_date = awsm.end_date
+
 
     if (self.start_date is not None and self.end_date is not None):
         self.start_date = self.start_date.to_pydatetime()
