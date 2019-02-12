@@ -144,16 +144,14 @@ def image_change(snow):
 
     if ylims[1] == 0:
         ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
-    if ylims[0] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
+    # if ylims[0] == 0:
+    #     ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
 
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
-    ax1.tick_params(axis='x')
-    ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
 
     # snow-free
@@ -169,7 +167,7 @@ def image_change(snow):
     ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
-    # plt.tight_layout()
+    plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
     snow._logger.info('saving figure to {}swe_change_{}.png'.format(snow.figs_path,snow.name_append))
