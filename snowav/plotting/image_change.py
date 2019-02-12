@@ -144,8 +144,9 @@ def image_change(snow):
 
     if ylims[1] == 0:
         ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
-    # if ylims[0] == 0:
-    #     ax1.set_ylim((ylims[0]+(ylims[0]*0.5),ylims[1]+ylims[1]*0.5))
+
+    if ylims[1] > 0:
+        ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.5))
 
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
