@@ -229,6 +229,7 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
+    variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
     # variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
     # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
     # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
@@ -397,7 +398,8 @@ def report(obj):
                     'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt',
                     'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt',
                     'COLD_FIG_TPL':obj.figs_tpl_path + 'cold_fig_tpl.txt',
-                    'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt'
+                    'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt',
+                    'SUBBASINS_FIG_TPL':obj.figs_tpl_path + 'subbasins_fig_tpl.txt'
                     # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
                     # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     }

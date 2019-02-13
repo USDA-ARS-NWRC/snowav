@@ -105,6 +105,7 @@ class SNOWAV(object):
                 database.database.write_csv(self)
 
             # Plots
+            snowav.plotting.subbasins.subbasins(self)
             snowav.plotting.accumulated.accumulated(self)
             snowav.plotting.current_image.current_image(self)
             snowav.plotting.state_by_elev.state_by_elev(self)

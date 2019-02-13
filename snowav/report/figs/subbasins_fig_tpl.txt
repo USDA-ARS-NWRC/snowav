@@ -1,0 +1,5 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.5\textwidth]{SUBBASINS_FIG}
+\end{centering}
+\end{figure}
