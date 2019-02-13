@@ -70,7 +70,7 @@ def plotlims(basin,plotorder):
             sumorder = plotorder
             swid = 0.45
 
-        if ['Main'] in sumorder:
-            sumorder.replace('Main','Mammoth')
+        # if ['Main'] in sumorder:
+        #     sumorder.replace('Main','Mammoth')
 
     return lims
