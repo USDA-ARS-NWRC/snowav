@@ -203,7 +203,7 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.barcolors = ['xkcd:cobalt',
                       'xkcd:mustard green',
-                      'xkcd:lichen', # light grey green
+                      'xkcd:lichen',
                       'xkcd:pale green',
                       'xkcd:blue green',
                       'xkcd:bluish purple',
@@ -212,6 +212,7 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.annot_x = ucfg.cfg['plots']['annot_x']
     self.annot_y = ucfg.cfg['plots']['annot_y']
+    self.subs_fig = ucfg.cfg['plots']['subs_fig']
 
     # San SanJoaquin
     # Jose Creek, South Fork, Main, Willow Creek
