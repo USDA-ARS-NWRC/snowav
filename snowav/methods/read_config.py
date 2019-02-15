@@ -24,6 +24,7 @@ from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
 from snowav import database
 from datetime import timedelta
+from shutil import copyfile
 
 
 def read_config(self, external_logger=None, awsm=None):
@@ -613,13 +614,9 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self._logger = external_logger
 
-    # Only need to store this name if we decide to
-    # write more to the copied config file...
-    self.config_copy = (self.figs_path + extf[0] + self.name_append
-                        + '_%s'%(ext_shr) + extf[1])
-
-    if not os.path.isfile(self.config_copy):
-        generate_config(ucfg,self.config_copy)
+    config_copy = '{}{}{}'.format(self.figs_path, ext_shr, extf[1])
+    # generate_config(ucfg,self.config_copy)
+    copyfile(self.config_file, config_copy)
 
 def createLog(self):
     '''

@@ -229,7 +229,17 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
-    variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
+
+    if obj.subs_fig is not None:
+        variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
+
+    else:
+        if obj.exclude_figs != None:
+            obj.exclude_figs = obj.exclude_figs + ['SUBBASINS']
+
+        else:
+            obj.exclude_figs = ['SUBBASINS']
+
     # variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
     # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
     # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)

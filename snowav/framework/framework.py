@@ -115,7 +115,7 @@ class SNOWAV(object):
             snowav.plotting.swe_change.swe_change(self)
             snowav.plotting.basin_total.basin_total(self)
             snowav.plotting.pixel_swe.pixel_swe(self)
-            # snowav.plotting.density.density(self)
+            snowav.plotting.density.density(self)
             snowav.plotting.stn_validate.stn_validate(self)
 
             # Write out current model SWE values at snow course locations
