@@ -135,18 +135,17 @@ def image_change(snow):
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
     ylims = ax1.get_ylim()
-    if ylims[0] < 0 and ylims[1] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-    if ylims[0] < 0 and ylims[1] > 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
-        if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+    max = ylims[1]
 
-    if ylims[1] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
+    if (ylims[0] > -2) and (ylims[1] <= 1) and (ylims[1] >= 0):
+        max = 1.5
 
-    if ylims[1] > 0:
-        ax1.set_ylim((ylims[0],ylims[1]+ylims[1]*0.5))
+    # elif (ylims[0] > -10) and (ylims[1] <= 1) and (ylims[1] >= 0):
+    #     max = ylims[1] + ylims[1]*0.5
+    else:
+        max = ylims[1] + ylims[1]*0.4
+
+    ax1.set_ylim((ylims[0], max))
 
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
