@@ -21,3 +21,4 @@ from . import cold_content
 from . import swe_volume
 from . import plotlims
 from . import subbasins
+from . import inflow

@@ -15,10 +15,6 @@ import os
 
 def stn_validate(snow):
 
-    if snow.valid_flag == False:
-        snow._logger.debug('No stations listed in config file for validation figure!')
-        return
-
     rundirs = snow.run_dirs
     stns = snow.val_stns
     lbls = snow.val_lbls

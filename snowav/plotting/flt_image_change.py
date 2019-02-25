@@ -12,6 +12,7 @@ import pandas as pd
 from snowav import database
 from snowav.database.tables import Basins
 import datetime
+from datetime import timedelta
 
 def flt_image_change(snow):
     '''
@@ -29,6 +30,8 @@ def flt_image_change(snow):
     if (ixs == ixe) and (len(snow.outputs['dates']) > 1):
         ixs = ixe - 1
         snow._logger.info('flt_start_date and/or flt_end_date not found, using '
+                            'last two images as flight difference')
+        print('flt_start_date and/or flt_end_date not found, using '
                             'last two images as flight difference')
 
     delta_swe = snow.outputs['swe_z'][ixe] - snow.outputs['swe_z'][ixs]
@@ -103,11 +106,12 @@ def flt_image_change(snow):
     if snow.units == 'SI':
         cbar.set_label(r'$\Delta$ SWE [mm]')
 
+    start_date = snow.flt_start_date + timedelta(hours=1)
     d = snow.flt_end_date + timedelta(hours=1)
 
     h.axes.set_title('Change in SWE from Snow Depth Update\n%s to %s'
-                     %(snow.flt_start_date.date().strftime("%Y-%-m-%-d"),
-                       snow.report_date.date().strftime("%Y-%-m-%-d")))
+                     %(start_date.date().strftime("%Y-%-m-%-d"),
+                       d.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
     sumorder  = snow.plotorder[1:]

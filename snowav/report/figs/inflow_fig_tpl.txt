@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.88\textwidth]{FIG_PATHINFLOW_FIG}
+	\caption{Water year total SWI and reservoir inflow, and runoff efficiency (dashed blue).}
+\end{centering}
+\end{figure}

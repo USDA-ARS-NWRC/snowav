@@ -229,6 +229,7 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
+    variables['INFLOW_FIG'] = 'inflow_{}.png'.format(obj.name_append)
 
     if obj.subs_fig is not None:
         variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
@@ -409,7 +410,8 @@ def report(obj):
                     'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt',
                     'COLD_FIG_TPL':obj.figs_tpl_path + 'cold_fig_tpl.txt',
                     'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt',
-                    'SUBBASINS_FIG_TPL':obj.figs_tpl_path + 'subbasins_fig_tpl.txt'
+                    'SUBBASINS_FIG_TPL':obj.figs_tpl_path + 'subbasins_fig_tpl.txt',
+                    'INFLOW_FIG_TPL':obj.figs_tpl_path + 'inflow_fig_tpl.txt'
                     # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
                     # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     }

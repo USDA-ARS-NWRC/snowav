@@ -88,8 +88,6 @@ def read_config(self, external_logger=None, awsm=None):
         self.end_date = ucfg.cfg['outputs']['end_date']
 
     else:
-
-        # define some formats
         fmt_cfg = '%Y-%m-%d 23:00'
         end_date = (datetime.datetime.now() - timedelta(hours=24)).date()
         end_date = pd.to_datetime(end_date.strftime(fmt_cfg))
@@ -102,8 +100,7 @@ def read_config(self, external_logger=None, awsm=None):
         self.end_date = self.end_date.to_pydatetime()
 
         if self.start_date >= self.end_date:
-            print('WARNING! start_date > end_date, needs to be fixed in '
-                  'config file, exiting...')
+            print('Error: [outputs]->start_date > [outputs]->end_date')
             return
 
     # Check for forced flight comparison images
@@ -154,14 +151,9 @@ def read_config(self, external_logger=None, awsm=None):
         self.val_stns = ucfg.cfg['validate']['stations']
         self.val_lbls = ucfg.cfg['validate']['labels']
         self.val_client = ucfg.cfg['validate']['client']
-        self.valid_flag = True
-
-    else:
-        self.valid_flag = False
 
     self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
     self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
-    self.precip_figure = ucfg.cfg['validate']['precip_figure']
     self.val_client = ucfg.cfg['validate']['client']
 
     # This is being used to combine 2017 HRRR data
@@ -214,16 +206,25 @@ def read_config(self, external_logger=None, awsm=None):
     self.annot_x = ucfg.cfg['plots']['annot_x']
     self.annot_y = ucfg.cfg['plots']['annot_y']
     self.subs_fig = ucfg.cfg['plots']['subs_fig']
+    self.flow_file = ucfg.cfg['plots']['flow_file']
 
-    # San SanJoaquin
-    # Jose Creek, South Fork, Main, Willow Creek
-    # annot_x: 950,1600,375,10
-    # annot_y: 1450,500,185,600
+    self.density_flag = ucfg.cfg['plots']['density']
+    self.subbasins_flag = ucfg.cfg['plots']['subbasins']
+    self.inflow_flag = ucfg.cfg['plots']['inflow']
+    self.accumulated_flag = ucfg.cfg['plots']['accumulated']
+    self.current_image_flag = ucfg.cfg['plots']['current_image']
+    self.image_change_flag = ucfg.cfg['plots']['image_change']
+    self.cold_content_flag = ucfg.cfg['plots']['cold_content']
+    self.swe_volume_flag = ucfg.cfg['plots']['swe_volume']
+    self.swe_change_flag = ucfg.cfg['plots']['swe_change']
+    self.basin_total_flag = ucfg.cfg['plots']['basin_total']
+    self.pixel_swe_flag = ucfg.cfg['plots']['pixel_swe']
+    self.stn_validate_flag = ucfg.cfg['plots']['stn_validate']
+    self.precip_validate_flag = ucfg.cfg['plots']['precip_validate']
+    self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
+    self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
+    self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
 
-    # Tuolumne
-    # Tuolumne, Cherry Creek, Eleanor
-    # annot_x: 875,175,50
-    # annot_y: 375,185,900
 
     ####################################################
     #          report                                  #
@@ -231,13 +232,22 @@ def read_config(self, external_logger=None, awsm=None):
     self.report_flag = ucfg.cfg['report']['report']
     self.exclude_figs = ucfg.cfg['report']['exclude_figs']
 
+
     if type(self.exclude_figs) != list and self.exclude_figs != None:
         self.exclude_figs = [self.exclude_figs]
 
-    if (self.valid_flag is False) and (self.exclude_figs is not None):
-        self.exclude_figs.append('VALID')
-    if (self.valid_flag is False) and (self.exclude_figs is None):
-        self.exclude_figs = ['VALID']
+    elif self.exclude_figs is None:
+        self.exclude_figs = []
+
+    else:
+        if self.subbasins_flag is False:
+            self.exclude_figs.append('SUBBASINS')
+
+        if self.inflow_flag is False:
+            self.exclude_figs.append('INFLOW')
+
+        if self.stn_validate_flag is False:
+            self.exclude_figs.append('VALID')
 
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
@@ -332,22 +342,15 @@ def read_config(self, external_logger=None, awsm=None):
     # If these are filled out, compare_runs.py gets called
     self.plot_runs = ucfg.cfg['results']['plot_runs']
     self.plot_labels = ucfg.cfg['results']['plot_labels']
-    self.plot_wy = ucfg.cfg['results']['plot_wy']
     self.plot_variables = ucfg.cfg['results']['plot_variables']
 
-    if (self.plot_runs is not None) and (self.plot_labels is not None):
-        self.basin_total_flag = True
-    else:
-        self.basin_total_flag = False
+    if (self.compare_runs_flag is True) and (self.plot_runs is None):
+        print('No runs listed in [results] -> plot_runs, so [] -> being set ' +
+              'to False')
+        self.compare_runs_flag = False
 
     if self.figures_only is True:
         self.plot_flag = True
-
-        if ( (self.plot_labels is None) or
-           (self.plot_wy is None) or
-           (self.plot_variables is None) ):
-            print('Must fill config file options [results] -> plot_labels, '
-                 'plot_wy, and plot_variables!')
 
         print('Config file option [results]->figures_only={}, '
               'creating figures from database...'.format(self.figures_only))
@@ -580,13 +583,6 @@ def read_config(self, external_logger=None, awsm=None):
         else:
             self.report_start = self.start_date + timedelta(hours=1)
 
-        self.report_date = self.end_date + timedelta(hours=1)
-
-
-        parts = self.report_name.split('.')
-        self.report_name = ( parts[0]
-                           + self.report_date.date().strftime("%Y%m%d")
-                           + '.' + parts[1] )
 
         # Copy the config file where figs will be saved
         # use name_append if only plotting figures from database and don't
@@ -601,6 +597,13 @@ def read_config(self, external_logger=None, awsm=None):
         # ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
         ext_shr = self.name_append
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
+
+
+    self.report_date = self.end_date + timedelta(hours=1)
+    parts = self.report_name.split('.')
+    self.report_name = ( parts[0]
+                       + self.report_date.date().strftime("%Y%m%d")
+                       + '.' + parts[1] )
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)
