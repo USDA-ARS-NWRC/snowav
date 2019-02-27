@@ -1,3 +1,4 @@
+climata==0.5.0
 cmocean==1.1
 colorcet==0.9.1
 Jinja2==2.9.6
