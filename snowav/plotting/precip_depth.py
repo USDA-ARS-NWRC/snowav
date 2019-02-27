@@ -79,14 +79,14 @@ def precip_depth(snow):
     # Get bar plot ylims
     if accum_byelev.values.max() > precip_byelev.values.max():
         if len(snow.plotorder) < 5:
-            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.2
+            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.4
         else:
-            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.5
+            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.6
     else:
         if len(snow.plotorder) < 5:
-            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.2
+            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.4
         else:
-            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.5
+            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.6
 
     cmap = cmocean.cm.dense
     cmap1 = plt.cm.nipy_spectral_r

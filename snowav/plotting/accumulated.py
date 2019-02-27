@@ -161,14 +161,9 @@ def accumulated(snow):
     ax1.yaxis.tick_right()
 
     ylims = ax1.get_ylim()
-
-    if ylims[1] < 10:
-        ax1.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-        ax1.locator_params(axis='y', nbins=6)
-        # yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}'))
-
-    else:
-        ax1.set_ylim((0,ylims[1] + ylims[1]*0.6))
+    max = ylims[1] + ylims[1]*0.6
+    min = 0
+    ax1.set_ylim((min, max))
 
     #plt.tight_layout()
     fig.subplots_adjust(top=0.88)

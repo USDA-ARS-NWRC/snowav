@@ -97,11 +97,6 @@ def swe_volume(snow):
                   & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
             swe.loc[elev,bid] = v2['value'].values[0]
 
-    lim = np.max(np.max(swe[snow.plotorder[0]]))
-    if lim <= 1:
-        lim = 1
-
-    ylim = np.max(lim) + np.max(lim)*0.2
     ix = len(snow.barcolors)
     # Total basin label
 
@@ -127,6 +122,10 @@ def swe_volume(snow):
                     bottom = pd.DataFrame(swe[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
+    ylims = ax1.get_ylim()
+    max = ylims[1] + ylims[1]*0.5
+    min = 0
+    ax1.set_ylim((min, max))
 
     ax1.xaxis.set_ticks(range(0,len(snow.edges)))
     plt.tight_layout()
@@ -141,13 +140,12 @@ def swe_volume(snow):
         tick.set_rotation(30)
 
     ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
-    
+
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
     ax1.legend(loc = 2, fontsize = 10)
-    ax1.set_ylim((0,ylim))
 
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)

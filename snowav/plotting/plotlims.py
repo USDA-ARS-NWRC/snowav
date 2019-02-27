@@ -41,11 +41,11 @@ def plotlims(basin,plotorder):
             pbbx = 0.1
 
         if basin in ['KINGS']:
-            legy = 0.5
+            legy = 0.52
             legy2 = 0.39
 
         if basin in ['MERCED']:
-            legy = 0.54
+            legy = 0.57
             legy2 = 0.42
 
         if basin in ['KAWEAH']:
