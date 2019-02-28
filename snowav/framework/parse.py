@@ -22,7 +22,7 @@ from shutil import copyfile
 from sys import exit
 
 
-def parse(self):
+def parse(self, external_logger=None):
     '''
     Parse options from reading in config file.
 
