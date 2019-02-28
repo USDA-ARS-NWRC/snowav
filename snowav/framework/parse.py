@@ -88,8 +88,8 @@ def parse(self, external_logger=None):
     # Establish database connection, create if necessary
     database.database.connect(self)
 
-    self.plotorder = []
-    maskpaths = []
+    # self.plotorder = []
+    # maskpaths = []
 
     ncf = nc.Dataset(self.dempath, 'r')
     self.dem = ncf.variables['dem'][:]

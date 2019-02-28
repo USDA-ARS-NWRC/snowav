@@ -107,12 +107,6 @@ class snowav(object):
                 # process(self)
 
             elif (self.pflag is True) and (self.write_db is True):
-                print(('There are existing fields on the database '
-                      'between {} and {} with run_name={}, and config option '
-                      '[results] -> overwrite=True, '
-                      'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
-                                                      self.end_date.date(),
-                                                      self.run_name)))
                 self._logger.info('There are existing fields on the database '
                       'between {} and {} with run_name={}, and config option '
                       '[results] -> overwrite=True, '
