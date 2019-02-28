@@ -296,3 +296,76 @@ def parse(self):
     config_copy = '{}{}{}'.format(self.figs_path, ext_shr, extf[1])
     # generate_config(ucfg,self.config_copy)
     copyfile(self.config_file, config_copy)
+
+
+    ####################################################
+    #             log file                             #
+    ####################################################
+    if external_logger == None:
+        createLog(self)
+    else:
+        self._logger = external_logger
+
+
+def createLog(self):
+    '''
+    Now that the directory structure is done, create log file and print out
+    saved logging statements.
+    '''
+
+    level_styles = {'info': {'color': 'white'},
+                    'notice': {'color': 'magenta'},
+                    'verbose': {'color': 'blue'},
+                    'success': {'color': 'green', 'bold': True},
+                    'spam': {'color': 'green', 'faint': True},
+                    'critical': {'color': 'red', 'bold': True},
+                    'error': {'color': 'red'},
+                    'debug': {'color': 'green'},
+                    'warning': {'color': 'yellow'}}
+
+    field_styles =  {'hostname': {'color': 'magenta'},
+                     'programname': {'color': 'cyan'},
+                     'name': {'color': 'white'},
+                     'levelname': {'color': 'white', 'bold': True},
+                     'asctime': {'color': 'green'}}
+
+    # start logging
+    loglevel = self.loglevel
+
+    numeric_level = getattr(logging, loglevel, None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % loglevel)
+
+    # setup the logging
+    logfile = None
+    if self.log_to_file:
+        logfile = os.path.join(self.figs_path, 'log_snowav.out')
+        # let user know
+        print('Logging to file: {}'.format(logfile))
+
+    fmt = '%(levelname)s:%(name)s:%(message)s'
+    if logfile is not None:
+        logging.basicConfig(filename=logfile,
+                            filemode='w',
+                            level=numeric_level,
+                            format=fmt)
+    else:
+        logging.basicConfig(level=numeric_level)
+        coloredlogs.install(level=numeric_level,
+                            fmt=fmt,
+                            level_styles=level_styles,
+                            field_styles=field_styles)
+
+    self._loglevel = numeric_level
+
+    self._logger = logging.getLogger(__name__)
+
+    if len(self.tmp_log) > 0:
+        for l in self.tmp_log:
+            self._logger.info(l)
+    if len(self.tmp_warn) > 0:
+        for l in self.tmp_warn:
+            self._logger.warning(l)
+    if len(self.tmp_err) > 0:
+        for l in self.tmp_err:
+            self._logger.error(l)
