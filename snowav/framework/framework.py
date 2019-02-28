@@ -1,8 +1,9 @@
 
 import os
 from sys import exit
-from snowav.methods.read_config import read_config
-from snowav.methods.process import process
+from snowav.framework.read_config import read_config
+from snowav.framework.process import process
+from snowav.framework.parse import parse
 from snowav.report.report import report
 from snowav.database.database import check_fields,delete,run_metadata,write_csv
 from snowav.plotting.accumulated import accumulated
@@ -23,7 +24,7 @@ from snowav.plotting.subbasins import subbasins
 from snowav.plotting.swe_change import swe_change
 from snowav.plotting.swe_volume import swe_volume
 
-class SNOWAV(object):
+class snowav(object):
 
     def __init__(self, config_file = None, external_logger = None, awsm = None):
         '''
@@ -42,17 +43,19 @@ class SNOWAV(object):
         if awsm is None and os.path.isfile(config_file):
             self.config_file = config_file
             read_config(self)
+            parse(self)
 
         elif awsm is not None:
             self.config_file = awsm.filename
             read_config(self, awsm = awsm)
+            parse(self)
 
         else:
             print('No config instance passed, or config file does not exist!')
-            return
+            exit()
 
         if self.report_only is True:
-            print('Config option [Results] -> report_only=True, ' +
+            self._logger.info('Config option [Results] -> report_only=True, ' +
                   'report generated with existing figures.')
             report(self)
             exit()
@@ -90,8 +93,8 @@ class SNOWAV(object):
 
             # Process results and put on the database
             if (self.write_db is False):
-                print('There are existing fields on the database between '
-                      '{} and {} with run_name={}, and config file option '
+                self._logger.info('There are existing fields on the database '
+                      'between {} and {} for run_name={}, and config option '
                       '[results] -> overwrite=False\n'
                       'Using iSnobal outputs specified in run_dirs for '
                       'spatial figures, loading processed results '
@@ -104,8 +107,14 @@ class SNOWAV(object):
                 # process(self)
 
             elif (self.pflag is True) and (self.write_db is True):
-                print('There are existing fields on the database between '
-                      '{} and {} with run_name={}, and config file option '
+                print(('There are existing fields on the database '
+                      'between {} and {} with run_name={}, and config option '
+                      '[results] -> overwrite=True, '
+                      'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
+                                                      self.end_date.date(),
+                                                      self.run_name)))
+                self._logger.info('There are existing fields on the database '
+                      'between {} and {} with run_name={}, and config option '
                       '[results] -> overwrite=True, '
                       'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
                                                       self.end_date.date(),

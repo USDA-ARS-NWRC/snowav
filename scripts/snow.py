@@ -15,6 +15,7 @@ import urllib.parse
 import mysql.connector
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from snowav import database
+from snowav.framework.framework import snowav
 from sys import exit
 
 def run(config_instance = None):
@@ -62,11 +63,11 @@ def run(config_instance = None):
 
         # If config file is passed, do standard snowav processing, figs, and report
         if args.config_file:
-            snowav.framework.framework.SNOWAV(config_file = args.config_file)
+            snowav(config_file = args.config_file)
 
     else:
         args = None
-        snowav.framework.framework.SNOWAV(awsm = config_instance)
+        snowav(awsm = config_instance)
         exit()
     #########################################################################
     #                       Database creation                               #

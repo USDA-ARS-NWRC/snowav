@@ -40,11 +40,11 @@ with open(fname,'w') as f:
 	f.write("__gitVersion__='{0}'\n".format(gitVersion[:nchars]))
 	f.close()
 
-with open('README.rst') as readme_file:
+with open('README.md') as readme_file:
     readme = readme_file.read()
 
-with open('HISTORY.rst') as history_file:
-    history = history_file.read()
+# with open('HISTORY.rst') as history_file:
+#     history = history_file.read()
 
 requirements = [
     # TODO: put package requirements here
@@ -62,7 +62,7 @@ setup(
     name='snowav',
     version='0.6.2',
     description="Snow and Water Model Analysis and Visualization ",
-    long_description=readme + '\n\n' + history,
+    # long_description=readme ,
     author="Mark Robertson",
     author_email='mark.robertson@ars.usda.gov',
     url='https://github.com/roberton-mark/SNOWAV',
@@ -72,7 +72,6 @@ setup(
 			  'snowav.database',
               'snowav.plotting',
               'snowav.report',
-              'snowav.methods',
               'snowav.utils'
 			  ],
 
