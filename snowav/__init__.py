@@ -19,7 +19,6 @@ __config_titles__ = {'basin': 'Overview information for SNOWAV, including'
 from . import framework
 from . import database
 from . import plotting
-from . import methods
 from . import report
 from . import utils
 __config_header__ = utils.utilities.get_config_header()

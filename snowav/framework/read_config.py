@@ -78,7 +78,7 @@ def read_config(self, external_logger=None, awsm=None):
     #           outputs                                #
     ####################################################
     self.dplcs = ucfg.cfg['outputs']['decimals']
-    self.vars = ucfg.cfg['outputs']['vars']
+    # self.vars = ucfg.cfg['outputs']['vars']
 
     if awsm is None:
         self.start_date = ucfg.cfg['outputs']['start_date']
@@ -308,9 +308,6 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self._logger = external_logger
 
-    config_copy = '{}{}{}'.format(self.figs_path, ext_shr, extf[1])
-    # generate_config(ucfg,self.config_copy)
-    copyfile(self.config_file, config_copy)
 
 def createLog(self):
     '''

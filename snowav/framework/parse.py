@@ -292,3 +292,7 @@ def parse(self):
 
     if not os.path.exists(self.figs_path):
         os.makedirs(self.figs_path)
+
+    config_copy = '{}{}{}'.format(self.figs_path, ext_shr, extf[1])
+    # generate_config(ucfg,self.config_copy)
+    copyfile(self.config_file, config_copy)
