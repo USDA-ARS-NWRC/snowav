@@ -46,34 +46,40 @@ def report(obj):
 
     # Initialize variables to pass to latex file
     variables = {}
+
     variables['TOTAL_SWI'] = r[ (r['basin_id']==bid)
-                                & (r['date_time']>=wy_start)
-                                & (r['date_time']<=end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = int(obj.dplcs))
+        &(r['date_time']>=wy_start)
+        &(r['date_time']<=end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swi_vol')]['value'].sum().round(decimals=int(obj.dplcs))
+
     variables['PER_SWI'] = r[ (r['basin_id']==bid)
-                                & (r['date_time']>=start_date)
-                                & (r['date_time']<=end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='swi_vol')]['value'].sum().round(decimals = int(obj.dplcs))
+        &(r['date_time']>=start_date)
+        &(r['date_time']<=end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swi_vol')]['value'].sum().round(decimals=int(obj.dplcs))
+
     variables['TOTAL_SWE'] = r[ (r['basin_id']==bid)
-                                & (r['date_time']==end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
+        &(r['date_time']==end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swe_vol')]['value'].values[0].round(decimals=int(obj.dplcs))
+
     variables['TOTAL_SAV'] = r[  (r['basin_id']==bid)
-                                & (r['date_time']==end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='swe_avail')]['value'].values[0].round(decimals = int(obj.dplcs))
+        &(r['date_time']==end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swe_avail')]['value'].values[0].round(decimals=int(obj.dplcs))
+
     variables['TOTAL_PVOL'] = '100'
 
     start_swe = r[ (r['basin_id']==bid)
-                    & (r['date_time']==start_date)
-                    & (r['elevation']=='total')
-                    & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
+        &(r['date_time']==start_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swe_vol')]['value'].values[0].round(decimals=int(obj.dplcs))
+
     end_swe = r[ (r['basin_id']==bid)
-                 & (r['date_time']==end_date)
-                 & (r['elevation']=='total')
-                 & (r['variable']=='swe_vol')]['value'].values[0].round(decimals = int(obj.dplcs))
+         &(r['date_time']==end_date)
+         &(r['elevation']=='total')
+         &(r['variable']=='swe_vol')]['value'].values[0].round(decimals=int(obj.dplcs))
 
     variables['TOTAL_SDEL'] = end_swe - start_swe
 
@@ -87,19 +93,21 @@ def report(obj):
         variables['SIGN'] = r'-'
 
     variables['TOTAL_PM'] = r[ (r['basin_id']==bid)
-                                & (r['date_time']==end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
+        &(r['date_time']==end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='swe_z')]['value'].values[0].round(decimals=int(obj.dplcs))
+
     variables['TOTALPRE_PM'] = r[ (r['basin_id']==bid)
-                                & (r['date_time']>=wy_start)
-                                & (r['date_time']<=end_date)
-                                & (r['elevation']=='total')
-                                & (r['variable']=='precip_z')]['value'].sum().round(decimals = int(obj.dplcs))
+        &(r['date_time']>=wy_start)
+        &(r['date_time']<=end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='precip_z')]['value'].sum().round(decimals=int(obj.dplcs))
+
     total_rai = r[ (r['basin_id']==bid)
-                    & (r['date_time']>=wy_start)
-                    & (r['date_time']<=end_date)
-                    & (r['elevation']=='total')
-                    & (r['variable']=='rain_z')]['value'].sum().round(decimals = int(obj.dplcs))
+        &(r['date_time']>=wy_start)
+        &(r['date_time']<=end_date)
+        &(r['elevation']=='total')
+        &(r['variable']=='rain_z')]['value'].sum().round(decimals=int(obj.dplcs))
 
     if variables['TOTALPRE_PM'] != 0.0:
         variables['TOTAL_RAT'] = str(int((total_rai/variables['TOTALPRE_PM'])*100))
@@ -206,29 +214,34 @@ def report(obj):
     variables['DEPLBL'] = obj.depthlbl
     variables['START_DATE'] = obj.report_start.date().strftime("%B %-d")
     variables['END_DATE'] = obj.report_date.date().strftime("%B %-d")
-    variables['FORE_DATE'] = ''
+    variables['FORE_START_DATE'] = obj.for_start_date.date().strftime("%B %-d")
+    variables['FORE_DATE'] = obj.for_end_date.date().strftime("%B %-d")
     variables['SWE_IN'] = variables['TOTAL_PM']
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
 
     # Figures
-    variables['SWI_FIG'] = 'swi_%s.png'%(obj.name_append)
-    variables['CHANGES_FIG'] = 'swe_change_%s.png'%(obj.name_append)
-    variables['DFLT_FIG'] = 'dflt_swe_change_%s.png'%(obj.name_append)
-    variables['CHANGES_DEP_FIG'] = 'swe_change_depth_%s.png'%(obj.name_append)
-    variables['TOTALS_FIG'] = 'basin_total_%s.png'%(obj.name_append)
-    variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_%s.png'%(obj.name_append)
-    # variables['MULTITOTSWI_FIG'] = 'compare_swi_vol_%s.png'%(obj.name_append)
-    variables['HYP_FIG'] = 'hypsometry_%s.png'%(obj.name_append)
-    variables['MEAN_FIG'] = 'mean_swe_depth_%s.png'%(obj.name_append)
-    variables['DETAIL_FIG'] = 'mean_detail_%s.png'%(obj.name_append)
-    variables['DENSITY_FIG'] = 'density_%s.png'%(obj.name_append)
-    variables['DENSITY_SUB_FIG'] = 'density_sub_%s.png'%(obj.name_append)
-    variables['DENSITY_SWE_FIG'] = 'density_swe_%s.png'%(obj.name_append)
-    variables['PDEP_FIG'] = 'precip_depth_%s.png'%(obj.name_append)
-    variables['VALID_FIG'] = 'validation_%s.png'%(obj.name_append)
+    variables['SWI_FIG'] = 'swi_{}.png'.format(obj.name_append)
+    variables['CHANGES_FIG'] = 'swe_change_{}.png'.format(obj.name_append)
+    variables['DFLT_FIG'] = 'dflt_swe_change_{}.png'.format(obj.name_append)
+    variables['CHANGES_DEP_FIG'] = 'swe_change_depth_{}.png'.format(obj.name_append)
+    variables['TOTALS_FIG'] = 'basin_total_{}.png'.format(obj.name_append)
+    variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(obj.name_append)
+    variables['HYP_FIG'] = 'hypsometry_{}.png'.format(obj.name_append)
+    variables['MEAN_FIG'] = 'mean_swe_depth_{}.png'.format(obj.name_append)
+    variables['DETAIL_FIG'] = 'mean_detail_{}.png'.format(obj.name_append)
+    variables['DENSITY_FIG'] = 'density_{}.png'.format(obj.name_append)
+    variables['DENSITY_SUB_FIG'] = 'density_sub_{}.png'.format(obj.name_append)
+    variables['DENSITY_SWE_FIG'] = 'density_swe_{}.png'.format(obj.name_append)
+    variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(obj.name_append)
+    variables['VALID_FIG'] = 'validation_{}.png'.format(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
+    variables['SWEFORECAST_FIG'] = 'swe_volume_{}.png'.format(obj.name_append + '_forecast')
+    variables['SWIFORECAST_FIG'] = 'swi_{}.png'.format(obj.name_append + '_forecast')
+    variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(obj.name_append + '_forecast')
+    variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(obj.name_append + '_forecast')
+
     variables['INFLOW_FIG'] = 'inflow_{}.png'.format(obj.name_append)
 
     if obj.subs_fig is not None:
@@ -240,10 +253,6 @@ def report(obj):
 
         else:
             obj.exclude_figs = ['SUBBASINS']
-
-    # variables['MULTITOT_FIG'] = 'basin_total_multiyr_%s.png'%(obj.name_append)
-    # variables['RESULTS_FIG'] = 'results_%s.png'%(obj.name_append)
-    # variables['ELEV_FIG'] = 'swe_elev_%s.png'%(obj.name_append)
 
     # Logos
     variables['ARSLOGO'] = obj.figs_tpl_path + 'ARS.jpg'
@@ -257,21 +266,23 @@ def report(obj):
     variables['FRIANTLOGO'] = obj.figs_tpl_path + 'FRIANT.jpg'
     variables['AWSMLOGO'] = obj.figs_tpl_path + 'logo.png'
 
-    # dfind = [str(i) for i in obj.edges] + ['total']
-    # dfind = obj.edges
     dfind = [str(i) for i in obj.edges]
-    # bmeanstr = 'basin mean'
-
     swe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
     swe_total = pd.DataFrame(np.nan, index = ['basin mean'], columns = obj.plotorder)
     depth_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
     sweper_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
-    swevol_byelev = pd.DataFrame(np.nan, index = [str(i) for i in obj.edges] + ['total'], columns = obj.plotorder)
+    swevol_byelev = pd.DataFrame(np.nan,
+                                 index = [str(i) for i in obj.edges] + ['total'],
+                                 columns = obj.plotorder)
     # swevol_total = pd.DataFrame(np.nan, index = ['total'], columns = obj.plotorder)
     sswe_byelev = pd.DataFrame(index = dfind, columns = obj.plotorder)
-    sswe_total = pd.DataFrame(np.nan, index = ['basin mean'], columns = obj.plotorder)
+    sswe_total = pd.DataFrame(np.nan,
+                              index = ['basin mean'],
+                              columns = obj.plotorder)
     # dswe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
-    dswe_byelev = pd.DataFrame(np.nan, index = [str(i) for i in obj.edges] + ['total'], columns = obj.plotorder)
+    dswe_byelev = pd.DataFrame(np.nan,
+                              index = [str(i) for i in obj.edges] + ['total'],
+                              columns = obj.plotorder)
 
     dswe_byelev.index.name = 'Elevation'
     swe_byelev.index.name = 'Elevation'
@@ -300,7 +311,6 @@ def report(obj):
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values.round(decimals = int(obj.dplcs))
 
-
         sum = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
@@ -327,7 +337,6 @@ def report(obj):
             sum_flag = False
 
     swe_byelev = swe_byelev.append(swe_total)
-    # swevol_byelev = swevol_byelev.append(swevol_total)
     sswe_byelev = sswe_byelev.append(sswe_total)
     dswe_byelev = swe_byelev - sswe_byelev
 
@@ -346,7 +355,6 @@ def report(obj):
                                 spacecmd + swevol_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                 r'} \\ \footnotesize{\textbf{Table 5:} Volume of SWE by elevation band.}'
                                 )
-    # variables['SWE_BYELEV'] = variables['SWE_BYELEV'].replace(r'\toprule','')
 
     variables['DSWE_BYELEV'] = (
                                 r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
@@ -356,8 +364,6 @@ def report(obj):
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
                                   r'\\ \clearpage'
                                 )
-
-    # variables['DSWE_BYELEV'] = variables['DSWE_BYELEV'].replace(r'\toprule','')
 
     if sum_flag is not True:
         variables['SWEPER_BYELEV'] = ' '
@@ -370,16 +376,6 @@ def report(obj):
                                     r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation band (totals may not add to 100 due to rounding).} '
                                     )
         variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
-        # variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace(r'\toprule','')
-
-    # variables['DEPTH_BYELEV'] = (
-    #                             r'  \textbf{Snow depth [%s], %s}\\ \vspace{0.1cm} \\'
-    #                             %(obj.depthlbl,
-    #                               obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-    #                               depth_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
-    #                               r'} \\ \footnotesize{\textbf{Table 5:} Mean snow depth by elevation band.} ' +
-    #                               r'\\ \clearpage'
-    #                             )
 
     variables['TOT_LBL'] = obj.plotorder[0]
 
@@ -404,15 +400,18 @@ def report(obj):
                     'MEAN_FIG_TPL':obj.figs_tpl_path + 'mean_fig_tpl.txt',
                     'TOTALS_FIG_TPL':obj.figs_tpl_path + 'totals_fig_tpl.txt',
                     'MULTITOTSWE_FIG_TPL':obj.figs_tpl_path + 'multitotswe_fig_tpl.txt',
-                    # 'MULTITOTSWI_FIG_TPL':obj.figs_tpl_path + 'multitotswi_fig_tpl.txt',
                     'VALID_FIG_TPL':obj.figs_tpl_path + 'valid_fig_tpl.txt',
                     'FLTCHANGES_FIG_TPL':obj.figs_tpl_path + 'flt_fig_tpl.txt',
                     'PDEP_FIG_TPL':obj.figs_tpl_path + 'pdep_fig_tpl.txt',
                     'COLD_FIG_TPL':obj.figs_tpl_path + 'cold_fig_tpl.txt',
                     'SWE_FIG_TPL':obj.figs_tpl_path + 'swe_fig_tpl.txt',
                     'SUBBASINS_FIG_TPL':obj.figs_tpl_path + 'subbasins_fig_tpl.txt',
-                    'INFLOW_FIG_TPL':obj.figs_tpl_path + 'inflow_fig_tpl.txt'
-                    # 'RESULTS_FIG_TPL':obj.figs_tpl_path + 'results_fig_tpl.txt',
+                    'INFLOW_FIG_TPL':obj.figs_tpl_path + 'inflow_fig_tpl.txt',
+                    'SWEFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastswe_fig_tpl.txt',
+                    'SWIFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastswi_fig_tpl.txt',
+                    'CHANGESFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastchanges_fig_tpl.txt',
+                    'TOTALSFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecasttotals_fig_tpl.txt'
+
                     # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     }
 
@@ -425,6 +424,22 @@ def report(obj):
     # Remove if no flight options
     if obj.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
+
+    # Remove if no flight options
+    if obj.forecast_flag is False:
+        variables['SWIFORECAST_FIG'] = ''
+        variables['SWIFORECAST_FIG_TPL'] = ''
+        variables['SWEFORECAST_FIG'] = ''
+        variables['SWEFORECAST_FIG_TPL'] = ''
+        variables['CHANGESFORECAST_FIG'] = ''
+        variables['CHANGESFORECAST_FIG_TPL'] = ''
+        variables['TOTALSFORECAST_FIG'] = ''
+        variables['TOTALSFORECAST_FIG_TPL'] = ''        
+        variables['FORE_TITLE'] = ''
+
+    else:
+        variables['FORE_TITLE'] = 'with WRF forecast, {} to {}'.format(obj.for_start_date.date().strftime("%b %-d"),
+                    obj.for_end_date.date().strftime("%b %-d"))
 
     # Remove if not available
     if obj.plot_flag is True:
@@ -441,15 +456,15 @@ def report(obj):
 
     # Remove if not BRB
     if (obj.basin not in ['BRB', 'TUOL']) or (obj.basin_total_flag is False):
-        variables['MULTITOTSWE_FIG'] = ' '
-        variables['MULTITOTSWE_FIG_TPL'] = ' '
+        variables['MULTITOTSWE_FIG'] = ''
+        variables['MULTITOTSWE_FIG_TPL'] = ''
 
     # If figs are listed in exclude, replace with empty string in latex file
     if obj.exclude_figs != None:
         for name in obj.exclude_figs:
-            variables[name + '_FIG'] = ' '
-            variables[name + '_TPL'] = ' '
-            variables[name + '_FIG_TPL'] = ' '
+            variables[name + '_FIG'] = ''
+            variables[name + '_TPL'] = ''
+            variables[name + '_FIG_TPL'] = ''
             # variables[name] = ' '
 
     # Make the report
@@ -462,7 +477,7 @@ def report(obj):
     # Save in reports and with figs
     rpath_1 = os.path.join(obj.rep_path, '' + obj.report_name)
     rpath_2 = os.path.join(obj.figs_path, '' + obj.report_name)
-    obj._logger.info('Saving report to {} and \n{}'.format(rpath_1,rpath_2))
+    obj._logger.info('Saving {}\nSaving {}'.format(rpath_1,rpath_2))
 
     if not os.path.isdir(os.path.join(obj.rep_path,'')):
         os.makedirs(os.path.join(obj.rep_path,''))

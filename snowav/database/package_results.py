@@ -8,7 +8,7 @@ from datetime import datetime
 from snowav.database.tables import Basins
 from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 
-def package(self, df, output, dtime):
+def package(self, df, output, dtime, forecast=None):
     '''
     This function sends process() results to the database.
 
@@ -18,6 +18,12 @@ def package(self, df, output, dtime):
         dtime: datetime
 
     '''
+
+    if forecast is not None:
+        runid = self.for_run_id
+
+    else:
+        runid = self.run_id
 
     # Make labels
     if ('z' in output) or ('depth' in output):
@@ -40,13 +46,13 @@ def package(self, df, output, dtime):
                 val = float(val)
 
             values = {'basin_id': Basins.basins[var]['basin_id'],
-                      'run_id':self.runid,
+                      'run_id':runid,
                       'date_time': dtime,
                       'variable': output,
                       'variable_id': self.vid[output],
                       'value': val,
                       'elevation': str(df[var].index[iters])}
-                      
+
             snowav.database.database.insert(self,'Results',values)
 
 
@@ -88,7 +94,7 @@ def post_process(self, dtime):
                     sval = float(sval)
 
                 values = {'basin_id': Basins.basins[bid]['basin_id'],
-                          'run_id':self.runid,
+                          'run_id':self.run_id,
                           'date_time': dtime,
                           'variable': sum_vals[val],
                           'variable_id': self.vid[sum_vals[val]],
@@ -104,7 +110,7 @@ def post_process(self, dtime):
                 v = np.nansum(summary[bid].values)
 
             values = {'basin_id': Basins.basins[bid]['basin_id'],
-                      'run_id':self.runid,
+                      'run_id':self.run_id,
                       'date_time': dtime,
                       'variable': sum_vals[val],
                       'variable_id': self.vid[sum_vals[val]],

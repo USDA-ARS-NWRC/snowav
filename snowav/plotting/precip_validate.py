@@ -176,5 +176,5 @@ def precip_validate(snow):
     plt.suptitle('Precipitation Validation')
     plt.subplots_adjust(top=0.92)
 
-    snow._logger.info('saving figure to %sprecip_validation_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sprecip_validation_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}precip_validation_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}precip_validation_{}.png'.format(snow.figs_path,snow.name_append))

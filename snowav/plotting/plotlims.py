@@ -45,7 +45,7 @@ def plotlims(basin,plotorder):
             legy2 = 0.39
 
         if basin in ['MERCED']:
-            legy = 0.57
+            legy = 0.58
             legy2 = 0.42
 
         if basin in ['KAWEAH']:

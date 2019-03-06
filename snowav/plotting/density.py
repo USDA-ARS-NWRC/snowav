@@ -170,8 +170,8 @@ def density(snow):
             ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05), loc=2, borderaxespad=0. )
 
     # plt.tight_layout()
-    snow._logger.info('saving figure to %sdensity_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sdensity_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}density_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}density_{}.png'.format(snow.figs_path,snow.name_append))
 
 
     ###############################

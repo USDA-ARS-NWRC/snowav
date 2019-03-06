@@ -1,0 +1,7 @@
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHCHANGESFORECAST_FIG}
+	\caption{{\color{red} Forecast change in SWE from model forced with WRF run.}}
+\end{centering}
+\end{figure}

@@ -1,0 +1,7 @@
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHSWIFORECAST_FIG}
+	\caption{{\color{red} Accumulated SWI during the WRF forecast run.}}
+\end{centering}
+\end{figure}

@@ -109,6 +109,8 @@ def delete(self, start_date, end_date, bid, run_name):
     try:
         # print('Deleting records from bid={}, run_name={}, from {} '
         #       'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
+        self._logger.info('Deleting records from bid={}, run_name={}, from {} '
+              'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
         # Since we know run_name, but not run_id, get the run_id
         qry = self.session.query(Results).join(RunMetadata).filter(and_(
@@ -138,6 +140,11 @@ def delete(self, start_date, end_date, bid, run_name):
                 # print('Deleting RunMetadata run_name={}, run_id={}, from {} '
                 #       'to {}'.format(run_name,str(r),start_date.date(),
                 #       end_date.date()))
+                self._logger.info('Deleting RunMetadata run_name={}, run_id={},'
+                                  ' from {} to {}'.format(run_name,
+                                                          str(r),
+                                                          start_date.date(),
+                                                          end_date.date()))
 
                 q1 = self.session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).first()
@@ -197,7 +204,7 @@ def create_tables(self=None, url=None):
 
     print('Completed initializing basins and watersheds')
 
-def run_metadata(self):
+def run_metadata(self, forecast=None):
     '''
     Create run metadata entry for each snowav run, using database session
     created in read_config().
@@ -209,9 +216,17 @@ def run_metadata(self):
 
     # Increase each runid by 1
     if not df.run_id.values.size:
-        self.runid = 1
+        runid = 1
     else:
-        self.runid = int(df['run_id'].max() + 1)
+        runid = int(df['run_id'].max() + 1)
+
+    if forecast is not None:
+        run_name = self.for_run_name
+        self.for_run_id = runid
+
+    else:
+        run_name = self.run_name
+        self.run_id = runid
 
     # From RunMetadata table, snowav/database/tables.py
     rdir_strlim = 1200
@@ -220,8 +235,8 @@ def run_metadata(self):
         trdir = self.run_dirs[0]
 
     values = {
-              'run_id':self.runid,
-              'run_name':self.run_name,
+              'run_id':runid,
+              'run_name':run_name,
               'watershed_id':Watersheds.watersheds[self.plotorder[0]]['watershed_id'],
               'pixel':self.pixel,
               'description':'',
@@ -250,7 +265,7 @@ def run_metadata(self):
             u = 'MJ'
 
         variables = {
-                     'run_id':self.runid,
+                     'run_id':runid,
                      'variable':v,
                      'unit':u,
                      'name':self.vars[v]
@@ -274,7 +289,7 @@ def run_metadata(self):
             u = self.depthlbl
 
         variables = {
-                     'run_id':self.runid,
+                     'run_id':runid,
                      'variable':v,
                      'unit':u,
                      'name':sum_vals[v]
@@ -286,7 +301,7 @@ def run_metadata(self):
         x = self.session.query(VariableUnits).all()
         self.vid[v] = copy.deepcopy(x[-1].id)
 
-def check_fields(self, start_date, end_date, bid, run_name, value):
+def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
     '''
     This functions queries the database and returns True if any value exists
     in the given date range, basin_id = id and run_name = run_name,
@@ -308,10 +323,18 @@ def check_fields(self, start_date, end_date, bid, run_name, value):
                         (Results.basin_id == Basins.basins[bid]['basin_id']),
                         (Results.variable == value))).first()
 
-    if qry is not None:
-        self.pflag = True
-    else:
-        self.pflag = False
+    if forecast is None:
+        if qry is not None:
+            self.pflag = True
+        else:
+            self.pflag = False
+
+    if forecast is not None:
+        if qry is not None:
+            self.for_pflag = True
+        else:
+            self.for_pflag = False
+
 
 def connect(self):
     '''
@@ -335,7 +358,7 @@ def connect(self):
 
         # Create metadata tables and keep open self.session
         if not os.path.isfile(database):
-            print('No results database specified, creating default sqlite '
+            self.tmp_log.append('No results database specified, creating default sqlite '
                   'database {}'.format(self.database))
 
             create_tables(self)
@@ -344,7 +367,7 @@ def connect(self):
             engine = create_engine(self.database)
             DBSession = sessionmaker(bind=engine)
             self.session = DBSession()
-            self._logger.info('Using {} for results...'.format(self.database))
+            self.tmp_log.append('Using {} for results...'.format(self.database))
 
     # sqlite specified
     if self.sqlite is not None:
@@ -353,7 +376,7 @@ def connect(self):
         try:
             if (not os.path.isfile(fp.path)):
                     self.database = self.sqlite
-                    print('Creating {} for results'.format(self.database))
+                    self.tmp_log.append('Creating {} for results'.format(self.database))
 
                     # Create metadata tables and keep open self.session
                     create_tables(self)
@@ -361,11 +384,11 @@ def connect(self):
             else:
                 engine = create_engine(self.sqlite)
         except:
-            print('Failed creating or connecting to {}...'.format(self.database))
+            self.tmp_log.append('Failed creating or connecting to {}...'.format(self.database))
 
         DBSession = sessionmaker(bind=engine)
         self.session = DBSession()
-        self._logger.info('Using {} for results...'.format(self.sqlite))
+        self.tmp_log.append('Using {} for results...'.format(self.sqlite))
 
     if self.mysql is not None:
 
@@ -393,7 +416,7 @@ def connect(self):
 
         # If the database doesn't exist, create it, otherwise connect
         if (self.mysql not in dbs):
-            print('Specified mysql database {} does not exist, it is being '
+            self.tmp_log.append('Specified mysql database {} does not exist, it is being '
                   'created...'.format(self.mysql))
             query = ("CREATE DATABASE {};".format(self.mysql))
             cursor.execute(query)
@@ -419,7 +442,7 @@ def connect(self):
                 # print('Using {} for results...'.format(db_engine))
 
             except:
-                print('Failed trying to make database connection '
+                self.tmp_log.append('Failed trying to make database connection '
                       'to {}'.format(self.mysql))
 
         cursor.close()

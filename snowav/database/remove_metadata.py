@@ -25,10 +25,11 @@ snowav -b 'basin' -wy wy -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/
 
 '''
 
-# run_name = 'kings_wy2019_devel'
-# start_date = datetime.datetime(2018,10,1)
-# end_date = datetime.datetime(2018,10,30)
+run_name = 'sj_wy2019_forecast'
+start_date = datetime.datetime(2018,10,1)
+end_date = datetime.datetime(2019,9,30)
 # basins = ['Middle Fork','West Kings','Dinkey Creek','Middle South Fork','South Fork','Mill Creek','North Fork']
+basins = ['San Joaquin River Basin','South Fork','Main','Auberry','Redinger']
 
 user = 'mark'
 pwd = 'whatdystm?1'
@@ -78,14 +79,15 @@ for bid in basins:
 
     # Toggling
 
-    for n in rid[run_name]:
-        qry = session.query(RunMetadata).filter(RunMetadata.run_id == int(n)).first()
-        session.delete(qry)
-        session.commit()
+    # for n in rid[run_name]:
+    #     session.query(RunMetadata).filter(RunMetadata.run_id == int(n)).delete()
+    #     session.flush()
+    #     session.commit()
 
-# for n in rid[run_name]:
-#     qry = session.query(VariableUnits).filter(VariableUnits.run_id == int(n)).first()
-#     session.delete(qry)
-#     session.commit()
+
+    # for n in rid[run_name]:
+    #         session.query(VariableUnits).filter(VariableUnits.run_id == int(n)).delete()
+    #         session.flush()
+    #         session.commit()
 
 session.close()

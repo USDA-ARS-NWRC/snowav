@@ -128,5 +128,5 @@ def current_image(snow):
     ax.legend(handles=patches, bbox_to_anchor=(pbbx, pbby),
               loc=2, borderaxespad=0. )
 
-    snow._logger.info('saving figure to %sresults_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sresults_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}results_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}results_{}.png'.format(snow.figs_path,snow.name_append))

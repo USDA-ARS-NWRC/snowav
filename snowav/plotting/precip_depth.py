@@ -387,11 +387,11 @@ def precip_depth(snow):
     #     elif len(snow.plotorder) == 4:
     #         ax[2,1].legend(loc= (0.01,0.71))
 
-    plt.suptitle('Depth of SWI, Precipitation, and Rain\n%s to %s'
-                         %(snow.report_start.date().strftime("%Y-%-m-%-d"),
+    plt.suptitle('Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
+                           snow.report_start.date().strftime("%Y-%-m-%-d"),
                            snow.report_date.date().strftime("%Y-%-m-%-d")))
     #plt.tight_layout()
     fig.subplots_adjust(top=0.92)
 
-    snow._logger.info('saving figure to %sprecip_depth_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sprecip_depth_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}precip_depth_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}precip_depth_{}.png'.format(snow.figs_path,snow.name_append))

@@ -1,0 +1,10 @@
+\clearpage
+\section*{{\color{red} \textbf{WRF Forecast Run Summary, FORE_START_DATE to FORE_DATE}}}
+An additional model run was forced with a WRF forecast, from FORE_START_DATE to FORE_DATE, with results shown below. We are in the process of evaluating the uncertainty of both the WRF forecasts and the resulting snowpack model states, but do not have uncertainty values for the WRF runs at this time.
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHSWEFORECAST_FIG}
+	\caption{{\color{red} Model SWE volume at the end of the WRF forecast run.}}
+\end{centering}
+\end{figure}

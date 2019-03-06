@@ -222,5 +222,5 @@ def flt_image_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving figure to %sdflt_swe_change_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sdflt_swe_change_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}dflt_swe_change_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}dflt_swe_change_{}.png'.format(snow.figs_path,snow.name_append))

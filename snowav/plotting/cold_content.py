@@ -151,5 +151,5 @@ def cold_content(snow):
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.2)
 
-    snow._logger.info('saving figure to %scold_content_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%scold_content_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}cold_content_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}cold_content_{}.png'.format(snow.figs_path,snow.name_append))

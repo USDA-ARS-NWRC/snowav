@@ -14,27 +14,82 @@ from snowav import database
 from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
 
-def image_change(snow):
+def image_change(snow, forecast = None):
     '''
     Change in SWE volume.
 
     '''
 
-    # Get change in swe during the specified period
-    delta_swe = snow.outputs['swe_z'][snow.ixe] - snow.outputs['swe_z'][snow.ixs]
-    delta_swe = np.multiply(delta_swe,snow.depth_factor)
-
     # Make df from database
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
-    for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'swe_vol')
+    # Two different calculation schemes, depending on WRF forecast
+    if forecast is None:
+        run_name = snow.run_name
+        outputs = snow.outputs
+        ixs = snow.ixs
+        ixe = snow.ixe
+        start_date = snow.start_date
+        end_date = snow.end_date
+        name_append = snow.name_append
+        title = 'Change in SWE \n {} to {}'.format(
+                                snow.report_start.date().strftime("%Y-%-m-%-d"),
+                                snow.report_date.date().strftime("%Y-%-m-%-d"))
 
-        for elev in snow.edges:
-            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
-            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
-            delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+        # Get change in swe during the specified period
+        delta_swe = outputs['swe_z'][ixe] - outputs['swe_z'][ixs]
+
+        for bid in snow.plotorder:
+            r = database.database.query(snow,
+                                        start_date,
+                                        end_date,
+                                        run_name,
+                                        bid,
+                                        'swe_vol')
+
+            for elev in snow.edges:
+                v = r[(r['elevation'] == str(elev)) & (r['date_time'] == start_date)]
+                v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == end_date)]
+                delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+
+    else:
+        run_name = snow.for_run_name
+        outputs = snow.for_outputs
+        ixs = 0
+        ixe = -1
+        start_date = snow.for_start_date
+        end_date = snow.for_end_date
+        name_append = snow.name_append + '_forecast'
+        title = 'Forecast Change in SWE \n {} to {}'.format(
+                                start_date.date().strftime("%Y-%-m-%-d"),
+                                end_date.date().strftime("%Y-%-m-%-d"))
+
+        # Get change in swe during the specified period
+        delta_swe = outputs['swe_z'][ixe] - snow.outputs['swe_z'][snow.ixe]
+
+        for bid in snow.plotorder:
+            # this is for the end of the actual run
+            r = database.database.query(snow,
+                                         snow.start_date,
+                                         snow.end_date,
+                                         snow.run_name,
+                                         bid,
+                                         'swe_vol')
+
+            # this is for the end of the WRF run
+            r2 = database.database.query(snow,
+                                        start_date,
+                                        end_date,
+                                        run_name,
+                                        bid,
+                                        'swe_vol')
+
+            for elev in snow.edges:
+                v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
+                v2 = r2[(r2['elevation'] == str(elev)) & (r2['date_time'] == end_date)]
+                delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+
+    delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
     qMin,qMax = np.nanpercentile(delta_swe,[1,99.9])
 
@@ -85,9 +140,7 @@ def image_change(snow):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label(r'$\Delta$ SWE [{}]'.format(snow.depthlbl))
 
-    h.axes.set_title('Change in SWE \n %s to %s'
-                     %(snow.report_start.date().strftime("%Y-%-m-%-d"),
-                       snow.report_date.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title(title)
 
     if snow.dplcs == 0:
         tlbl = '{}: {} {}'.format(snow.plotorder[0],
@@ -162,5 +215,5 @@ def image_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving figure to {}swe_change_{}.png'.format(snow.figs_path,snow.name_append))
-    plt.savefig('{}swe_change_{}.png'.format(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}swe_change_{}.png'.format(snow.figs_path,name_append))
+    plt.savefig('{}swe_change_{}.png'.format(snow.figs_path,name_append))

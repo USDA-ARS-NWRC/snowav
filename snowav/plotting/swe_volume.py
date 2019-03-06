@@ -12,14 +12,33 @@ from snowav import database
 from snowav.database.tables import Basins
 import pandas as pd
 from snowav.plotting.plotlims import plotlims as plotlims
+from datetime import timedelta
 
 
-def swe_volume(snow):
+def swe_volume(snow, forecast=None):
     '''
 
     '''
 
-    state = copy.deepcopy(snow.outputs['swe_z'][snow.ixe])
+    if forecast is None:
+        run_name = snow.run_name
+        outputs = snow.outputs
+        ixe = snow.ixe
+        start_date = snow.start_date
+        end_date = snow.end_date
+        name_append = snow.name_append
+        title = 'SWE \n {}'.format(snow.report_date.date().strftime("%Y-%-m-%-d"))
+
+    else:
+        run_name = snow.for_run_name
+        outputs = snow.for_outputs
+        ixe = -1
+        start_date = snow.for_start_date
+        end_date = snow.for_end_date
+        name_append = snow.name_append + '_forecast'
+        title = 'Forecast SWE \n {}'.format(end_date.date().strftime("%Y-%-m-%-d"))
+
+    state = copy.deepcopy(outputs['swe_z'][-1])
     state = np.multiply(state,snow.depth_factor)
 
     qMin,qMax = np.nanpercentile(state,[0,99.8])
@@ -66,7 +85,7 @@ def swe_volume(snow):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[%s]'%(snow.depthlbl))
 
-    h.axes.set_title('SWE \n %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title(title)
 
     # Get basin-specific lims
     lims = plotlims(snow.basin, snow.plotorder)
@@ -88,12 +107,12 @@ def swe_volume(snow):
     swe = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r2 = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'swe_vol')
+        r2 = database.database.query(snow, start_date, end_date,
+                                    run_name, bid, 'swe_vol')
 
         for elev in snow.edges:
             v2 = r2[(r2['elevation'] == str(elev))
-                  & (r2['date_time'] == snow.end_date)
+                  & (r2['date_time'] == end_date)
                   & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
             swe.loc[elev,bid] = v2['value'].values[0]
 
@@ -153,5 +172,5 @@ def swe_volume(snow):
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.2)
 
-    snow._logger.info('saving figure to %sswe_volume_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswe_volume_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}swe_volume_{}.png'.format(snow.figs_path,name_append))
+    plt.savefig('{}swe_volume_{}.png'.format(snow.figs_path,name_append))

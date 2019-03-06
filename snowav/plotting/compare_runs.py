@@ -109,7 +109,7 @@ def compare_runs(self):
         ax.set_title(title)
         plt.tight_layout()
 
-        self._logger.info('saving figure to {}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
+        self._logger.info('saving {}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
         plt.savefig('{}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
 
     # This will need to change if framework.py is updated with different workflow

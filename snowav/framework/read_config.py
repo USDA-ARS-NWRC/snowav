@@ -122,6 +122,24 @@ def read_config(self, external_logger=None, awsm=None):
         self.summary = [self.summary]
 
     ####################################################
+    #           forecast                               #
+    ####################################################
+    self.forecast_flag = ucfg.cfg['forecast']['report']
+    self.for_start_date = ucfg.cfg['forecast']['start_date'].to_pydatetime()
+    self.for_end_date = ucfg.cfg['forecast']['end_date'].to_pydatetime()
+    self.for_run_name = ucfg.cfg['forecast']['run_name']
+
+    if self.for_start_date >= self.for_end_date:
+        self.tmp_log.append('Error: [outputs]->start_date > [outputs]->end_date')
+        exit()
+
+    self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
+                    os.listdir(ucfg.cfg['forecast']['run_dir'])
+                    if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s)) ])
+
+    self.for_run_dir.sort()
+
+    ####################################################
     #           runs                                   #
     ####################################################
     # If True, run_dirs are all sub directories

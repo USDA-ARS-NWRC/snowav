@@ -194,5 +194,5 @@ def stn_validate(snow):
     snow.swe_meas = swe_meas
     snow.swe_mod = swe_mod
 
-    snow._logger.info('saving figure to %svalidation_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%svalidation_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}validation_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}validation_{}.png'.format(snow.figs_path,snow.name_append))

@@ -95,9 +95,9 @@ def pixel_swe(snow):
     ylims = ax.get_ylim()
     ax.set_ylim((ylims[0],ylims[1]+ylims[1]*0.2))
 
-    ax.set_ylabel('mean depth [%s]'%(snow.depthlbl))
+    ax.set_ylabel('mean depth [{}]'.format(snow.depthlbl))
     ax.set_xlabel('elevation [ft]')
-    ax1.set_ylabel('mean SWE [%s]'%(snow.depthlbl))
+    ax1.set_ylabel('mean SWE [{}]'.format(snow.depthlbl))
     ax1.set_xlabel('elevation [ft]')
 
     if len(snow.plotorder) > 1:
@@ -106,9 +106,9 @@ def pixel_swe(snow):
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
-    ax.set_title('Mean Depth, %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
-    ax1.set_title('Mean SWE, %s'%(snow.report_date.date().strftime("%Y-%-m-%-d")))
+    ax.set_title('Mean Depth, {}'.format(snow.report_date.date().strftime("%Y-%-m-%-d")))
+    ax1.set_title('Mean SWE, {}'.format(snow.report_date.date().strftime("%Y-%-m-%-d")))
 
     plt.tight_layout()
-    snow._logger.info('saving figure to %smean_swe_depth_%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%smean_swe_depth_%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}mean_swe_depth_{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}mean_swe_depth_{}.png'.format(snow.figs_path,snow.name_append))

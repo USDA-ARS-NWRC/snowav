@@ -43,16 +43,17 @@ class snowav(object):
         if awsm is None and os.path.isfile(config_file):
             self.config_file = config_file
             read_config(self)
-            parse(self)
 
         elif awsm is not None:
             self.config_file = awsm.filename
             read_config(self, awsm = awsm)
-            parse(self)
 
         else:
             print('No config instance passed, or config file does not exist!')
             exit()
+
+        # parse config options
+        parse(self)
 
         if self.report_only is True:
             self._logger.info('Config option [Results] -> report_only=True, ' +
@@ -194,6 +195,43 @@ class snowav(object):
             # Make flight difference figure in options in config file
             if self.flt_flag is True:
                 flt_image_change(self)
+
+            # WRF forecast
+            if self.forecast_flag is True:
+                self._logger.info('starting forecast processing...')
+
+                # Check for existing fields, delete if necessary
+                check_fields(self,
+                             self.for_start_date,
+                             self.for_end_date,
+                             self.plotorder[0],
+                             self.for_run_name,
+                             'swe_z',
+                             forecast=self.for_run_name)
+
+                if self.for_pflag is True:
+                    for bid in self.plotorder:
+                        delete(self,
+                               self.for_start_date,
+                               self.for_end_date,
+                               bid,
+                               self.for_run_name)
+
+                # Process and put on database
+                run_metadata(self, forecast=self.for_run_name)
+                process(self, forecast=self.for_run_name)
+
+                if self.image_change_flag is True:
+                    image_change(self, forecast=self.for_run_name)
+
+                if self.accumulated_flag is True:
+                    accumulated(self, forecast=self.for_run_name)
+
+                if self.swe_volume_flag is True:
+                    swe_volume(self, forecast=self.for_run_name)
+
+                if self.basin_total_flag is True:
+                    basin_total(self, forecast=self.for_run_name)
 
             # Create pdf report
             if self.report_flag is True:

@@ -13,9 +13,10 @@ from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
 import pandas as pd
 from matplotlib.ticker import FormatStrFormatter
+import copy
 
 
-def accumulated(snow):
+def accumulated(snow, forecast=None):
     '''
     Figure: 0
 
@@ -40,19 +41,47 @@ def accumulated(snow):
 
     '''
 
-    # Calculate accumulated swi during the specified period
-    accum = np.zeros((len(snow.outputs['swi_z'][0][:,0]),
-                      len(snow.outputs['swi_z'][0][0,:])))
+    if forecast is None:
+        run_name = snow.run_name
+        outputs = copy.deepcopy(snow.outputs)
+        ixs = snow.ixs
+        ixe = snow.ixe
+        start_date = snow.start_date
+        end_date = snow.end_date
+        name_append = snow.name_append
+        title = 'Accumulated SWI \n {} to {}'.format(
+                                    start_date.date().strftime("%Y-%-m-%-d"),
+                                    end_date.date().strftime("%Y-%-m-%-d"))
 
-    for n in range(snow.ixs,snow.ixe):
-        accum = accum + np.multiply(snow.outputs['swi_z'][n],snow.depth_factor)
+    else:
+        run_name = snow.for_run_name
+        outputs = copy.deepcopy(snow.for_outputs)
+        ixs = snow.for_ixs
+        ixe = snow.for_ixe
+        start_date = snow.for_start_date
+        end_date = snow.for_end_date
+        name_append = snow.name_append + '_forecast'
+        title = 'Forecast Accumulated SWI \n {} to {}'.format(
+                                    start_date.date().strftime("%Y-%-m-%-d"),
+                                    end_date.date().strftime("%Y-%-m-%-d"))
+
+    # Calculate accumulated swi during the specified period
+    accum = np.zeros((len(outputs['swi_z'][0][:,0]),
+                      len(outputs['swi_z'][0][0,:])))
+
+    for n in range(ixs,ixe):
+        accum = accum + np.multiply(outputs['swi_z'][n],snow.depth_factor)
 
     # Make df from database
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'swi_vol')
+        r = database.database.query(snow,
+                                    start_date,
+                                    end_date,
+                                    run_name,
+                                    bid,
+                                    'swi_vol')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]
@@ -107,9 +136,7 @@ def accumulated(snow):
     cax = divider.append_axes("right", size="4%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[{}]'.format(snow.depthlbl))
-    h.axes.set_title('Accumulated SWI \n {} to {}'.format(
-                                snow.report_start.date().strftime("%Y-%-m-%-d"),
-                                snow.report_date.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title(title)
 
     # Decimal places
     if accum_byelev[snow.plotorder[0]].sum() < 9.9:
@@ -174,21 +201,15 @@ def accumulated(snow):
         ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
 
-    # fix so that legend isn't obscured
-    if accum_byelev.iloc[0,:].sum() > np.nanmax(accum_byelev.sum())*0.9:
-
-        if len(snow.plotorder) > 1:
-            ax1.legend(loc=1,markerscale = 0.5)
-
-    else:
-
-        if len(snow.plotorder) > 1:
-            ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
-
-        ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
-
-    snow._logger.info('saving figure to{}swi_{}.png'.format(snow.figs_path,
-                                                             snow.name_append))
     plt.tight_layout()
-    plt.savefig('{}swi_{}.png'.format(snow.figs_path,snow.name_append))
+
+    # fix so that legend isn't obscured
+    if len(snow.plotorder) > 1:
+        ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
+
+    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
+
+    snow._logger.info('saving {}swi_{}.png'.format(snow.figs_path,
+                                                             name_append))
+    plt.savefig('{}swi_{}.png'.format(snow.figs_path,name_append))

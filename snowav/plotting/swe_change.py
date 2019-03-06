@@ -140,8 +140,8 @@ def swe_change(snow):
         if ylims[0] == 0:
             ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
 
-    ax1.set_ylabel(r'$\Delta$ [%s] - by elevation band'%(snow.depthlbl))
-    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.set_ylabel(r'$\Delta$ [{}] - by elevation band'.format(snow.depthlbl))
+    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
@@ -170,5 +170,5 @@ def swe_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving figure to %sswe_change_depth%s.png'%(snow.figs_path,snow.name_append))
-    plt.savefig('%sswe_change_depth%s.png'%(snow.figs_path,snow.name_append))
+    snow._logger.info('saving {}swe_change_depth{}.png'.format(snow.figs_path,snow.name_append))
+    plt.savefig('{}swe_change_depth{}.png'.format(snow.figs_path,snow.name_append))

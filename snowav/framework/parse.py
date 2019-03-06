@@ -283,6 +283,69 @@ def parse(self, external_logger=None):
         ext_shr = self.name_append
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
+    #############################
+    # forecast section          #
+    #############################
+
+    if self.forecast_flag is True:
+        self.for_outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],
+                            'depth':[], 'dates':[], 'time':[], 'density':[],
+                            'coldcont':[] }
+
+        self.for_rundirs_dict = {}
+
+        lrdirs = copy.deepcopy(self.for_run_dir)
+        for rd in lrdirs:
+
+            path = rd
+
+            # If the run_dirs isn't empty use it, otherwise remove
+            if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
+               and not (os.path.isfile(path))):
+
+                d = path.split('runs/run')[-1]
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:]))
+
+                # Only load the rundirs that we need
+                if ( (folder_date.date() >= self.for_start_date.date()) and
+                    (folder_date.date() <= self.for_end_date.date()) ):
+
+                    output = iSnobalReader(path,
+                                           self.filetype,
+                                           snowbands = [0,1,2],
+                                           embands = [6,7,8,9],
+                                           wy = self.wy)
+
+                    self.for_outputs['dates'] = np.append(self.for_outputs['dates'],
+                                                          output.dates)
+                    self.for_outputs['time'] = np.append(self.for_outputs['time'],
+                                                         output.time)
+
+                    # Make a dict for wyhr-rundir lookup
+                    for t in output.time:
+                        self.for_rundirs_dict[int(t)] = rd
+
+                    for n in range(0,len(output.em_data[8])):
+                        self.for_outputs['swi_z'].append(output.em_data[8][n,:,:])
+                        self.for_outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                        self.for_outputs['evap_z'].append(output.em_data[6][n,:,:])
+                        self.for_outputs['coldcont'].append(output.em_data[9][n,:,:])
+                        self.for_outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.for_outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.for_outputs['density'].append(output.snow_data[1][n,:,:])
+
+                else:
+                    self.for_run_dir.remove(rd)
+
+            else:
+                self.for_run_dir.remove(rd)
+
+        self.for_ixs = 0
+        self.for_ixe = len(self.for_outputs['swe_z'])
+
+    #############################
+    # ^ forecast section done ^ #
+    #############################
 
     self.report_date = self.end_date + timedelta(hours=1)
     parts = self.report_name.split('.')

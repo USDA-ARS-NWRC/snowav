@@ -1,0 +1,7 @@
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHTOTALSFORECAST_FIG}
+	\caption{{\color{red} Basin total SWE and SWI values, including WRF results as dashed lines.}}
+\end{centering}
+\end{figure}
