@@ -214,8 +214,6 @@ def report(obj):
     variables['DEPLBL'] = obj.depthlbl
     variables['START_DATE'] = obj.report_start.date().strftime("%B %-d")
     variables['END_DATE'] = obj.report_date.date().strftime("%B %-d")
-    variables['FORE_START_DATE'] = obj.for_start_date.date().strftime("%B %-d")
-    variables['FORE_DATE'] = obj.for_end_date.date().strftime("%B %-d")
     variables['SWE_IN'] = variables['TOTAL_PM']
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = obj.figs_path
@@ -237,12 +235,16 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_{}.png'.format(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
-    variables['SWEFORECAST_FIG'] = 'swe_volume_{}.png'.format(obj.name_append + '_forecast')
-    variables['SWIFORECAST_FIG'] = 'swi_{}.png'.format(obj.name_append + '_forecast')
-    variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(obj.name_append + '_forecast')
-    variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(obj.name_append + '_forecast')
 
     variables['INFLOW_FIG'] = 'inflow_{}.png'.format(obj.name_append)
+
+    if obj.forecast_flag is True:
+        variables['FORE_START_DATE'] = obj.for_start_date.date().strftime("%B %-d")
+        variables['FORE_DATE'] = obj.for_end_date.date().strftime("%B %-d")
+        variables['SWEFORECAST_FIG'] = 'swe_volume_{}.png'.format(obj.name_append + '_forecast')
+        variables['SWIFORECAST_FIG'] = 'swi_{}.png'.format(obj.name_append + '_forecast')
+        variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(obj.name_append + '_forecast')
+        variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(obj.name_append + '_forecast')
 
     if obj.subs_fig is not None:
         variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
@@ -427,6 +429,11 @@ def report(obj):
 
     # Remove if no flight options
     if obj.forecast_flag is False:
+        del section_dict['SWEFORECAST_FIG_TPL']
+        del section_dict['SWIFORECAST_FIG_TPL']
+        del section_dict['CHANGESFORECAST_FIG_TPL']
+        del section_dict['TOTALSFORECAST_FIG_TPL']
+
         variables['SWIFORECAST_FIG'] = ''
         variables['SWIFORECAST_FIG_TPL'] = ''
         variables['SWEFORECAST_FIG'] = ''
@@ -434,8 +441,13 @@ def report(obj):
         variables['CHANGESFORECAST_FIG'] = ''
         variables['CHANGESFORECAST_FIG_TPL'] = ''
         variables['TOTALSFORECAST_FIG'] = ''
-        variables['TOTALSFORECAST_FIG_TPL'] = ''        
+        variables['TOTALSFORECAST_FIG_TPL'] = ''
         variables['FORE_TITLE'] = ''
+
+        # \VAR{SWEFORECAST_FIG_TPL}
+        # \VAR{SWIFORECAST_FIG_TPL}
+        # \VAR{CHANGESFORECAST_FIG_TPL}
+        # \VAR{TOTALSFORECAST_FIG_TPL}
 
     else:
         variables['FORE_TITLE'] = 'with WRF forecast, {} to {}'.format(obj.for_start_date.date().strftime("%b %-d"),
