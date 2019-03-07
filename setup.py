@@ -60,7 +60,7 @@ test_requirements = [
 
 setup(
     name='snowav',
-    version='0.7.1',
+    version='0.7.2',
     description="Snow and Water Model Analysis and Visualization ",
     # long_description=readme ,
     author="Mark Robertson",
