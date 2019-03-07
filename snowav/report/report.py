@@ -440,7 +440,7 @@ def report(obj):
         variables['SWIFORECAST_FIG'] = ''
         variables['SWIFORECAST_FIG_TPL'] = ''
         variables['PDEPFORECAST_FIG'] = ''
-        variables['PDEPFORECAST_FIG_TPL'] = ''        
+        variables['PDEPFORECAST_FIG_TPL'] = ''
         variables['SWEFORECAST_FIG'] = ''
         variables['SWEFORECAST_FIG_TPL'] = ''
         variables['CHANGESFORECAST_FIG'] = ''
@@ -472,7 +472,7 @@ def report(obj):
         variables[rep] = var
 
     # Remove if not BRB
-    if (obj.basin not in ['BRB', 'TUOL']) or (obj.basin_total_flag is False):
+    if obj.compare_runs_flag is False:
         variables['MULTITOTSWE_FIG'] = ''
         variables['MULTITOTSWE_FIG_TPL'] = ''
 

@@ -241,8 +241,17 @@ def read_config(self, external_logger=None, awsm=None):
         if self.stn_validate_flag is False:
             self.exclude_figs.append('VALID')
 
-        if self.precip_depth_flag is True:
-            self.exclude_figs.append('PDEP')       
+        if self.precip_depth_flag is False:
+            self.exclude_figs.append('PDEP')
+
+        if self.compare_runs_flag is False:
+            self.exclude_figs.append('MULTITOTSWE')
+
+        if self.accumulated_flag is False:
+            self.exclude_figs.append('SWI')
+
+        if self.basin_total_flag is False:
+            self.exclude_figs.append('TOTALS')                                 
 
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
