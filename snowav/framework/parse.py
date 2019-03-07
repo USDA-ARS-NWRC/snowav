@@ -17,6 +17,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
 from snowav import database
+from snowav.utils.wyhr import calculate_wyhr_from_date
 from datetime import timedelta
 from shutil import copyfile
 from sys import exit
@@ -184,14 +185,12 @@ def parse(self, external_logger=None):
             if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
                and not (os.path.isfile(path))):
 
+                # Once we save the pixel values that we're interested in
+                # outside of this loop (for stn_validate, etc), we can remove
+                # the 'if' statement below and let the iSnobalReader clip
                 d = path.split('runs/run')[-1]
-                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:]))
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
 
-                # Only load the rundirs that we need
-                # If we do this, stn_validate isn't right...
-                # if ((self.start_date is not None) and
-                #    (folder_date.date() >= self.start_date.date()) and
-                #    (folder_date.date() <= self.end_date.date())):
                 if (
                     (
                     (self.start_date is not None) and
@@ -199,11 +198,17 @@ def parse(self, external_logger=None):
                     or (self.start_date is None)
                     ):
 
+                    # pass the reader start and end times
+                    st_hr = calculate_wyhr_from_date(self.start_date)
+                    en_hr = calculate_wyhr_from_date(self.end_date)
+
                     output = iSnobalReader(path,
                                            self.filetype,
                                            snowbands = [0,1,2],
                                            embands = [6,7,8,9],
-                                           wy = self.wy)
+                                           wy = self.wy,
+                                           time_start = st_hr,
+                                           time_end = en_hr)
 
                     if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
                         self.outputs['dates'] = np.append(
@@ -226,6 +231,16 @@ def parse(self, external_logger=None):
                         self.outputs['depth'].append(output.snow_data[0][n,:,:])
                         self.outputs['density'].append(output.snow_data[1][n,:,:])
 
+                    # Everything but 'dates' gets clipped in the reader
+                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.outputs['dates'],
+                                            (self.outputs['dates'] > self.end_date))
+                                            if not remove]))
+                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.outputs['dates'],
+                                            (self.outputs['dates'] < self.start_date))
+                                            if not remove]))
+
                 else:
                     self.run_dirs.remove(rd)
 
@@ -237,7 +252,7 @@ def parse(self, external_logger=None):
             self.start_date = self.outputs['dates'][0]
             self.end_date = self.outputs['dates'][-1]
 
-            self._logger.info('start_date and/or end_date not specified, '
+            self.tmp_log.append('start_date and/or end_date not specified, '
                               'using: {} and {}'.format(self.start_date,
                                                         self.end_date))
             self.ixs = 0
@@ -252,7 +267,7 @@ def parse(self, external_logger=None):
 
         if ((self.start_date.date() < self.outputs['dates'][0].date())
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
-            self._logger.info('ERROR! [Outputs] -> start_date or end_date ' +
+            print('ERROR! [Outputs] -> start_date or end_date ' +
                               'outside of range in [runs] -> run_dirs')
             # print(self.start_date.date(), self.outputs['dates'][0].date(),
             # self.end_date.date() , self.outputs['dates'][-1].date())
@@ -304,22 +319,26 @@ def parse(self, external_logger=None):
                and not (os.path.isfile(path))):
 
                 d = path.split('runs/run')[-1]
-                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:]))
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
 
-                # Only load the rundirs that we need
                 if ( (folder_date.date() >= self.for_start_date.date()) and
                     (folder_date.date() <= self.for_end_date.date()) ):
+
+                    # pass the reader start and end times
+                    st_hr = calculate_wyhr_from_date(self.for_start_date)
+                    en_hr = calculate_wyhr_from_date(self.for_end_date)
 
                     output = iSnobalReader(path,
                                            self.filetype,
                                            snowbands = [0,1,2],
                                            embands = [6,7,8,9],
-                                           wy = self.wy)
+                                           wy = self.wy,
+                                           time_start = st_hr,
+                                           time_end = en_hr)
 
-                    self.for_outputs['dates'] = np.append(self.for_outputs['dates'],
-                                                          output.dates)
-                    self.for_outputs['time'] = np.append(self.for_outputs['time'],
-                                                         output.time)
+                    self.for_outputs['dates'] = np.append(self.for_outputs['dates'],output.dates)
+
+                    self.for_outputs['time'] = np.append(self.for_outputs['time'],output.time)
 
                     # Make a dict for wyhr-rundir lookup
                     for t in output.time:
@@ -333,6 +352,16 @@ def parse(self, external_logger=None):
                         self.for_outputs['swe_z'].append(output.snow_data[2][n,:,:])
                         self.for_outputs['depth'].append(output.snow_data[0][n,:,:])
                         self.for_outputs['density'].append(output.snow_data[1][n,:,:])
+
+                    # Everything but 'dates' gets clipped in the reader
+                    self.for_outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.for_outputs['dates'],
+                                            (self.for_outputs['dates'] > self.for_end_date))
+                                            if not remove]))
+                    self.for_outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.for_outputs['dates'],
+                                            (self.for_outputs['dates'] < self.for_start_date))
+                                            if not remove]))
 
                 else:
                     self.for_run_dir.remove(rd)

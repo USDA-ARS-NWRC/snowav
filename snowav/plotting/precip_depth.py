@@ -13,18 +13,45 @@ import pandas as pd
 from snowav import database
 from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
+from datetime import timedelta
 
-def precip_depth(snow):
+def precip_depth(snow, forecast=None):
     '''
     SWI, precipitation, and rain as depths.
 
     '''
 
+    if forecast is None:
+        run_name = snow.run_name
+        outputs = copy.deepcopy(snow.outputs)
+        ixs = snow.ixs
+        ixe = snow.ixe
+        start_date = snow.start_date
+        end_date = snow.end_date
+        name_append = snow.name_append
+        title = ('Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
+                               snow.report_start.date().strftime("%Y-%-m-%-d"),
+                               snow.report_date.date().strftime("%Y-%-m-%-d")))
+
+
+    else:
+        run_name = snow.for_run_name
+        outputs = copy.deepcopy(snow.for_outputs)
+        ixs = snow.for_ixs
+        ixe = snow.for_ixe
+        start_date = snow.for_start_date
+        end_date = snow.for_end_date
+        rep_end = snow.for_end_date
+        name_append = snow.name_append + '_forecast'
+        title = ('Forecast Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
+                               start_date.date().strftime("%Y-%-m-%-d"),
+                               end_date.date().strftime("%Y-%-m-%-d")))
+
     # Get all images first, so we can set global colorlims
     accum = np.zeros((snow.nrows,snow.ncols))
 
-    for n in range(snow.ixs,snow.ixe):
-        accum = accum + snow.outputs['swi_z'][n]
+    for n in range(ixs,ixe):
+        accum = accum + outputs['swi_z'][n]
 
     accum = np.multiply(accum, snow.depth_factor)
     precip = np.multiply(snow.precip_total, snow.depth_factor)
@@ -47,8 +74,8 @@ def precip_depth(snow):
     accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'swi_z')
+        r = database.database.query(snow, start_date, end_date,
+                                    run_name, bid, 'swi_z')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]
@@ -58,8 +85,8 @@ def precip_depth(snow):
     precip_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'precip_z')
+        r = database.database.query(snow, start_date, end_date,
+                                    run_name, bid, 'precip_z')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]
@@ -69,8 +96,8 @@ def precip_depth(snow):
     rain_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'rain_z')
+        r = database.database.query(snow, start_date, end_date,
+                                    run_name, bid, 'rain_z')
 
         for elev in snow.edges:
             v = r[r['elevation'] == str(elev)]
@@ -140,7 +167,7 @@ def precip_depth(snow):
     divider = make_axes_locatable(ax[0,0])
     cax = divider.append_axes("right", size="4%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label('SWI [%s]'%(snow.depthlbl))
+    cbar.set_label('SWI [{}]'.format(snow.depthlbl))
     h.axes.set_title('Accumulated SWI')
 
     if len(snow.plotorder) == 1:
@@ -182,7 +209,7 @@ def precip_depth(snow):
 
     ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
 
-    ax[0,1].set_ylabel('SWI [%s]'%(snow.depthlbl))
+    ax[0,1].set_ylabel('SWI [{}]'.format(snow.depthlbl))
     #ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[0,1].yaxis.set_label_position("right")
     ax[0,1].yaxis.tick_right()
@@ -237,7 +264,7 @@ def precip_depth(snow):
     divider = make_axes_locatable(ax[1,0])
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h2, cax = cax)
-    cbar.set_label(r'precip [%s]'%(snow.depthlbl))
+    cbar.set_label(r'precip [{}]'.format(snow.depthlbl))
 
     h2.axes.set_title('Total Precipitation')
 
@@ -266,7 +293,7 @@ def precip_depth(snow):
 
     #ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[1,1].set_ylim((0,yMax))
-    ax[1,1].set_ylabel(r'precip [%s]'%(snow.depthlbl))
+    ax[1,1].set_ylabel(r'precip [{}]'.format(snow.depthlbl))
     ax[1,1].yaxis.set_label_position("right")
     ax[1,1].tick_params(axis='x')
     ax[1,1].tick_params(axis='y')
@@ -331,7 +358,7 @@ def precip_depth(snow):
     divider = make_axes_locatable(ax[2,0])
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h2, cax = cax)
-    cbar.set_label(r'rain [%s]'%(snow.depthlbl))
+    cbar.set_label(r'rain [{}]'.format(snow.depthlbl))
 
     h2.axes.set_title('Rain')
 
@@ -361,8 +388,8 @@ def precip_depth(snow):
 
     #ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
     ax[2,1].set_ylim((0,yMax))
-    ax[2,1].set_ylabel(r'rain [%s]'%(snow.depthlbl))
-    ax[2,1].set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax[2,1].set_ylabel(r'rain [{}]'.format(snow.depthlbl))
+    ax[2,1].set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax[2,1].yaxis.set_label_position("right")
     ax[2,1].tick_params(axis='x')
     ax[2,1].tick_params(axis='y')
@@ -387,11 +414,9 @@ def precip_depth(snow):
     #     elif len(snow.plotorder) == 4:
     #         ax[2,1].legend(loc= (0.01,0.71))
 
-    plt.suptitle('Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
-                           snow.report_start.date().strftime("%Y-%-m-%-d"),
-                           snow.report_date.date().strftime("%Y-%-m-%-d")))
+    plt.suptitle(title)
     #plt.tight_layout()
     fig.subplots_adjust(top=0.92)
 
-    snow._logger.info('saving {}precip_depth_{}.png'.format(snow.figs_path,snow.name_append))
-    plt.savefig('{}precip_depth_{}.png'.format(snow.figs_path,snow.name_append))
+    snow._logger.info(' saving {}precip_depth_{}.png'.format(snow.figs_path,name_append))
+    plt.savefig('{}precip_depth_{}.png'.format(snow.figs_path,name_append))

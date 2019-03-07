@@ -56,7 +56,7 @@ class snowav(object):
         parse(self)
 
         if self.report_only is True:
-            self._logger.info('Config option [Results] -> report_only=True, ' +
+            self._logger.info(' Config option [Results] -> report_only=True, ' +
                   'report generated with existing figures.')
             report(self)
             exit()
@@ -94,7 +94,7 @@ class snowav(object):
 
             # Process results and put on the database
             if (self.write_db is False):
-                self._logger.info('There are existing fields on the database '
+                self._logger.info(' There are existing fields on the database '
                       'between {} and {} for run_name={}, and config option '
                       '[results] -> overwrite=False\n'
                       'Using iSnobal outputs specified in run_dirs for '
@@ -108,7 +108,7 @@ class snowav(object):
                 # process(self)
 
             elif (self.pflag is True) and (self.write_db is True):
-                self._logger.info('There are existing fields on the database '
+                self._logger.info(' There are existing fields on the database '
                       'between {} and {} with run_name={}, and config option '
                       '[results] -> overwrite=True, '
                       'OVERWRITING RESULTS!!!'.format(self.start_date.date(),
@@ -198,7 +198,7 @@ class snowav(object):
 
             # WRF forecast
             if self.forecast_flag is True:
-                self._logger.info('starting forecast processing...')
+                self._logger.info(' starting forecast processing...')
 
                 # Check for existing fields, delete if necessary
                 check_fields(self,
@@ -232,6 +232,9 @@ class snowav(object):
 
                 if self.basin_total_flag is True:
                     basin_total(self, forecast=self.for_run_name)
+
+                if self.precip_depth_flag is True:
+                    precip_depth(self, forecast=self.for_run_name)
 
             # Create pdf report
             if self.report_flag is True:

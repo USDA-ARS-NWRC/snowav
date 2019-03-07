@@ -333,7 +333,7 @@ def process(self, forecast=None):
         else:
             prt = self.for_rundirs_dict[hr]
 
-        debug = 'processed: {}, elapsed hours: {}, date: {}'.format(
+        debug = ' processed: {}, elapsed hours: {}, date: {}'.format(
                                         prt,
                                         str(hr - t),
                                         out_date.date().strftime("%Y-%-m-%-d"))

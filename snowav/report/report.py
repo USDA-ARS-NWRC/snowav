@@ -245,6 +245,7 @@ def report(obj):
         variables['SWIFORECAST_FIG'] = 'swi_{}.png'.format(obj.name_append + '_forecast')
         variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(obj.name_append + '_forecast')
         variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(obj.name_append + '_forecast')
+        variables['PDEPFORECAST_FIG'] = 'precip_depth_{}.png'.format(obj.name_append + '_forecast')
 
     if obj.subs_fig is not None:
         variables['SUBBASINS_FIG'] = '{}'.format(obj.subs_fig)
@@ -412,7 +413,8 @@ def report(obj):
                     'SWEFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastswe_fig_tpl.txt',
                     'SWIFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastswi_fig_tpl.txt',
                     'CHANGESFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastchanges_fig_tpl.txt',
-                    'TOTALSFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecasttotals_fig_tpl.txt'
+                    'TOTALSFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecasttotals_fig_tpl.txt',
+                    'PDEPFORECAST_FIG_TPL':obj.figs_tpl_path + 'forecastpdep_fig_tpl.txt'
 
                     # 'ELEV_FIG_TPL':obj.figs_tpl_path + 'elev_fig_tpl.txt',
                     }
@@ -433,9 +435,12 @@ def report(obj):
         del section_dict['SWIFORECAST_FIG_TPL']
         del section_dict['CHANGESFORECAST_FIG_TPL']
         del section_dict['TOTALSFORECAST_FIG_TPL']
+        del section_dict['PDEPFORECAST_FIG_TPL']
 
         variables['SWIFORECAST_FIG'] = ''
         variables['SWIFORECAST_FIG_TPL'] = ''
+        variables['PDEPFORECAST_FIG'] = ''
+        variables['PDEPFORECAST_FIG_TPL'] = ''        
         variables['SWEFORECAST_FIG'] = ''
         variables['SWEFORECAST_FIG_TPL'] = ''
         variables['CHANGESFORECAST_FIG'] = ''

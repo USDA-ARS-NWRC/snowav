@@ -1,0 +1,6 @@
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHPDEPFORECAST_FIG}
+	\caption{SWI, total precipitation, and rain for the forecast period, as a depth (left), and by elevation band (right).}
+\end{centering}
+\end{figure}

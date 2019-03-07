@@ -241,6 +241,9 @@ def read_config(self, external_logger=None, awsm=None):
         if self.stn_validate_flag is False:
             self.exclude_figs.append('VALID')
 
+        if self.precip_depth_flag is True:
+            self.exclude_figs.append('PDEP')       
+
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
     self.rep_path = ucfg.cfg['report']['rep_path']

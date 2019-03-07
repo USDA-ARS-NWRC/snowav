@@ -109,7 +109,7 @@ def delete(self, start_date, end_date, bid, run_name):
     try:
         # print('Deleting records from bid={}, run_name={}, from {} '
         #       'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
-        self._logger.info('Deleting records from bid={}, run_name={}, from {} '
+        self._logger.info(' Deleting records from bid={}, run_name={}, from {} '
               'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
         # Since we know run_name, but not run_id, get the run_id
@@ -140,7 +140,7 @@ def delete(self, start_date, end_date, bid, run_name):
                 # print('Deleting RunMetadata run_name={}, run_id={}, from {} '
                 #       'to {}'.format(run_name,str(r),start_date.date(),
                 #       end_date.date()))
-                self._logger.info('Deleting RunMetadata run_name={}, run_id={},'
+                self._logger.info(' Deleting RunMetadata run_name={}, run_id={},'
                                   ' from {} to {}'.format(run_name,
                                                           str(r),
                                                           start_date.date(),
