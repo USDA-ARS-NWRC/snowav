@@ -189,6 +189,9 @@ def read_config(self, external_logger=None, awsm=None):
     self.dempath = ucfg.cfg['masks']['dempath']
     self.plotorder = ucfg.cfg['masks']['mask_labels']
 
+    if type(self.plotorder) != list:
+        self.plotorder = [self.plotorder]
+
     if ucfg.cfg['masks']['basin_masks'] is not None:
         self.total = ucfg.cfg['masks']['basin_masks'][0]
 
@@ -251,7 +254,7 @@ def read_config(self, external_logger=None, awsm=None):
             self.exclude_figs.append('SWI')
 
         if self.basin_total_flag is False:
-            self.exclude_figs.append('TOTALS')                                 
+            self.exclude_figs.append('TOTALS')
 
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
