@@ -12,8 +12,10 @@ from datetime import datetime
 import copy
 from datetime import date
 import os
+from snowav.utils.wyhr import calculate_date_from_wyhr
 
-def stn_validate(snow):
+
+def stn_validate(snow, file=None):
 
     rundirs = snow.run_dirs
     stns = snow.val_stns
@@ -41,9 +43,20 @@ def stn_validate(snow):
     swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
                                                      snow.end_date,
                                                      freq='D'),columns = stns)
-    swe_mod = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                                                     snow.end_date,
-                                                     freq='D'),columns = stns)
+
+    if file is None:
+        swe_mod = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
+                                                         snow.end_date,
+                                                         freq='D'),columns = stns)
+        stns_out = []
+        for sta in stns:
+            for i in np.arange(0,9):
+                stns_out = stns_out + [sta + '_{}'.format(str(i))]
+        swe_mod_out = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
+                                                         snow.end_date,
+                                                         freq='D'),columns = stns_out)
+    else:
+        swe_mod_out = pd.read_csv(file)
 
     tbl = 'tbl_level1'
     var = 'snow_water_equiv'
@@ -102,11 +115,11 @@ def stn_validate(snow):
 
     for iters,stn in enumerate(stns):
 
-        for n,m in zip(px,py):
+        for i2,(n,m) in enumerate(zip(px,py)):
             # ixs = np.where(snow.outputs['dates'] == snow.start_date)[0][0]
             if ( (snow.offset == 0)
                 and (snow.outputs['dates'][0].date() != datetime(snow.wy-1,10,1)) ):
-                iswe = (snow.outputs['dates'][0].date() -  datetime(snow.wy-1,10,1).date()).days
+                iswe = (snow.outputs['dates'][0].date() - datetime(snow.wy-1,10,1).date()).days
             else:
                 iswe = snow.offset
 
@@ -125,13 +138,24 @@ def stn_validate(snow):
                 yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
                 swe = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)
 
+                date = calculate_date_from_wyhr(int(nctvec),year=snow.wy)
+                print(date)
+
+                out_stn = stn + '_{}'.format(str(i2))
                 try:
+                    print('try')
                     swe_mod.loc[iswe:(iswe + len(swe.values)),stn] = swe.values
+                    #swe_mod_out.loc[iswe:(iswe + len(swe.values)),out_stn] = swe.values
 
                 except:
+                    print('except')
                     sv = swe_mod[stn].values
                     lx = len(sv[iswe::])
                     swe_mod.loc[iswe:(iswe + lx),stn] = swe.values[0:lx]
+                    #swe_mod_out.loc[iswe:(iswe + lx),out_stn] = swe.values[0:lx]
+
+                if file is not None:
+                    swe_mod_out.loc[date,out_stn] = swe.values[0:lx]
 
                 ncf.close()
                 iswe = iswe + len(swe.values)
@@ -141,6 +165,9 @@ def stn_validate(snow):
             axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')
             axs[iters].set_title(lbls[iters])
             axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
+
+    print(swe_mod_out)
+    swe_mod_out.to_csv('/home/markrobertson/wkspace/results/brb/wy19/stns.csv')
 
     if len(stns) <= 6:
         for n in (1,3,5):

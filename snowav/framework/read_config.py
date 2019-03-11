@@ -217,6 +217,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.basin_total_flag = ucfg.cfg['plots']['basin_total']
     self.pixel_swe_flag = ucfg.cfg['plots']['pixel_swe']
     self.stn_validate_flag = ucfg.cfg['plots']['stn_validate']
+    self.stns_file = ucfg.cfg['plots']['stns_file']
     self.precip_validate_flag = ucfg.cfg['plots']['precip_validate']
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']

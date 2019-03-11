@@ -164,7 +164,11 @@ class snowav(object):
                 density(self)
 
             if self.stn_validate_flag is True:
-                stn_validate(self)
+                if self.stns_file is not None:
+                    stn_validate(self, file=self.stns_file)
+                    
+                else:
+                    stn_validate(self)
 
             if self.inflow_flag is True:
                 inflow(self)

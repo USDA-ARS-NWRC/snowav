@@ -200,6 +200,7 @@ def parse(self, external_logger=None):
 
                     # pass the reader start and end times
                     st_hr = calculate_wyhr_from_date(self.start_date)
+                    # st_hr = 0
                     en_hr = calculate_wyhr_from_date(self.end_date)
 
                     output = iSnobalReader(path,
