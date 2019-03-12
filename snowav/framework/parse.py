@@ -185,12 +185,14 @@ def parse(self, external_logger=None):
             if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
                and not (os.path.isfile(path))):
 
-                # Once we save the pixel values that we're interested in
-                # outside of this loop (for stn_validate, etc), we can remove
-                # the 'if' statement below and let the iSnobalReader clip
                 d = path.split('runs/run')[-1]
                 folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
 
+                # Only load the rundirs that we need
+                # If we do this, stn_validate isn't right...
+                # if ((self.start_date is not None) and
+                #    (folder_date.date() >= self.start_date.date()) and
+                #    (folder_date.date() <= self.end_date.date())):
                 if (
                     (
                     (self.start_date is not None) and
@@ -198,17 +200,11 @@ def parse(self, external_logger=None):
                     or (self.start_date is None)
                     ):
 
-                    # pass the reader start and end times
-                    st_hr = calculate_wyhr_from_date(self.start_date)
-                    en_hr = calculate_wyhr_from_date(self.end_date)
-
                     output = iSnobalReader(path,
                                            self.filetype,
                                            snowbands = [0,1,2],
                                            embands = [6,7,8,9],
-                                           wy = self.wy,
-                                           time_start = st_hr,
-                                           time_end = en_hr)
+                                           wy = self.wy)
 
                     if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
                         self.outputs['dates'] = np.append(
@@ -230,16 +226,6 @@ def parse(self, external_logger=None):
                         self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
                         self.outputs['depth'].append(output.snow_data[0][n,:,:])
                         self.outputs['density'].append(output.snow_data[1][n,:,:])
-
-                    # Everything but 'dates' gets clipped in the reader
-                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                            zip(self.outputs['dates'],
-                                            (self.outputs['dates'] > self.end_date))
-                                            if not remove]))
-                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                            zip(self.outputs['dates'],
-                                            (self.outputs['dates'] < self.start_date))
-                                            if not remove]))
 
                 else:
                     self.run_dirs.remove(rd)
