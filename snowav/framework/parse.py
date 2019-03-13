@@ -199,16 +199,16 @@ def parse(self, external_logger=None):
                     ):
 
                     # pass the reader start and end times
-                    st_hr = calculate_wyhr_from_date(self.start_date)
-                    en_hr = calculate_wyhr_from_date(self.end_date)
+                    # st_hr = calculate_wyhr_from_date(self.start_date)
+                    # en_hr = calculate_wyhr_from_date(self.end_date)
 
                     output = iSnobalReader(path,
                                            self.filetype,
                                            snowbands = [0,1,2],
                                            embands = [6,7,8,9],
-                                           wy = self.wy,
-                                           time_start = st_hr,
-                                           time_end = en_hr)
+                                           wy = self.wy)
+                                           # time_start = st_hr,
+                                           # time_end = en_hr)
 
                     if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
                         self.outputs['dates'] = np.append(
@@ -231,15 +231,15 @@ def parse(self, external_logger=None):
                         self.outputs['depth'].append(output.snow_data[0][n,:,:])
                         self.outputs['density'].append(output.snow_data[1][n,:,:])
 
-                    # Everything but 'dates' gets clipped in the reader
-                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                            zip(self.outputs['dates'],
-                                            (self.outputs['dates'] > self.end_date))
-                                            if not remove]))
-                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                            zip(self.outputs['dates'],
-                                            (self.outputs['dates'] < self.start_date))
-                                            if not remove]))
+                    # # Everything but 'dates' gets clipped in the reader
+                    # self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                    #                         zip(self.outputs['dates'],
+                    #                         (self.outputs['dates'] > self.end_date))
+                    #                         if not remove]))
+                    # self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                    #                         zip(self.outputs['dates'],
+                    #                         (self.outputs['dates'] < self.start_date))
+                    #                         if not remove]))
 
                 else:
                     self.run_dirs.remove(rd)
