@@ -15,9 +15,6 @@ import os
 
 def precip_validate(snow):
 
-    # if snow.valid_flag == False:
-    #     snow._logger.debug('No stations listed in config file for validation figure!')
-    #     return
 
     rundirs = snow.run_dirs
     stns = snow.pre_val_stns
@@ -25,15 +22,20 @@ def precip_validate(snow):
     client = snow.val_client
 
     # get metadata from the data base from snotel sites
-    qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
-           + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
-           + 'tbl_stations.station_id WHERE tbl_stations.client = '
-           + '"'"%s"'" ;'%client)
+    # qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
+    #        + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
+    #        + 'tbl_stations.station_id WHERE tbl_stations.client = '
+    #        + '"'"%s"'" ;'%client)
+
+    qry = ('SELECT tbl_metadata.* FROM tbl_metadata INNER JOIN tbl_stations ON '
+           'tbl_metadata.id=tbl_stations.metadata_id WHERE '
+           'tbl_stations.client="KINGS_2019";')
 
     cnx = mysql.connector.connect(user='markrobertson',
                                   password='whatdystm?1',
                                   host='10.200.28.137',
-                                  database='weather_db')
+                                  database='weather_db',
+                                  port=32768)
 
     meta_sno = pd.read_sql(qry, cnx)
     meta_sno.index = meta_sno['primary_id']
@@ -61,11 +63,8 @@ def precip_validate(snow):
                     "WHERE weather_db.%s.date_time between '" % tbl + st_time+ "' and '"+end_time+"'"
                     "AND weather_db.%s.station_id IN ('" % tbl + stn + "');")
 
-        try:
-            data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
-        except:
-            data = pd.read_sql(var_qry, cnx, index_col='date_time')
-
+        # data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        data = pd.read_sql(var_qry, cnx, index_col='date_time')
         data.index.names=['date_time']
         dind = pd.date_range(st_time,end_time,freq='D')
         pre_meas[stn] = data.reindex(dind)
@@ -74,15 +73,20 @@ def precip_validate(snow):
     sns.set_context('notebook')
     plt.close(9)
 
-    if len(stns) <= 6:
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=2)
+    nrows = 3
+    ncols = 1
+
+    if len(stns) > 3 and len(stns) <= 6:
+        cols = 2
 
     if (len(stns) > 6) and (len(stns) <= 9):
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=3)
+        ncols = 3
 
     if (len(stns) > 9) and (len(stns) <= 12):
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=4, ncols=3)
+        nrows = 4
+        ncols = 3
 
+    fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=nrows, ncols=ncols)
     axs = axs.flatten()
 
     if ( (snow.offset == 0)
@@ -109,18 +113,16 @@ def precip_validate(snow):
         ncyvec = ncf.variables['y'][:]
 
         for stn in stns:
+
             ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
             xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
             yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
             pre = pd.Series(precip[yind,xind])
 
-            try:
-                pre_mod.loc[iswe:(iswe + len(pre.values)),stn] = pre.values
-
-            except:
-                sv = pre_mod[stn].values
-                lx = len(sv[iswe::])
-                pre_mod.loc[iswe:(iswe + lx),stn] = pre.values[0:lx]
+            pre_mod.loc[iswe:(iswe + len(pre.values)),stn] = pre.values
+            # sv = pre_mod[stn].values
+            # lx = len(sv[iswe::])
+            # pre_mod.loc[iswe:(iswe + lx),stn] = pre.values[0:lx]
 
         ncf.close()
         iswe = iswe + len(pre.values)
@@ -133,7 +135,15 @@ def precip_validate(snow):
         axs[iters].set_title(lbls[iters])
         axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
 
-    if len(stns) <= 6:
+    if len(stns) <= 3:
+
+        for tick in axs[2].get_xticklabels():
+            tick.set_rotation(30)
+
+        for n in (0,1):
+            axs[n].set_xticklabels('')
+
+    if len(stns) > 3 and len(stns) <= 6:
         for n in (1,3,5):
             axs[n].yaxis.tick_right()
 

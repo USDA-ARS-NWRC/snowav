@@ -161,17 +161,13 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #           validate                               #
     ####################################################
-    if (ucfg.cfg['validate']['stations'] != None and
-        ucfg.cfg['validate']['labels'] != None and
-        ucfg.cfg['validate']['client'] != None):
-
-        self.val_stns = ucfg.cfg['validate']['stations']
-        self.val_lbls = ucfg.cfg['validate']['labels']
-        self.val_client = ucfg.cfg['validate']['client']
+    self.val_stns = ucfg.cfg['validate']['stations']
+    self.val_lbls = ucfg.cfg['validate']['labels']
+    self.val_client = ucfg.cfg['validate']['client']
 
     self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
     self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
-    self.val_client = ucfg.cfg['validate']['client']
+    # self.val_client = ucfg.cfg['validate']['client']
 
     # This is being used to combine 2017 HRRR data
     self.offset = int(ucfg.cfg['validate']['offset'])
@@ -206,7 +202,6 @@ def read_config(self, external_logger=None, awsm=None):
     self.subs_fig = ucfg.cfg['plots']['subs_fig']
     self.flow_file = ucfg.cfg['plots']['flow_file']
     self.density_flag = ucfg.cfg['plots']['density']
-    self.subbasins_flag = ucfg.cfg['plots']['subbasins']
     self.inflow_flag = ucfg.cfg['plots']['inflow']
     self.accumulated_flag = ucfg.cfg['plots']['accumulated']
     self.current_image_flag = ucfg.cfg['plots']['current_image']
@@ -222,6 +217,32 @@ def read_config(self, external_logger=None, awsm=None):
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
+
+    if self.basin in ['KINGS', 'SJ', 'MERCED','KAWEAH']:
+        self.subbasins_flag = ucfg.cfg['plots']['subbasins']
+
+    else:
+        self.subbasins_flag = False    
+
+    if ((self.precip_validate_flag) is True and
+       (self.val_client is None) or
+       (self.pre_val_stns is None) or
+       (self.pre_val_lbls is None)):
+        self.tmp_log.append('[plots] -> precip_validate is being set to '
+            'to False, either [validate] -> pre_stations, pre_labels or '
+            'client is empty')
+
+        self.precip_validate_flag = False
+
+    if ((self.stn_validate_flag) is True and
+       (self.val_client is None) or
+       (self.val_stns is None) or
+       (self.val_lbls is None)):
+        self.tmp_log.append('[plots] -> stn_validate is being set to '
+            'to False, either [validate] -> stations, labels or '
+            'client is empty')
+
+        self.stn_validate_flag = False
 
     ####################################################
     #          report                                  #

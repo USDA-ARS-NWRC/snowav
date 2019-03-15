@@ -166,7 +166,7 @@ class snowav(object):
             if self.stn_validate_flag is True:
                 if self.stns_file is not None:
                     stn_validate(self, file=self.stns_file)
-                    
+
                 else:
                     stn_validate(self)
 
@@ -175,9 +175,6 @@ class snowav(object):
 
             if self.compare_runs_flag is True:
                 compare_runs(self)
-
-            if self.inflow_flag is True:
-                inflow(self)
 
             if self.precip_depth_flag is True:
                 precip_depth(self)
