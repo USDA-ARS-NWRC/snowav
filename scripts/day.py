@@ -1,6 +1,8 @@
 
 from snowav.framework.process_day import process_day
 import argparse
+from snowav.plotting.swe_volume import swe_volume
+
 
 def main():
 
@@ -17,7 +19,9 @@ def main():
 
     # do a check on args.basin for in tables
 
-    process_day(args.snow_nc_path, args.basin)
+    process_day(args.nc_path, args.basin)
+
+    swe_volume()
 
 if __name__ == '__main__':
     main()

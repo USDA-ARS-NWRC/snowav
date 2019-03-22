@@ -1,4 +1,5 @@
 
+from snowav.utils.OutputReader import iSnobalReader
 import numpy as np
 from spatialnc import ipw
 import os
@@ -10,8 +11,9 @@ import coloredlogs
 import netCDF4 as nc
 from snowav import database
 import warnings
+from collections import OrderedDict
 
-def process_day(snow_nc_path, basin, dem=None, wy=None):
+def process_day(nc_path, basin, dem=None, wy=None):
     '''
 
     snow -p snow.nc
@@ -89,19 +91,17 @@ def process_day(snow_nc_path, basin, dem=None, wy=None):
             nclbl = lbl
 
         if lbl != plotorder[0]:
-            masks[lbl] = {'border': blank,
-                               'mask': ncf[nclbl + ' mask'][:],
-                               'label': lbl}
+            masks[lbl] = {'mask': ncf[nclbl + ' mask'][:],
+                          'label': lbl}
 
         else:
-            masks[lbl] = {'border': blank,
-                               'mask': ncf['mask'][:],
-                               'label': nclbl}
+            masks[lbl] = {'mask': ncf['mask'][:],
+                          'label': nclbl}
 
     ncf.close()
 
-    min_dem = min(min(dem))
-    max_dem = max(max(dem))
+    min_dem = np.min(np.min(dem))
+    max_dem = np.max(np.max(dem))
     min_dem -= min_dem % + 1000
     max_dem -= max_dem % - 1000
     edges = np.arange(min_dem,max_dem,step)
