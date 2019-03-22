@@ -149,7 +149,7 @@ class snowav(object):
                 cold_content(self)
 
             if self.swe_volume_flag is True:
-                swe_volume(self)
+                swe_volume(snow = self)
 
             if self.swe_change_flag is True:
                 swe_change(self)
@@ -229,7 +229,7 @@ class snowav(object):
                     accumulated(self, forecast=self.for_run_name)
 
                 if self.swe_volume_flag is True:
-                    swe_volume(self, forecast=self.for_run_name)
+                    swe_volume(snow = self, forecast=self.for_run_name)
 
                 if self.basin_total_flag is True:
                     basin_total(self, forecast=self.for_run_name)

@@ -15,13 +15,22 @@ def main():
     parser.add_argument('-b', '--basin', dest='basin', type=str,
                         help='Basin.')
 
+    parser.add_argument('-p', '--figs_path', dest='figs_path', type=str,
+                        help='Path to save the figure.')
+
     args = parser.parse_args()
 
     # do a check on args.basin for in tables
 
-    process_day(args.nc_path, args.basin)
+    day = process_day(args.nc_path, args.basin)
 
-    swe_volume()
+    if args.figs_path is not None:
+        day.figs_path = args.figs_path
+        
+    else:
+        day.figs_path = '.'
+
+    swe_volume(day=day)
 
 if __name__ == '__main__':
     main()
