@@ -143,21 +143,25 @@ def swe_volume(snow=None, forecast=None, day=None):
     # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
     #          transform=ax1.transAxes,fontsize = 10)
 
+    swe = pd.DataFrame(index = edges, columns = plotorder)
+    
     if snow is not None:
-        swe = pd.DataFrame(index = edges, columns = plotorder)
 
-        for bid in snow.plotorder:
+        for bid in plotorder:
             r2 = database.database.query(snow, start_date, end_date,
                                         run_name, bid, 'swe_vol')
 
-            for elev in snow.edges:
+            for elev in edges:
                 v2 = r2[(r2['elevation'] == str(elev))
                       & (r2['date_time'] == end_date)
                       & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
                 swe.loc[elev,bid] = v2['value'].values[0]
 
     else:
-        swe =
+        # day.daily_outputs['swe_vol'].values
+        for bid in plotorder:
+            for i,elev in enumerate(edges):
+                swe.loc[elev,bid] = day.daily_outputs['swe_vol'][i].values
 
     ix = len(barcolors)
     # Total basin label
