@@ -17,7 +17,7 @@ def main():
 
     # do a check on args.basin for in tables
 
-    process_day(args.snow_nc_path, args.basin):
+    process_day(args.snow_nc_path, args.basin)
 
 if __name__ == '__main__':
     main()
