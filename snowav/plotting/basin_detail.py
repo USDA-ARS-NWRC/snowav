@@ -35,7 +35,7 @@ def basin_detail(self):
     for name in self.masks:
         smin = np.nanmin(self.dem[self.dem*self.masks[name]['mask'] > 0])
         smax = np.nanmax(self.dem[self.dem*self.masks[name]['mask'] > 0])
-        self._logger.info(name,str(int(smin),str(int(smax))))
+        # self._logger.info(name,str(int(smin),str(int(smax))))
 
     # filter out high and low hyp
     map = plt.cm.terrain
@@ -56,14 +56,20 @@ def basin_detail(self):
         ax.contour(self.masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
     for iters,name in enumerate(self.plotorder):
-        hyp = copy.deepcopy(hypsom[name].cumsum()-hypsom[name].iloc[0])
+        hyp = 100 - copy.deepcopy(hypsom[name].cumsum()-hypsom[name].iloc[0])
         imin = hyp < 0.1
         hyp[imin] = np.nan
         imax = hyp > 99.9
         hyp[imax] = np.nan
         ax1.plot(hyp,range(0,len(edges)),color = clrs[iters],label = name)
-
-    ax1.invert_xaxis()
+        
+        # if name == self.plotorder[0]:
+        labels = ax1.get_xticklabels()
+        # print(hyp)
+        # print(labels, name, labels[0], labels[1])
+        # for l in labels:
+        #     print(l)
+    # ax1.invert_xaxis()
     ax1.legend()
     ax1.set_xlim((102,-2))
     ax1.set_ylim((-1,len(hypsom)))
@@ -71,15 +77,14 @@ def basin_detail(self):
     ax1.set_ylabel('elevation [%s]'%(self.elevlbl))
     ax1.yaxis.tick_right()
     ax1.yaxis.set_label_position("right")
-
-    labels = ax1.get_xticklabels()
-    ax1.set_xticklabels(labels[::-1])
+    # ax1.set_xticklabels(labels[::-1])
 
     xts = ax1.get_yticks()
     edges_lbl = []
     for i in xts[0:len(xts)-1]:
         edges_lbl.append(str(int(edges[int(i)])))
 
+    # print(edges_lbl)
     ax1.set_yticklabels(str(i) for i in edges_lbl)
 
     ax1.set_xlabel(r'Basin area above elevation [%]')
@@ -92,7 +97,7 @@ def basin_detail(self):
     cbar = plt.colorbar(h, cax = cax)
     cax.yaxis.set_ticks_position('left')
     cax.yaxis.set_label_position('left')
-    cax.set_ylabel('elevation [m]')
+    cax.set_ylabel('elevation [ft]')
 
     plt.subplots_adjust(top=0.88)
     plt.tight_layout()

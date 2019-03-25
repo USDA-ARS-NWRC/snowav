@@ -19,7 +19,8 @@ def main():
                         help='Path to save the figure.')
 
     args = parser.parse_args()
-
+    print(args)
+    print(args.nc_path)
     # do a check on args.basin for in tables
 
     day = process_day(args.nc_path, args.basin)

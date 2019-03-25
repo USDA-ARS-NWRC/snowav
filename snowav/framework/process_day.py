@@ -28,11 +28,11 @@ def process_day(nc_path, basin, dem=None, wy=None):
     # Suppress warnings - empty slices
     pd.options.mode.chained_assignment = None
     warnings.filterwarnings('ignore')
-
+    print(nc_path)
     # declare defaults
     class day():
-        nc_path = nc_path
-        basin = basin
+        # nc_path = nc_path
+        # basin = basin
 
         if basin == 'LAKES':
             imgx = (1250,1475)

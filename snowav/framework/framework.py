@@ -23,6 +23,7 @@ from snowav.plotting.stn_validate import stn_validate
 from snowav.plotting.subbasins import subbasins
 from snowav.plotting.swe_change import swe_change
 from snowav.plotting.swe_volume import swe_volume
+from snowav.plotting.basin_detail import basin_detail
 
 class snowav(object):
 
@@ -59,6 +60,8 @@ class snowav(object):
             self._logger.info(' Config option [Results] -> report_only=True, ' +
                   'report generated with existing figures.')
             report(self)
+
+            basin_detail(self)
             exit()
 
         # These can be made from pulling from the database
