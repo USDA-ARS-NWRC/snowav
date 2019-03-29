@@ -91,11 +91,11 @@ def image_change(snow, forecast = None):
 
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
-    qMin,qMax = np.nanpercentile(delta_swe,[1,99.9])
+    qMin,qMax = np.nanpercentile(delta_swe,[0.01,99.99])
 
     # ix = np.logical_and(delta_swe < qMin, delta_swe >= np.nanmin(np.nanmin(delta_swe)))
     # delta_swe[ix] = qMin + qMin*0.2
-    vMin,vMax = np.nanpercentile(delta_swe,[1,99.9])
+    vMin,vMax = np.nanpercentile(delta_swe,[0.01,99.99])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -200,10 +200,10 @@ def image_change(snow, forecast = None):
     ax1.yaxis.tick_right()
 
     # snow-free
-    patches = [mpatches.Patch(color='grey', label='snow free')]
-    if sum(sum(ixf)) > 1000:
-        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
-                  loc=2, borderaxespad=0.)
+    # patches = [mpatches.Patch(color='grey', label='snow free')]
+    # if sum(sum(ixf)) > 1000:
+    #     ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+    #               loc=2, borderaxespad=0.)
 
     # basin total and legend
     if len(snow.plotorder) > 1:

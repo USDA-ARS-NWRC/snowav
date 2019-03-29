@@ -47,6 +47,9 @@ def main():
     # read in options
     wy = ucfg.cfg['query']['wy']
     basins = ucfg.cfg['query']['basins']
+    if type(basins) != list:
+        basins = [basins]
+        
     value = ucfg.cfg['query']['value']
     run_name = ucfg.cfg['query']['run_name']
     start_date = ucfg.cfg['query']['start_date'].to_pydatetime()

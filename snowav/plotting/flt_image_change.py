@@ -13,6 +13,8 @@ from snowav import database
 from snowav.database.tables import Basins
 import datetime
 from datetime import timedelta
+from snowav.plotting.plotlims import plotlims as plotlims
+
 
 def flt_image_change(snow):
     '''
@@ -73,6 +75,9 @@ def flt_image_change(snow):
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
+    lims = plotlims(snow.basin, snow.plotorder)
+
+
     plt.close(6)
     fig,(ax,ax1) = plt.subplots(num=6, figsize=snow.figsize,
                                 dpi=snow.dpi, nrows = 1, ncols = 2)
@@ -114,26 +119,25 @@ def flt_image_change(snow):
                        d.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
-    sumorder  = snow.plotorder[1:]
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        sumorder = [snow.plotorder[0]]
+
+
     if snow.dplcs == 0:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(int(delta_swe_byelev[snow.plotorder[0]].sum())),
                              snow.vollbl)
     else:
-        tlbl = '%s = %s %s'%(snow.plotorder[0],
+        tlbl = '{}: {} {}'.format(snow.plotorder[0],
                              str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
                                           snow.dplcs)),snow.vollbl)
 
-    for iters,name in enumerate(sumorder):
+    for iters,name in enumerate(lims.sumorder):
 
         if snow.dplcs == 0:
-            lbl = '%s = %s %s'%(name,
+            lbl = '{}: {} {}'.format(name,
                                 str(int(delta_swe_byelev[name].sum())),
                                 snow.vollbl)
         else:
-            lbl = '%s = %s %s'%(name,
+            lbl = '{}: {} {}'.format(name,
                                 str(np.round(delta_swe_byelev[name].sum(),
                                 snow.dplcs)),snow.vollbl)
 
@@ -141,20 +145,10 @@ def flt_image_change(snow):
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
                     color = snow.barcolors[iters],
                     edgecolor = 'k',label = lbl)
-        elif iters == 1:
+
+        else:
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]],
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-        elif iters == 2:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]]
-                    + delta_swe_byelev[sumorder[iters-2]],
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
-        elif iters == 3:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = delta_swe_byelev[sumorder[iters-1]]
-                    + delta_swe_byelev[sumorder[iters-2]]
-                    + delta_swe_byelev[sumorder[iters-3]],
+                    bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
     plt.tight_layout()
@@ -200,24 +194,13 @@ def flt_image_change(snow):
         ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
                   loc=2, borderaxespad=0. )
 
-    if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-        # more ifs for number subs...
-        if len(snow.plotorder) == 5:
-            ax1.legend(loc= (0.02,0.68))
-        elif len(snow.plotorder) == 4:
-            ax1.legend(loc= (0.02,0.74))
+    # basin total and legend
 
-    if snow.basin == 'BRB':
-        ax1.text(0.26,0.96,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
+    if len(snow.plotorder) > 1:
+        ax1.legend(loc=(lims.legx,lims.legy))
 
-    if snow.basin == 'SJ':
-        ax1.text(0.23,0.94,tlbl,horizontalalignment='center',
+    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
-
-    if snow.basin == 'TUOL':
-        ax1.text(0.3,0.94,tlbl,horizontalalignment='center',
-                 transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)

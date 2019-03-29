@@ -141,11 +141,11 @@ def basin_total(snow, forecast = None):
         ax.axvline(x=snow.for_start_date,
                    linestyle = ':',
                    linewidth = 0.75,
-                   color = 'k')
+                   color = 'r')
         ax1.axvline(x=snow.for_start_date,
                    linestyle = ':',
                    linewidth = 0.75,
-                   color = 'k')
+                   color = 'r')
 
     ax1.yaxis.set_label_position("right")
     ax1.set_xlim((datetime(snow.wy -1 , 10, 1),x_end_date))
