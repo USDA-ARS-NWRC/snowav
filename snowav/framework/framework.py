@@ -152,7 +152,7 @@ class snowav(object):
                 cold_content(self)
 
             if self.swe_volume_flag is True:
-                swe_volume(snow = self)
+                swe_volume(self, day=None)
 
             if self.swe_change_flag is True:
                 swe_change(self)

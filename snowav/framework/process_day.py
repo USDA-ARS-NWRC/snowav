@@ -13,7 +13,7 @@ from snowav import database
 import warnings
 from collections import OrderedDict
 
-def process_day(nc_path, basin, dem=None, wy=None):
+def process_day(nc_path, basin=None, dem=None, wy=None):
     '''
 
     snow -p snow.nc
@@ -28,11 +28,9 @@ def process_day(nc_path, basin, dem=None, wy=None):
     # Suppress warnings - empty slices
     pd.options.mode.chained_assignment = None
     warnings.filterwarnings('ignore')
-    print(nc_path)
     # declare defaults
+
     class day():
-        # nc_path = nc_path
-        # basin = basin
 
         if basin == 'LAKES':
             imgx = (1250,1475)
@@ -78,17 +76,18 @@ def process_day(nc_path, basin, dem=None, wy=None):
                          'Auberry']
 
         # get some things
-        if dem is None:
-            dem_path = '/home/ops/wy2019/sanjoaquin/topo/topo.nc'
+        # if dem is None:
+        dem_path = '/home/ops/wy2019/sanjoaquin/topo/topo.nc'
+        # dem_path = '/home/ops/wy2019/tuolumne/topo/topo.nc'
 
-        if wy is None:
-            date_time = datetime.now()
+        # if wy is None:
+        date_time = datetime.now()
 
-            if date_time.month in (10,11,12):
-                wy = date_time.year-1
+        if date_time.month in (10,11,12):
+            wy = date_time.year-1
 
-            else:
-                wy = date_time.year
+        else:
+            wy = date_time.year
 
         ncf = nc.Dataset(dem_path, 'r')
         dem = ncf.variables['dem'][:] * 3.28
@@ -130,7 +129,8 @@ def process_day(nc_path, basin, dem=None, wy=None):
                         'depth':[], 'dates':[], 'time':[], 'density':[],
                         'coldcont':[] }
 
-        output = iSnobalReader(nc_path,
+        path = nc_path.split('snow.nc')[0]
+        output = iSnobalReader(path,
                                filetype,
                                snowbands = snowbands,
                                embands = embands,

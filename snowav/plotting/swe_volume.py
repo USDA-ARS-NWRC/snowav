@@ -15,14 +15,15 @@ from snowav.plotting.plotlims import plotlims as plotlims
 from datetime import timedelta
 
 
-def swe_volume(snow=None, forecast=None, day=None):
+def swe_volume(snow, forecast=None, day=None):
     '''
 
     '''
 
     if day is not None:
+        print('swe vol, ', day)
         outputs = day.outputs
-        title = 'SWE \n {}'.format(day.nc_path)
+        title = 'SWE \n {}'.format(day.path)
         depth_factor = day.depth_factor
         masks = day.masks
         plotorder = day.plotorder
@@ -58,7 +59,7 @@ def swe_volume(snow=None, forecast=None, day=None):
         name_append = snow.name_append + '_forecast'
         title = 'Forecast SWE \n {}'.format(end_date.date().strftime("%Y-%-m-%-d"))
 
-    if snow is not None:
+    if day is None:
         depth_factor = snow.depth_factor
         masks = snow.masks
         plotorder = snow.plotorder
@@ -71,6 +72,9 @@ def swe_volume(snow=None, forecast=None, day=None):
         dplcs = 1
         xlims = snow.xlims
         figs_path = snow.figs_path
+        edges = snow.edges
+        barcolors = snow.barcolors
+
 
         if snow.basin == 'LAKES':
             imgx = snow.imgx
@@ -144,7 +148,7 @@ def swe_volume(snow=None, forecast=None, day=None):
     #          transform=ax1.transAxes,fontsize = 10)
 
     swe = pd.DataFrame(index = edges, columns = plotorder)
-    
+
     if snow is not None:
 
         for bid in plotorder:

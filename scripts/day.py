@@ -5,7 +5,10 @@ from snowav.plotting.swe_volume import swe_volume
 
 
 def main():
+    '''
+     python scripts/day.py -b Tuolumne -d /data/blizzard/tuolumne/ops/wy2019/ops/runs/run20190301/snow.nc -p .
 
+    '''
 
     parser = argparse.ArgumentParser(description="Examine and auto populate")
 
@@ -19,15 +22,14 @@ def main():
                         help='Path to save the figure.')
 
     args = parser.parse_args()
-    print(args)
-    print(args.nc_path)
+
     # do a check on args.basin for in tables
 
-    day = process_day(args.nc_path, args.basin)
+    day = process_day(args.nc_path, basin=args.basin)
 
     if args.figs_path is not None:
         day.figs_path = args.figs_path
-        
+
     else:
         day.figs_path = '.'
 
