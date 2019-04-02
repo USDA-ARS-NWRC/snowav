@@ -41,14 +41,16 @@ def flt_image_change(snow):
 
     # Make df from database
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    end_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
+        r = database.database.query(snow, snow.flt_start_date, snow.flt_end_date,
                                     snow.run_name, bid, 'swe_vol')
         for elev in snow.edges:
-            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
-            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
+            v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.flt_start_date)]
+            v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.flt_end_date)]
             delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
+            end_swe_byelev.loc[elev,bid] = v2['value'].values
 
     # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(delta_swe)
@@ -114,12 +116,10 @@ def flt_image_change(snow):
     start_date = snow.flt_start_date + timedelta(hours=1)
     d = snow.flt_end_date + timedelta(hours=1)
 
-    h.axes.set_title('Change in SWE from Snow Depth Update\n%s to %s'
-                     %(start_date.date().strftime("%Y-%-m-%-d"),
-                       d.date().strftime("%Y-%-m-%-d")))
+    h.axes.set_title('Change in SWE from Snow Depth Update\n{}'
+                     .format(start_date.date().strftime("%Y-%-m-%-d")))
 
     # Plot the bar in order
-
 
     if snow.dplcs == 0:
         tlbl = '{}: {} {}'.format(snow.plotorder[0],
@@ -150,6 +150,10 @@ def flt_image_change(snow):
             ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
                     bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
+
+    print('flt_image_change ', delta_swe_byelev.sum(skipna=True))
+    print('flt_image_change ', end_swe_byelev.sum(skipna=True))
+    print('flt_image_change percent change', delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum(skipna=True))
 
     plt.tight_layout()
     xts = ax1.get_xticks()

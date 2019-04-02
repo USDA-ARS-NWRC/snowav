@@ -28,7 +28,8 @@ def compare_runs(self):
     '''
 
     start_date = datetime.datetime(self.wy - 1,10,1)
-    end_date = datetime.datetime(self.wy,8,1)
+    # end_date = datetime.datetime(self.wy,8,1)
+    end_date = self.end_date
 
     bid = self.plotorder[0]
 
@@ -53,7 +54,7 @@ def compare_runs(self):
 
         for iters,run in enumerate(self.plot_runs):
             qry = self.session.query(Results).join(RunMetadata).filter(and_(#(Results.date_time >= start_date),
-                                                      #(Results.date_time <= end_date),
+                                                      (Results.date_time <= end_date),
                                                       (Results.variable == var),
                                                       (RunMetadata.run_name == run),
                                                       (Results.basin_id == Basins.basins[bid]['basin_id'])))

@@ -61,6 +61,7 @@ def basin_total(snow, forecast = None):
             swi_summary.loc[d,bid] = v2['value'].values[iter]
 
     swi_summary.sort_index(inplace=True)
+    swe_summary.sort_index(inplace=True)
     swi_summary = swi_summary.cumsum()
     swi_end_val = copy.deepcopy(swi_summary)
 

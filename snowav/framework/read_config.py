@@ -101,8 +101,8 @@ def read_config(self, external_logger=None, awsm=None):
             exit()
 
     # Check for forced flight comparison images
-    self.flt_start_date = ucfg.cfg['outputs']['flt_start_date']
-    self.flt_end_date = ucfg.cfg['outputs']['flt_end_date']
+    self.flt_start_date = ucfg.cfg['outputs']['flt_start_date'].to_pydatetime()
+    self.flt_end_date = ucfg.cfg['outputs']['flt_end_date'].to_pydatetime()
 
     if self.flt_start_date is not None:
         self.flt_flag = True
@@ -222,7 +222,7 @@ def read_config(self, external_logger=None, awsm=None):
         self.subbasins_flag = ucfg.cfg['plots']['subbasins']
 
     else:
-        self.subbasins_flag = False    
+        self.subbasins_flag = False
 
     if ((self.precip_validate_flag) is True and
        (self.val_client is None) or
