@@ -71,9 +71,9 @@ def density(snow):
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
 
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])

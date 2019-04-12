@@ -157,9 +157,9 @@ def precip_depth(snow, forecast=None):
     #     ax[0,0].plot(fix1*0,fix1,'k')
     #     ax[0,0].plot(fix2*0,fix2,'k')
 
-    if snow.basin == 'LAKES':
-        ax[0,0].set_xlim(snow.imgx)
-        ax[0,0].set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax[0,0].set_xlim(snow.imgx)
+    #     ax[0,0].set_ylim(snow.imgy)
 
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
@@ -244,9 +244,9 @@ def precip_depth(snow, forecast=None):
 
     h2 = ax[1,0].imshow(precip, interpolation='none', cmap = mymap1, clim = clims)
 
-    if snow.basin == 'LAKES':
-        ax[1,0].set_xlim(snow.imgx)
-        ax[1,0].set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax[1,0].set_xlim(snow.imgx)
+    #     ax[1,0].set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:
@@ -301,23 +301,10 @@ def precip_depth(snow, forecast=None):
 
     patches = [mpatches.Patch(color='grey', label='no precip')]
 
-    if sum(sum(r)) > 1000:
-        if snow.basin == 'SJ':
-            ax[1,0].legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        elif snow.basin == 'RCEW':
-            ax[1,0].legend(handles=patches, bbox_to_anchor=(-0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        else:
-            ax[1,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                      loc=2, borderaxespad=0. )
-
-    # if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-    #     # more ifs for number subs...
-    #     if len(snow.plotorder) == 5:
-    #         ax[1,1].legend(loc= (0.01,0.65))
-    #     elif len(snow.plotorder) == 4:
-    #         ax[1,1].legend(loc= (0.01,0.71))
+    # if sum(sum(r)) > 1000:
+    #     patches = [mpatches.Patch(color='grey', label='no precip')]
+    #     ax[1,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+    #               loc=2, borderaxespad=0. )
 
     ################################################
     #           rain                                #
@@ -338,9 +325,9 @@ def precip_depth(snow, forecast=None):
 
     h2 = ax[2,0].imshow(rain, interpolation='none', cmap = mymap, clim = clims)
 
-    if snow.basin == 'LAKES':
-        ax[2,0].set_xlim(snow.imgx)
-        ax[2,0].set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax[2,0].set_xlim(snow.imgx)
+    #     ax[2,0].set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:
@@ -395,24 +382,11 @@ def precip_depth(snow, forecast=None):
     ax[2,1].tick_params(axis='y')
     ax[2,1].yaxis.tick_right()
 
-    patches = [mpatches.Patch(color='grey', label='no rain')]
-    if sum(sum(r)) > 1000:
-        if snow.basin == 'SJ':
-            ax[2,0].legend(handles=patches, bbox_to_anchor=(0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        elif snow.basin == 'RCEW':
-            ax[2,0].legend(handles=patches, bbox_to_anchor=(-0.3, 0.05),
-                      loc=2, borderaxespad=0. )
-        else:
-            ax[2,0].legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
-                      loc=2, borderaxespad=0. )
-
-    # if snow.basin != 'LAKES' and snow.basin != 'RCEW':
-    #     # more ifs for number subs...
-    #     if len(snow.plotorder) == 5:
-    #         ax[2,1].legend(loc= (0.01,0.65))
-    #     elif len(snow.plotorder) == 4:
-    #         ax[2,1].legend(loc= (0.01,0.71))
+    # patches = [mpatches.Patch(color='grey', label='no rain')]
+    # if sum(sum(r)) > 1000:
+    #     patches = [mpatches.Patch(color='grey', label='no rain')]
+    #     ax[2,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+    #               loc=2, borderaxespad=0. )
 
     plt.suptitle(title)
     #plt.tight_layout()

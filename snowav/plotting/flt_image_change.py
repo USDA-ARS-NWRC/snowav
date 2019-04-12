@@ -28,7 +28,7 @@ def flt_image_change(snow):
     e = min(snow.outputs['dates'],key=lambda x: abs(x-snow.flt_end_date))
     ixs = np.where(snow.outputs['dates'] == s)[0][0]
     ixe = np.where(snow.outputs['dates'] == e)[0][0]
-    print('flt change, ', snow.outputs['swe_z'][ixs], snow.outputs['swe_z'][ixe])
+    # print('flt change, ', snow.outputs['swe_z'][ixs], snow.outputs['swe_z'][ixe])
 
     if (ixs == ixe) and (len(snow.outputs['dates']) > 1):
         ixs = ixe - 1
@@ -55,11 +55,11 @@ def flt_image_change(snow):
 
     # Make copy so that we can add nans for the plots, but not mess up the original
     delta_state = copy.deepcopy(delta_swe)
-    qMin,qMax = np.nanpercentile(delta_state,[1,99.5])
+    qMin,qMax = np.nanpercentile(delta_state,[0.5,99.5])
 
     ix = np.logical_and(delta_state < qMin, delta_state >= np.nanmin(np.nanmin(delta_state)))
     delta_state[ix] = qMin + qMin*0.2
-    vMin,vMax = np.nanpercentile(delta_state,[1,99])
+    vMin,vMax = np.nanpercentile(delta_state,[0.5,99.5])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -88,9 +88,9 @@ def flt_image_change(snow):
         cmap = cmap, norm=MidpointNormalize(midpoint=0,
                                             vmin = vMin-0.01,vmax=vMax+0.01))
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:
@@ -196,7 +196,7 @@ def flt_image_change(snow):
         ax.legend(handles=patches, bbox_to_anchor=(-0.1, 0.05),
                   loc=2, borderaxespad=0. )
     else:
-        ax.legend(handles=patches, bbox_to_anchor=(0.05, 0.05),
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
 
     # basin total and legend

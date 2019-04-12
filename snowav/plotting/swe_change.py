@@ -64,9 +64,9 @@ def swe_change(snow):
         cmap = cmap, norm=MidpointNormalize(midpoint=0,
                                             vmin = vMin-0.01,vmax=vMax+0.01))
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:

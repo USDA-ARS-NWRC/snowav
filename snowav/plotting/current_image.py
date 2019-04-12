@@ -70,11 +70,11 @@ def current_image(snow):
 
             ax.annotate(n, xy=(snow.annot_x[i], snow.annot_y[i]), size = 8)
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
-        ax1.set_xlim(snow.imgx)
-        ax1.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
+    #     ax1.set_xlim(snow.imgx)
+    #     ax1.set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:

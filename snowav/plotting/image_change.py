@@ -91,11 +91,11 @@ def image_change(snow, forecast = None):
 
     delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
-    qMin,qMax = np.nanpercentile(delta_swe,[0.01,99.99])
+    qMin,qMax = np.nanpercentile(delta_swe,[0.5,99.5])
 
     # ix = np.logical_and(delta_swe < qMin, delta_swe >= np.nanmin(np.nanmin(delta_swe)))
     # delta_swe[ix] = qMin + qMin*0.2
-    vMin,vMax = np.nanpercentile(delta_swe,[0.01,99.99])
+    vMin,vMax = np.nanpercentile(delta_swe,[0.5,99.5])
 
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -124,9 +124,9 @@ def image_change(snow, forecast = None):
         cmap = cmap, norm=MidpointNormalize(midpoint=0,
                                             vmin = vMin-0.01,vmax=vMax+0.01))
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:

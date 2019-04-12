@@ -47,9 +47,9 @@ def cold_content(snow):
 
     h = ax.imshow(cold, clim=clims2, cmap = mymap1)
 
-    if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+    # if snow.basin == 'LAKES':
+    #     ax.set_xlim(snow.imgx)
+    #     ax.set_ylim(snow.imgy)
 
     # Basin boundaries
     for name in snow.masks:
