@@ -1,6 +1,7 @@
 
 import sys
 import os
+import numpy as np
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -186,7 +187,14 @@ class Basins(object):
                 # San Joaquin
                 'San Joaquin River Basin':{'watershed_id':3,
                                            'basin_id':9,
-                                           'basin_name':'San Joaquin'},
+                                           'basin_name':'San Joaquin',
+                                           'defaults':{'plotorder':['San Joaquin River Basin',
+                                                                    'Main',
+                                                                    'Redinger',
+                                                                    'South Fork',
+                                                                    'Auberry'],
+                                                        'edges':np.arange(4000,13000,1000),
+                                                        'dem_path':'/home/ops/wy2019/sanjoaquin/topo/topo.nc'}},
 
                 'South Fork':{'watershed_id':3,
                               'basin_id':10,
