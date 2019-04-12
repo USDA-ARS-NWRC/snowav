@@ -8,7 +8,7 @@ from sys import exit
 
 def main():
     '''
-    python scripts/day.py -b SJ -d /data/blizzard/sanjoaquin/ops/wy2019/ops/runs/run20190301/snow.nc -p /home/markrobertson/wkspace/
+    snowav_day -b "San Joaquin River Basin" -d snow.nc -p wkspace/
 
 
     '''
