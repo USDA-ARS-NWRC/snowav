@@ -100,17 +100,17 @@ def process(self, forecast=None):
         rain = np.zeros((self.nrows,self.ncols))
 
         if os.path.isfile(ppt_path):
-
             ppt = nc.Dataset(ppt_path, 'r')
             percent_snow = nc.Dataset(percent_snow_path, 'r')
 
             # For the wy2019 daily runs, precip.nc always has an extra hour...
-            if len(ppt.variables['time'][:]) <= 24:
+            if len(ppt.variables['precip'][:]) > 24:
                 nb = 24
             else:
-                nb = len(ppt.variables['time'][:])
+                nb = len(ppt.variables['precip'][:])
 
             for nb in range(0,nb):
+                # print(ppt_path,nb)
                 pre = ppt['precip'][nb]
                 ps = percent_snow['percent_snow'][nb]
 
