@@ -15,15 +15,37 @@ from snowav.plotting.plotlims import plotlims as plotlims
 from datetime import timedelta
 
 
-def swe_volume(snow, forecast=None):
+def swe_volume(snow, forecast=None, day=None):
     '''
 
     '''
 
-    if forecast is None:
+    if day is not None:
+        print('swe vol, ', day)
+        outputs = day.outputs
+        title = 'SWE \n {}'.format(day.path)
+        depth_factor = day.depth_factor
+        masks = day.masks
+        plotorder = day.plotorder
+        dpi = 200
+        figsize = (10,5)
+        depthlbl = day.depthlbl
+        vollbl = day.vollbl
+        elevlbl = day.elevlbl
+        basin = day.basin
+        dplcs = 1
+        xlims = day.xlims
+        figs_path = day.figs_path
+        name_append = ''
+
+        if day.basin == 'LAKES':
+            imgx = day.imgx
+            imgy = day.imgy
+            dplcs = 2
+
+    elif forecast is None:
         run_name = snow.run_name
         outputs = snow.outputs
-        ixe = snow.ixe
         start_date = snow.start_date
         end_date = snow.end_date
         name_append = snow.name_append
@@ -32,18 +54,39 @@ def swe_volume(snow, forecast=None):
     else:
         run_name = snow.for_run_name
         outputs = snow.for_outputs
-        ixe = -1
         start_date = snow.for_start_date
         end_date = snow.for_end_date
         name_append = snow.name_append + '_forecast'
         title = 'Forecast SWE \n {}'.format(end_date.date().strftime("%Y-%-m-%-d"))
 
+    if day is None:
+        depth_factor = snow.depth_factor
+        masks = snow.masks
+        plotorder = snow.plotorder
+        figsize = snow.figsize
+        dpi = snow.dpi
+        depthlbl = snow.depthlbl
+        vollbl = snow.vollbl
+        elevlbl = snow.elevlbl
+        basin = snow.basin
+        dplcs = 1
+        xlims = snow.xlims
+        figs_path = snow.figs_path
+        edges = snow.edges
+        barcolors = snow.barcolors
+
+
+        if snow.basin == 'LAKES':
+            imgx = snow.imgx
+            imgy = snow.imgy
+            dplcs = 2
+
     state = copy.deepcopy(outputs['swe_z'][-1])
-    state = np.multiply(state,snow.depth_factor)
+    state = np.multiply(state, depth_factor)
 
     qMin,qMax = np.nanpercentile(state,[0,99.8])
     clims = (qMin,qMax)
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
 
     # Prepare no-snow and outside of the basin for the colormaps
@@ -63,19 +106,19 @@ def swe_volume(snow, forecast=None):
     sns.set_context("notebook")
 
     plt.close(21)
-    fig,(ax,ax1) = plt.subplots(num=21, figsize=snow.figsize,
-                                facecolor = 'white', dpi=snow.dpi,
+    fig,(ax,ax1) = plt.subplots(num=21, figsize=figsize,
+                                facecolor = 'white', dpi=dpi,
                                 nrows = 1, ncols = 2)
 
     h = ax.imshow(state, clim=clims, cmap = mymap)
 
     if snow.basin == 'LAKES':
-        ax.set_xlim(snow.imgx)
-        ax.set_ylim(snow.imgy)
+        ax.set_xlim(imgx)
+        ax.set_ylim(imgy)
 
     # Basin boundaries
-    for name in snow.masks:
-        ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+    for name in masks:
+        ax.contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
     # Do pretty stuff for the left plot
     h.axes.get_xaxis().set_ticks([])
@@ -83,12 +126,12 @@ def swe_volume(snow, forecast=None):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label('[%s]'%(snow.depthlbl))
+    cbar.set_label('[{}]'.format(depthlbl))
 
     h.axes.set_title(title)
 
     # Get basin-specific lims
-    lims = plotlims(snow.basin, snow.plotorder)
+    lims = plotlims(basin, plotorder)
 
     patches = [mpatches.Patch(color='grey', label='snow free')]
 
@@ -104,64 +147,72 @@ def swe_volume(snow, forecast=None):
     # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
     #          transform=ax1.transAxes,fontsize = 10)
 
-    swe = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    swe = pd.DataFrame(index = edges, columns = plotorder)
 
-    for bid in snow.plotorder:
-        r2 = database.database.query(snow, start_date, end_date,
-                                    run_name, bid, 'swe_vol')
+    if snow is not None:
 
-        for elev in snow.edges:
-            v2 = r2[(r2['elevation'] == str(elev))
-                  & (r2['date_time'] == end_date)
-                  & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
-            swe.loc[elev,bid] = v2['value'].values[0]
+        for bid in plotorder:
+            r2 = database.database.query(snow, start_date, end_date,
+                                        run_name, bid, 'swe_vol')
 
-    ix = len(snow.barcolors)
+            for elev in edges:
+                v2 = r2[(r2['elevation'] == str(elev))
+                      & (r2['date_time'] == end_date)
+                      & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
+                swe.loc[elev,bid] = v2['value'].values[0]
+
+    else:
+        # day.daily_outputs['swe_vol'].values
+        for bid in plotorder:
+            for i,elev in enumerate(edges):
+                swe.loc[elev,bid] = day.daily_outputs['swe_vol'][i].values
+
+    ix = len(barcolors)
     # Total basin label
 
-    if len(snow.plotorder) > 1:
-        sumorder = snow.plotorder[1::]
+    if len(plotorder) > 1:
+        sumorder = plotorder[1::]
     else:
-        sumorder = snow.plotorder
+        sumorder = plotorder
 
     for iters,name in enumerate(sumorder):
 
         if snow.dplcs == 0:
             ukaf = str(np.int(np.nansum(swe[name])))
         else:
-            ukaf = str(np.round(np.nansum(swe[name]),snow.dplcs))
+            ukaf = str(np.round(np.nansum(swe[name]),dplcs))
 
         if iters == 0:
-            ax1.bar(range(0,len(snow.edges)),swe[name],
-                    color = snow.barcolors[iters],
-                    edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
+            ax1.bar(range(0,len(edges)),swe[name],
+                    color = barcolors[iters],
+                    edgecolor = 'k',label = name + ': {} {}'.format(ukaf,vollbl))
 
         else:
             ax1.bar(range(0,len(snow.edges)),swe[name],
                     bottom = pd.DataFrame(swe[sumorder[0:iters]]).sum(axis = 1).values,
-                    color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
+                    color = barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,vollbl))
 
     ylims = ax1.get_ylim()
     max = ylims[1] + ylims[1]*0.5
     min = 0
     ax1.set_ylim((min, max))
 
-    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
+    ax1.xaxis.set_ticks(range(0,len(edges)))
     plt.tight_layout()
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax1.set_xlim((xlims[0]-0.5,xlims[1]+0.5))
 
     edges_lbl = []
-    for i in range(0,len(snow.edges)):
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    for i in range(0,len(edges)):
+        edges_lbl.append(str(int(edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax1.set_xlim((xlims[0]-0.5,xlims[1]+0.5))
 
-    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
-    ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
+    ax1.set_xlabel('elevation [{}]'.format(elevlbl))
+    ax1.set_ylabel('{} - per elevation band'.format(vollbl))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
     ax1.legend(loc = 2, fontsize = 10)
@@ -172,5 +223,6 @@ def swe_volume(snow, forecast=None):
     fig.tight_layout()
     fig.subplots_adjust(top=0.92,wspace = 0.2)
 
-    snow._logger.info('saving {}swe_volume_{}.png'.format(snow.figs_path,name_append))
-    plt.savefig('{}swe_volume_{}.png'.format(snow.figs_path,name_append))
+    if snow is not None:
+        snow._logger.info('saving {}swe_volume_{}.png'.format(figs_path,name_append))
+    plt.savefig('{}swe_volume_{}.png'.format(figs_path,name_append))

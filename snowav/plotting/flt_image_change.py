@@ -28,6 +28,7 @@ def flt_image_change(snow):
     e = min(snow.outputs['dates'],key=lambda x: abs(x-snow.flt_end_date))
     ixs = np.where(snow.outputs['dates'] == s)[0][0]
     ixe = np.where(snow.outputs['dates'] == e)[0][0]
+    print('flt change, ', snow.outputs['swe_z'][ixs], snow.outputs['swe_z'][ixe])
 
     if (ixs == ixe) and (len(snow.outputs['dates']) > 1):
         ixs = ixe - 1

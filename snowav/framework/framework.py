@@ -23,6 +23,7 @@ from snowav.plotting.stn_validate import stn_validate
 from snowav.plotting.subbasins import subbasins
 from snowav.plotting.swe_change import swe_change
 from snowav.plotting.swe_volume import swe_volume
+from snowav.plotting.basin_detail import basin_detail
 
 class snowav(object):
 
@@ -59,6 +60,8 @@ class snowav(object):
             self._logger.info(' Config option [Results] -> report_only=True, ' +
                   'report generated with existing figures.')
             report(self)
+
+            basin_detail(self)
             exit()
 
         # These can be made from pulling from the database
@@ -149,7 +152,7 @@ class snowav(object):
                 cold_content(self)
 
             if self.swe_volume_flag is True:
-                swe_volume(self)
+                swe_volume(self, day=None)
 
             if self.swe_change_flag is True:
                 swe_change(self)
@@ -229,7 +232,7 @@ class snowav(object):
                     accumulated(self, forecast=self.for_run_name)
 
                 if self.swe_volume_flag is True:
-                    swe_volume(self, forecast=self.for_run_name)
+                    swe_volume(snow = self, forecast=self.for_run_name)
 
                 if self.basin_total_flag is True:
                     basin_total(self, forecast=self.for_run_name)

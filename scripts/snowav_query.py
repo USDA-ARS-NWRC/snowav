@@ -49,7 +49,12 @@ def main():
     basins = ucfg.cfg['query']['basins']
     if type(basins) != list:
         basins = [basins]
-        
+
+    if basins[0] not in Watersheds.watersheds.keys():
+        print('First basin in {}: [query] -> basins should be one of '
+              '{}'.format(args.config_file,Watersheds.watersheds.keys()))
+        exit()
+
     value = ucfg.cfg['query']['value']
     run_name = ucfg.cfg['query']['run_name']
     start_date = ucfg.cfg['query']['start_date'].to_pydatetime()
@@ -71,14 +76,15 @@ def main():
 
     for bid in basins:
 
+        # Get available run_names for the watershed
+        wid = Basins.basins[basins[0]]['watershed_id']
+
         # print out all available runs for the time period if desired
         if print_runs is True:
 
-            # Get available run_names for the watershed
-            wid =  Basins.basins[bid]['watershed_id']
             q = session.query(RunMetadata).join(Results).filter(and_(RunMetadata.watershed_id == wid),
                                                                     (Results.date_time >= start_date),
-                                                                    (Results.date_time <= end_date),                                    )
+                                                                    (Results.date_time <= end_date))
             df = pd.read_sql(q.statement, q.session.connection())
             names = df.run_name.unique()
 
@@ -90,6 +96,7 @@ def main():
             qry = session.query(Results).join(RunMetadata).filter(and_((Results.date_time >= start_date),
                                                       (Results.date_time <= end_date),
                                                       (RunMetadata.run_name.in_(names)),
+                                                      (RunMetadata.watershed_id == wid),
                                                       (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
@@ -131,6 +138,7 @@ def main():
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
                         (RunMetadata.run_name == run_name),
+                        (RunMetadata.watershed_id == wid),
                         (Results.variable == value),
                         (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
