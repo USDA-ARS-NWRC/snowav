@@ -50,8 +50,8 @@ def accumulated(snow, forecast=None):
         end_date = snow.end_date
         name_append = snow.name_append
         title = 'Accumulated SWI \n {} to {}'.format(
-                                    start_date.date().strftime("%Y-%-m-%-d"),
-                                    end_date.date().strftime("%Y-%-m-%-d"))
+                                    snow.report_start.date().strftime("%Y-%-m-%-d"),
+                                    snow.report_date.date().strftime("%Y-%-m-%-d"))                                 
 
     else:
         run_name = snow.for_run_name
