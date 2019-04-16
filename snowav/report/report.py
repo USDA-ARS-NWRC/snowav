@@ -271,6 +271,8 @@ def report(obj):
 
     dfind = [str(i) for i in obj.edges]
     swe_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    # swi_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
+    swi_byelev = pd.DataFrame(np.nan, index = obj.edges, columns = obj.plotorder)
     swe_total = pd.DataFrame(np.nan, index = ['basin mean'], columns = obj.plotorder)
     depth_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
     sweper_byelev = pd.DataFrame(np.nan, index = dfind, columns = obj.plotorder)
@@ -289,6 +291,7 @@ def report(obj):
 
     dswe_byelev.index.name = 'Elevation'
     swe_byelev.index.name = 'Elevation'
+    swi_byelev.index.name = 'Elevation'
     swevol_byelev.index.name = 'Elevation'
     sweper_byelev.index.name = 'Elevation'
     depth_byelev.index.name = 'Elevation'
@@ -305,10 +308,28 @@ def report(obj):
         swe_byelev.loc[dfind,sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_z')
                                     & (r['basin_id'] == Basins.basins[sub]['basin_id'])]['value'].values[:-1].round(decimals = int(obj.dplcs))
+
+        for elev in obj.edges:
+            v = r[(r['date_time']>=start_date)
+                   & (r['date_time']<=end_date)
+                   & (r['variable']=='swi_vol')
+                   & (r['elevation'] == str(elev))
+                   & (r['basin_id'] == Basins.basins[sub]['basin_id'])]
+            if np.sum(v['value'].values) > 0:
+                swi_byelev.loc[elev,sub] = np.sum(v['value'].values.round(decimals = int(obj.dplcs)))
+
+        v2 = r[(r['date_time']>=start_date)
+               & (r['date_time']<=end_date)
+               & (r['variable']=='swi_vol')
+               & (r['elevation'] == 'total')
+               & (r['basin_id'] == Basins.basins[sub]['basin_id'])]
+        swi_byelev.loc['total',sub] = np.nansum(v2['value'].values.round(decimals = int(obj.dplcs)))
+
         swe_total.loc['basin mean',sub] = r[ (r['basin_id']==Basins.basins[sub]['basin_id'])
                                     & (r['date_time']==end_date)
                                     & (r['elevation']=='total')
                                     & (r['variable']=='swe_z')]['value'].values[0].round(decimals = int(obj.dplcs))
+
 
         swevol_byelev.loc[[str(i) for i in obj.edges] + ['total'],sub] = r[ (r['date_time']==end_date)
                                     & (r['variable']=='swe_vol')
@@ -365,6 +386,15 @@ def report(obj):
                                   obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
                                   dswe_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
                                   r'} \\ \footnotesize{\textbf{Table 3:} Mean change in depth of SWE by elevation band.} ' +
+                                  r'\\ \clearpage'
+                                )
+
+    variables['ACCUM_BYELEV'] = (
+                                r'  \textbf{SWI volume by elevation [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                %(obj.vollbl,obj.report_start.date().strftime("%Y-%-m-%-d"),
+                                  obj.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                  swi_byelev[obj.plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                  r'} \\ \footnotesize{\textbf{Table 6:} Volume of SWI during the report period by elevation band.} ' +
                                   r'\\ \clearpage'
                                 )
 
