@@ -76,6 +76,7 @@ def compare_runs(self):
             i = df['month'] >= 10
             df.year[i] = self.wy - 1
             df.index = pd.to_datetime(df[['year','month','day']])
+            df.sort_index(inplace=True)
 
             if var == 'swi_vol':
                 ax.plot(df[df['elevation'] == 'total']['value'].cumsum(),
