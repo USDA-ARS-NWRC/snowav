@@ -32,7 +32,7 @@ def plotlims(basin,plotorder):
         btx = 0.31
         bty = 0.95
 
-        if basin in ['SJ']:
+        if basin in ['SJ','San Joaquin River Basin']:
             pbbx = 0.3
             legy = 0.69
             legy2 = 0.65
@@ -58,7 +58,8 @@ def plotlims(basin,plotorder):
             legy = 0.85
             legy2 = 0.88
 
-        if basin in ['BRB','TUOL']:
+        if basin in ['BRB','TUOL','Extended Tuolumne']:
+            # legy = 0.74
             legy = 0.74
             btx = 0.28
 

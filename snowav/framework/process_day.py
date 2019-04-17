@@ -25,7 +25,7 @@ class day(object):
     snowbands = [0,1,2]
     embands = [6,7,8,9]
 
-    def process_day(day, nc_path, basin=None, dem=None, wy=None):
+    def process_day(day, nc_path, value, basin=None, dem=None, wy=None):
         '''
 
         '''
@@ -57,9 +57,10 @@ class day(object):
                      'xkcd:lightish purple',
                      'xkcd:deep magenta']
 
-        plotorder = Basins.basins['San Joaquin River Basin']['defaults']['plotorder']
-        dem_path = Basins.basins['San Joaquin River Basin']['defaults']['dem_path']
-        edges = Basins.basins['San Joaquin River Basin']['defaults']['edges']
+        plotorder = Basins.basins[basin]['defaults']['plotorder']
+        dem_path = Basins.basins[basin]['defaults']['dem_path']
+        edges = Basins.basins[basin]['defaults']['edges']
+        results = {}
 
         # if wy is None:
         date_time = datetime.now()
@@ -114,28 +115,33 @@ class day(object):
                         'depth':[], 'dates':[], 'time':[], 'density':[],
                         'coldcont':[] }
 
-        path = nc_path.split('snow.nc')[0]
+        # will need to look over this
+        if type(nc_path) != list:
+            nc_path = [nc_path]
+
         rundirs_dict = {}
-        output = iSnobalReader(path,
-                               day.filetype,
-                               snowbands = day.snowbands,
-                               embands = day.embands,
-                               wy = wy)
+        for ncp in nc_path:
+            path = ncp.split('snow.nc')[0]
+            output = iSnobalReader(path,
+                                   day.filetype,
+                                   snowbands = day.snowbands,
+                                   embands = day.embands,
+                                   wy = wy)
 
-        for n in range(0,len(output.em_data[8])):
-            outputs['swi_z'].append(output.em_data[8][n,:,:])
-            outputs['snowmelt'].append(output.em_data[7][n,:,:])
-            outputs['evap_z'].append(output.em_data[6][n,:,:])
-            outputs['coldcont'].append(output.em_data[9][n,:,:])
-            outputs['swe_z'].append(output.snow_data[2][n,:,:])
-            outputs['depth'].append(output.snow_data[0][n,:,:])
-            outputs['density'].append(output.snow_data[1][n,:,:])
+            for n in range(0,len(output.em_data[8])):
+                outputs['swi_z'].append(output.em_data[8][n,:,:])
+                outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                outputs['evap_z'].append(output.em_data[6][n,:,:])
+                outputs['coldcont'].append(output.em_data[9][n,:,:])
+                outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                outputs['depth'].append(output.snow_data[0][n,:,:])
+                outputs['density'].append(output.snow_data[1][n,:,:])
 
-        outputs['dates'] = np.append(outputs['dates'],output.dates)
-        outputs['time'] = np.append(outputs['time'],output.time)
+            outputs['dates'] = np.append(outputs['dates'],output.dates)
+            outputs['time'] = np.append(outputs['time'],output.time)
 
-        for t in output.time:
-            rundirs_dict[int(t)] = path
+            for t in output.time:
+                rundirs_dict[int(t)] = path
 
         # based on an average of 60 W/m2 from TL paper
         cclimit = -5*1000*1000
@@ -176,10 +182,10 @@ class day(object):
                 percent_snow = nc.Dataset(percent_snow_path, 'r')
 
                 # For the wy2019 daily runs, precip.nc always has an extra hour...
-                if len(ppt.variables['time'][:]) <= 24:
+                if len(ppt.variables['precip'][:]) > 24:
                     nb = 24
                 else:
-                    nb = len(ppt.variables['time'][:])
+                    nb = len(ppt.variables['precip'][:])
 
                 for nb in range(0,nb):
                     pre = ppt['precip'][nb]
@@ -374,10 +380,15 @@ class day(object):
                 df = daily_outputs[k].copy()
                 df = df.round(decimals = 3)
 
+            results[out_date] = daily_outputs[value]
+
         day.basin = basin
+        day.value = value
+        day.results = results
         day.outputs = outputs
         day.daily_outputs = daily_outputs
         day.path = path
+        day.nc_path = nc_path
         day.masks = masks
         day.plotorder = plotorder
         day.barcolors = barcolors
