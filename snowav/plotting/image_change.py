@@ -65,7 +65,9 @@ def image_change(snow, forecast = None):
                                 end_date.date().strftime("%Y-%-m-%-d"))
 
         # Get change in swe during the specified period
-        delta_swe = outputs['swe_z'][ixe] - snow.outputs['swe_z'][snow.ixe]
+        # print(outputs)
+        # print(len(outputs['swe_z']), ixe, ixs)
+        delta_swe = outputs['swe_z'][ixs] - snow.outputs['swe_z'][ixe]
 
         for bid in snow.plotorder:
             # this is for the end of the actual run

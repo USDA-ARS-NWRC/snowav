@@ -32,7 +32,7 @@ def flt_image_change(snow):
 
     if (ixs == ixe) and (len(snow.outputs['dates']) > 1):
         ixs = ixe - 1
-        snow._logger.info('flt_start_date and/or flt_end_date not found, using '
+        snow._logger.info(' flt_start_date and/or flt_end_date not found, using '
                             'last two images as flight difference')
         print('flt_start_date and/or flt_end_date not found, using '
                             'last two images as flight difference')
@@ -42,7 +42,7 @@ def flt_image_change(snow):
 
     # Make df from database
     delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-    end_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    end_swe_byelev = pd.DataFrame(0, index = snow.edges, columns = snow.plotorder)
 
     for bid in snow.plotorder:
         r = database.database.query(snow, snow.flt_start_date, snow.flt_end_date,
@@ -152,9 +152,11 @@ def flt_image_change(snow):
                     bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
 
-    print('flt_image_change ', delta_swe_byelev.sum(skipna=True))
-    print('flt_image_change ', end_swe_byelev.sum(skipna=True))
-    print('flt_image_change percent change', delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum(skipna=True))
+    end_swe_byelev = end_swe_byelev.fillna(0)
+    # print(end_swe_byelev,delta_swe_byelev)
+    print('flt_image_change, delta\n', delta_swe_byelev.sum(skipna=True))
+    # print('\nflt_image_change, ending\n', end_swe_byelev.sum())
+    print('\nflt_image_change, percent change\n', (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100)
 
     plt.tight_layout()
     xts = ax1.get_xticks()
@@ -167,20 +169,12 @@ def flt_image_change(snow):
         tick.set_rotation(30)
 
     ylims = ax1.get_ylim()
-    if ylims[0] < 0 and ylims[1] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-    if ylims[0] < 0 and ylims[1] > 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(ylims[1] + ylims[1]*0.9)))
-        if (ylims[1] + ylims[1]*0.9) < abs(ylims[0]):
-            ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-(ylims[0]*0.6))))
+    ymax = ylims[1] + abs(ylims[1] - ylims[0])
+    ymin = ylims[0] - abs(ylims[1] - ylims[0])*0.1
+    ax1.set_ylim((ymin, ymax))
 
-    if ylims[1] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),(-ylims[0])*0.65))
-    if ylims[0] == 0:
-        ax1.set_ylim((ylims[0]+(ylims[0]*0.3),ylims[1]+ylims[1]*0.3))
-
-    ax1.set_ylabel('%s - per elevation band'%(snow.vollbl))
-    ax1.set_xlabel('elevation [%s]'%(snow.elevlbl))
+    ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
+    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
     ax1.axes.set_title('Change in SWE')
 
     ax1.yaxis.set_label_position("right")
@@ -210,5 +204,5 @@ def flt_image_change(snow):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving {}dflt_swe_change_{}.png'.format(snow.figs_path,snow.name_append))
+    snow._logger.info(' saving {}dflt_swe_change_{}.png'.format(snow.figs_path,snow.name_append))
     plt.savefig('{}dflt_swe_change_{}.png'.format(snow.figs_path,snow.name_append))
