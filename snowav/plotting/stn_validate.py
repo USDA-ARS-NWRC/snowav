@@ -13,14 +13,16 @@ import copy
 from datetime import date
 import os
 from snowav.utils.wyhr import calculate_date_from_wyhr
-
+from spotpy import objectivefunctions
 
 def stn_validate(snow):
 
-    rundirs = snow.run_dirs
+    # rundirs = snow.run_dirs
+    rundirs = self.lrdirs
     stns = snow.val_stns
     lbls = snow.val_lbls
     client = snow.val_client
+    factor = 25.4
 
     # get metadata from the data base from snotel sites
     if snow.basin == 'BRB':
@@ -72,16 +74,6 @@ def stn_validate(snow):
         dind = pd.date_range(st_time,end_time,freq='D')
         swe_meas[stn] = data.reindex(dind)
 
-    if snow.wy == 2017:
-        if 'TIOC1' in swe_meas:
-            swe_meas.TIOC1 = swe_meas.TIOC1 - 300
-        if 'AGP' in swe_meas:
-            swe_meas.AGP = swe_meas.AGP - 40
-        if 'VLC' in swe_meas:
-            swe_meas.VLC = swe_meas.VLC + 250
-        if 'UBC' in swe_meas:
-            swe_meas.UBC = swe_meas.UBC - 50
-
     sns.set_style('darkgrid')
     sns.set_context('notebook')
 
@@ -117,14 +109,19 @@ def stn_validate(snow):
 
                 ncf = nc.Dataset(os.path.join(rname,'snow.nc'), 'r')
                 nctvec = ncf.variables['time'][:]
-                vswe = ncf.variables['specific_mass']
-                ncxvec = ncf.variables['x'][:]
-                ncyvec = ncf.variables['y'][:]
+                # vswe = ncf.variables['specific_mass']
+                # ncxvec = ncf.variables['x'][:]
+                # ncyvec = ncf.variables['y'][:]
+                ncxvec = snow.snow_x
+                ncyvec = snow.snow_y
+                # snow.snow_x
+                # snow.snow_y
                 ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
                 # ll      = utm.from_latlon(37.641922,-119.055443)
 
                 xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
                 yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
+                vswe = ncf.variables['specific_mass'][yind,xind]
                 swe = pd.Series(vswe[:,yind+m,xind+n].flatten(),index=nctvec)
 
                 try:
@@ -139,10 +136,15 @@ def stn_validate(snow):
                 iswe = iswe + len(swe.values)
 
             z = snow.dem[yind,xind]
-            axs[iters].plot(swe_meas[stn],'k',label='measured')
-            axs[iters].plot(swe_mod[stn],'b',linewidth = 0.75,label='model')
+            axs[iters].plot(swe_meas[stn]/factor,'k',label='measured')
+            axs[iters].plot(swe_mod[stn]/factor,'b',linewidth = 0.75,label='model')
             axs[iters].set_title(lbls[iters])
             axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
+
+            # if (px == 0) and (py == 0):
+            nashsut = objectivefunctions.nashsutcliffe(swe_meas[stn].values.tolist(),
+                                                       swe_mod[stn].values.tolist())
+            print('stn val nash, ', np.round(nashsut,3))
 
     if len(stns) <= 6:
         for n in (1,3,5):
@@ -176,8 +178,8 @@ def stn_validate(snow):
 
     # Plot
     swe_meas = swe_meas.replace('[]',np.nan)
-    maxm = np.nanmax(swe_meas.max().values)
-    maxi = np.nanmax(swe_mod.max().values)
+    maxm = np.nanmax(swe_meas.max().values/factor)
+    maxi = np.nanmax(swe_mod.max().values/factor)
 
     if maxm > maxi:
         maxswe = maxm
@@ -188,7 +190,7 @@ def stn_validate(snow):
         axs[iters].set_ylim((-0.1,maxswe + maxswe*0.05))
 
     axs[0].legend(['measured','modeled'],loc='upper left')
-    axs[0].set_ylabel('SWE [mm]')
+    axs[0].set_ylabel('SWE [in]')
 
     plt.suptitle('Validation at Measured Sites')
     plt.subplots_adjust(top=0.92)

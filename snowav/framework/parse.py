@@ -176,143 +176,143 @@ def parse(self, external_logger=None):
                  'brb/devel/wy2018/hrrr_comparison/run20171001_20180107/',
                  'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
 
-        lrdirs = copy.deepcopy(self.run_dirs)
+        self.lrdirs = copy.deepcopy(self.run_dirs)
 
-        # In this case we don't need to load all previous outputs
-        if self.stn_validate_flag is True:
-            for rd in lrdirs:
+        # # In this case we don't need to load all previous outputs
+        # if self.stn_validate_flag is True:
+        #     for rd in self.lrdirs:
+        #
+        #         path = rd
+        #
+        #         # If the run_dirs isn't empty use it, otherwise remove
+        #         if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
+        #            and not (os.path.isfile(path))):
+        #
+        #             d = path.split('runs/run')[-1]
+        #             folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
+        #
+        #             # Only load the rundirs that we need
+        #             # If we do this, stn_validate isn't right...
+        #             # if ((self.start_date is not None) and
+        #             #    (folder_date.date() >= self.start_date.date()) and
+        #             #    (folder_date.date() <= self.end_date.date())):
+        #             if ( ((self.start_date is not None) and
+        #                 (folder_date.date() <= self.end_date.date()) )
+        #                 or (self.start_date is None) ):
+        #
+        #                 # pass the reader start and end times
+        #                 # st_hr = calculate_wyhr_from_date(self.start_date)
+        #                 # en_hr = calculate_wyhr_from_date(self.end_date)
+        #                 output = iSnobalReader(path,
+        #                                        self.filetype,
+        #                                        snowbands = [0,1,2],
+        #                                        embands = [6,7,8,9],
+        #                                        wy = self.wy)
+        #                            # time_start = st_hr,
+        #                                        # time_end = en_hr)
+        #
+        #                 if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+        #                     self.outputs['dates'] = np.append(
+        #                             self.outputs['dates'],output.dates-relativedelta(years=1) )
+        #                 else:
+        #                     self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+        #
+        #                 self.outputs['time'] = np.append(self.outputs['time'],output.time)
+        #
+        #                 # Make a dict for wyhr-rundir lookup
+        #                 for t in output.time:
+        #                     self.rundirs_dict[int(t)] = rd
+        #
+        #                 for n in range(0,len(output.em_data[8])):
+        #                     self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+        #                     self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+        #                     self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+        #                     self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+        #                     self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+        #                     self.outputs['depth'].append(output.snow_data[0][n,:,:])
+        #                     self.outputs['density'].append(output.snow_data[1][n,:,:])
+        #
+        #                 # # Everything but 'dates' gets clipped in the reader
+        #                 # self.outputs['dates'] = np.asarray(([d for (d, remove) in
+        #                 #                         zip(self.outputs['dates'],
+        #                 #                         (self.outputs['dates'] > self.end_date))
+        #                 #                         if not remove]))
+        #                 # self.outputs['dates'] = np.asarray(([d for (d, remove) in
+        #                 #                         zip(self.outputs['dates'],
+        #                 #                         (self.outputs['dates'] < self.start_date))
+        #                 #                         if not remove]))
+        #
+        #             else:
+        #                 self.run_dirs.remove(rd)
+        #
+        #         else:
+        #             self.run_dirs.remove(rd)
+        #
+        # else:
+        for rd in self.lrdirs:
+            path = rd
 
-                path = rd
+            # If the run_dirs isn't empty use it, otherwise remove
+            if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
+               and not (os.path.isfile(path))):
 
-                # If the run_dirs isn't empty use it, otherwise remove
-                if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
-                   and not (os.path.isfile(path))):
+                d = path.split('runs/run')[-1]
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
 
-                    d = path.split('runs/run')[-1]
-                    folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
+                # Only load the rundirs that we need
+                # If we do this, stn_validate isn't right...
+                if ((self.start_date is not None) and
+                   (folder_date.date() >= self.start_date.date()) and
+                   (folder_date.date() <= self.end_date.date())):
 
-                    # Only load the rundirs that we need
-                    # If we do this, stn_validate isn't right...
-                    # if ((self.start_date is not None) and
-                    #    (folder_date.date() >= self.start_date.date()) and
-                    #    (folder_date.date() <= self.end_date.date())):
-                    if ( ((self.start_date is not None) and
-                        (folder_date.date() <= self.end_date.date()) )
-                        or (self.start_date is None) ):
+                    # pass the reader start and end times
+                    st_hr = calculate_wyhr_from_date(self.start_date)
+                    en_hr = calculate_wyhr_from_date(self.end_date)
 
-                        # pass the reader start and end times
-                        # st_hr = calculate_wyhr_from_date(self.start_date)
-                        # en_hr = calculate_wyhr_from_date(self.end_date)
-                        output = iSnobalReader(path,
-                                               self.filetype,
-                                               snowbands = [0,1,2],
-                                               embands = [6,7,8,9],
-                                               wy = self.wy)
-                                   # time_start = st_hr,
-                                               # time_end = en_hr)
+                    output = iSnobalReader(path,
+                                           self.filetype,
+                                           snowbands = [0,1,2],
+                                           embands = [6,7,8,9],
+                                           wy = self.wy,
+                                           time_start = st_hr,
+                                           time_end = en_hr)
 
-                        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                            self.outputs['dates'] = np.append(
-                                    self.outputs['dates'],output.dates-relativedelta(years=1) )
-                        else:
-                            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
-
-                        self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-                        # Make a dict for wyhr-rundir lookup
-                        for t in output.time:
-                            self.rundirs_dict[int(t)] = rd
-
-                        for n in range(0,len(output.em_data[8])):
-                            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                            self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                            self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                            self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                            self.outputs['density'].append(output.snow_data[1][n,:,:])
-
-                        # # Everything but 'dates' gets clipped in the reader
-                        # self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                        #                         zip(self.outputs['dates'],
-                        #                         (self.outputs['dates'] > self.end_date))
-                        #                         if not remove]))
-                        # self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                        #                         zip(self.outputs['dates'],
-                        #                         (self.outputs['dates'] < self.start_date))
-                        #                         if not remove]))
-
+                    if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
+                        self.outputs['dates'] = np.append(
+                                self.outputs['dates'],output.dates-relativedelta(years=1) )
                     else:
-                        self.run_dirs.remove(rd)
+                        self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
+
+                    self.outputs['time'] = np.append(self.outputs['time'],output.time)
+
+                    # Make a dict for wyhr-rundir lookup
+                    for t in output.time:
+                        self.rundirs_dict[int(t)] = rd
+
+                    for n in range(0,len(output.em_data[8])):
+                        self.outputs['swi_z'].append(output.em_data[8][n,:,:])
+                        self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
+                        self.outputs['evap_z'].append(output.em_data[6][n,:,:])
+                        self.outputs['coldcont'].append(output.em_data[9][n,:,:])
+                        self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.outputs['density'].append(output.snow_data[1][n,:,:])
+
+                    # Everything but 'dates' gets clipped in the reader
+                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.outputs['dates'],
+                                            (self.outputs['dates'] > self.end_date))
+                                            if not remove]))
+                    self.outputs['dates'] = np.asarray(([d for (d, remove) in
+                                            zip(self.outputs['dates'],
+                                            (self.outputs['dates'] < self.start_date))
+                                            if not remove]))
 
                 else:
                     self.run_dirs.remove(rd)
 
-        else:
-            for rd in lrdirs:
-                path = rd
-
-                # If the run_dirs isn't empty use it, otherwise remove
-                if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
-                   and not (os.path.isfile(path))):
-
-                    d = path.split('runs/run')[-1]
-                    folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
-
-                    # Only load the rundirs that we need
-                    # If we do this, stn_validate isn't right...
-                    if ((self.start_date is not None) and
-                       (folder_date.date() >= self.start_date.date()) and
-                       (folder_date.date() <= self.end_date.date())):
-
-                        # pass the reader start and end times
-                        st_hr = calculate_wyhr_from_date(self.start_date)
-                        en_hr = calculate_wyhr_from_date(self.end_date)
-
-                        output = iSnobalReader(path,
-                                               self.filetype,
-                                               snowbands = [0,1,2],
-                                               embands = [6,7,8,9],
-                                               wy = self.wy,
-                                               time_start = st_hr,
-                                               time_end = en_hr)
-
-                        if (fdirs[0] in rd) or (fdirs[1] in rd) or (fdirs[2] in rd):
-                            self.outputs['dates'] = np.append(
-                                    self.outputs['dates'],output.dates-relativedelta(years=1) )
-                        else:
-                            self.outputs['dates'] = np.append(self.outputs['dates'],output.dates)
-
-                        self.outputs['time'] = np.append(self.outputs['time'],output.time)
-
-                        # Make a dict for wyhr-rundir lookup
-                        for t in output.time:
-                            self.rundirs_dict[int(t)] = rd
-
-                        for n in range(0,len(output.em_data[8])):
-                            self.outputs['swi_z'].append(output.em_data[8][n,:,:])
-                            self.outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                            self.outputs['evap_z'].append(output.em_data[6][n,:,:])
-                            self.outputs['coldcont'].append(output.em_data[9][n,:,:])
-                            self.outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                            self.outputs['depth'].append(output.snow_data[0][n,:,:])
-                            self.outputs['density'].append(output.snow_data[1][n,:,:])
-
-                        # Everything but 'dates' gets clipped in the reader
-                        self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                                zip(self.outputs['dates'],
-                                                (self.outputs['dates'] > self.end_date))
-                                                if not remove]))
-                        self.outputs['dates'] = np.asarray(([d for (d, remove) in
-                                                zip(self.outputs['dates'],
-                                                (self.outputs['dates'] < self.start_date))
-                                                if not remove]))
-
-                    else:
-                        self.run_dirs.remove(rd)
-
-                else:
-                    self.run_dirs.remove(rd)
+            else:
+                self.run_dirs.remove(rd)
 
         # If no dates are specified, use first and last
         if (self.start_date is None) and (self.end_date is None):
@@ -331,6 +331,7 @@ def parse(self, external_logger=None):
             e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
             self.ixs = np.where(self.outputs['dates'] == s)[0][0]
             self.ixe = np.where(self.outputs['dates'] == e)[0][0]
+            # print('parse, ', len(self.outputs['dates']),self.ixs, self.ixe)
 
         if ((self.start_date.date() < self.outputs['dates'][0].date())
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
@@ -376,9 +377,8 @@ def parse(self, external_logger=None):
 
         self.for_rundirs_dict = {}
 
-        lrdirs = copy.deepcopy(self.for_run_dir)
-        for rd in lrdirs:
-
+        self.lrdirs = copy.deepcopy(self.for_run_dir)
+        for rd in self.lrdirs:
             path = rd
 
             # If the run_dirs isn't empty use it, otherwise remove
@@ -437,7 +437,7 @@ def parse(self, external_logger=None):
                 self.for_run_dir.remove(rd)
 
         self.for_ixs = 0
-        self.for_ixe = len(self.for_outputs['swe_z'])
+        self.for_ixe = len(self.for_outputs['swe_z']) - 1
 
     #############################
     # ^ forecast section done ^ #
