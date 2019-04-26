@@ -81,6 +81,10 @@ def process(self, forecast=None):
                          'evap_z':dz.copy(),
                          'coldcont':dz.copy()}
 
+        self.density = {}
+        for name in self.masks:
+            self.density[name] = {}
+
         # Hack for Hx-repeats-itself forecasting
         if out_date == self.start_date:
             self.dateFrom = outputs['dates'][iters]
@@ -136,6 +140,7 @@ def process(self, forecast=None):
             for name in self.masks:
                 mask = copy.deepcopy(self.masks[name]['mask'])
                 mask = mask.astype(float)
+                # self.density[name] = {}
 
                 mask[mask < 1] = np.nan
                 elevbin = np.multiply(self.ixd,mask)
@@ -213,6 +218,9 @@ def process(self, forecast=None):
                     elif k in ['coldcont','density']:
                         # masked out by pixels with snow -> [ix]
                         daily_outputs[k].loc[b,name] = np.nanmean(mask_out[ind][ix])
+
+                        # print(name,n)
+                        self.density[name][self.edges[n]] = mask_out[ind][ix]
 
                     elif k == 'precip_z':
                         # not masked out by pixels with snow
