@@ -155,6 +155,8 @@ def main():
         else:
             fqry = df
 
+        fqry = fqry.sort_values(by=['date_time'])
+
         db_val.loc['total',bid] = fqry['value'].values
 
         cols = ['date_time','value','units','elevation']
@@ -162,10 +164,12 @@ def main():
         if output == 'print':
             with pd.option_context('display.max_rows', None, 'display.max_columns', None):
                 print('\n\nsnowav database values \n'
+                      'basin: {}\n'
                       'run_name: {}\n'
-                      '{} to {}\n'
+                      # '{} to {}\n'
                       'value: {}\n\n'
-                      '{}'.format(run_name, start_date, end_date, value, fqry[cols]))
+                      # '{}'.format(bid, run_name, start_date, end_date, value, fqry[cols]))
+                      '{}'.format(bid, run_name, value, fqry[cols]))
 
         if output == 'csv':
             fqry.to_csv(csv_file)
