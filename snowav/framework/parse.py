@@ -1,4 +1,5 @@
 
+import logging
 import numpy as np
 from shutil import copyfile
 import os
@@ -7,12 +8,9 @@ import datetime
 import snowav.utils.wyhr_to_datetime as wy
 import snowav.utils.get_topo_stats as ts
 from snowav.utils.OutputReader import iSnobalReader
-import logging
 import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
-# from sqlalchemy import create_engine
-# from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results,VariableUnits, Watersheds, Basins
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
@@ -34,8 +32,8 @@ def parse(self, external_logger=None):
     ####################################################
     if self.save_path is None:
         self.save_path = self.snowav_path + '/snowav/data/'
-        self._logger.info('No save_path specified, using ' +
-                            '{}'.format(self.save_path))
+        # self._logger.info('No save_path specified, using ' +
+        #                     '{}'.format(self.save_path))
 
     ####################################################
     #           outputs                                #
@@ -89,9 +87,6 @@ def parse(self, external_logger=None):
     # Establish database connection, create if necessary
     database.database.connect(self)
 
-    # self.plotorder = []
-    # maskpaths = []
-
     ncf = nc.Dataset(self.dempath, 'r')
     self.dem = ncf.variables['dem'][:]
     self.mask = ncf.variables['mask'][:]
@@ -130,9 +125,9 @@ def parse(self, external_logger=None):
                            self.elev_bins[1]+self.elev_bins[2],
                            self.elev_bins[2])
 
-    if self.basin == 'LAKES':
-        self.imgx = (1250,1475)
-        self.imgy = (450,225)
+    # if self.basin == 'LAKES':
+    #     self.imgx = (1250,1475)
+    #     self.imgy = (450,225)
 
     # Right now this is a placeholder, could edit by basin...
     self.xlims = (0,len(self.edges))
@@ -141,7 +136,6 @@ def parse(self, external_logger=None):
     # Note! If new units are introduced, may need a second look at figure
     # labels, database fields, and writing out variable csv...
     if self.units == 'TAF':
-        # KAF, inches, ft
         self.conversion_factor = ((self.pixel**2)
                                  * 0.000000810713194*0.001)
         self.depth_factor = 0.03937
@@ -152,7 +146,6 @@ def parse(self, external_logger=None):
         self.elevlbl = 'ft'
 
     if self.units == 'SI':
-        # m^3, m, mm
         self.conversion_factor = ((self.pixel**2)
                                   * 0.000000810713194*1233.48/1e9)
         self.depth_factor = 1
@@ -337,8 +330,6 @@ def parse(self, external_logger=None):
             or (self.end_date.date() > self.outputs['dates'][-1].date())):
             print('ERROR! [Outputs] -> start_date or end_date ' +
                               'outside of range in [runs] -> run_dirs')
-            # print(self.start_date.date(), self.outputs['dates'][0].date(),
-            # self.end_date.date() , self.outputs['dates'][-1].date())
             exit()
 
         # Since model outputs at 23:00, step the figure and report dates to
@@ -490,8 +481,8 @@ def createLog(self):
 
     # start logging
     loglevel = self.loglevel
-
     numeric_level = getattr(logging, loglevel, None)
+
     if not isinstance(numeric_level, int):
         raise ValueError('Invalid log level: %s' % loglevel)
 
@@ -503,7 +494,12 @@ def createLog(self):
         print('Logging to file: {}'.format(logfile))
 
     fmt = '%(levelname)s:%(name)s:%(message)s'
+
     if logfile is not None:
+
+        for handler in logging.root.handlers[:]:
+            logging.root.removeHandler(handler)
+
         logging.basicConfig(filename=logfile,
                             filemode='w',
                             level=numeric_level,
