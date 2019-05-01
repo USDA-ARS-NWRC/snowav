@@ -129,11 +129,15 @@ def stn_validate(snow):
             ncf.close()
 
     # Nash-Sutcliffe on pixel 0,0
-    for sta in stns:
+    for iters,sta in enumerate(stns):
         pz_sta = sta + '_5'
         nsv = objectivefunctions.nashsutcliffe(swe_meas[stn].values.tolist(),
                                                swe_mod[pz_sta].values.tolist())
-        print('Nash-Sutcliffe for {}: {}'.format(sta,np.round(nsv,3)))
+        # print('Nash-Sutcliffe for {}: {}'.format(sta,np.round(nsv,3)))
+        nstr = 'Nash-Sutcliffe: {}'.format(str(np.round(nsv,3)))
+        if nsv > 0:
+            axs[iters].text(0.3,0.05,nstr,horizontalalignment='center',
+                            transform=axs[iters].transAxes,fontsize = 8)
 
     if len(stns) <= 6:
         for n in (1,3,5):
