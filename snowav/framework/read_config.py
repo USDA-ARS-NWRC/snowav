@@ -1,4 +1,5 @@
 
+import logging
 import numpy as np
 from spatialnc import ipw
 from shutil import copyfile
@@ -13,12 +14,9 @@ from snowav.utils.OutputReader import iSnobalReader
 from inicheck.tools import get_user_config, check_config
 from inicheck.output import generate_config, print_config_report
 from inicheck.config import MasterConfig
-import logging
 import coloredlogs
 import netCDF4 as nc
 from dateutil.relativedelta import relativedelta
-# from sqlalchemy import create_engine
-# from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
 from snowav import database

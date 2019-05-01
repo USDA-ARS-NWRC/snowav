@@ -14,6 +14,8 @@ import pandas as pd
 from snowav.plotting.plotlims import plotlims as plotlims
 from datetime import timedelta
 import os
+from pandas.tools.plotting import table
+import six
 
 
 def swe_volume(snow=None, forecast=None, day=None):
@@ -77,6 +79,12 @@ def swe_volume(snow=None, forecast=None, day=None):
         name_append = snow.name_append + '_forecast'
         title = 'Forecast SWE \n {}'.format(end_date.date().strftime("%Y-%-m-%-d"))
 
+    if len(plotorder) > 1:
+        sumorder = plotorder[1::]
+    else:
+        sumorder = plotorder
+
+
     state = copy.deepcopy(outputs['swe_z'][-1])
     state = np.multiply(state, depth_factor)
 
@@ -136,16 +144,28 @@ def swe_volume(snow=None, forecast=None, day=None):
     # basin total and legend
     ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
-    # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-    #          transform=ax1.transAxes,fontsize = 10)
-
+    datestr = snow.report_date.date().strftime("%Y-%-m-%-d")
     swe = pd.DataFrame(index = edges, columns = plotorder)
+    swe_total = pd.DataFrame(index = ['Total'] + sumorder, columns = [datestr, 'SWE [TAF]'])
 
     if snow is not None:
 
         for bid in plotorder:
             r2 = database.database.query(snow, start_date, end_date,
                                         run_name, bid, 'swe_vol')
+
+            total = r2[(r2['elevation'] == 'total')
+                  & (r2['date_time'] == end_date)
+                  & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
+
+            if bid == plotorder[0]:
+                swe_total.loc['Total','SWE [TAF]'] = total['value'].values[0]
+                swe_total.loc['Total',datestr] = 'Total'
+            else:
+                swe_total.loc[bid,'SWE [TAF]'] = total['value'].values[0]
+                swe_total.loc[bid,datestr] = bid
+
+
             for elev in edges:
                 v2 = r2[(r2['elevation'] == str(elev))
                       & (r2['date_time'] == end_date)
@@ -161,11 +181,6 @@ def swe_volume(snow=None, forecast=None, day=None):
 
     ix = len(barcolors)
     # Total basin label
-
-    if len(plotorder) > 1:
-        sumorder = plotorder[1::]
-    else:
-        sumorder = plotorder
 
     for iters,name in enumerate(sumorder):
 
@@ -218,7 +233,35 @@ def swe_volume(snow=None, forecast=None, day=None):
 
     if snow is not None:
         snow._logger.info(' saving {}swe_volume_{}.png'.format(figs_path,name_append))
-    plt.savefig('{}swe_volume_{}.png'.format(figs_path,name_append))
+    fig.savefig('{}swe_volume_{}.png'.format(figs_path,name_append))
 
     if day is not None:
         plt.show()
+
+    # SWE table
+    def render_mpl_table(data, col_width=7.0, row_height=0.625, font_size=14,
+                         header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='w',
+                         bbox=[0, 0, 1, 1], header_columns=0,
+                         ax=None, **kwargs):
+        if ax is None:
+            size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
+            fig, ax = plt.subplots(figsize=size)
+            ax.axis('off')
+
+        mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, **kwargs)
+
+        mpl_table.auto_set_font_size(False)
+        mpl_table.set_fontsize(font_size)
+
+        for k, cell in  six.iteritems(mpl_table._cells):
+            cell.set_edgecolor(edge_color)
+            if k[0] == 0 or k[1] < header_columns:
+                cell.set_text_props(weight='bold', color='w')
+                cell.set_facecolor(header_color)
+            else:
+                cell.set_facecolor(row_colors[k[0]%len(row_colors) ])
+        return fig, ax
+
+    tf, ta = render_mpl_table(swe_total, header_columns=0, col_width=3.5)
+
+    tf.savefig('{}swe_table_{}.png'.format(figs_path,name_append))

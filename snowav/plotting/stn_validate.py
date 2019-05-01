@@ -17,7 +17,6 @@ from spotpy import objectivefunctions
 
 def stn_validate(snow):
 
-    # rundirs = snow.run_dirs
     rundirs = snow.lrdirs
     stns = snow.val_stns
     lbls = snow.val_lbls
@@ -44,16 +43,16 @@ def stn_validate(snow):
     meta_sno = pd.read_sql(qry, cnx)
     meta_sno.index = meta_sno['primary_id']
     swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                                                     snow.end_date,
-                                                     freq='D'),columns = stns)
+                            snow.end_date,freq='D'),
+                            columns = stns)
 
     stns_pixel = []
     for sta in stns:
         stns_pixel = stns_pixel + ['{}_'.format(sta) + str(s) for s in range(0,9)]
 
     swe_mod = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                                                     snow.end_date,
-                                                     freq='D'),columns = stns_pixel)
+                           snow.end_date,freq='D'),
+                           columns = stns_pixel)
 
     tbl = 'tbl_level1'
     var = 'snow_water_equiv'
@@ -95,7 +94,6 @@ def stn_validate(snow):
 
     axs = axs.flatten()
 
-    # First need to combine all nc files...
     px = (1,1,1,0,0,0,-1,-1,-1)
     py = (1,0,-1,1,0,-1,1,0,-1)
 
@@ -185,9 +183,6 @@ def stn_validate(snow):
 
     plt.suptitle('Validation at Measured Sites')
     plt.subplots_adjust(top=0.92)
-
-    # snow.swe_meas = swe_meas
-    # snow.swe_mod = swe_mod
 
     snow._logger.info(' saving {}validation_{}.png'.format(snow.figs_path,snow.name_append))
     plt.savefig('{}validation_{}.png'.format(snow.figs_path,snow.name_append))
