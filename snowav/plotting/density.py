@@ -11,7 +11,6 @@ from snowav import database
 from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
 from datetime import datetime
-from sys import exit
 
 
 def density(snow):
@@ -26,7 +25,7 @@ def density(snow):
     # Make df from database
     density_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
     density_summary = pd.DataFrame(columns = snow.plotorder)
-    # density_summary_8 = pd.DataFrame(columns = snow.plotorder)
+    density_summary_8 = pd.DataFrame(columns = snow.plotorder)
     # density_summary_11 = pd.DataFrame(columns = snow.plotorder)
     # delta_density_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
 
@@ -42,15 +41,14 @@ def density(snow):
                                      'density')
 
         vd = dr[(dr['elevation'] == 'total')]
-        # vd_8 = dr[(dr['elevation'] == '8000')]
+        vd_8 = dr[(dr['elevation'] == '8000')]
         # vd_11 = dr[(dr['elevation'] == '11000')]
 
-        # print(np.isnan(vd['value'].values))
         try:
             for iter,d in enumerate(vd['date_time'].values):
                 density_summary.loc[d,bid] = vd['value'].values[iter]
-                # if (vd_8['value'].values[iter] > 0) and (vd_11['value'].values[iter] > 0):
-                #     density_summary_8.loc[d,bid] = vd_8['value'].values[iter]
+                if (vd_8['value'].values[iter] > 0):
+                    density_summary_8.loc[d,bid] = vd_8['value'].values[iter]
                 #     density_summary_11.loc[d,bid] = vd_11['value'].values[iter]
 
             for elev in snow.edges:
@@ -60,7 +58,7 @@ def density(snow):
                 density_byelev.loc[elev,bid] = v2['value'].values
         except:
             snow._logger.info(' skipping density figure, empty values')
-            exit()
+            return
 
     density_summary.sort_index(inplace=True)
     value = copy.deepcopy(density_byelev)
@@ -106,12 +104,12 @@ def density(snow):
 
     h.axes.set_title('Density\n{}'.format(snow.report_date.date().strftime("%Y-%-m-%-d")))
 
-    ####################
-    #       ax1
-    ####################
+
     sep = 0.05
     wid = 1/len(snow.plotorder)-sep
-    widths = (-wid-sep, 0, wid+sep)
+    # widths = (-wid-sep, 0, wid+sep)
+    widths = np.arange((-1 + wid), (1 - wid), wid)
+
     for i,name in enumerate(lims.sumorder):
         for iter,edge in enumerate(snow.edges):
             if sum(snow.density[name][edge]) > 0:
@@ -119,10 +117,7 @@ def density(snow):
 
                 for element in ['boxes', 'whiskers', 'caps']:
                     plt.setp(bp[element], color=snow.barcolors[i])
-            # for patch in bp['boxes']:
-            #     patch.set(facecolor='b')
 
-    # ax1.legend([bp["boxes"][0], bp["boxes"][1]], ['A', 'B'], loc='upper right')
     ax1.set_xticks(np.arange(0,len(snow.edges)))
     ax1.set_xticklabels([str(x) for x in snow.edges])
     ax1.set_xlim((-0.5, len(snow.edges) - 0.5))
@@ -133,38 +128,6 @@ def density(snow):
     ax1.set_title('Elevation distribution')
     ax1.set_ylabel(r'density [kg/$m^3$]')
 
-    # print('density, ', density_summary)
-
-    # for iters, name in enumerate(lims.sumorder):
-    #     density_summary[name].plot(ax=ax1, color = snow.barcolors[iters],
-    #                                label = name,
-    #                                linewidth = 0.75)
-    #     density_summary_8[name].plot(ax=ax1, color = snow.barcolors[iters],
-    #                                  linestyle = ':',
-    #                                  linewidth = 0.5,
-    #                                  label='__nolabel__')
-    #     density_summary_11[name].plot(ax=ax1, color = snow.barcolors[iters],
-    #                                  linestyle = ':',
-    #                                  linewidth = 0.5,
-    #                                  label='__nolabel__')
-    #
-    #     density_summary_8.dropna(how='all',inplace=True)
-    #     density_summary_11.dropna(how='all',inplace=True)
-    #
-    #     # idx = density_summary_11.index.intersection(density_summary_8.index)
-    #     # density_summary_11 = density_summary_11[idx]
-    #     # idx = density_summary_8.index.intersection(density_summary_11.index)
-    #     # density_summary_8 = density_summary_8[idx]
-    #
-    #     ax1.fill_between(density_summary_8.index,
-    #                      density_summary_8[name].values,
-    #                      density_summary_11[name].values)
-    # ax1.yaxis.set_label_position("right")
-    # ax1.set_xlim((datetime(snow.wy-1,10,1), snow.end_date))
-    # ax1.tick_params(axis='y')
-    # ax1.yaxis.tick_right()
-    # ax1.set_ylabel('median density [kg/$m^3$]')
-    # ax1.legend(loc=2,fontsize=8)
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
@@ -179,3 +142,41 @@ def density(snow):
 
     snow._logger.info(' saving {}density_{}.png'.format(snow.figs_path,snow.name_append))
     fig.savefig('{}density_{}.png'.format(snow.figs_path,snow.name_append))
+
+
+    ###########################################
+    #   2nd density figure
+    ###########################################
+
+    plt.close(4)
+    f = plt.figure(num=4, figsize = snow.figsize, dpi=snow.dpi)
+    a = plt.gca()
+
+    for iters,name in enumerate(snow.plotorder):
+        if iters == 0:
+            lname = '8k ft'
+        else:
+            lname = '__nolabel__'
+
+        a.plot(density_summary[name],
+               color = snow.barcolors[iters],
+               label = name)
+        a.plot(density_summary_8[name],
+               color = snow.barcolors[iters],
+               linewidth = 0.75,
+               linestyle = ':',
+               label = lname)
+
+    if snow.flight_dates is not None:
+        for d in snow.flight_dates:
+            a.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+
+    a.legend(loc=2)
+    a.set_ylabel('density [kg/$m^3$]')
+    a.set_xlim((snow.start_date, snow.end_date))
+
+    for tick in a.get_xticklabels():
+        tick.set_rotation(30)
+
+    f.tight_layout()
+    f.savefig('{}density_change_{}.png'.format(snow.figs_path,snow.name_append))
