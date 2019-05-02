@@ -65,6 +65,7 @@ def swe_volume(snow=None, forecast=None, day=None):
         outputs = snow.outputs
         start_date = snow.start_date
         end_date = snow.end_date
+        date_stamp = snow.end_date.strftime("%Y-%-m-%-d %H:%M") + ' (UTC)'
         name_append = snow.name_append
         title = 'SWE \n {}'.format(snow.report_date.date().strftime("%Y-%-m-%-d"))
 
@@ -144,9 +145,9 @@ def swe_volume(snow=None, forecast=None, day=None):
     # basin total and legend
     ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
-    datestr = snow.report_date.date().strftime("%Y-%-m-%-d")
+    # datestr = snow.report_date.date().strftime("%Y-%-m-%-d")
     swe = pd.DataFrame(index = edges, columns = plotorder)
-    swe_total = pd.DataFrame(index = ['Total'] + sumorder, columns = [datestr, 'SWE [TAF]'])
+    swe_total = pd.DataFrame(index = ['Total'] + sumorder, columns = [date_stamp, 'SWE [TAF]'])
 
     if snow is not None:
 
@@ -160,10 +161,10 @@ def swe_volume(snow=None, forecast=None, day=None):
 
             if bid == plotorder[0]:
                 swe_total.loc['Total','SWE [TAF]'] = total['value'].values[0]
-                swe_total.loc['Total',datestr] = 'Total'
+                swe_total.loc['Total',date_stamp] = 'Total'
             else:
                 swe_total.loc[bid,'SWE [TAF]'] = total['value'].values[0]
-                swe_total.loc[bid,datestr] = bid
+                swe_total.loc[bid,date_stamp] = bid
 
 
             for elev in edges:
