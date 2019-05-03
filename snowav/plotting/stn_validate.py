@@ -32,8 +32,7 @@ def stn_validate(snow):
     else:
         qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
                + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
-               + 'tbl_stations.station_id WHERE tbl_stations.client = '
-               + '"'"%s"'" ;'%client)
+               + 'tbl_stations.station_id ;')
 
     cnx = mysql.connector.connect(user='markrobertson',
                                   password='whatdystm?1',
@@ -42,6 +41,8 @@ def stn_validate(snow):
 
     meta_sno = pd.read_sql(qry, cnx)
     meta_sno.index = meta_sno['primary_id']
+    meta_sno = meta_sno[~meta_sno.index.duplicated(keep='first')]
+
     swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
                             snow.end_date,freq='D'),
                             columns = stns)
@@ -96,7 +97,7 @@ def stn_validate(snow):
 
     px = (1,1,1,0,0,0,-1,-1,-1)
     py = (1,0,-1,1,0,-1,1,0,-1)
-
+  
     for rname in rundirs:
 
         d = rname.split('runs/run')[-1]
@@ -106,7 +107,7 @@ def stn_validate(snow):
         if (folder_date.date() <= snow.end_date.date()):
 
             ncf = nc.Dataset(os.path.join(rname,'snow.nc'), 'r')
-            nctvec = ncf.variables['time'][:]
+            # nctvec = ncf.variables['time'][:]
 
             for iters,stn in enumerate(stns):
                 ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
@@ -129,15 +130,23 @@ def stn_validate(snow):
             ncf.close()
 
     # Nash-Sutcliffe on pixel 0,0
-    for iters,sta in enumerate(stns):
-        pz_sta = sta + '_5'
-        nsv = objectivefunctions.nashsutcliffe(swe_meas[stn].values.tolist(),
-                                               swe_mod[pz_sta].values.tolist())
-        # print('Nash-Sutcliffe for {}: {}'.format(sta,np.round(nsv,3)))
-        nstr = 'Nash-Sutcliffe: {}'.format(str(np.round(nsv,3)))
-        if nsv > 0:
-            axs[iters].text(0.3,0.05,nstr,horizontalalignment='center',
-                            transform=axs[iters].transAxes,fontsize = 8)
+    if snow.nash_sut_flag:
+        for iters,sta in enumerate(stns):
+            pz_sta = sta + '_5'
+            
+            nsv = objectivefunctions.nashsutcliffe(swe_meas[swe_meas.index > datetime(snow.wy - 1, 10, 15)][stn].values.tolist(),
+                                                            swe_mod[swe_mod.index > datetime(snow.wy - 1, 10, 15)][pz_sta].values.tolist())
+            nstr = 'Nash-Sutcliffe:\n{}'.format(str(np.round(nsv,2)))
+
+            nsx = 0.05
+            nsy = 0.85
+
+            if iters == 0:
+               nsy = 0.675
+
+            if nsv > 0:
+                axs[iters].text(nsx,nsy,nstr,horizontalalignment='left',
+                                transform=axs[iters].transAxes,fontsize = 8)
 
     if len(stns) <= 6:
         for n in (1,3,5):
@@ -156,8 +165,12 @@ def stn_validate(snow):
         for n in (6,7,8):
             for tick in axs[n].get_xticklabels():
                 tick.set_rotation(30)
+
         for n in (0,1,2,3,4,5):
             axs[n].set_xticklabels('')
+
+        for n in (1,4,7):
+            axs[n].set_yticklabels('')            
 
     if (len(stns) > 9) and (len(stns) <=12):
         for n in (2,5,8,11):
