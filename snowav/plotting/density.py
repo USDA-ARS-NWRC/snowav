@@ -69,10 +69,13 @@ def density(snow):
 
     nf = len(snow.masks)
     cvalue = copy.deepcopy(density)
-    colors1 = cmocean.cm.speed(np.linspace(0., 1, 255))
-    colors2 = plt.cm.binary(np.linspace(0, 1, 1))
-    colors = np.vstack((colors2, colors1))
-    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+    mymap = plt.cm.get_cmap('BuGn', 5) 
+    
+    # colors1 = cmocean.cm.speed(np.linspace(0., 1, 255))
+    # colors2 = plt.cm.binary(np.linspace(0, 1, 1))
+    # colors = np.vstack((colors2, colors1))
+    # mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
     # This is to get the background white
     pmask = snow.masks[snow.plotorder[0]]['mask']
@@ -87,7 +90,7 @@ def density(snow):
     plt.close(4)
     fig,(ax,ax1) = plt.subplots(num=4, figsize = snow.figsize,
                                 dpi=snow.dpi, nrows = 1, ncols = 2)
-    h = ax.imshow(cvalue, cmap = mymap)
+    h = ax.imshow(cvalue, vmin = 250, cmap = mymap)
 
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
