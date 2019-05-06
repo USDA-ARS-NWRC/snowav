@@ -121,16 +121,21 @@ def parse(self, external_logger=None):
     self.snow_x = topo['x']
     self.snow_y = topo['y']
     self.pixel = int(topo['dv'])
-    self.edges = np.arange(self.elev_bins[0],
+
+    # make the bins
+    edges = np.arange(self.elev_bins[0],
                            self.elev_bins[1]+self.elev_bins[2],
                            self.elev_bins[2])
 
-    # if self.basin == 'LAKES':
-    #     self.imgx = (1250,1475)
-    #     self.imgy = (450,225)
+    # use for definition
+    self.edges = np.arange(self.elev_bins[0]-self.elev_bins[2],
+                           self.elev_bins[1],
+                           self.elev_bins[2])
+
+    # print(edges, self.edges)
 
     # Right now this is a placeholder, could edit by basin...
-    self.xlims = (0,len(self.edges))
+    self.xlims = (0,len(edges))
 
     # Conversion factors and labels
     # Note! If new units are introduced, may need a second look at figure
@@ -140,10 +145,21 @@ def parse(self, external_logger=None):
                                  * 0.000000810713194*0.001)
         self.depth_factor = 0.03937
         self.dem = self.dem * 3.28
-        self.ixd = np.digitize(self.dem,self.edges)
+        print(np.min(np.min(self.dem)),np.max(np.max(self.dem)))
+        self.ixd = np.digitize(self.dem,edges)
+
         self.depthlbl = 'in'
         self.vollbl = self.units
         self.elevlbl = 'ft'
+
+    # from matplotlib import pyplot as plt
+    # print(self.edges)
+    # print(self.dem[0],self.ixd[0])
+    # print(np.max(np.max(self.ixd)),np.min(np.min(self.ixd)))
+    # f, (a,a1) = plt.subplots(nrows=1, ncols=2)
+    # a.imshow(self.ixd)
+    # a1.imshow(self.dem)
+    # plt.show()
 
     if self.units == 'SI':
         self.conversion_factor = ((self.pixel**2)
@@ -297,8 +313,7 @@ def parse(self, external_logger=None):
 
         self.for_rundirs_dict = {}
 
-        self.lrdirs = copy.deepcopy(self.for_run_dir)
-        for rd in self.lrdirs:
+        for rd in self.for_run_dir:
             path = rd
 
             # If the run_dirs isn't empty use it, otherwise remove

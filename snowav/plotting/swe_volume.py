@@ -1,6 +1,6 @@
 
 import numpy as np
-import matplotlib
+# import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -16,6 +16,7 @@ from datetime import timedelta
 import os
 from pandas.tools.plotting import table
 import six
+from snowav.plotting.figure import save
 
 
 def swe_volume(snow=None, forecast=None, day=None):
@@ -26,21 +27,23 @@ def swe_volume(snow=None, forecast=None, day=None):
     if day is not None:
         outputs = day.outputs
         title = 'SWE \n{}'.format(day.path)
-        depth_factor = day.depth_factor
-        masks = day.masks
-        plotorder = day.plotorder
-        dpi = 200
-        figsize = (10,5)
-        depthlbl = day.depthlbl
-        vollbl = day.vollbl
-        elevlbl = day.elevlbl
-        basin = day.basin
-        dplcs = 1
-        xlims = day.xlims
-        figs_path = day.figs_path
-        name_append = 'day'
-        edges = day.edges
-        barcolors = day.barcolors
+        depth_factor = day.depth_factor #
+        masks = day.masks #
+        plotorder = day.plotorder #
+        dpi = 200 #
+        figsize = (10,5) #
+        depthlbl = day.depthlbl #
+        vollbl = day.vollbl #
+        elevlbl = day.elevlbl #
+        basin = day.basin #
+        dplcs = 1 #
+        xlims = day.xlims #
+        figs_path = day.figs_path #
+        swe_table_path = day.figs_path #
+        name_append = 'day' #
+        edges = day.edges #
+        barcolors = day.barcolors #
+        date_stamp = day.date.strftime("%Y-%-m-%-d %H:%M") + ' (UTC)'
 
         if day.basin == 'LAKES':
             dplcs = 2
@@ -59,6 +62,7 @@ def swe_volume(snow=None, forecast=None, day=None):
         dplcs = 1
         xlims = snow.xlims
         figs_path = snow.figs_path
+        swe_table_path = snow.figs_path
         edges = snow.edges
         barcolors = snow.barcolors
         run_name = snow.run_name
@@ -84,7 +88,6 @@ def swe_volume(snow=None, forecast=None, day=None):
         sumorder = plotorder[1::]
     else:
         sumorder = plotorder
-
 
     state = copy.deepcopy(outputs['swe_z'][-1])
     state = np.multiply(state, depth_factor)
@@ -128,10 +131,8 @@ def swe_volume(snow=None, forecast=None, day=None):
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[{}]'.format(depthlbl))
-
     h.axes.set_title(title)
 
-    # Get basin-specific lims
     lims = plotlims(basin, plotorder)
 
     patches = [mpatches.Patch(color='grey', label='snow free')]
@@ -145,12 +146,11 @@ def swe_volume(snow=None, forecast=None, day=None):
     # basin total and legend
     ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
-    # datestr = snow.report_date.date().strftime("%Y-%-m-%-d")
     swe = pd.DataFrame(index = edges, columns = plotorder)
-    swe_total = pd.DataFrame(index = ['Total'] + sumorder, columns = [date_stamp, 'SWE [TAF]'])
+    swe_total = pd.DataFrame(index = ['Total'] + sumorder,
+                             columns = [date_stamp, 'SWE [TAF]'])
 
     if snow is not None:
-
         for bid in plotorder:
             r2 = database.database.query(snow, start_date, end_date,
                                         run_name, bid, 'swe_vol')
@@ -166,7 +166,6 @@ def swe_volume(snow=None, forecast=None, day=None):
                 swe_total.loc[bid,'SWE [TAF]'] = total['value'].values[0]
                 swe_total.loc[bid,date_stamp] = bid
 
-
             for elev in edges:
                 v2 = r2[(r2['elevation'] == str(elev))
                       & (r2['date_time'] == end_date)
@@ -174,14 +173,23 @@ def swe_volume(snow=None, forecast=None, day=None):
 
                 swe.loc[elev,bid] = v2['value'].values[0]
 
-    else:
-        # day.daily_outputs['swe_vol'].values
+    if day is not None:
+
         for bid in plotorder:
+            val = day.daily_outputs['swe_vol'][bid]['total'].round(1)
+
+            if bid == plotorder[0]:
+                swe_total.loc['Total','SWE [TAF]'] = val
+                swe_total.loc['Total',date_stamp] = 'Total'
+
+            else:
+                swe_total.loc[bid,'SWE [TAF]'] = val
+                swe_total.loc[bid,date_stamp] = bid
+
             for i,elev in enumerate(edges):
                 swe.loc[elev,bid] = day.daily_outputs['swe_vol'][bid][i]
 
     ix = len(barcolors)
-    # Total basin label
 
     for iters,name in enumerate(sumorder):
 
@@ -191,7 +199,6 @@ def swe_volume(snow=None, forecast=None, day=None):
             ukaf = str(np.round(np.nansum(swe[name].values),dplcs))
 
         if iters == 0:
-            #print(iters,edges,name,ukaf,vollbl)
             ax1.bar(range(0,len(edges)),swe[name],
                     color = barcolors[iters],
                     edgecolor = 'k',label = name + ': {} {}'.format(ukaf,vollbl))
@@ -199,12 +206,18 @@ def swe_volume(snow=None, forecast=None, day=None):
         else:
             ax1.bar(range(0,len(edges)),swe[name],
                     bottom = pd.DataFrame(swe[sumorder[0:iters]]).sum(axis = 1).values,
-                    color = barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,vollbl))
+                    color = barcolors[iters],
+                    edgecolor = 'k',
+                    label = name + ': {} {}'.format(ukaf,vollbl))
 
     ylims = ax1.get_ylim()
     max = ylims[1] + ylims[1]*0.5
     min = 0
     ax1.set_ylim((min, max))
+
+    # Keep these to use in cold_content()
+    if snow is not None:
+        snow.swe_ylims = (min,max)
 
     ax1.xaxis.set_ticks(range(0,len(edges)))
     plt.tight_layout()
@@ -219,7 +232,6 @@ def swe_volume(snow=None, forecast=None, day=None):
         tick.set_rotation(30)
 
     ax1.set_xlim((xlims[0]-0.5,xlims[1]+0.5))
-
     ax1.set_xlabel('elevation [{}]'.format(elevlbl))
     ax1.set_ylabel('{} - per elevation band'.format(vollbl))
     ax1.yaxis.set_label_position("right")
@@ -234,10 +246,9 @@ def swe_volume(snow=None, forecast=None, day=None):
 
     if snow is not None:
         snow._logger.info(' saving {}swe_volume_{}.png'.format(figs_path,name_append))
-    fig.savefig('{}swe_volume_{}.png'.format(figs_path,name_append))
 
-    if day is not None:
-        plt.show()
+    fig_name = ['{}swe_volume_{}.png'.format(figs_path,name_append)]
+    save(fig, fig_name)
 
     # SWE table
     def render_mpl_table(data, col_width=7.0, row_height=0.625, font_size=14,
@@ -263,6 +274,12 @@ def swe_volume(snow=None, forecast=None, day=None):
                 cell.set_facecolor(row_colors[k[0]%len(row_colors) ])
         return fig, ax
 
-    tf, ta = render_mpl_table(swe_total, header_columns=0, col_width=3.5)
+    ft, at = render_mpl_table(swe_total, header_columns=0, col_width=3.5)
 
-    tf.savefig('{}swe_table_{}.png'.format(figs_path,name_append))
+    if (swe_table_path is not None) and (os.path.exists(swe_table_path)):
+        fig_names = ['{}{}_swe_table.png'.format(swe_table_path,lims.basin_name),
+                     '{}{}_swe_table.png'.format(figs_path,lims.basin_name)]
+        save(ft, fig_names)
+
+    if (day is not None) and day.show:
+        plt.show()

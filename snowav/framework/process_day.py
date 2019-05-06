@@ -14,19 +14,77 @@ import warnings
 from collections import OrderedDict
 from snowav.database.tables import Basins
 
-class day(object):
+class Day():
 
-    depth_factor = 0.03937
-    step = 1000
-    depthlbl = 'in'
-    vollbl = 'TAF'
-    elevlbl = 'ft'
-    filetype = 'netcdf'
-    snowbands = [0,1,2]
-    embands = [6,7,8,9]
-
-    def process_day(day, nc_path, value, basin=None, dem=None, wy=None):
+    def __init__(self, basin, nc_path, value, figs_path, **kwargs):
         '''
+        This class is used for simple single day, or two day difference
+        between two snow.nc files.
+
+        Args
+            basin: basin name
+            nc_path: path to snow.nc file(s)
+            figs_path: path to save figures
+
+            **kwargs:
+                depth_factor: conversion from mm to desired units
+                depthlbl: str for plots
+                vollbl: str for plots
+                elevlbl: str for plots
+                filetype: str, 'netcdf' only current supported version
+                snowbands: array of necessary snow.nc bands
+                embands: array of necessary em.nc bands
+                cclimit: MJ limit for unavailable SWE
+                show: boolean to show figs
+                value: str for processed value ('swe_z')
+                wy: water year
+
+        '''
+
+        self.basin = basin
+        self.nc_path = nc_path
+        self.figs_path = figs_path
+        self.value = value
+
+        # Defaults, can be overwritten with kwargs
+        date_time = datetime.now()
+        if date_time.month in (10,11,12):
+            self.wy = date_time.year-1
+        else:
+            self.wy = date_time.year
+
+        self.depth_factor = 0.03937
+        self.depthlbl = 'in'
+        self.vollbl = 'TAF'
+        self.elevlbl = 'ft'
+        self.filetype = 'netcdf'
+        self.snowbands = [0,1,2]
+        self.embands = [6,7,8,9]
+        self.cclimit = -5*1000*1000
+        self.show = False
+        self.value = 'swe_z'
+        self.name_append = ''
+        self.plotorder = Basins.basins[self.basin]['defaults']['plotorder']
+        self.dem_path = Basins.basins[self.basin]['defaults']['dem_path']
+        self.edges = Basins.basins[self.basin]['defaults']['edges']
+        self.barcolors = ['xkcd:cobalt',
+                          'xkcd:mustard green',
+                          'xkcd:lichen',
+                          'xkcd:pale green',
+                          'xkcd:blue green',
+                          'xkcd:bluish purple',
+                          'xkcd:lightish purple',
+                          'xkcd:deep magenta']
+
+        for (k, v) in kwargs.items():
+            setattr(self, k, v)
+
+    def process_day(self):
+        '''
+        This version of process() is for the command line snowav_day, and
+        processes either a single snow.nc file, or two snow.nc files to
+        calculate a simple SWE volume difference. This could be expanded
+        to include other output variables.
 
         '''
 
@@ -48,30 +106,9 @@ class day(object):
                      ('swe_avail','snow water equivalent available for melt'),
                      ('swe_unavail','snow water equivalent unavailable for melt')])
 
-        barcolors = ['xkcd:cobalt',
-                     'xkcd:mustard green',
-                     'xkcd:lichen',
-                     'xkcd:pale green',
-                     'xkcd:blue green',
-                     'xkcd:bluish purple',
-                     'xkcd:lightish purple',
-                     'xkcd:deep magenta']
-
-        plotorder = Basins.basins[basin]['defaults']['plotorder']
-        dem_path = Basins.basins[basin]['defaults']['dem_path']
-        edges = Basins.basins[basin]['defaults']['edges']
         results = {}
 
-        # if wy is None:
-        date_time = datetime.now()
-
-        if date_time.month in (10,11,12):
-            wy = date_time.year-1
-
-        else:
-            wy = date_time.year
-
-        ncf = nc.Dataset(dem_path, 'r')
+        ncf = nc.Dataset(self.dem_path, 'r')
         dem = ncf.variables['dem'][:] * 3.28
         nrows = len(dem[:,0])
         ncols = len(dem[0,:])
@@ -83,50 +120,43 @@ class day(object):
         precip_total = np.zeros((nrows,ncols))
         rain_total = np.zeros((nrows,ncols))
 
-        masks = dict()
+        self.masks = dict()
 
-        for lbl in plotorder:
+        for lbl in self.plotorder:
 
-            # Exceptions
             if lbl == 'Cherry Creek':
                 nclbl = 'Cherry'
             else:
                 nclbl = lbl
 
-            if lbl != plotorder[0]:
-                masks[lbl] = {'mask': ncf[nclbl + ' mask'][:],
+            if lbl != self.plotorder[0]:
+                self.masks[lbl] = {'mask': ncf[nclbl + ' mask'][:],
                               'label': lbl}
-
             else:
-                masks[lbl] = {'mask': ncf['mask'][:],
+                self.masks[lbl] = {'mask': ncf['mask'][:],
                               'label': nclbl}
 
         ncf.close()
 
-        # min_dem = np.min(np.min(dem))
-        # max_dem = np.max(np.max(dem))
-        # min_dem -= min_dem % + 1000
-        # max_dem -= max_dem % - 1000
-        ixd = np.digitize(dem,edges)
-        xlims = (0,len(edges))
+        ixd = np.digitize(dem,self.edges)
+        self.xlims = (0,len(self.edges))
 
         # pre-processing
-        outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],
-                        'depth':[], 'dates':[], 'time':[], 'density':[],
-                        'coldcont':[] }
+        outputs = {'swi_z':[],'evap_z':[],'snowmelt':[],'swe_z':[],'depth':[],
+                   'dates':[],'time':[],'density':[],'coldcont':[]}
 
-        # will need to look over this
-        if type(nc_path) != list:
-            nc_path = [nc_path]
+        if type(self.nc_path) != list:
+            nc_path = [self.nc_path]
 
         rundirs_dict = {}
         for ncp in nc_path:
+
             path = ncp.split('snow.nc')[0]
             output = iSnobalReader(path,
-                                   day.filetype,
-                                   snowbands = day.snowbands,
-                                   embands = day.embands,
-                                   wy = wy)
+                                   self.filetype,
+                                   snowbands = self.snowbands,
+                                   embands = self.embands,
+                                   wy = self.wy)
 
             for n in range(0,len(output.em_data[8])):
                 outputs['swi_z'].append(output.em_data[8][n,:,:])
@@ -143,11 +173,10 @@ class day(object):
             for t in output.time:
                 rundirs_dict[int(t)] = path
 
-        # based on an average of 60 W/m2 from TL paper
-        cclimit = -5*1000*1000
+        self.date = outputs['dates'][0]
 
         # Daily, by elevation
-        dz = pd.DataFrame(0, index = edges, columns = masks.keys())
+        dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
         for iters, out_date in enumerate(outputs['dates']):
             # Initialize output dataframes for every day
@@ -169,7 +198,6 @@ class day(object):
             hr = int(outputs['time'][iters])
             sf = rundirs_dict[hr].replace('runs','data')
             sf = sf.replace('run','data')
-            # ppt_path = sf.split('output')[0] + '/smrfOutputs/precip.nc'
             ppt_path = sf + '/smrfOutputs/precip.nc'
             percent_snow_path = ppt_path.replace('precip','percent_snow')
 
@@ -181,7 +209,7 @@ class day(object):
                 ppt = nc.Dataset(ppt_path, 'r')
                 percent_snow = nc.Dataset(percent_snow_path, 'r')
 
-                # For the wy2019 daily runs, precip.nc always has an extra hour...
+                # For the wy2019 daily runs, precip.nc has an extra hour...
                 if len(ppt.variables['precip'][:]) > 24:
                     nb = 24
                 else:
@@ -197,8 +225,6 @@ class day(object):
                 ppt.close()
                 percent_snow.close()
 
-            # self.precip_total = np.nansum(np.dstack((self.precip_total,copy.deepcopy(precip))),2)
-            # self.rain_total = np.nansum(np.dstack((self.rain_total,copy.deepcopy(rain))),2)
             precip_total = precip_total + copy.deepcopy(precip)
             rain_total = rain_total + copy.deepcopy(rain)
 
@@ -210,8 +236,8 @@ class day(object):
             for k in vars.keys():
 
                 # Mask by subbasin
-                for name in masks:
-                    mask = copy.deepcopy(masks[name]['mask'])
+                for name in self.masks:
+                    mask = copy.deepcopy(self.masks[name]['mask'])
                     mask = mask.astype(float)
 
                     mask[mask < 1] = np.nan
@@ -228,9 +254,9 @@ class day(object):
                     cold_sub = np.multiply(cold,mask)
 
                     # Now mask the subbasins by elevation band
-                    for n in np.arange(0,len(edges)):
+                    for n in np.arange(0,len(self.edges)):
                         ind = elevbin == n
-                        b = edges[n]
+                        b = self.edges[n]
 
                         # index for pixels with SWE, in subbasin, in elevation band,
                         # needed for mean values
@@ -240,7 +266,7 @@ class day(object):
                         if k == 'swe_z':
                             mask_out = np.multiply(outputs['swe_z'][iters],mask)
                             ccb = cold_sub[ind]
-                            cind = ccb > cclimit
+                            cind = ccb > self.cclimit
 
                             # masked out by pixels with snow -> [ix]
                             swe_bin = mask_out[ind]
@@ -254,7 +280,7 @@ class day(object):
                                             np.multiply(r,conversion_factor) )
                                 daily_outputs['swe_z'].loc[b,name] = (
                                             np.multiply(np.nanmean(swe_bin),
-                                                        day.depth_factor) )
+                                                        self.depth_factor) )
                                 daily_outputs['swe_vol'].loc[b,name] = (
                                             np.multiply(np.nansum(swe_bin),
                                                         conversion_factor) )
@@ -271,7 +297,7 @@ class day(object):
                             r = np.nansum(mask_out[ind])
                             daily_outputs['swi_z'].loc[b,name] = (
                                             np.multiply(np.nanmean(mask_out[ind]),
-                                                        day.depth_factor) )
+                                                        self.depth_factor) )
                             daily_outputs['swi_vol'].loc[b,name] = (
                                             np.multiply(r,conversion_factor) )
 
@@ -281,11 +307,11 @@ class day(object):
 
                             if k == 'depth':
                                 daily_outputs[k].loc[b,name] = (
-                                            np.multiply(r,day.depth_factor*1000) )
+                                            np.multiply(r,self.depth_factor*1000) )
 
                             else:
                                 daily_outputs[k].loc[b,name] = (
-                                                np.multiply(r,day.depth_factor) )
+                                                np.multiply(r,self.depth_factor) )
 
                         elif k in ['coldcont','density']:
                             # masked out by pixels with snow -> [ix]
@@ -300,7 +326,7 @@ class day(object):
                             rv = np.nansum(mask_out[ind])
 
                             daily_outputs[k].loc[b,name] = (
-                                            np.multiply(r,day.depth_factor) )
+                                            np.multiply(r,self.depth_factor) )
                             daily_outputs['precip_vol'].loc[b,name] = (
                                             np.multiply(rv,conversion_factor) )
 
@@ -312,7 +338,7 @@ class day(object):
 
                             r = np.nanmean(mask_out[ind])
                             daily_outputs[k].loc[b,name] = (
-                                            np.multiply(r,day.depth_factor) )
+                                            np.multiply(r,self.depth_factor) )
 
                     # Add basin total mean/volume field once all elevations are done
                     isub = swe_mask_sub > 0
@@ -320,13 +346,13 @@ class day(object):
                     if k in ['evap_z','coldcont']:
                         # Mask by snow-free
                         out = np.multiply(outputs[k][iters],mask)
-                        total = np.multiply(np.nanmean(out), day.depth_factor)
+                        total = np.multiply(np.nanmean(out), self.depth_factor)
                         daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                     if k == 'swe_z':
                         # calc swe_z derived values
                         out = np.multiply(outputs[k][iters],mask)
-                        total = np.multiply(np.nanmean(out), day.depth_factor)
+                        total = np.multiply(np.nanmean(out), self.depth_factor)
 
                         s = np.nansum(daily_outputs['swe_vol'][name].values)
                         s1 = np.nansum(daily_outputs['swe_avail'][name].values)
@@ -340,7 +366,7 @@ class day(object):
                     if k == 'depth':
                         # Mask by snow-free
                         out = np.multiply(outputs[k][iters],mask)
-                        total = np.multiply(np.nanmean(out), day.depth_factor*1000)
+                        total = np.multiply(np.nanmean(out), self.depth_factor*1000)
                         daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                     if k == 'density':
@@ -352,7 +378,7 @@ class day(object):
                     if k == 'swi_z':
                         # Do not mask by snow free
                         out = np.multiply(outputs[k][iters],mask)
-                        total = np.multiply(np.nanmean(out), day.depth_factor)
+                        total = np.multiply(np.nanmean(out), self.depth_factor)
                         daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                         s = np.nansum(daily_outputs['swi_vol'][name].values)
@@ -362,7 +388,7 @@ class day(object):
                         nanmask = mask == 0
                         out = np.multiply(precip,mask)
                         out[nanmask] = np.nan
-                        total = np.multiply(np.nanmean(out), day.depth_factor)
+                        total = np.multiply(np.nanmean(out), self.depth_factor)
                         daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                         s = np.nansum(daily_outputs['precip_vol'][name].values)
@@ -373,28 +399,15 @@ class day(object):
                         out = np.multiply(rain,mask)
                         out[nanmask] = np.nan
 
-                        total = np.multiply(np.nanmean(out), day.depth_factor)
+                        total = np.multiply(np.nanmean(out), self.depth_factor)
                         daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
-                # Send daily results to database
                 df = daily_outputs[k].copy()
                 df = df.round(decimals = 3)
 
-            results[out_date] = daily_outputs[value]
+            results[out_date] = daily_outputs[self.value]
 
-        day.basin = basin
-        day.value = value
-        day.results = results
-        day.outputs = outputs
-        day.daily_outputs = daily_outputs
-        day.path = path
-        day.nc_path = nc_path
-        day.masks = masks
-        day.plotorder = plotorder
-        day.barcolors = barcolors
-        day.edges = edges
-        day.dplcs = 1
-        day.xlims = xlims
-        day.name_append = ''
-
-        return day
+        self.path = path
+        self.results = results
+        self.outputs = outputs
+        self.daily_outputs = daily_outputs

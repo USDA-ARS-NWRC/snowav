@@ -11,6 +11,7 @@ from snowav.database.tables import Basins, Watersheds
 import pandas as pd
 import os
 from datetime import timedelta
+import snowav
 
 
 def report(obj):
@@ -237,6 +238,7 @@ def report(obj):
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
 
     variables['INFLOW_FIG'] = 'inflow_{}.png'.format(obj.name_append)
+    variables['VERSION'] = snowav.__version__
 
     if obj.forecast_flag is True:
         variables['FORE_START_DATE'] = obj.for_start_date.date().strftime("%B %-d")

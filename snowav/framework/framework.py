@@ -82,9 +82,6 @@ class snowav(object):
             if self.density_flag is True:
                 density(self)
 
-            if self.compare_runs_flag is True:
-                compare_runs(self)
-
             if self.basin_detail_flag is True:
                 basin_detail(self)
 
@@ -148,11 +145,11 @@ class snowav(object):
             if self.image_change_flag is True:
                 image_change(self)
 
-            if self.cold_content_flag is True:
-                cold_content(self)
-
             if self.swe_volume_flag is True:
                 swe_volume(snow = self)
+
+            if self.cold_content_flag is True:
+                cold_content(self)
 
             if self.swe_change_flag is True:
                 swe_change(self)

@@ -1,5 +1,5 @@
 
-def plotlims(basin,plotorder):
+def plotlims(basin,plotorder=None):
     '''
     Args
         basin: ['TUOL','SJ','KINGS','KAWEAH','MERCED','BRB','LAKES']
@@ -32,44 +32,66 @@ def plotlims(basin,plotorder):
         btx = 0.31
         bty = 0.95
 
-        if basin in ['SJ','San Joaquin River Basin']:
+        if basin in ['SJ',
+                     'San Joaquin River Basin',
+                     'sanjoaquin']:
             pbbx = 0.3
             legy = 0.69
             legy2 = 0.65
+            basin_name = 'sanjoaquin'
+            database_name = 'San Joaquin River Basin'
 
         if basin in ['RCEW']:
             pbbx = 0.1
 
-        if basin in ['KINGS']:
+        if basin in ['KINGS','kings']:
             legy = 0.52
             legy2 = 0.39
+            basin_name = 'kings'
+            database_name = 'Kings River Basin'
 
-        if basin in ['MERCED']:
+        if basin in ['MERCED','merced']:
             legy = 0.58
             legy2 = 0.42
+            basin_name = 'merced'
+            database_name = 'Merced River Basin'
 
-        if basin in ['KAWEAH']:
+
+        if basin in ['KAWEAH','kaweah']:
             legy = 0.5
             legy2 = 0.39
             pbbx = 0.45
+            basin_name = 'kaweah'
+            database_name = 'Kaweah River Basin'
 
-        if basin in ['LAKES']:
+
+        if basin in ['LAKES','lakes']:
             btx = 0.26
             legy = 0.85
             legy2 = 0.88
+            basin_name = 'lakes'
 
-        if basin in ['BRB','TUOL','Extended Tuolumne']:
+        if basin in ['BRB','TUOL','Extended Tuolumne','tuolumne']:
             # legy = 0.74
             legy = 0.74
             btx = 0.28
+            if basin != 'BRB':
+                basin_name = 'tuolumne'
+                database_name = 'Extended Tuolumne'
+
+            else:
+                basin_name = 'brb'
+                database_name = 'Boise River Basin'
+
 
         # Total basin label
-        if len(plotorder) > 1:
-            sumorder = plotorder[1::]
-            swid = 0.25
-        else:
-            sumorder = plotorder
-            swid = 0.45
+        if plotorder is not None:
+            if len(plotorder) > 1:
+                sumorder = plotorder[1::]
+                swid = 0.25
+            else:
+                sumorder = plotorder
+                swid = 0.45
 
         # if ['Main'] in sumorder:
         #     sumorder.replace('Main','Mammoth')

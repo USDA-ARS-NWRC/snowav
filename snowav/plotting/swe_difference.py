@@ -50,7 +50,7 @@ def swe_difference(day):
     else:
         v = day.value
 
-    title = '{}\n{} -\n{}'.format(v,day.nc_path[1],day.nc_path[0])    
+    title = '{}\n{} -\n{}'.format(v,day.nc_path[1],day.nc_path[0])
 
     swe_a = np.multiply(outputs[v][0], depth_factor)
     swe_b = np.multiply(outputs[v][1], depth_factor)
@@ -171,5 +171,6 @@ def swe_difference(day):
 
     plt.tight_layout()
     plt.savefig('{}swe_difference_{}.png'.format(figs_path,name_append))
-    print('Saving {}swe_difference_{}.png'.format(figs_path,name_append))
-    plt.show()
+
+    if (day is not None) and day.show:
+        plt.show()

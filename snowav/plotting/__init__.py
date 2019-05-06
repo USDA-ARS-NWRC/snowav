@@ -23,3 +23,4 @@ from . import swe_difference
 from . import plotlims
 from . import subbasins
 from . import inflow
+from . import figure

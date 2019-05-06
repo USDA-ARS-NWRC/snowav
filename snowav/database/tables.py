@@ -154,6 +154,10 @@ class Basins(object):
     To add basins, Basins main key and watershed_id must match the
     correct Watershed!
 
+    self.edges = np.arange(self.elev_bins[0],
+                           self.elev_bins[1]+self.elev_bins[2],
+                           self.elev_bins[2])
+
     '''
     basins = {
                 # BRB
@@ -177,7 +181,7 @@ class Basins(object):
                                      'defaults':{'plotorder':['Tuolumne',
                                                               'Cherry Creek',
                                                               'Eleanor'],
-                                                  'edges':np.arange(4000,13000,1000),
+                                                  'edges':np.arange(4000,14000,1000),
                                                   'dem_path':'/home/ops/wy2019/tuolumne/topo/topo.nc'}},
                 'Tuolumne':{'watershed_id':2,
                             'basin_id':6,
@@ -198,7 +202,7 @@ class Basins(object):
                                                                     'Redinger',
                                                                     'South Fork',
                                                                     'Auberry'],
-                                                        'edges':np.arange(4000,13000,1000),
+                                                        'edges':np.arange(4000,14000,1000),
                                                         'dem_path':'/home/ops/wy2019/sanjoaquin/topo/topo.nc'}},
 
                 'South Fork':{'watershed_id':3,
@@ -240,7 +244,7 @@ class Basins(object):
                                'basin_id':16,
                                'basin_name':'Lakes',
                                'defaults':{'plotorder':['Lakes'],
-                                            'edges':np.arange(9000,12000,1000),
+                                            'edges':np.arange(9000,13000,1000),
                                             'dem_path':'/home/ops/wy2019/lakes/topo/topo.nc'}},
 
                 # Merced
@@ -252,7 +256,7 @@ class Basins(object):
                                                           'Upper South Fork',
                                                           'Lower South Fork',
                                                           'El Portal', 'West'],
-                                                   'edges':np.arange(4000,13000,1000),
+                                                   'edges':np.arange(4000,14000,1000),
                                                    'dem_path':'/home/ops/wy2019/merced/topo/topo.nc'}},
 
                 'West':{'watershed_id':5,
@@ -288,7 +292,7 @@ class Basins(object):
                                                   'Middle Fork', 'East Fork',
                                                   'South Fork', 'Lake Kaweah',
                                                   'Kaweah River'],
-                                                   'edges':np.arange(4000,13000,1000),
+                                                   'edges':np.arange(4000,14000,1000),
                                                    'dem_path':'/home/ops/wy2019/kaweah/topo/topo.nc'}},
 
                 'North Fork':{'watershed_id':6,
@@ -328,7 +332,7 @@ class Basins(object):
                                                  'North Fork', 'Dinkey Creek',
                                                  'Middle South Fork',
                                                  'West Kings', 'Mill Creek'],
-                                                  'edges':np.arange(4000,13000,1000),
+                                                  'edges':np.arange(4000,14000,1000),
                                                   'dem_path':'/home/ops/wy2019/kings/topo/topo.nc'}},
 
                 'Middle Fork':{'watershed_id':7,

@@ -13,6 +13,7 @@ import copy
 from datetime import date
 import os
 from snowav.utils.wyhr import calculate_date_from_wyhr
+from snowav.utils.stats import nashsutcliffe
 from spotpy import objectivefunctions
 
 def stn_validate(snow):
@@ -23,20 +24,14 @@ def stn_validate(snow):
     client = snow.val_client
     factor = 25.4
 
-    # get metadata from the data base from snotel sites
-    if snow.basin == 'BRB':
-        qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
-               + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id = '
-               + 'tbl_stations.station_id WHERE tbl_stations.client = '
-               + ' "'"%s"'" HAVING network_name = "'"SNOTEL"'";'%client)
-    else:
-        qry = ('SELECT tbl_metadata.* FROM tbl_metadata '
-               + 'INNER JOIN tbl_stations ON tbl_metadata.primary_id ='
-               + 'tbl_stations.station_id ;')
+    qry = ('SELECT tbl_metadata.* FROM tbl_metadata INNER JOIN tbl_stations ON '
+          'tbl_metadata.id = tbl_stations.metadata_id WHERE tbl_stations.client'
+          '="{}";'.format(client))
 
     cnx = mysql.connector.connect(user='markrobertson',
                                   password='whatdystm?1',
                                   host='10.200.28.137',
+                                  port=32768,
                                   database='weather_db')
 
     meta_sno = pd.read_sql(qry, cnx)
@@ -84,20 +79,31 @@ def stn_validate(snow):
 
     plt.close(9)
 
-    if len(stns) <= 6:
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=2)
+    if len(stns) <= 3:
+        fig, axs = plt.subplots(num=9,figsize=(6,6),dpi=200,nrows=3,ncols=1)
+
+    if (len(stns) > 3) and (len(stns) <= 6):
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=3,ncols=2)
 
     if (len(stns) > 6) and (len(stns) <= 9):
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=3, ncols=3)
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=3,ncols=3)
 
     if (len(stns) > 9) and (len(stns) <= 12):
-        fig, axs = plt.subplots(num=9, figsize=(10,10), nrows=4, ncols=3)
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=4,ncols=3)
 
     axs = axs.flatten()
 
+    set_x_on = 12
+    if len(stns) in (2,5,8):
+        fig.delaxes(axs[len(stns)])
+        if len(stns) == 5:
+            set_x_on = 3
+        if len(stns) == 8:
+            set_x_on = 5
+
     px = (1,1,1,0,0,0,-1,-1,-1)
     py = (1,0,-1,1,0,-1,1,0,-1)
-  
+
     for rname in rundirs:
 
         d = rname.split('runs/run')[-1]
@@ -113,6 +119,20 @@ def stn_validate(snow):
                 ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
                 xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
                 yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
+
+                if ((xind == 0) or (xind >= len(ncxvec)-1) or
+                   (yind == 0) or (yind >= len(ncyvec)-1)):
+                    snow._logger.info('Station {} in [validate] outside of domain, exiting '
+                          'stn_validate()...'.format(stn))
+                    print('Station {} in [validate] outside of domain, exiting '
+                          'stn_validate()...'.format(stn))
+                    snow.stn_validate_flag = False
+
+                    if snow.exclude_figs != None:
+                        snow.exclude_figs = snow.exclude_figs + ['VALID']
+                    else:
+                        snow.exclude_figs = ['VALID']                    
+                    return
 
                 for ix, (n,m) in enumerate(zip(px,py)):
                     land_stn = stn + '_{}'.format(str(ix))
@@ -133,9 +153,10 @@ def stn_validate(snow):
     if snow.nash_sut_flag:
         for iters,sta in enumerate(stns):
             pz_sta = sta + '_5'
-            
-            nsv = objectivefunctions.nashsutcliffe(swe_meas[swe_meas.index > datetime(snow.wy - 1, 10, 15)][stn].values.tolist(),
-                                                            swe_mod[swe_mod.index > datetime(snow.wy - 1, 10, 15)][pz_sta].values.tolist())
+            stime = datetime(snow.wy-1,10,15)
+            nsv = nashsutcliffe(swe_meas[swe_meas.index>stime][stn].values.tolist(),
+                                swe_mod[swe_mod.index>stime][pz_sta].values.tolist())
+            # nstr = '{} Nash-Sutcliffe:\n{}'.format(sta,str(np.round(nsv,2)))
             nstr = 'Nash-Sutcliffe:\n{}'.format(str(np.round(nsv,2)))
 
             nsx = 0.05
@@ -156,7 +177,11 @@ def stn_validate(snow):
             for tick in axs[n].get_xticklabels():
                 tick.set_rotation(30)
         for n in (0,1,2,3):
-            axs[n].set_xticklabels('')
+            if n != set_x_on:
+                axs[n].set_xticklabels('')
+            else:
+                for tick in axs[n].get_xticklabels():
+                    tick.set_rotation(30)
 
     if (len(stns) > 6) and (len(stns) <=9):
         for n in (2,5,8):
@@ -170,7 +195,7 @@ def stn_validate(snow):
             axs[n].set_xticklabels('')
 
         for n in (1,4,7):
-            axs[n].set_yticklabels('')            
+            axs[n].set_yticklabels('')
 
     if (len(stns) > 9) and (len(stns) <=12):
         for n in (2,5,8,11):

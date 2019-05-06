@@ -119,10 +119,14 @@ def cold_content(snow):
                     bottom = pd.DataFrame(nonmelt[sumorder[0:iters]]).sum(axis = 1).values,
                     color = snow.barcolors[iters], edgecolor = 'k',label = name + ': {} {}'.format(ukaf,snow.vollbl))
 
-    ylims = ax1.get_ylim()
-    max = ylims[1] + ylims[1]*0.5
-    min = 0
-    ax1.set_ylim((min, max))
+    # Per Danny's request
+    if hasattr(snow, 'swe_ylims'):
+        ax1.set_ylim(snow.swe_ylims)
+    else:
+        ylims = ax1.get_ylim()
+        max = ylims[1] + ylims[1]*0.5
+        min = 0
+        ax1.set_ylim((min, max))
 
     ax1.xaxis.set_ticks(range(0,len(snow.edges)))
     plt.tight_layout()

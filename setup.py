@@ -78,7 +78,7 @@ setup(
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
     scripts=['./scripts/snow.py',
-			 './scripts/day.py',
+			 './scripts/snowav_day.py',
 		     './scripts/snowav_airflow.py',
 			 './scripts/snowav_query.py'],
     install_requires=requirements,
@@ -100,7 +100,7 @@ setup(
        'console_scripts': ['snowav = scripts.snow:run',
 	   					   'snowav_airflow = scripts.snowav_airflow:run',
 						   'snowav_query = scripts.snowav_query:main',
-						   'snowav_day = scripts.day:main'],
+						   'snowav_day = scripts.snowav_day:main'],
     }
 
 )
