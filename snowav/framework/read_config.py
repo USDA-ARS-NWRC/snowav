@@ -98,23 +98,6 @@ def read_config(self, external_logger=None, awsm=None):
             self.tmp_log.append('Error: [outputs]->start_date > [outputs]->end_date')
             exit()
 
-    # Check for forced flight comparison images
-    self.flt_start_date = ucfg.cfg['outputs']['flt_start_date']
-    self.flt_end_date = ucfg.cfg['outputs']['flt_end_date']
-
-    if self.flt_start_date is not None:
-        self.flt_flag = True
-
-        #if not isinstance(self.flt_start_date, datetime.date):
-        self.flt_start_date = self.flt_start_date.to_pydatetime()
-        self.flt_end_date = self.flt_end_date.to_pydatetime()
-
-    else:
-        self.flt_flag = False
-
-    # Once we load in self.outputs, will make the indices for these dates the
-    # closest to a specified hour
-
     self.summary = ucfg.cfg['outputs']['summary']
     if type(self.summary) != list:
         self.summary = [self.summary]
@@ -217,6 +200,13 @@ def read_config(self, external_logger=None, awsm=None):
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
+    self.update_file = ucfg.cfg['plots']['update_file']
+    self.update_numbers = ucfg.cfg['plots']['update_numbers']
+
+    if self.update_file is not None:
+        self.flt_flag = True
+    else:
+        self.flt_flag = False
 
     if self.basin in ['KINGS', 'SJ', 'MERCED','KAWEAH']:
         self.subbasins_flag = ucfg.cfg['plots']['subbasins']

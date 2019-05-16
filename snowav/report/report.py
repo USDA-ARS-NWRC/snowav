@@ -206,7 +206,26 @@ def report(obj):
             title = title + ', ' + s
         variables['REPORT_TITLE'] = title
     else:
-        variables['REPORT_TITLE'] = obj.rep_title
+
+        if obj.flt_flag:
+            variables['REPORT_TITLE'] = obj.rep_title + r' \\ ASO Updates'
+            fst = ' Model snow depths were updated with ASO snow depths on '
+
+            for i,d in enumerate(obj.flight_diff_datestr):
+                if len(obj.flight_diff_datestr) == 1:
+                    fst = fst + d + '.'
+
+                if len(obj.flight_diff_datestr) > 1 and (i < len(obj.flight_diff_datestr) - 1):
+                    fst = fst + d + ', '
+
+                if (len(obj.flight_diff_datestr) > 1) and (i == len(obj.flight_diff_datestr) - 1):
+                    fst = fst + 'and ' + d + '.'
+
+            variables['FLTSENT'] = fst
+
+        else:
+            variables['REPORT_TITLE'] = obj.rep_title
+            variables['FLTSENT'] = ' Model snow depths will be updated with ASO snow depths as they become available.'
 
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(obj.wy)
@@ -222,7 +241,6 @@ def report(obj):
     # Figures
     variables['SWI_FIG'] = 'swi_{}.png'.format(obj.name_append)
     variables['CHANGES_FIG'] = 'swe_change_{}.png'.format(obj.name_append)
-    variables['DFLT_FIG'] = 'dflt_swe_change_{}.png'.format(obj.name_append)
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth_{}.png'.format(obj.name_append)
     variables['TOTALS_FIG'] = 'basin_total_{}.png'.format(obj.name_append)
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(obj.name_append)
@@ -236,9 +254,12 @@ def report(obj):
     variables['VALID_FIG'] = 'validation_{}.png'.format(obj.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(obj.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(obj.name_append)
-
     variables['INFLOW_FIG'] = 'inflow_{}.png'.format(obj.name_append)
     variables['VERSION'] = snowav.__version__
+
+    if (obj.update_file is not None) and obj.flt_flag :
+        for name in obj.flight_diff_fig_names:
+            variables['DFLT_FIG'] = name
 
     if obj.forecast_flag is True:
         variables['FORE_START_DATE'] = obj.for_start_date.date().strftime("%B %-d")
@@ -461,6 +482,7 @@ def report(obj):
     if obj.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
 
+
     # Remove if no flight options
     if obj.forecast_flag is False:
         del section_dict['SWEFORECAST_FIG_TPL']
@@ -495,13 +517,44 @@ def report(obj):
         del section_dict['PDEP_FIG_TPL']
 
     for rep in section_dict.keys():
-        fid = open(section_dict[rep],'r')
-        var = fid.read()
-        fid.close()
 
-        for name in sorted(variables):
-            var = var.replace(name,variables[name])
-        variables[rep] = var
+        # for variable numbers of fligth figures
+        if rep == 'FLTCHANGES_FIG_TPL':
+            fid = open(section_dict[rep],'r')
+            var = fid.read()
+            fid.close()
+
+            for name in sorted(variables):
+                if name == 'DFLT_FIG':
+                    for i,fltname in enumerate(obj.flight_diff_fig_names):
+                        flt_date = obj.flight_outputs['dates'][i].date().strftime("%Y%m%d")
+                        flt_num = obj.flight_delta_vol_df[flt_date].round(1).to_latex(na_rep='-', column_format=colstr)
+                        table = (r'{ \vspace{0.5cm} \textbf{Change in SWE [%s] by elevation, '%(obj.vollbl) +
+                                 r'from %s update} \\ \vspace{0.1cm} \\'%(flt_date) +
+                                 r' %s %s }'%(spacecmd,flt_num))
+
+                        if i == 0:
+                            tmp = var.replace(name,fltname)
+                        else:
+                            tmp += var.replace(name,fltname)
+
+                        tmp += table
+
+                    var = tmp.replace(name,variables[name])
+
+                else:
+                    var = var.replace(name,variables[name])
+
+            variables[rep] = var
+
+        else:
+            fid = open(section_dict[rep],'r')
+            var = fid.read()
+            fid.close()
+
+            for name in sorted(variables):
+                var = var.replace(name,variables[name])
+            variables[rep] = var
 
     # Remove if not BRB
     if obj.compare_runs_flag is False:
@@ -521,7 +574,6 @@ def report(obj):
     tpl = env.get_template(obj.tex_file)
     # print(tpl.render(variables))
     pdf = build_pdf(tpl.render(variables))
-    # To see what's in latex  >>> print(tpl.render(variables))
 
     # Save in reports and with figs
     rpath_1 = os.path.join(obj.rep_path, '' + obj.report_name)

@@ -15,7 +15,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from collections import OrderedDict
 from snowav import database
-from snowav.utils.wyhr import calculate_wyhr_from_date
+from snowav.utils.wyhr import calculate_wyhr_from_date, calculate_date_from_wyhr
 from datetime import timedelta
 from shutil import copyfile
 from sys import exit
@@ -32,21 +32,6 @@ def parse(self, external_logger=None):
     ####################################################
     if self.save_path is None:
         self.save_path = self.snowav_path + '/snowav/data/'
-        # self._logger.info('No save_path specified, using ' +
-        #                     '{}'.format(self.save_path))
-
-    ####################################################
-    #           outputs                                #
-    ####################################################
-    if self.flt_start_date is not None:
-        self.flt_flag = True
-
-        if not isinstance(self.flt_start_date, datetime.date):
-            self.flt_start_date = self.flt_start_date.to_pydatetime()
-            self.flt_end_date = self.flt_end_date.to_pydatetime()
-
-    else:
-        self.flt_flag = False
 
     ####################################################
     #         results
@@ -132,8 +117,6 @@ def parse(self, external_logger=None):
                            self.elev_bins[1],
                            self.elev_bins[2])
 
-    # print(edges, self.edges)
-
     # Right now this is a placeholder, could edit by basin...
     self.xlims = (0,len(edges))
 
@@ -145,21 +128,11 @@ def parse(self, external_logger=None):
                                  * 0.000000810713194*0.001)
         self.depth_factor = 0.03937
         self.dem = self.dem * 3.28
-        print(np.min(np.min(self.dem)),np.max(np.max(self.dem)))
         self.ixd = np.digitize(self.dem,edges)
 
         self.depthlbl = 'in'
         self.vollbl = self.units
         self.elevlbl = 'ft'
-
-    # from matplotlib import pyplot as plt
-    # print(self.edges)
-    # print(self.dem[0],self.ixd[0])
-    # print(np.max(np.max(self.ixd)),np.min(np.min(self.ixd)))
-    # f, (a,a1) = plt.subplots(nrows=1, ncols=2)
-    # a.imshow(self.ixd)
-    # a1.imshow(self.dem)
-    # plt.show()
 
     if self.units == 'SI':
         self.conversion_factor = ((self.pixel**2)
@@ -186,6 +159,7 @@ def parse(self, external_logger=None):
                  'brb/devel/wy2018/hrrr_comparison/run20180108_20180117/']
 
         self.lrdirs = copy.deepcopy(self.run_dirs)
+        self.run_dirs_flight = copy.deepcopy(self.run_dirs)
 
         for rd in self.lrdirs:
             path = rd
@@ -298,7 +272,6 @@ def parse(self, external_logger=None):
     # Otherwise, all we need to do is create the figs_path
     else:
         extf = os.path.splitext(os.path.split(self.config_file)[1])
-        # ext_shr = self.name_append + '_'  + self.start_date.date().strftime("%Y%m%d") + '_' + self.end_date.date().strftime("%Y%m%d")
         ext_shr = self.name_append
         self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
 
@@ -376,6 +349,97 @@ def parse(self, external_logger=None):
 
     #############################
     # ^ forecast section done ^ #
+    #############################
+
+    #############################
+    # FLIGHT section          #
+    #############################
+
+    if self.flt_flag is True:
+
+        file = self.update_file
+        p = nc.Dataset(file, 'r')
+
+        if self.update_numbers is None:
+            times = p.variables['time'][:]
+        else:
+            times = p.variables['time'][self.update_numbers]
+        p.close()
+
+        flight_dates = []
+        pre_flight_dates = []
+
+        for time in times:
+            wydate = calculate_date_from_wyhr(int(time), self.wy)
+            pre_wydate = calculate_date_from_wyhr(int(time-24), self.wy)
+            flight_dates = np.append(flight_dates,wydate)
+            pre_flight_dates = np.append(pre_flight_dates,wydate)
+
+        self.flight_outputs = {'swe_z':[],'depth':[], 'dates':[],
+                               'time':[], 'density':[]}
+        self.pre_flight_outputs = {'swe_z':[],'depth':[], 'dates':[],
+                               'time':[], 'density':[]}
+
+        self.flight_rundirs_dict = {}
+        flist = copy.deepcopy(self.run_dirs_flight)
+
+        for rd in flist:
+            path = rd
+
+            if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
+               and not (os.path.isfile(path))):
+
+                d = path.split('runs/run')[-1]
+                folder_date = datetime.datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
+
+                if ((folder_date.date() in [x.date() for x in flight_dates]) and
+                    (folder_date.date() <= self.end_date.date())):
+
+                    output = iSnobalReader(path,
+                                           self.filetype,
+                                           snowbands = [0,1,2],
+                                           wy = self.wy)
+
+                    self.flight_outputs['dates'] = np.append(self.flight_outputs['dates'],output.dates)
+                    self.flight_outputs['time'] = np.append(self.flight_outputs['time'],output.time)
+
+                    for t in output.time:
+                        self.flight_rundirs_dict[int(t)] = rd
+
+                    for n in range(0,len(output.snow_data[0])):
+                        self.flight_outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.flight_outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.flight_outputs['density'].append(output.snow_data[1][n,:,:])
+
+                # Get the previous snow.nc as necessary
+                if ((folder_date.date() in [x.date()-timedelta(hours = 24) for x in pre_flight_dates]) and
+                    (folder_date.date() <= self.end_date.date())):
+
+                    output = iSnobalReader(path,
+                                           self.filetype,
+                                           snowbands = [0,1,2],
+                                           wy = self.wy)
+                    self.pre_flight_outputs['dates'] = np.append(self.pre_flight_outputs['dates'],output.dates)
+                    self.pre_flight_outputs['time'] = np.append(self.pre_flight_outputs['time'],output.time)
+
+                    for n in range(0,len(output.snow_data[0])):
+                        self.pre_flight_outputs['swe_z'].append(output.snow_data[2][n,:,:])
+                        self.pre_flight_outputs['depth'].append(output.snow_data[0][n,:,:])
+                        self.pre_flight_outputs['density'].append(output.snow_data[1][n,:,:])
+
+                else:
+                    self.run_dirs_flight.remove(rd)
+
+            else:
+                self.run_dirs_flight.remove(rd)
+
+    # If there are no flights in the period, set to false for the flight diff
+    # figure and report
+    if not self.run_dirs_flight:
+        self.flt_flag = False
+
+    #############################
+    # ^ FLIGHT section done ^ #
     #############################
 
     self.report_date = self.end_date + timedelta(hours=1)

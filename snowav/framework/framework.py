@@ -154,9 +154,6 @@ class snowav(object):
             if self.swe_change_flag is True:
                 swe_change(self)
 
-            if self.basin_total_flag is True:
-                basin_total(self)
-
             if self.pixel_swe_flag is True:
                 pixel_swe(self)
 
@@ -196,6 +193,9 @@ class snowav(object):
             # Make flight difference figure in options in config file
             if self.flt_flag is True:
                 flt_image_change(self)
+
+            if self.basin_total_flag is True:
+                basin_total(self)                
 
             # WRF forecast
             if self.forecast_flag is True:
