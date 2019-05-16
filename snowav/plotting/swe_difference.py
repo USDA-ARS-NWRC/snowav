@@ -45,6 +45,7 @@ def swe_difference(day):
     if day.basin == 'LAKES':
         dplcs = 2
 
+    ax1_title = 'Change in {}'.format(day.value)
     if day.value in ['swe_z','swe_vol','swe_avail','swe_unavail']:
         v = 'swe_z'
     else:
@@ -114,7 +115,7 @@ def swe_difference(day):
                              str(np.round(delta_swe_byelev[plotorder[0]].sum(),
                                           dplcs)),vollbl)
 
-    for iters,name in enumerate(lims.sumorder):
+    for iters,name in enumerate(plotorder):
 
         if dplcs == 0:
             lbl = '{}: {} {}'.format(name,
@@ -128,17 +129,21 @@ def swe_difference(day):
         if iters == 0:
             ax1.bar(range(0,len(edges)),delta_swe_byelev[name],
                     color = barcolors[iters],
-                    edgecolor = 'k',label = lbl)
+                    edgecolor = 'k',
+                    label = lbl)
 
         else:
             ax1.bar(range(0,len(edges)),delta_swe_byelev[name],
-                    bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
-                    color = barcolors[iters], edgecolor = 'k',label = lbl)
+                    # bottom = pd.DataFrame(delta_swe_byelev[plotorder[0:iters]]).sum(axis = 1).values,
+                    color = barcolors[iters],
+                    edgecolor = 'k',
+                    alpha=0.5,
+                    label = lbl)
 
 
     ax1.xaxis.set_ticks(range(0,len(edges)))
     plt.tight_layout()
-    ax1.set_xlim((xlims[0]-0.5,xlims[1]+0.5))
+    ax1.set_xlim((xlims[0]-0.5,xlims[1]))
 
     edges_lbl = []
     for i in range(0,len(edges)):
@@ -148,7 +153,7 @@ def swe_difference(day):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_xlim((xlims[0]-0.5,xlims[1]+0.5))
+    ax1.set_xlim((xlims[0]-0.5,xlims[1]))
 
     ylims = ax1.get_ylim()
     max = ylims[1] + abs(ylims[1] - ylims[0])
@@ -157,7 +162,7 @@ def swe_difference(day):
 
     ax1.set_ylabel('{} - per elevation band'.format(vollbl))
     ax1.set_xlabel('elevation [{}]'.format(elevlbl))
-    ax1.axes.set_title('Change in {}'.format(day.value))
+    ax1.axes.set_title(ax1_title)
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
@@ -166,8 +171,8 @@ def swe_difference(day):
     if len(plotorder) > 1:
         ax1.legend(loc=(lims.legx,lims.legy))
 
-    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
+    # ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+    #          transform=ax1.transAxes,fontsize = 10)
 
     plt.tight_layout()
     plt.savefig('{}swe_difference_{}.png'.format(figs_path,name_append))

@@ -58,8 +58,8 @@ def plotlims(basin,plotorder=None):
 
 
         if basin in ['KAWEAH','kaweah']:
-            legy = 0.5
-            legy2 = 0.39
+            legy = 0.52
+            legy2 = 0.38
             pbbx = 0.45
             basin_name = 'kaweah'
             database_name = 'Kaweah River Basin'
@@ -73,8 +73,8 @@ def plotlims(basin,plotorder=None):
 
         if basin in ['BRB','TUOL','Extended Tuolumne','tuolumne']:
             # legy = 0.74
-            legy = 0.74
-            btx = 0.28
+            legy = 0.75
+            btx = 0.22
             if basin != 'BRB':
                 basin_name = 'tuolumne'
                 database_name = 'Extended Tuolumne'

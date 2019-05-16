@@ -84,6 +84,7 @@ def main():
         parser.error('Must use either -d, or both -A and -B arguments')
 
     lims = plotlims(args.basin, plotorder=None)
+
     day = Day(lims.database_name,
               nc_path,
               args.value,

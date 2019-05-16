@@ -62,7 +62,7 @@ class Day():
         self.embands = [6,7,8,9]
         self.cclimit = -5*1000*1000
         self.show = False
-        self.value = 'swe_z'
+        self.value = value
         self.name_append = ''
         self.plotorder = Basins.basins[self.basin]['defaults']['plotorder']
         self.dem_path = Basins.basins[self.basin]['defaults']['dem_path']
@@ -147,6 +147,8 @@ class Day():
 
         if type(self.nc_path) != list:
             nc_path = [self.nc_path]
+        else:
+            nc_path = self.nc_path
 
         rundirs_dict = {}
         for ncp in nc_path:
@@ -178,7 +180,11 @@ class Day():
         # Daily, by elevation
         dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
 
+        if outputs['dates'][0] == outputs['dates'][1]:
+            outputs['dates'][1] = outputs['dates'][1] + timedelta(hours=1/60)
+
         for iters, out_date in enumerate(outputs['dates']):
+
             # Initialize output dataframes for every day
             daily_outputs = {'swe_vol':dz.copy(),
                              'swe_avail':dz.copy(),
