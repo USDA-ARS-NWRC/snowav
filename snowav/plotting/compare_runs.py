@@ -28,7 +28,6 @@ def compare_runs(self):
     '''
 
     start_date = datetime.datetime(self.wy - 1,10,1)
-    # end_date = datetime.datetime(self.wy,8,1)
     end_date = self.end_date
 
     bid = self.plotorder[0]
@@ -53,16 +52,16 @@ def compare_runs(self):
             lbl = 'kg/m^3'
 
         for iters,run in enumerate(self.plot_runs):
-            qry = self.session.query(Results).join(RunMetadata).filter(and_(#(Results.date_time >= start_date),
-                                                      (Results.date_time <= end_date),
-                                                      (Results.variable == var),
-                                                      (RunMetadata.run_name == run),
-                                                      (Results.basin_id == Basins.basins[bid]['basin_id'])))
+            qry = self.session.query(Results).join(RunMetadata).filter(and_(
+                          (Results.date_time <= end_date),
+                          (Results.variable == var),
+                          (RunMetadata.run_name == run),
+                          (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 
             if df.empty:
-                print('No results from database in compare_runs() query, '
+                raise IOError('No results from database in compare_runs() query, '
                       'database may not have results for:\n'
                       '{} to {}\n'
                       '{}\n'
@@ -93,7 +92,7 @@ def compare_runs(self):
         if self.flight_dates is not None:
             for i,d in enumerate(self.flight_dates):
                 if i == 0:
-                    lb = 'flight update'
+                    lb = 'wy{} flight update'.format(self.wy)
                 else:
                     lb = '__nolabel__'
                 ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k',label = lb)
@@ -104,15 +103,11 @@ def compare_runs(self):
         formatter = mdates.DateFormatter('%b')
         ax.xaxis.set_major_formatter(formatter)
         ax.legend()
-        ax.set_ylabel('[%s]'%(lbl))
-        # ax.set_ylim((-5,2600))
+        ax.set_ylabel('[{}]'.format(lbl))
         ax.set_xlim((datetime.datetime(self.wy-1,10,1),datetime.datetime(self.wy,9,30)))
 
         ax.set_title(title)
         plt.tight_layout()
 
-        self._logger.info('saving {}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
+        self._logger.info(' saving {}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
         plt.savefig('{}compare_{}_{}.png'.format(self.figs_path,var,self.name_append))
-
-    # This will need to change if framework.py is updated with different workflow
-    # self.session.close()

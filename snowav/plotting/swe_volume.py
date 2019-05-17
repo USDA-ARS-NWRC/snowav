@@ -159,6 +159,11 @@ def swe_volume(snow=None, forecast=None, day=None):
                   & (r2['date_time'] == end_date)
                   & (r2['basin_id'] == Basins.basins[bid]['basin_id'])]
 
+            if total.empty:
+                raise IOError('Empty results for database query in '
+                              'swe_volume() for run_name={}, {} to '
+                              '{}'. format(run_name,start_date, end_date))                
+
             if bid == plotorder[0]:
                 swe_total.loc['Total','SWE [TAF]'] = total['value'].values[0]
                 swe_total.loc['Total',date_stamp] = 'Total'

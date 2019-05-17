@@ -74,10 +74,14 @@ def basin_total(snow, forecast = None):
         swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
         swi_summary[name].plot(ax=ax1,color = snow.barcolors[iters], label='_nolegend_')
 
-    if snow.flight_dates is not None:
-        for d in snow.flight_dates:
-            ax.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
-            ax1.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+    if snow.flt_flag:
+        for i,d in enumerate(snow.flight_diff_dates):
+            if i == 0:
+                lb = 'flight update'.format(snow.wy)
+            else:
+                lb = '__nolabel__'
+            ax.axvline(x=d,linestyle=':',linewidth=0.75,color='k',label=lb)
+            # ax1.axvline(x=d,linestyle=':',linewidth=0.75,color='k',label=lb)
 
     # add in other years
     x_end_date = snow.end_date
@@ -179,6 +183,6 @@ def basin_total(snow, forecast = None):
     # plt.tight_layout()
     del snow.barcolors[0]
 
-    snow._logger.info('saving {}basin_total_{}.png'.format(snow.figs_path,
+    snow._logger.info(' saving {}basin_total_{}.png'.format(snow.figs_path,
                                                           name_append))
     plt.savefig('{}basin_total_{}.png'.format(snow.figs_path,name_append))
