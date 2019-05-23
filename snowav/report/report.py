@@ -12,6 +12,7 @@ import pandas as pd
 import os
 from datetime import timedelta
 import snowav
+from snowav.database.database import collect
 
 
 def report(obj):
@@ -41,6 +42,9 @@ def report(obj):
     wy_start = datetime(obj.wy-1,10,1)
     start_date = obj.start_date
     end_date = obj.end_date
+    run_name = obj.run_name
+    edges = obj.edges
+    plotorder = obj.plotorder
 
     r = database.database.query(obj, wy_start, obj.end_date, obj.run_name,
                                 bid = obj.plotorder)
@@ -53,6 +57,10 @@ def report(obj):
         &(r['date_time']<=end_date)
         &(r['elevation']=='total')
         &(r['variable']=='swi_vol')]['value'].sum().round(decimals=int(obj.dplcs))
+
+    test = collect(obj,plotorder,wy_start,end_date,'swi_vol',run_name,edges,'end',total=True)
+    print(test)
+    print(variables['TOTAL_SWI'])
 
     variables['PER_SWI'] = r[ (r['basin_id']==bid)
         &(r['date_time']>=start_date)
