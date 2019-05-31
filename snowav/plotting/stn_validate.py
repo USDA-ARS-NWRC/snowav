@@ -131,7 +131,7 @@ def stn_validate(snow):
                     if snow.exclude_figs != None:
                         snow.exclude_figs = snow.exclude_figs + ['VALID']
                     else:
-                        snow.exclude_figs = ['VALID']                    
+                        snow.exclude_figs = ['VALID']
                     return
 
                 for ix, (n,m) in enumerate(zip(px,py)):
@@ -140,10 +140,15 @@ def stn_validate(snow):
                     swe_mod.loc[folder_date.date(),land_stn] = swe
 
                     # z = snow.dem[yind,xind]
-                    if n == 0 and m == 0:
-                        axs[iters].plot(swe_meas[stn]/factor,'k',label='measured')
+                    if (n == 0 and m == 0) and (rname == rundirs[-1]):
+                        lbl = 'measured'
+                        lblm = 'modeled'
+                    else:
+                        lbl = '__nolabel__'
+                        lblm = 'modeled'
 
-                    axs[iters].plot(swe_mod[land_stn]/factor,'b',linewidth = 0.75,label='model')
+                    axs[iters].plot(swe_meas[stn]/factor,'k',label=lbl)
+                    axs[iters].plot(swe_mod[land_stn]/factor,'b',linewidth = 0.75,label=lblm)
                     axs[iters].set_title(lbls[iters])
                     axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
 

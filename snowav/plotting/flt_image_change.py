@@ -64,8 +64,7 @@ def flt_image_change(snow):
                                    'swe_vol',
                                    snow.run_name,
                                    snow.edges,
-                                   'difference',
-                                   total=False)
+                                   'difference')
 
         end_swe_byelev = collect(snow,
                                  snow.plotorder,
@@ -74,8 +73,7 @@ def flt_image_change(snow):
                                  'swe_vol',
                                  snow.run_name,
                                  snow.edges,
-                                 'end',
-                                 total=False)
+                                 'end')
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
