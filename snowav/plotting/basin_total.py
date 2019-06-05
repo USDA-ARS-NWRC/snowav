@@ -1,26 +1,27 @@
 
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
-import matplotlib.colors as mcolors
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
-import copy
-import cmocean
-import matplotlib.patches as mpatches
 from datetime import datetime
 import pandas as pd
 from matplotlib.dates import DateFormatter
-import pandas as pd
-from snowav import database
 from snowav.database.tables import Basins
 import dateutil.parser
+from snowav.database.database import collect
+from snowav.plotting.figure import save
+from snowav import database
+import copy
 
 def basin_total(snow, forecast = None):
+    '''
+    Basin total daily SWE and SWI figure, as well as forecast basin total
+    if forecast is supplied.
 
     '''
 
-    '''
+    wy_start = datetime(snow.wy-1,10,1)
+    end_date = snow.end_date
+    run_name = snow.run_name
     name_append = snow.name_append
     swe_title = 'Basin SWE'
     swi_title = 'Basin SWI'
@@ -35,36 +36,41 @@ def basin_total(snow, forecast = None):
     snow.barcolors.insert(0,'black')
 
     # Make df from database
-    swe_summary = pd.DataFrame(columns = snow.plotorder)
-    swi_summary = pd.DataFrame(columns = snow.plotorder)
+    # swe_summary = pd.DataFrame(columns = snow.plotorder)
+    # swi_summary = pd.DataFrame(columns = snow.plotorder)
+    #
+    # for bid in snow.plotorder:
+    #     r = database.database.query(snow,
+    #                                 datetime(snow.wy-1,10,1),
+    #                                 snow.end_date,
+    #                                 snow.run_name,
+    #                                 bid,
+    #                                 'swe_vol')
+    #
+    #     r2 = database.database.query(snow,
+    #                                 datetime(snow.wy-1,10,1),
+    #                                 snow.end_date,
+    #                                 snow.run_name,
+    #                                 bid,
+    #                                 'swi_vol')
+    #
+    #     v = r[(r['elevation'] == 'total')]
+    #     v2 = r2[(r2['elevation'] == 'total')]
+    #
+    #     for iter,d in enumerate(v['date_time'].values):
+    #         swe_summary.loc[d,bid] = v['value'].values[iter]
+    #         swi_summary.loc[d,bid] = v2['value'].values[iter]
 
-    for bid in snow.plotorder:
-        r = database.database.query(snow,
-                                    datetime(snow.wy-1,10,1),
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swe_vol')
+    swi_summary = collect(snow,snow.plotorder,wy_start,end_date,'swi_vol',run_name,'total','daily')
+    swe_summary = collect(snow,snow.plotorder,wy_start,end_date,'swe_vol',run_name,'total','daily')
 
-        r2 = database.database.query(snow,
-                                    datetime(snow.wy-1,10,1),
-                                    snow.end_date,
-                                    snow.run_name,
-                                    bid,
-                                    'swi_vol')
-
-        v = r[(r['elevation'] == 'total')]
-        v2 = r2[(r2['elevation'] == 'total')]
-
-        for iter,d in enumerate(v['date_time'].values):
-            swe_summary.loc[d,bid] = v['value'].values[iter]
-            swi_summary.loc[d,bid] = v2['value'].values[iter]
-
-    swi_summary.sort_index(inplace=True)
-    swe_summary.sort_index(inplace=True)
+    # swi_summary.sort_index(inplace=True)
+    # swe_summary.sort_index(inplace=True)
     swi_summary = swi_summary.cumsum()
     swi_end_val = copy.deepcopy(swi_summary)
 
+    # lims = plotlims(snow.basin, snow.plotorder)
+    #
     if snow.basin == 'LAKES' or snow.basin == 'RCEW':
         plotorder = [snow.plotorder[0]]
     else:

@@ -1,6 +1,5 @@
 
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -8,36 +7,17 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
-from snowav import database
 from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
 import pandas as pd
 from matplotlib.ticker import FormatStrFormatter
-import copy
-
+from snowav.database.database import collect
+from snowav.plotting.figure import save
 
 def accumulated(snow, forecast=None):
     '''
-    Figure: 0
-
-    outputs['swi_z'] (trimmed to ixe,ixs)
-    depth_factor
-    edges
-    plotorder
-    figsize
-    start_date
-    end_date
-    report_date
-    run_name
-    session (to database)
-    masks
-    imgx (lakes)
-    imgy (lakes)
-    depthlbl
-    vollbl
-    figs_path
-    name_append
-    xlims
+    Makes the standard SWI figure, as well as forecast SWI figure from WRF
+    forecast runs if forecast is supplied.
 
     '''
 
@@ -49,9 +29,9 @@ def accumulated(snow, forecast=None):
         start_date = snow.start_date
         end_date = snow.end_date
         name_append = snow.name_append
-        title = 'Accumulated SWI \n {} to {}'.format(
+        title = 'Accumulated SWI\n{} to {}'.format(
                                     snow.report_start.date().strftime("%Y-%-m-%-d"),
-                                    snow.report_date.date().strftime("%Y-%-m-%-d"))                                 
+                                    snow.report_date.date().strftime("%Y-%-m-%-d"))
 
     else:
         run_name = snow.for_run_name
@@ -61,37 +41,24 @@ def accumulated(snow, forecast=None):
         start_date = snow.for_start_date
         end_date = snow.for_end_date
         name_append = snow.name_append + '_forecast'
-        title = 'Forecast Accumulated SWI \n {} to {}'.format(
+        title = 'Forecast Accumulated SWI\n{} to {}'.format(
                                     start_date.date().strftime("%Y-%-m-%-d"),
                                     end_date.date().strftime("%Y-%-m-%-d"))
 
-    # Calculate accumulated swi during the specified period
-    accum = np.zeros((len(outputs['swi_z'][0][:,0]),
-                      len(outputs['swi_z'][0][0,:])))
+    edges = snow.edges
+    lims = plotlims(snow.basin, snow.plotorder)
 
+    accum = np.zeros_like(outputs['swi_z'][0])
     for n in range(ixs,ixe):
-        accum = accum + np.multiply(outputs['swi_z'][n],snow.depth_factor)
+        accum = accum + outputs['swi_z'][n]*snow.depth_factor
 
-    # Make df from database
-    accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    for bid in snow.plotorder:
-        r = database.database.query(snow,
-                                    start_date,
-                                    end_date,
-                                    run_name,
-                                    bid,
-                                    'swi_vol')
-
-        for elev in snow.edges:
-            v = r[r['elevation'] == str(elev)]
-            accum_byelev.loc[elev,bid] = np.nansum(v['value'].values)
+    accum_byelev = collect(snow,snow.plotorder,start_date,end_date,'swi_vol',run_name,edges,'sum')
 
     #######################################
     #            plot set up              #
     #######################################
 
-    qMin,qMax = np.nanpercentile(accum,[0,99.8])
+    qMin,qMax = np.nanpercentile(accum,[0,99])
     clims = (0,qMax)
     colors1 = cmocean.cm.dense(np.linspace(0., 1, 255))
     colors2 = plt.cm.binary(np.linspace(0, 1, 1))
@@ -110,9 +77,6 @@ def accumulated(snow, forecast=None):
     accum[zs] = -1
     mymap.set_under('grey',1.)
 
-    # Get basin-specific lims
-    lims = plotlims(snow.basin, snow.plotorder)
-
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
@@ -124,10 +88,6 @@ def accumulated(snow, forecast=None):
     # Basin boundaries
     for name in snow.masks:
         ax.contour(snow.masks[name]['mask'], cmap='Greys',linewidths=1)
-
-    # if snow.basin == 'LAKES':
-    #     ax.set_xlim(snow.imgx)
-    #     ax.set_ylim(snow.imgy)
 
     # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
@@ -183,16 +143,13 @@ def accumulated(snow, forecast=None):
 
     ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
     ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
-    #ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
     ylims = ax1.get_ylim()
     max = ylims[1] + ylims[1]*0.6
-    min = 0
-    ax1.set_ylim((min, max))
+    ax1.set_ylim((0, max))
 
-    #plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
     # If there is meaningful snow-free area, include path and label
@@ -210,6 +167,6 @@ def accumulated(snow, forecast=None):
     ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
              transform=ax1.transAxes,fontsize = 10)
 
-    snow._logger.info('saving {}swi_{}.png'.format(snow.figs_path,
-                                                             name_append))
-    plt.savefig('{}swi_{}.png'.format(snow.figs_path,name_append))
+    fig_name = '{}swi_{}.png'.format(snow.figs_path,name_append)
+    snow._logger.info(' saving {}swi_{}.png'.format(snow.figs_path,name_append))
+    save(fig, fig_name)

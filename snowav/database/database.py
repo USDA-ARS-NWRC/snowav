@@ -56,7 +56,11 @@ def collect(self, plotorder, start_date, end_date, value, run_name, edges, metho
     if edges == 'total':
         edges = ['total']
 
-    df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
+    if method == 'daily':
+        df = pd.DataFrame(index = ['date_time'], columns=plotorder)
+
+    else:
+        df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
 
     for bid in plotorder:
         results = query(self, start_date, end_date, run_name, bid, value)
@@ -68,44 +72,65 @@ def collect(self, plotorder, start_date, end_date, value, run_name, edges, metho
                           'has results for {} to {}'. format(run_name,
                           start_date, end_date))
 
+        if method == 'daily':
+            e = results[(results['elevation'] == 'total')
+                        & (results['date_time'] >= start_date)
+                        & (results['date_time'] <= end_date)]
+            if e.empty:
+                raise IOError('Empty results for database query in '
+                              'database.collect(), for run_name={}, '
+                              'elev={}, {} to {}'. format(run_name, elev,
+                              start_date, end_date))
+            else:
+                e = e.set_index('date_time')
+                e.sort_index(inplace=True)
+                if bid == plotorder[0]:
+                    df = e[['value']].copy()
+                    df = df.rename(columns={'value':bid})
+
+                else:
+                    df.loc[e.index,bid] = e['value'].values
+
+            df.sort_index(inplace=True)
+
         if method == 'end':
-                for elev in edges:
-                    e = results[(results['elevation'] == str(elev))
-                                & (results['date_time'] == end_date)]
-                    if e.empty:
-                        raise IOError('Empty results for database query in '
-                                      'database.collect(), for run_name={}, '
-                                      'elev={}, {} to {}'. format(run_name, elev,
-                                      start_date, end_date))
-                    else:
-                        df.loc[elev,bid] = e['value'].values
+            for elev in edges:
+                e = results[(results['elevation'] == str(elev))
+                            & (results['date_time'] == end_date)]
+                if e.empty:
+                    raise IOError('Empty results for database query in '
+                                  'database.collect(), for run_name={}, '
+                                  'elev={}, {} to {}'. format(run_name, elev,
+                                  start_date, end_date))
+                else:
+                    df.loc[elev,bid] = e['value'].values
 
         if method == 'difference':
-                for elev in edges:
-                    s = results[(results['elevation'] == str(elev))
-                                & (results['date_time'] == start_date)]
-                    e = results[(results['elevation'] == str(elev))
-                                & (results['date_time'] == end_date)]
-                    if e.empty or s.empty:
-                        raise IOError('Empty results for database query in '
-                                      'database.collect(), for run_name={}, '
-                                      'elev={}, {} to {}'. format(run_name, elev,
-                                      start_date, end_date))
-                    else:
-                        df.loc[elev,bid] = np.nansum(e['value'].values-s['value'].values)
+            for elev in edges:
+                s = results[(results['elevation'] == str(elev))
+                            & (results['date_time'] == start_date)]
+                e = results[(results['elevation'] == str(elev))
+                            & (results['date_time'] == end_date)]
+                if e.empty or s.empty:
+                    raise IOError('Empty results for database query in '
+                                  'database.collect(), for run_name={}, '
+                                  'elev={}, {} to {}'. format(run_name, elev,
+                                  start_date, end_date))
+                else:
+                    df.loc[elev,bid] = np.nansum(e['value'].values-s['value'].values)
 
         if method == 'sum':
-                for elev in edges:
-                    e = results[(results['elevation'] == str(elev))
-                                & (results['date_time'] >= start_date)
-                                & (results['date_time'] <= end_date)]
-                    if e.empty:
-                        raise IOError('Empty results for database query in '
-                                      'database.collect(), for run_name={}, '
-                                      'elev={}, {} to {}'. format(run_name, elev,
-                                      start_date, end_date))
-                    else:
-                        df.loc[elev,bid] = e['value'].sum()
+            for elev in edges:
+                e = results[(results['elevation'] == str(elev))
+                            & (results['date_time'] >= start_date)
+                            & (results['date_time'] <= end_date)]
+                if e.empty:
+                    raise IOError('Empty results for database query in '
+                                  'database.collect(), for run_name={}, '
+                                  'elev={}, {} to {}'. format(run_name, elev,
+                                  start_date, end_date))
+                else:
+                    df.loc[elev,bid] = e['value'].sum()
 
     return df
 
