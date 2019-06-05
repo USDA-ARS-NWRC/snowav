@@ -76,7 +76,6 @@ def read_config(self, external_logger=None, awsm=None):
     #           outputs                                #
     ####################################################
     self.dplcs = ucfg.cfg['outputs']['decimals']
-    # self.vars = ucfg.cfg['outputs']['vars']
 
     if awsm is None:
         self.start_date = ucfg.cfg['outputs']['start_date']
@@ -98,9 +97,9 @@ def read_config(self, external_logger=None, awsm=None):
             self.tmp_log.append('Error: [outputs]->start_date > [outputs]->end_date')
             exit()
 
-    self.summary = ucfg.cfg['outputs']['summary']
-    if type(self.summary) != list:
-        self.summary = [self.summary]
+    # self.summary = ucfg.cfg['outputs']['summary']
+    # if type(self.summary) != list:
+    #     self.summary = [self.summary]
 
     ####################################################
     #           forecast                               #
@@ -145,10 +144,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.val_stns = ucfg.cfg['validate']['stations']
     self.val_lbls = ucfg.cfg['validate']['labels']
     self.val_client = ucfg.cfg['validate']['client']
-
     self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
     self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
-    # self.val_client = ucfg.cfg['validate']['client']
 
     # This is being used to combine 2017 HRRR data
     self.offset = int(ucfg.cfg['validate']['offset'])
@@ -169,8 +166,9 @@ def read_config(self, external_logger=None, awsm=None):
     if type(self.plotorder) != list:
         self.plotorder = [self.plotorder]
 
-    if ucfg.cfg['masks']['basin_masks'] is not None:
-        self.total = ucfg.cfg['masks']['basin_masks'][0]
+    for item in ['mask_labels']:
+        if type(ucfg.cfg['masks'][item]) != list:
+            ucfg.cfg['masks'][item] = [ucfg.cfg['masks'][item]]
 
     ####################################################
     #          plots                                   #
@@ -302,37 +300,51 @@ def read_config(self, external_logger=None, awsm=None):
     self.adj_hours = ucfg.cfg['hx forecast']['adj_hours']
 
     ####################################################
-    #           masks
-    ####################################################
-    for item in ['basin_masks', 'mask_labels']:
-        if type(ucfg.cfg['masks'][item]) != list:
-            ucfg.cfg['masks'][item] = [ucfg.cfg['masks'][item]]
-
-    masks = ucfg.cfg['masks']['basin_masks']
-
-    ####################################################
     #         results
     ####################################################
+    # mysql options
+    self.mysql = ucfg.cfg['results']['mysql']
     self.db_user = ucfg.cfg['results']['user']
     self.db_password = ucfg.cfg['results']['password']
     self.db_host = ucfg.cfg['results']['host']
     self.db_port = ucfg.cfg['results']['port']
-    self.mysql = ucfg.cfg['results']['mysql']
-    self.sqlite = ucfg.cfg['results']['sqlite']
+    if ((self.mysql is not None) and
+        ((self.db_user is None) or
+         (self.db_password is None) or
+         (self.db_host is None) or
+         (self.db_port is None)) ):
+        raise IOError('If using config option [results] mysql:, must also ' +
+                      'supply user, password, host, and port')
+
+    # sqlite options
+    sqlite = ucfg.cfg['results']['sqlite']
+
+    if (sqlite is not None) and os.path.isdir(os.path.dirname(sqlite)):
+        self.sqlite = 'sqlite:///' + sqlite
+    elif sqlite is None:
+        self.sqlite = None
+
+    if (sqlite is not None) and not os.path.isdir(os.path.dirname(sqlite)):
+        raise IOError('Config option [results] sqlite: {} '.format(sqlite) +
+                      'contains an invalid base path for the sqlite database')
+
+    if self.mysql is not None and sqlite is not None:
+        raise IOError('Config [results] section contains both mysql and ' +
+                      'sqlite entries, please pick one...')
+
     self.write_csv = ucfg.cfg['results']['write_csv']
     self.report_only = ucfg.cfg['results']['report_only']
     self.write_stn_csv_flag = ucfg.cfg['results']['write_stn_csv']
-
-    if self.write_stn_csv_flag is True:
-        self.stns_csv = pd.read_csv(ucfg.cfg['results']['stn_csv_file'])
-        self.stns_csv.set_index('name')
-
     self.run_name = ucfg.cfg['results']['run_name']
     self.write_db = ucfg.cfg['results']['write_db']
     self.figures_only = ucfg.cfg['results']['figures_only']
     self.plot_runs = ucfg.cfg['results']['plot_runs']
     self.plot_labels = ucfg.cfg['results']['plot_labels']
     self.plot_variables = ucfg.cfg['results']['plot_variables']
+
+    if self.write_stn_csv_flag is True:
+        self.stns_csv = pd.read_csv(ucfg.cfg['results']['stn_csv_file'])
+        self.stns_csv.set_index('name')
 
     if (self.compare_runs_flag is True) and (self.plot_runs is None):
         self.tmp_log.append('No runs listed in [results] -> plot_runs, so [] ' +
