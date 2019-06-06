@@ -432,61 +432,29 @@ def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
 
 def connect(self):
     '''
-    This establishes a connection with a database for results, and will make
-    a default sqlite database in the repo /snowav/data/model_results.db if
-    no database is specified.
+    This establishes a connection with a database for results. If the specified
+    sqlite database doesn't exist, it will be created.
 
     '''
 
-    # If no database is specified, make database snowav/data/model_results.db
-    # Also, if specified database doesn't exist, it will be created
-
-    # No database specified, create default sqlite in snowav/data
-    if self.sqlite is None and self.mysql is None:
-
-        # If this changes, update scripts/snow.py, which uses the default
-        # location but does not always call read_config().
-        dbpath = os.path.abspath((self.snowav_path + '/snowav/data/'))
-        database = os.path.abspath(dbpath + '/snowav.db')
-        self.database = 'sqlite:///{}'.format(database)
-
-        # Create metadata tables and keep open self.session
-        if not os.path.isfile(database):
-            self.tmp_log.append('No results database specified, creating default sqlite '
-                  'database {}'.format(self.database))
-
-            create_tables(self)
-
-        else:
-            engine = create_engine(self.database)
-            DBSession = sessionmaker(bind=engine)
-            self.session = DBSession()
-            self.tmp_log.append('Using {} for results...'.format(self.database))
-
-    # sqlite specified
     if self.sqlite is not None:
         fp = urllib.parse.urlparse(self.sqlite)
 
-        try:
-            if (not os.path.isfile(fp.path)):
-                    self.database = self.sqlite
-                    self.tmp_log.append('Creating {} for results'.format(self.database))
+        if (not os.path.isfile(fp.path)):
+            self.database = self.sqlite
+            self.tmp_log.append('Creating {} for results'.format(self.database))
+            create_tables(self)
+            engine = create_engine(self.sqlite)
 
-                    # Create metadata tables and keep open self.session
-                    create_tables(self)
-                    engine = create_engine(self.sqlite)
-            else:
-                engine = create_engine(self.sqlite)
-        except:
-            self.tmp_log.append('Failed creating or connecting to {}...'.format(self.database))
+        else:
+            engine = create_engine(self.sqlite)
 
         DBSession = sessionmaker(bind=engine)
         self.session = DBSession()
         self.tmp_log.append('Using {} for results...'.format(self.sqlite))
 
-    if self.mysql is not None:
+    if (self.mysql is not None) and (self.sqlite is None):
 
-        # First, check if database exists, if not, make it
         cnx = mysql.connector.connect(user=self.db_user,
                                       password=self.db_password,
                                       host=self.db_host,
@@ -510,14 +478,13 @@ def connect(self):
 
         # If the database doesn't exist, create it, otherwise connect
         if (self.mysql not in dbs):
-            self.tmp_log.append('Specified mysql database {} does not exist, it is being '
-                  'created...'.format(self.mysql))
+            self.tmp_log.append('Specified mysql database {} '.format(self.mysql) +
+                  ' does not exist, it is being created...')
             query = ("CREATE DATABASE {};".format(self.mysql))
             cursor.execute(query)
             create_tables(self, url = db_engine)
 
         else:
-
             query = ("SHOW DATABASES")
             cursor.execute('USE {}'.format(self.mysql))
             cursor.execute('SHOW TABLES')
@@ -533,7 +500,6 @@ def connect(self):
                 Base.metadata.create_all(engine)
                 DBSession = sessionmaker(bind=engine)
                 self.session = DBSession()
-                # print('Using {} for results...'.format(db_engine))
 
             except:
                 self.tmp_log.append('Failed trying to make database connection '
