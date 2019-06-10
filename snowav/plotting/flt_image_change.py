@@ -146,7 +146,7 @@ def flt_image_change(snow):
                                  str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
                                               snow.dplcs)),snow.vollbl)
 
-        for iters,name in enumerate(lims.sumorder):
+        for iters,name in enumerate(lims.plotorder):
 
             if snow.dplcs == 0:
                 lbl = '{}: {} {}'.format(name,

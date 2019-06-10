@@ -187,7 +187,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.image_change_flag = ucfg.cfg['plots']['image_change']
     self.cold_content_flag = ucfg.cfg['plots']['cold_content']
     self.swe_volume_flag = ucfg.cfg['plots']['swe_volume']
-    self.swe_table_path = ucfg.cfg['plots']['swe_table_path']
+    # self.swe_table_path = ucfg.cfg['plots']['swe_table_path']
     self.swe_change_flag = ucfg.cfg['plots']['swe_change']
     self.basin_total_flag = ucfg.cfg['plots']['basin_total']
     self.pixel_swe_flag = ucfg.cfg['plots']['pixel_swe']

@@ -11,6 +11,9 @@ from snowav.database.database import collect
 from snowav.plotting.figure import save
 from snowav import database
 import copy
+from snowav.plotting.figure import save
+from snowav.plotting.plotlims import plotlims as plotlims
+
 
 def basin_total(snow, forecast = None):
     '''
@@ -35,48 +38,14 @@ def basin_total(snow, forecast = None):
 
     snow.barcolors.insert(0,'black')
 
-    # Make df from database
-    # swe_summary = pd.DataFrame(columns = snow.plotorder)
-    # swi_summary = pd.DataFrame(columns = snow.plotorder)
-    #
-    # for bid in snow.plotorder:
-    #     r = database.database.query(snow,
-    #                                 datetime(snow.wy-1,10,1),
-    #                                 snow.end_date,
-    #                                 snow.run_name,
-    #                                 bid,
-    #                                 'swe_vol')
-    #
-    #     r2 = database.database.query(snow,
-    #                                 datetime(snow.wy-1,10,1),
-    #                                 snow.end_date,
-    #                                 snow.run_name,
-    #                                 bid,
-    #                                 'swi_vol')
-    #
-    #     v = r[(r['elevation'] == 'total')]
-    #     v2 = r2[(r2['elevation'] == 'total')]
-    #
-    #     for iter,d in enumerate(v['date_time'].values):
-    #         swe_summary.loc[d,bid] = v['value'].values[iter]
-    #         swi_summary.loc[d,bid] = v2['value'].values[iter]
-
     swi_summary = collect(snow,snow.plotorder,wy_start,end_date,'swi_vol',run_name,'total','daily')
     swe_summary = collect(snow,snow.plotorder,wy_start,end_date,'swe_vol',run_name,'total','daily')
-
-    # swi_summary.sort_index(inplace=True)
-    # swe_summary.sort_index(inplace=True)
     swi_summary = swi_summary.cumsum()
     swi_end_val = copy.deepcopy(swi_summary)
 
     # lims = plotlims(snow.basin, snow.plotorder)
-    #
-    if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-        plotorder = [snow.plotorder[0]]
-    else:
-        plotorder = snow.plotorder
 
-    for iters,name in enumerate(plotorder):
+    for iters,name in enumerate(snow.plotorder):
         swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
         swi_summary[name].plot(ax=ax1,color = snow.barcolors[iters], label='_nolegend_')
 
@@ -134,12 +103,7 @@ def basin_total(snow, forecast = None):
         swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
         swi_summary = swi_summary.cumsum()
 
-        if snow.basin == 'LAKES' or snow.basin == 'RCEW':
-            plotorder = [snow.plotorder[0]]
-        else:
-            plotorder = snow.plotorder
-
-        for iters,name in enumerate(plotorder):
+        for iters,name in enumerate(snow.plotorder):
             swe_summary[name].plot(ax=ax,
                                    color = snow.barcolors[iters],
                                    linestyle = ':',
@@ -182,13 +146,14 @@ def basin_total(snow, forecast = None):
         tick1.set_rotation(30)
 
     ax1.set_ylabel(r'[{}]'.format(snow.vollbl))
+    ax1.set_xlabel('')
+    ax.set_xlabel('')
     ax.axes.set_title(swe_title)
     ax1.axes.set_title(swi_title)
     ax.set_ylabel(r'[{}]'.format(snow.vollbl))
 
-    # plt.tight_layout()
     del snow.barcolors[0]
 
-    snow._logger.info(' saving {}basin_total_{}.png'.format(snow.figs_path,
-                                                          name_append))
-    plt.savefig('{}basin_total_{}.png'.format(snow.figs_path,name_append))
+    fig_name = '{}basin_total_{}.png'.format(snow.figs_path,name_append)
+    snow._logger.info(' saving {}basin_total_{}.png'.format(snow.figs_path,name_append))
+    save(fig, fig_name)
