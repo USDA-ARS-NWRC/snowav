@@ -10,95 +10,69 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
-from snowav import database
-from snowav.database.tables import Basins
-from snowav.plotting.plotlims import plotlims as plotlims
+import snowav.framework.figures
 
-def image_change(snow, forecast = None):
+def image_change(args, logger):
     '''
-    Change in SWE volume.
+    Makes change in SWE figure, with spatial depth on the left and
+    bar volume on right.
+
+    Args
+    ----------
+    args : dict
+        dictionary of values and options for figure. See CoreConfig.ini
+            for more information. Use config option [plots]
+            print_args_dict: True to print args to the screen if desired.
+
+            df: standard subbasin by elevation dataframe from
+                snowav.database.database.collect()
+                       Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
+                3000      0.008              0.008         0.000    0.000
+                ...
+            image: 2D array of change in SWE
+            title: figure title
+            directory: figure directory name
+            figs_path: base directory for saving figures
+            edges: array of elevation bins in min, max, step
+            plotorder: list of basins from topo.nc
+            labels: dictionary of labels to use with plotorder
+            lims: more figure specs from snowav.plotting.plotlims(plotorder)
+            masks: masks made from topo.nc and snowav_masks()
+            figsize: figure size
+            dpi: figure dpi
+            depthlbl: depth label
+            vollbl: volume label
+            dplcs: decimal places to round outputs
+            barcolors: list of colors for bar plots
+            xlims: xlims
+            elevlblself.percent_max: elevation label
+            depth_clip: lower limit on image depths for plotting
+            percent_min: quantile min for image
+            percent_max: quantile max for image
+
+        logger : dict
+            snowav logger
 
     '''
 
-    # Make df from database
-    delta_swe_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
+    # print to screen for each figure if desired
+    if args['print']:
+        print('image_change() figure args:\n','omitting masks and image...\n')
+        for name in args.keys():
+            if name not in ['masks','image']:
+                print(name, ': ', args[name])
 
-    # Two different calculation schemes, depending on WRF forecast
-    if forecast is None:
-        run_name = snow.run_name
-        outputs = snow.outputs
-        ixs = snow.ixs
-        ixe = snow.ixe
-        start_date = snow.start_date
-        end_date = snow.end_date
-        name_append = snow.name_append
-        title = 'Change in SWE \n {} to {}'.format(
-                                snow.report_start.date().strftime("%Y-%-m-%-d"),
-                                snow.report_date.date().strftime("%Y-%-m-%-d"))
+    # These get used more and we'll just assign here
+    masks = args['masks']
+    delta_swe = args['image']
+    df = args['df']
+    plotorder = args['plotorder']
+    lims = args['lims']
+    edges = args['edges']
+    labels = args['labels']
+    barcolors = args['barcolors']
 
-        # Get change in swe during the specified period
-        delta_swe = outputs['swe_z'][ixe] - outputs['swe_z'][ixs]
-
-        for bid in snow.plotorder:
-            r = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swe_vol')
-
-            for elev in snow.edges:
-                v = r[(r['elevation'] == str(elev)) & (r['date_time'] == start_date)]
-                v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == end_date)]
-                delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
-
-    else:
-        run_name = snow.for_run_name
-        outputs = snow.for_outputs
-        ixs = 0
-        ixe = -1
-        start_date = snow.for_start_date
-        end_date = snow.for_end_date
-        name_append = snow.name_append + '_forecast'
-        title = 'Forecast Change in SWE \n {} to {}'.format(
-                                start_date.date().strftime("%Y-%-m-%-d"),
-                                end_date.date().strftime("%Y-%-m-%-d"))
-
-        # Get change in swe during the specified period
-        # print(outputs)
-        # print(len(outputs['swe_z']), ixe, ixs)
-        delta_swe = outputs['swe_z'][ixs] - snow.outputs['swe_z'][ixe]
-
-        for bid in snow.plotorder:
-            # this is for the end of the actual run
-            r = database.database.query(snow,
-                                         snow.start_date,
-                                         snow.end_date,
-                                         snow.run_name,
-                                         bid,
-                                         'swe_vol')
-
-            # this is for the end of the WRF run
-            r2 = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swe_vol')
-
-            for elev in snow.edges:
-                v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
-                v2 = r2[(r2['elevation'] == str(elev)) & (r2['date_time'] == end_date)]
-                delta_swe_byelev.loc[elev,bid] = np.nansum(v2['value'].values - v['value'].values)
-
-    delta_swe = np.multiply(delta_swe,snow.depth_factor)
-
-    qMin,qMax = np.nanpercentile(delta_swe,[0.5,99.5])
-
-    # ix = np.logical_and(delta_swe < qMin, delta_swe >= np.nanmin(np.nanmin(delta_swe)))
-    # delta_swe[ix] = qMin + qMin*0.2
-    vMin,vMax = np.nanpercentile(delta_swe,[0.5,99.5])
-
+    vMin,vMax = np.nanpercentile(delta_swe,[args['percent_min'],args['percent_max']])
     colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
     colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
     colors2 = plt.cm.Blues(np.linspace(0, 1, 128))
@@ -107,108 +81,91 @@ def image_change(snow, forecast = None):
 
     ixf = delta_swe == 0
     delta_swe[ixf] = -100000
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
     delta_swe[ixo] = np.nan
     cmap = copy.copy(mymap)
     cmap.set_bad('white',1.)
 
-    # Get basin-specific lims
-    lims = plotlims(snow.basin, snow.plotorder)
-
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
     plt.close(6)
-    fig,(ax,ax1) = plt.subplots(num=6, figsize=snow.figsize,
-                                dpi=snow.dpi, nrows = 1, ncols = 2)
+    fig,(ax,ax1) = plt.subplots(num=6, figsize=args['figsize'],
+                                dpi=args['dpi'], nrows = 1, ncols = 2)
     h = ax.imshow(delta_swe, interpolation='none',
         cmap = cmap, norm=MidpointNormalize(midpoint=0,
                                             vmin = vMin-0.01,vmax=vMax+0.01))
 
-    # if snow.basin == 'LAKES':
-    #     ax.set_xlim(snow.imgx)
-    #     ax.set_ylim(snow.imgy)
-
     # Basin boundaries
-    for name in snow.masks:
-        ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+    for name in masks:
+        ax.contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label(r'$\Delta$ SWE [{}]'.format(snow.depthlbl))
+    cbar.set_label(r'$\Delta$ SWE [{}]'.format(args['depthlbl']))
 
-    h.axes.set_title(title)
+    h.axes.set_title(args['title'])
 
-    if snow.dplcs == 0:
-        tlbl = '{}: {} {}'.format(snow.plotorder[0],
-                             str(int(delta_swe_byelev[snow.plotorder[0]].sum())),
-                             snow.vollbl)
+    if args['dplcs'] == 0:
+        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
+                             str(int(df[plotorder[0]].sum())),
+                             args['vollbl'])
     else:
-        tlbl = '{}: {} {}'.format(snow.plotorder[0],
-                             str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
-                                          snow.dplcs)),snow.vollbl)
+        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
+                             str(np.round(df[plotorder[0]].sum(),
+                                          args['dplcs'])),args['vollbl'])
 
     for iters,name in enumerate(lims.sumorder):
 
-        if snow.dplcs == 0:
-            lbl = '{}: {} {}'.format(name,
-                                str(int(delta_swe_byelev[name].sum())),
-                                snow.vollbl)
+        if args['dplcs'] == 0:
+            lbl = '{}: {} {}'.format(labels[name],
+                                str(int(df[name].sum())),
+                                args['vollbl'])
         else:
-            lbl = '{}: {} {}'.format(name,
-                                str(np.round(delta_swe_byelev[name].sum(),
-                                snow.dplcs)),snow.vollbl)
+            lbl = '{}: {} {}'.format(labels[name],
+                                str(np.round(df[name].sum(),
+                                args['dplcs'])),args['vollbl'])
 
         if iters == 0:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    color = snow.barcolors[iters],
+            ax1.bar(range(0,len(edges)),df[name],
+                    color = barcolors[iters],
                     edgecolor = 'k',label = lbl)
 
         else:
-            ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                    bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
-                    color = snow.barcolors[iters], edgecolor = 'k',label = lbl)
+            ax1.bar(range(0,len(edges)),df[name],
+                    bottom = pd.DataFrame(df[lims.sumorder[0:iters]]).sum(axis = 1).values,
+                    color = barcolors[iters], edgecolor = 'k',label = lbl)
 
-
-    ax1.xaxis.set_ticks(range(0,len(snow.edges)))
+    ax1.xaxis.set_ticks(range(0,len(edges)))
     plt.tight_layout()
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax1.set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
     edges_lbl = []
-    for i in range(0,len(snow.edges)):
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    for i in range(0,len(edges)):
+        edges_lbl.append(str(int(edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax1.set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
     ylims = ax1.get_ylim()
     max = ylims[1] + abs(ylims[1] - ylims[0])
     min = ylims[0] - abs(ylims[1] - ylims[0])*0.1
     ax1.set_ylim((min, max))
 
-    ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
-    ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
-    ax1.axes.set_title('Change in SWE')
-
+    ax1.set_ylabel('{}'.format(args['vollbl']))
+    ax1.set_xlabel('elevation [{}]'.format(args['elevlbl']))
+    ax1.axes.set_title('Change in SWE Volume')
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 
-    # snow-free
-    # patches = [mpatches.Patch(color='grey', label='snow free')]
-    # if sum(sum(ixf)) > 1000:
-    #     ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
-    #               loc=2, borderaxespad=0.)
-
-    # basin total and legend
-    if len(snow.plotorder) > 1:
+    if len(plotorder) > 1:
         ax1.legend(loc=(lims.legx,lims.legy))
 
     ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
@@ -217,5 +174,10 @@ def image_change(snow, forecast = None):
     plt.tight_layout()
     fig.subplots_adjust(top=0.88)
 
-    snow._logger.info('saving {}swe_change_{}.png'.format(snow.figs_path,name_append))
-    plt.savefig('{}swe_change_{}.png'.format(snow.figs_path,name_append))
+    fig_name_short = 'swe_change_'
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    if logger is not None:
+        logger.info(' saving {}{}{}.png'.format(args['figs_path'],fig_name,args['directory']))
+    snowav.framework.figures.save_fig(fig, fig_name)
+
+    return fig_name_short

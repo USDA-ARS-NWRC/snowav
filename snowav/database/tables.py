@@ -261,32 +261,32 @@ class Basins(object):
 
                 'West':{'watershed_id':5,
                                       'basin_id':36,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'West'},
 
                 'Yosemite':{'watershed_id':5,
                                       'basin_id':37,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'Yosemite'},
 
                 'Upper South Fork':{'watershed_id':5,
                                       'basin_id':38,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'Upper South Fork'},
 
                 'El Portal':{'watershed_id':5,
                                       'basin_id':39,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'El Portal'},
 
                 'Lower South Fork':{'watershed_id':5,
                                       'basin_id':40,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'Lower South Fork'},
 
                 'Pohono':{'watershed_id':5,
                                       'basin_id':41,
-                                      'basin_name':'Merced'},
+                                      'basin_name':'Pohono'},
 
                 # Kaweah
                 'Kaweah River Basin':{'watershed_id':6,
                                       'basin_id':18,
-                                      'basin_name':'Kaweah',
+                                      'basin_name':'Kaweah River Basin',
                                       'defaults':{'plotorder':['Kaweah River Basin',
                                                   'North Fork', 'Marble Fork',
                                                   'Middle Fork', 'East Fork',
@@ -297,36 +297,36 @@ class Basins(object):
 
                 'North Fork':{'watershed_id':6,
                                       'basin_id':29,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'North Fork'},
 
                 'Marble Fork':{'watershed_id':6,
                                       'basin_id':30,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'Marble Fork'},
 
                 'East Fork':{'watershed_id':6,
                                       'basin_id':31,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'East Fork'},
 
                 'South Fork':{'watershed_id':6,
                                       'basin_id':32,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'South Fork'},
 
                 'Middle Fork':{'watershed_id':6,
                                       'basin_id':33,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'Middle Fork'},
 
                 'Lake Kaweah':{'watershed_id':6,
                                       'basin_id':34,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'Lake Kaweah'},
 
                 'Kaweah River':{'watershed_id':6,
                                       'basin_id':35,
-                                      'basin_name':'Kaweah'},
+                                      'basin_name':'Kaweah River'},
 
                 # Kings
                 'Kings River Basin':{'watershed_id':7,
                                      'basin_id':19,
-                                     'basin_name':'Kings',
+                                     'basin_name':'Kings River Basin',
                                      'defaults':{'plotorder':['Kings River Basin',
                                                  'South Fork', 'Middle Fork',
                                                  'North Fork', 'Dinkey Creek',
@@ -337,31 +337,30 @@ class Basins(object):
 
                 'Middle Fork':{'watershed_id':7,
                               'basin_id':20,
-                              'basin_name':'Kings'},
+                              'basin_name':'Middle Fork'},
 
                 'West Kings':{'watershed_id':7,
                               'basin_id':21,
-                              'basin_name':'Kings'},
+                              'basin_name':'West Kings'},
 
                 'Middle South Fork':{'watershed_id':7,
                               'basin_id':22,
-                              'basin_name':'Kings'},
+                              'basin_name':'Middle South Fork'},
 
                 'South Fork':{'watershed_id':7,
                               'basin_id':23,
-                              'basin_name':'Kings'},
+                              'basin_name':'South Fork'},
 
                 'Mill Creek':{'watershed_id':7,
                               'basin_id':24,
-                              'basin_name':'Kings'},
+                              'basin_name':'Mill Creek'},
 
                 'North Fork':{'watershed_id':7,
                               'basin_id':25,
-                              'basin_name':'Kings'},
+                              'basin_name':'North Fork'},
 
                 'Dinkey Creek':{'watershed_id':7,
                               'basin_id':26,
-                              'basin_name':'Kings'}
-
+                              'basin_name':'Dinkey Creek'}
 
                 }

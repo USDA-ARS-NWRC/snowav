@@ -8,7 +8,8 @@ import datetime
 import logging
 import coloredlogs
 import netCDF4 as nc
-from snowav import database
+from snowav.database.package_results import package, post_process
+from snowav.database.database import delete
 import warnings
 from datetime import timedelta
 
@@ -26,6 +27,21 @@ def process(self, forecast=None):
             'total' fields (either mean depth for the subbasin or total volume
             for the subbasin) are calculated
         - finally, that is sent to the database
+
+        wy
+        outputs
+        ixs
+        ixe
+        rundirs_dict
+        edges
+        masks
+        nrows
+        ncols
+        vars
+        ixd
+        conversion_factor
+        depth_factor
+        wy
 
     '''
 
@@ -59,6 +75,10 @@ def process(self, forecast=None):
 
     for iters, out_date in enumerate(outputs['dates']):
 
+        # delete anything currently on the database for same run and date
+        for bid in self.plotorder:
+            delete(self, out_date, out_date, bid, self.run_name)
+
         # end processing at self.ixe
         if iters < ixs:
             continue
@@ -84,13 +104,6 @@ def process(self, forecast=None):
         self.density = {}
         for name in self.masks:
             self.density[name] = {}
-
-        # Hack for Hx-repeats-itself forecasting
-        if out_date == self.start_date:
-            self.dateFrom = outputs['dates'][iters]
-            if self.adj_hours != None:
-                self._logger.debug('Hacking adj_hours...')
-                adj = self.adj_hours
 
         # Get daily rain from hourly input data
         hr = int(outputs['time'][iters])
@@ -311,28 +324,16 @@ def process(self, forecast=None):
             df = daily_outputs[k].copy()
             df = df.round(decimals = 3)
 
-            # If there are already results on database, only insert if overwriting
-            if self.pflag is False:
-                database.package_results.package(self, df, k,
-                                                 outputs['dates'][iters],
-                                                 forecast = forecast)
-
-            if (self.pflag is True) and (self.write_db is True):
-                database.package_results.package(self, df, k,
-                                                 outputs['dates'][iters],
-                                                 forecast = forecast)
+            package(self, df, k, outputs['dates'][iters], forecast = forecast)
 
         # Add water year totals for swi and evap
         if ((out_date.date() != datetime.datetime(self.wy-1,10,1).date()) and
-            (self.pflag is False) and
             (forecast is None)):
-            database.package_results.post_process(self, out_date)
+            post_process(self, out_date)
 
         if ((out_date.date() != datetime.datetime(self.wy-1,10,1).date()) and
-            (self.pflag is True) and
-            (self.write_db is True) and
             (forecast is None)):
-            database.package_results.post_process(self, out_date)
+            post_process(self, out_date)
 
         # It's nice to see where we are...
         if forecast is None:

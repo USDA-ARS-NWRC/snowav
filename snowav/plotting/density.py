@@ -1,3 +1,4 @@
+
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import numpy as np
 from matplotlib import pyplot as plt
@@ -7,78 +8,72 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
-from snowav import database
-from snowav.database.tables import Basins
-from snowav.plotting.plotlims import plotlims as plotlims
-from datetime import datetime
+import snowav.framework.figures
 
+def density(args, logger = None):
+    '''
+    Density figure.
 
-def density(snow):
+    Args
+    ----------
+    args : dict
+        dictionary of values and options for figure. See CoreConfig.ini
+            for more information. Use config option [plots]
+            print_args_dict: True to print args to the screen if desired.
+
+            density: array assigned in process()
+            image: 2D array of density
+            title: figure title
+            directory: figure directory name
+            figs_path: base directory for saving figures
+            edges: array of elevation bins in min, max, step
+            plotorder: list of basins from topo.nc
+            labels: dictionary of labels to use with plotorder
+            lims: more figure specs from snowav.plotting.plotlims(plotorder)
+            masks: masks made from topo.nc and snowav_masks()
+            figsize: figure size
+            dpi: figure dpi
+            depthlbl: depth label
+            vollbl: volume label
+            dplcs: decimal places to round outputs
+            barcolors: list of colors for bar plots
+            xlims: xlims
+            elevlbl: elevation label
+            depth_clip: lower limit on image depths for plotting
+            percent_min: quantile min for image
+            percent_max: quantile max for image
+
+        logger : dict
+            snowav logger
+
     '''
 
-    '''
+    if args['print']:
+        print('density() figure args:\n','omitting masks, image, and density...\n')
+        for name in args.keys():
+            if name not in ['masks','image', 'density']:
+                print(name, ': ', args[name])
 
-    density = snow.outputs['density'][snow.ixe]
-    qMin,qMax = np.nanpercentile(density,[10,90])
+    masks = args['masks']
+    image = args['image']
+    density = args['density']
+    plotorder = args['plotorder']
+    lims = args['lims']
+    edges = args['edges']
+    labels = args['labels']
+    barcolors = args['barcolors']
+
+    qMin,qMax = np.nanpercentile(image,[5,95])
     clims = (qMin,qMax)
-
-    # Make df from database
-    density_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-    density_summary = pd.DataFrame(columns = snow.plotorder)
-    density_summary_8 = pd.DataFrame(columns = snow.plotorder)
-    # density_summary_11 = pd.DataFrame(columns = snow.plotorder)
-    # delta_density_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    for bid in snow.plotorder:
-        r = database.database.query(snow, snow.start_date, snow.end_date,
-                                    snow.run_name, bid, 'density')
-
-        dr = database.database.query(snow,
-                                     datetime(snow.wy-1,10,1),
-                                     snow.end_date,
-                                     snow.run_name,
-                                     bid,
-                                     'density')
-
-        vd = dr[(dr['elevation'] == 'total')]
-        vd_8 = dr[(dr['elevation'] == '8000')]
-        # vd_11 = dr[(dr['elevation'] == '11000')]
-
-        try:
-            for iter,d in enumerate(vd['date_time'].values):
-                density_summary.loc[d,bid] = vd['value'].values[iter]
-                if (vd_8['value'].values[iter] > 0):
-                    density_summary_8.loc[d,bid] = vd_8['value'].values[iter]
-                #     density_summary_11.loc[d,bid] = vd_11['value'].values[iter]
-
-            for elev in snow.edges:
-                v = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.start_date)]
-                v2 = r[(r['elevation'] == str(elev)) & (r['date_time'] == snow.end_date)]
-
-                density_byelev.loc[elev,bid] = v2['value'].values
-        except:
-            snow._logger.info(' skipping density figure, empty values')
-            return
-
-    density_summary.sort_index(inplace=True)
-    value = copy.deepcopy(density_byelev)
-    lims = plotlims(snow.basin, snow.plotorder)
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
-    nf = len(snow.masks)
-    cvalue = copy.deepcopy(density)
+    cvalue = copy.deepcopy(image)
 
-    mymap = plt.cm.get_cmap('BuGn', 5) 
-    
-    # colors1 = cmocean.cm.speed(np.linspace(0., 1, 255))
-    # colors2 = plt.cm.binary(np.linspace(0, 1, 1))
-    # colors = np.vstack((colors2, colors1))
-    # mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+    mymap = plt.cm.get_cmap('BuGn', 8)
 
-    # This is to get the background white
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
     cvalue[ixo] = np.nan
     mymap.set_bad('white',1.)
@@ -88,14 +83,13 @@ def density(snow):
     mymap.set_under('lightgrey',1.)
 
     plt.close(4)
-    fig,(ax,ax1) = plt.subplots(num=4, figsize = snow.figsize,
-                                dpi=snow.dpi, nrows = 1, ncols = 2)
-    h = ax.imshow(cvalue, vmin = 250, cmap = mymap)
+    fig,(ax,ax1) = plt.subplots(num=4, figsize = args['figsize'],
+                                dpi=args['dpi'], nrows = 1, ncols = 2)
+    h = ax.imshow(cvalue, vmin = 200, vmax = 500, cmap = mymap)
 
-    for name in snow.masks:
-        ax.contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+    for name in masks:
+        ax.contour(masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax)
@@ -105,32 +99,33 @@ def density(snow):
     cbar.ax.tick_params()
     cbar.set_label('[kg/$m^3$]')
 
-    h.axes.set_title('Density\n{}'.format(snow.report_date.date().strftime("%Y-%-m-%-d")))
-
+    h.axes.set_title(args['title'])
 
     sep = 0.05
-    wid = 1/len(snow.plotorder)-sep
-    # widths = (-wid-sep, 0, wid+sep)
+    wid = 1/len(plotorder)-sep
     widths = np.arange((-1 + wid), (1 - wid), wid)
 
     for i,name in enumerate(lims.sumorder):
-        for iter,edge in enumerate(snow.edges):
-            if sum(snow.density[name][edge]) > 0:
-                bp = ax1.boxplot(snow.density[name][edge],positions=[iter + widths[i]],widths=wid)
+        for iter,edge in enumerate(edges):
+
+            if np.nansum(density[name][edge]) > 0:
+
+                bp = ax1.boxplot(density[name][edge],
+                                 positions=[iter + widths[i]],
+                                 widths=wid)
 
                 for element in ['boxes', 'whiskers', 'caps']:
-                    plt.setp(bp[element], color=snow.barcolors[i])
+                    plt.setp(bp[element], color=barcolors[i])
 
-    ax1.set_xticks(np.arange(0,len(snow.edges)))
-    ax1.set_xticklabels([str(x) for x in snow.edges])
-    ax1.set_xlim((-0.5, len(snow.edges) - 0.5))
+    ax1.set_xticks(np.arange(0,len(edges)))
+    ax1.set_xticklabels([str(x) for x in edges])
+    ax1.set_xlim(args['xlims'][0],args['xlims'][1])
 
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
     ax1.set_title('Elevation distribution')
     ax1.set_ylabel(r'density [kg/$m^3$]')
-
 
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
@@ -143,43 +138,49 @@ def density(snow):
         ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
 
-    snow._logger.info(' saving {}density_{}.png'.format(snow.figs_path,snow.name_append))
-    fig.savefig('{}density_{}.png'.format(snow.figs_path,snow.name_append))
+    fig_name_short = 'density_'
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    if logger is not None:
+        logger.info(' saving {}{}{}.png'.format(args['figs_path'],
+                    fig_name,args['directory']))
 
+    snowav.framework.figures.save_fig(fig, fig_name)
+
+    return fig_name_short
 
     ###########################################
     #   2nd density figure
     ###########################################
-
-    plt.close(4)
-    f = plt.figure(num=4, figsize = snow.figsize, dpi=snow.dpi)
-    a = plt.gca()
-
-    for iters,name in enumerate(snow.plotorder):
-        if iters == 0:
-            lname = '8k ft'
-        else:
-            lname = '__nolabel__'
-
-        a.plot(density_summary[name],
-               color = snow.barcolors[iters],
-               label = name)
-        a.plot(density_summary_8[name],
-               color = snow.barcolors[iters],
-               linewidth = 0.75,
-               linestyle = ':',
-               label = lname)
-
-    if snow.flight_dates is not None:
-        for d in snow.flight_dates:
-            a.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
-
-    a.legend(loc=2)
-    a.set_ylabel('density [kg/$m^3$]')
-    a.set_xlim((snow.start_date, snow.end_date))
-
-    for tick in a.get_xticklabels():
-        tick.set_rotation(30)
-
-    f.tight_layout()
-    f.savefig('{}density_change_{}.png'.format(snow.figs_path,snow.name_append))
+    #
+    # plt.close(4)
+    # f = plt.figure(num=4, figsize = snow.figsize, dpi=snow.dpi)
+    # a = plt.gca()
+    #
+    # for iters,name in enumerate(snow.plotorder):
+    #     if iters == 0:
+    #         lname = '8k ft'
+    #     else:
+    #         lname = '__nolabel__'
+    #
+    #     a.plot(density_summary[name],
+    #            color = snow.barcolors[iters],
+    #            label = name)
+    #     a.plot(density_summary_8[name],
+    #            color = snow.barcolors[iters],
+    #            linewidth = 0.75,
+    #            linestyle = ':',
+    #            label = lname)
+    #
+    # if snow.flight_dates is not None:
+    #     for d in snow.flight_dates:
+    #         a.axvline(x=d,linestyle = ':',linewidth = 0.75, color = 'k')
+    #
+    # a.legend(loc=2)
+    # a.set_ylabel('density [kg/$m^3$]')
+    # a.set_xlim((snow.start_date, snow.end_date))
+    #
+    # for tick in a.get_xticklabels():
+    #     tick.set_rotation(30)
+    #
+    # f.tight_layout()
+    # f.savefig('{}density_change_{}.png'.format(snow.figs_path,snow.name_append))

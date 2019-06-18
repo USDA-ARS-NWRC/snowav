@@ -15,7 +15,7 @@ from datetime import timedelta
 from snowav.plotting.plotlims import plotlims as plotlims
 import netCDF4 as nc
 from snowav.database.database import collect
-from snowav.plotting.figure import save
+# from . import figure
 from snowav.utils.wyhr import calculate_wyhr_from_date, calculate_date_from_wyhr
 
 def flt_image_change(snow):
@@ -230,6 +230,6 @@ def flt_image_change(snow):
 
         fig_name = '{}flight_diff_{}_{}.png'.format(snow.figs_path,snow.name_append,datestr)
         snow._logger.info(' saving {}'.format(fig_name))
-        save(fig, fig_name)
+        figure.save(fig, fig_name)
 
     p.close()

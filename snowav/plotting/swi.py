@@ -9,9 +9,10 @@ import matplotlib.patches as mpatches
 import pandas as pd
 import snowav.framework.figures
 
-def cold_content(args, logger):
+def swi(args, logger=None):
     '''
-    SWE unavailable for melt based on snowpack cold content.
+    SWI figure, with depth image on the left and volume by elevation band on
+    the right.
 
     Args
     ----------
@@ -25,8 +26,7 @@ def cold_content(args, logger):
                        Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
                 3000      0.008              0.008         0.000    0.000
                 ...
-            image: 2D array of cold content
-            swe: 2D array of SWE to mask cold content
+            image: 2D array of accumulated SWI
             title: figure title
             directory: figure directory name
             figs_path: base directory for saving figures
@@ -49,17 +49,19 @@ def cold_content(args, logger):
 
         logger : dict
             snowav logger
+
     '''
+
     # print to screen for each figure if desired
     if args['print']:
-        print('cold_content() figure args:\n','omitting masks, image, and swe...\n')
+        print('swi() figure args:\n','omitting masks and image...\n')
         for name in args.keys():
-            if name not in ['masks','image','swe']:
+            if name not in ['masks','image']:
                 print(name, ': ', args[name])
 
+    # These get used more and we'll just assign here
     masks = args['masks']
-    swe = args['swe']
-    image = args['image']
+    accum = args['image']
     df = args['df']
     plotorder = args['plotorder']
     lims = args['lims']
@@ -67,78 +69,72 @@ def cold_content(args, logger):
     labels = args['labels']
     barcolors = args['barcolors']
 
-    clims2 = (-5,0)
+    qMin,qMax = np.nanpercentile(accum,[0,args['percent_max']])
+    clims = (0,qMax)
+    colors1 = cmocean.cm.dense(np.linspace(0, 1, 255))
+    colors2 = plt.cm.binary(np.linspace(0, 1, 1))
+    colors = np.vstack((colors2, colors1))
+    mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
     pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
-    ixz = swe == 0
-    image[ixz] = 1
+    accum[ixo] = np.nan
+    mymap.set_bad('white',1.)
 
-    mymap1 = plt.cm.Spectral_r
-    image[ixo] = np.nan
-    mymap1.set_bad('white')
-    mymap1.set_over('lightgrey',1)
+    # Now set SWI-free to some color
+    zs = ~np.isnan(accum)
+    zs[zs] &= accum[zs] < args['depth_clip']
+    accum[zs] = -1
+    mymap.set_under('grey',1.)
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
 
-    plt.close(1)
-    fig,(ax,ax1) = plt.subplots(num=1, figsize=args['figsize'],
-                                facecolor = 'white', dpi=args['dpi'],
-                                nrows = 1, ncols = 2)
+    plt.close(0)
+    fig,(ax,ax1) = plt.subplots(num=0,
+                                figsize=args['figsize'],
+                                dpi=args['dpi'],
+                                nrows=1,
+                                ncols=2)
 
-    h = ax.imshow(image, clim=clims2, cmap = mymap1)
+    h = ax.imshow(accum, clim=clims, cmap=mymap)
 
     for name in masks:
-        ax.contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
+        ax.contour(masks[name]['mask'], cmap='Greys',linewidths=1)
 
-    # Do pretty stuff for the left plot
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
-    h.axes.set_title(args['title'])
     divider = make_axes_locatable(ax)
-    cax2 = divider.append_axes("right", size="5%", pad=0.2)
-    cbar = plt.colorbar(h, cax = cax2)
-    cbar.set_label('[MJ/$m^3$]')
-    cbar.ax.tick_params()
+    cax = divider.append_axes("right", size="4%", pad=0.2)
+    cbar = plt.colorbar(h, cax = cax)
+    cbar.set_label('[{}]'.format(args['depthlbl']))
+    h.axes.set_title(args['title'])
 
-    patches = [mpatches.Patch(color='grey', label='snow free')]
+    if df[plotorder[0]].sum() < 9.9:
+        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
+                             str(int(df[plotorder[0]].sum())),
+                             args['vollbl'])
+    else:
+        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
+               str(np.round(df[plotorder[0]].sum(),args['dplcs'])),args['vollbl'])
 
-    # If there is meaningful snow-free area, include path and label
-    if sum(sum(ixz)) > 1000:
-        patches = [mpatches.Patch(color='grey', label='snow free')]
-        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
-                  loc=2, borderaxespad=0. )
-
-    # basin total and legend
-    ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
-
+    # Plot the bars
     for iters,name in enumerate(lims.sumorder):
-
-        if args['dplcs'] == 0:
-            ukaf = str(np.int(np.nansum(df[name])))
+        if df[plotorder[0]].sum() < 9.9:
+            lbl = '{}: {} {}'.format(labels[name],str(int(df[name].sum())),
+                                args['vollbl'])
         else:
-            ukaf = str(np.round(np.nansum(df[name]),args['dplcs']))
+            lbl = '{}: {} {}'.format(labels[name],str(np.round(df[name].sum(),
+                                args['dplcs'])),args['vollbl'])
 
         if iters == 0:
-            ax1.bar(range(0,len(edges)),df[name],
-                    color = barcolors[iters],
-                    edgecolor = 'k',
-                    label = labels[name] + ': {} {}'.format(ukaf,args['vollbl']))
+            ax1.bar(range(0,len(edges)),df[name],color=args['barcolors'][iters],
+                    edgecolor = 'k',label = lbl)
 
         else:
             ax1.bar(range(0,len(edges)),df[name],
                     bottom = pd.DataFrame(df[lims.sumorder[0:iters]]).sum(axis = 1).values,
-                    color = barcolors[iters], edgecolor = 'k',
-                    label = labels[name] + ': {} {}'.format(ukaf,args['vollbl']))
-
-    if 'ylims' in args.keys():
-        ax1.set_ylim(args['ylims'])
-
-    else:
-        ylims = ax1.get_ylim()
-        max = ylims[1] + ylims[1]*0.5
-        min = 0
-        ax1.set_ylim((min, max))
+                    color = barcolors[iters], edgecolor = 'k',label = lbl)
 
     ax1.xaxis.set_ticks(range(0,len(edges)))
     plt.tight_layout()
@@ -152,25 +148,39 @@ def cold_content(args, logger):
     for tick in ax1.get_xticklabels():
         tick.set_rotation(30)
 
-    ax1.set_xlim((args['xlims'][0]-0.5,args['xlims'][1]+0.5))
+    ax1.set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
+    ax1.set_ylabel('{}'.format(args['vollbl']))
     ax1.set_xlabel('elevation [{}]'.format(args['elevlbl']))
-    ax1.set_ylabel('{} '.format(args['vollbl']))
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
-    ax1.legend(loc = 2, fontsize = 10)
 
-    for tick in ax1.get_xticklabels():
-        tick.set_rotation(30)
+    ylims = ax1.get_ylim()
+    max = ylims[1] + ylims[1]*0.6
+    ax1.set_ylim((0, max))
 
-    ax1.set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
-    fig.tight_layout()
-    fig.subplots_adjust(top=0.92,wspace = 0.2)
+    fig.subplots_adjust(top=0.88)
 
-    fig_name_short = 'cold_content_'
+    # If there is meaningful snow-free area, include patch and label
+    if sum(sum(zs)) > 1000:
+        patches = [mpatches.Patch(color='grey', label='no SWI')]
+        ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
+                  loc=2, borderaxespad=0. )
+
+    plt.tight_layout()
+
+    # fix so that legend isn't obscured
+    if len(plotorder) > 1:
+        ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
+
+    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
+             transform=ax1.transAxes,fontsize = 10)
+
+    fig_name_short = 'swi_'
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
     if logger is not None:
-        logger.info(' saving {}{}{}.png'.format(args['figs_path'],fig_name,args['directory']))
+        logger.info(' saving {}{}{}.png'.format(args['figs_path'],
+                    fig_name,args['directory']))
     snowav.framework.figures.save_fig(fig, fig_name)
 
     return fig_name_short

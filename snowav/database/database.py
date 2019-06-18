@@ -18,6 +18,34 @@ import copy
 import urllib.parse
 import mysql.connector
 
+def make_session(url = None, database = None):
+    '''
+    Make snowav database session.
+
+    Args
+    -------
+    url : str
+    database : str
+
+    Returns
+    -------
+    session : object
+        snowav database session
+    '''
+
+    print('db ', url, database)
+
+    if url is not None:
+        engine = create_engine(url)
+
+    else:
+        engine = create_engine(database)
+
+    Base.metadata.create_all(engine)
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    return session
 
 def insert(self, table, values):
     '''
@@ -39,22 +67,60 @@ def insert(self, table, values):
     self.session.add(my_dbtable)
     self.session.commit()
 
-def collect(self, plotorder, start_date, end_date, value, run_name, edges, method):
+def collect(url, database, plotorder, start_date, end_date, value, run_name, edges, method):
     '''
-    Collect snowav database results into our standard dataframe
-    with elevation rows and subbasin columns, with end date,
-    difference between dates, or sum between dates.
+    Collect snowav database results into our standard dataframe with elevation
+    rows and subbasin columns.
 
-           Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
-    3000      0.008              0.008         0.000    0.000
+    Args
+    ---------
+    session : object
+        sqlalchemy snowav database session
+    plotorder : str
+        list of basins
+    start_date : datetime
+    end_date : datetime
+    value : str
+        database value identifier
+    run_name : str
+        database run name identifier
+    edges : list
+        elevation band, can include 'total'
+    method : str
+        options [end sum difference daily]
+
+
+    Returns
+    ----------
+    df : pandas DataFrame with subbasin columns and elevation labels
+
+               Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
+        3000               0.008     0.008         0.000    0.000
+        ...                  ...       ...           ...      ...
 
     '''
+
+    value_options = ['swe_z','swe_vol','density','precip_z','precip_vol',
+                     'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
+                     'swi_z','swi_vol','depth']
+
+    method_options = ['sum','difference','daily','end']
+
+    if value not in value_options:
+        raise Exception('value={} call to database.collect() '.format(value) +
+                        'must be one of {}'.format(options))
+
+    if method not in method_options:
+        raise Exception('method={} call to database collect() '.format(method) +
+                        'must be one of {}'.format(options))
 
     if type(plotorder) != list:
         plotorder = [plotorder]
 
     if edges == 'total':
         edges = ['total']
+
+    session = make_session(url = self.url, database = database)
 
     if method == 'daily':
         df = pd.DataFrame(index = ['date_time'], columns=plotorder)
@@ -63,7 +129,7 @@ def collect(self, plotorder, start_date, end_date, value, run_name, edges, metho
         df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
 
     for bid in plotorder:
-        results = query(self, start_date, end_date, run_name, bid, value)
+        results = query(session, start_date, end_date, run_name, bid, value)
 
         if results.empty:
             raise IOError('Empty results for database query in '
@@ -132,9 +198,11 @@ def collect(self, plotorder, start_date, end_date, value, run_name, edges, metho
                 else:
                     df.loc[elev,bid] = e['value'].sum()
 
+    session.close()
+
     return df
 
-def query(self, start_date, end_date, run_name, bid=None, value=None, rid=None):
+def query(session, start_date, end_date, run_name, bid=None, value=None, rid=None):
     '''
     Query and retrieve results from the database, using database session created
     in read_config().
@@ -194,19 +262,18 @@ def delete(self, start_date, end_date, bid, run_name):
     Args
         start_date: (datetime)
         end_date: (datetime)
-        bid: basin id in string format ('Boise River Basin')
+        bid: basin name
         run_name: identifier for run, specified in config file
 
     Table deletion order matters, by relationship.
 
     '''
     try:
-        # print('Deleting records from bid={}, run_name={}, from {} '
-        #       'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
+
         self._logger.info(' Deleting records from bid={}, run_name={}, from {} '
               'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
-        # Since we know run_name, but not run_id, get the run_id
+        # Get the run_id
         qry = self.session.query(Results).join(RunMetadata).filter(and_(
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
@@ -231,9 +298,7 @@ def delete(self, start_date, end_date, bid, run_name):
             df2 = pd.read_sql(qry2.statement, qry2.session.connection())
 
             if df2.empty:
-                # print('Deleting RunMetadata run_name={}, run_id={}, from {} '
-                #       'to {}'.format(run_name,str(r),start_date.date(),
-                #       end_date.date()))
+
                 self._logger.info(' Deleting RunMetadata run_name={}, run_id={},'
                                   ' from {} to {}'.format(run_name,
                                                           str(r),
@@ -265,10 +330,8 @@ def create_tables(self=None, url=None):
 
     '''
 
-    # Make database connection for duration of snowav processing
     if url is not None:
         engine = create_engine(url)
-
     else:
         engine = create_engine(self.database)
 
@@ -276,20 +339,40 @@ def create_tables(self=None, url=None):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    # Initialize watersheds
-    for ws in Watersheds.watersheds:
-        wsid = Watersheds.watersheds[ws]['watershed_id']
-        wsn = Watersheds.watersheds[ws]['watershed_name']
-        wval = Watershed(watershed_id = wsid, watershed_name = wsn)
-        session.add(wval)
+    # if self.plotorder[0] not in Watersheds.watersheds.keys():
+    # print('{} not in database '.format(self.plotorder[0]) +
+    #       'watersheds, it is being added')
 
-        # Initialize basins within the watershed
-        for bid in Basins.basins:
-            if Basins.basins[bid]['watershed_id'] == wsid:
-                bval = Basin(watershed_id = wsid,
-                             basin_id = Basins.basins[bid]['basin_id'],
-                             basin_name = Basins.basins[bid]['basin_name'])
-                session.add(bval)
+    qry = session.query(Watershed)
+    df = pd.read_sql(qry.statement, qry.session.connection())
+
+    if not df.empty:
+        wid = np.max(df['watershed_id'].values) + 1
+    else:
+        wid = 1
+
+    qry = session.query(Basin)
+    df = pd.read_sql(qry.statement, qry.session.connection())
+
+    if not df.empty:
+        bid = np.max(df['basin_id'].values) + 1
+    else:
+        bid = 1
+
+    wval = Watershed(watershed_id = int(wid), watershed_name = self.plotorder[0])
+    session.add(wval)
+    session.commit()
+
+    # Initialize basins within the watershed
+    for i,name in enumerate(self.plotorder):
+        print('{} not in database '.format(name) +
+              'basins, it is being added')
+
+        bval = Basin(watershed_id = int(wid),
+                     basin_id = int(bid + i),
+                     basin_name = name)
+
+        session.add(bval)
 
     session.commit()
 
@@ -297,6 +380,11 @@ def create_tables(self=None, url=None):
         self.session = session
 
     print('Completed initializing basins and watersheds')
+
+def basins_dict():
+    '''
+    Make the basins lookup dictionary. This will try to
+    '''
 
 def run_metadata(self, forecast=None):
     '''
@@ -430,35 +518,39 @@ def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
             self.for_pflag = False
 
 
-def connect(self):
+def connect(sqlite, mysql, user = user, password = password, host = host,
+            port = port, logger = None):
     '''
     This establishes a connection with a database for results. If the specified
     sqlite database doesn't exist, it will be created.
 
     '''
 
-    if self.sqlite is not None:
-        fp = urllib.parse.urlparse(self.sqlite)
+    if logger is None:
+        logger = []
+
+    if sqlite is not None:
+        fp = urllib.parse.urlparse(sqlite)
 
         if (not os.path.isfile(fp.path)):
-            self.database = self.sqlite
-            self.tmp_log.append('Creating {} for results'.format(self.database))
+            database = sqlite
+            logger.append(' Creating {} for results'.format(database))
             create_tables(self)
-            engine = create_engine(self.sqlite)
+            engine = create_engine(sqlite)
 
         else:
-            engine = create_engine(self.sqlite)
+            engine = create_engine(sqlite)
 
         DBSession = sessionmaker(bind=engine)
-        self.session = DBSession()
-        self.tmp_log.append('Using {} for results...'.format(self.sqlite))
+        session = DBSession()
+        logger.append(' Using {} for results...'.format(sqlite))
 
-    if (self.mysql is not None) and (self.sqlite is None):
+    if (mysql is not None) and (sqlite is None):
 
-        cnx = mysql.connector.connect(user=self.db_user,
-                                      password=self.db_password,
-                                      host=self.db_host,
-                                      port=self.db_port)
+        cnx = mysql.connector.connect(user=user,
+                                      password=password,
+                                      host=host,
+                                      port=port)
         cursor = cnx.cursor()
 
         # Check if database exists, create if necessary
@@ -471,22 +563,22 @@ def connect(self):
         except:
             dbs = [i[0] for i in dbs]
 
-        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(self.db_user,
-                                                                self.db_password,
-                                                                self.db_host,
-                                                                self.mysql)
+        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(user,
+                                                                password,
+                                                                host,
+                                                                mysql)
 
         # If the database doesn't exist, create it, otherwise connect
-        if (self.mysql not in dbs):
-            self.tmp_log.append('Specified mysql database {} '.format(self.mysql) +
+        if (mysql not in dbs):
+            logger.append(' Specified mysql database {} '.format(mysql) +
                   ' does not exist, it is being created...')
-            query = ("CREATE DATABASE {};".format(self.mysql))
+            query = ("CREATE DATABASE {};".format(mysql))
             cursor.execute(query)
             create_tables(self, url = db_engine)
 
         else:
             query = ("SHOW DATABASES")
-            cursor.execute('USE {}'.format(self.mysql))
+            cursor.execute('USE {}'.format(mysql))
             cursor.execute('SHOW TABLES')
             tbls = cursor.fetchall()
 
@@ -499,14 +591,83 @@ def connect(self):
                 engine = create_engine(db_engine)
                 Base.metadata.create_all(engine)
                 DBSession = sessionmaker(bind=engine)
-                self.session = DBSession()
+                session = DBSession()
 
             except:
-                self.tmp_log.append('Failed trying to make database connection '
-                      'to {}'.format(self.mysql))
+                logger.append(' Failed trying to make database connection '
+                      'to {}'.format(mysql))
 
         cursor.close()
         cnx.close()
+
+    # watersheds = {'Boise River Basin':{'watershed_id':1,
+    #                                  'watershed_name':'',
+    #                                  'basins': '',
+    #                                  'shapefile':'empty'}}
+    #
+    # basins = {'Boise River Basin':{'watershed_id':1,
+    #                                'basin_id':1},
+    #           'Featherville':{'watershed_id':1,
+    #                           'basin_id':2}}
+
+    qry = self.session.query(Watershed)
+    ws = pd.read_sql(qry.statement, qry.session.connection())
+
+    qry = self.session.query(Basin)
+    bs = pd.read_sql(qry.statement, qry.session.connection())
+
+    if self.plotorder[0] in ws['watershed_name'].values:
+        f = ws[ws['watershed_name'].values == self.plotorder[0]]
+        wid = f['watershed_id'].values[0]
+
+    else:
+        print('{} not found as a watershed in '.format(self.plotorder[0]) +
+              'existing database, it is being added')
+
+        if not ws.empty:
+            wid = np.max(ws['watershed_id'].values) + 1
+        else:
+            wid = 1
+
+        wval = Watershed(watershed_id = int(wid),
+                         watershed_name = self.plotorder[0])
+
+        self.session.add(wval)
+        self.session.commit()
+
+    self.basins = {}
+    self.watersheds = {self.plotorder[0]:{'watershed_id':wid,
+                                     'watershed_name':'',
+                                     'basins': '',
+                                     'shapefile':''}}
+
+    # Initialize basins within the watershed
+    for i,name in enumerate(self.plotorder):
+
+        if name in bs['basin_name'].values:
+            f = bs[bs['basin_name'].values == name]
+            bid = f['basin_id'].values[0]
+
+        else:
+            print('{} not found as a basin in '.format(name) +
+                  'existing database, it is being added')
+
+            if not bs.empty:
+                bid = np.max(bs['basin_id'].values) + 1
+            else:
+                bid = 1
+
+            bval = Basin(watershed_id = int(wid),
+                         basin_id = int(bid + i),
+                         basin_name = name)
+
+            self.session.add(bval)
+
+        self.basins[name] = {'watershed_id':wid, 'basin_id':bid}
+
+    self.session.commit()
+
+    return logger, database
 
 def write_csv(self):
     '''

@@ -1,5 +1,5 @@
 
-def plotlims(basin,plotorder=None):
+def plotlims(plotorder):
     '''
     Args
         basin: ['TUOL','SJ','KINGS','KAWEAH','MERCED','BRB','LAKES']
@@ -16,6 +16,7 @@ def plotlims(basin,plotorder=None):
             swid: bar spacing
 
     '''
+    basin = plotorder[0]
 
     class lims:
 
@@ -32,68 +33,61 @@ def plotlims(basin,plotorder=None):
         btx = 0.31
         bty = 0.95
 
-        if basin in ['SJ',
-                     'San Joaquin River Basin',
-                     'sanjoaquin']:
+        if basin == 'San Joaquin River Basin':
             pbbx = 0.3
             legy = 0.69
             legy2 = 0.65
             basin_name = 'sanjoaquin'
-            database_name = 'San Joaquin River Basin'
+            # database_name = 'San Joaquin River Basin'
 
         if basin in ['RCEW']:
             pbbx = 0.1
 
-        if basin in ['KINGS','kings']:
+        if basin == 'Kings River Basin':
             legy = 0.53
             legy2 = 0.39
             basin_name = 'kings'
-            database_name = 'Kings River Basin'
+            # database_name = 'Kings River Basin'
 
-        if basin in ['MERCED','merced']:
+        if basin == 'Merced River Basin':
             legy = 0.58
             legy2 = 0.42
             basin_name = 'merced'
-            database_name = 'Merced River Basin'
+            # database_name = 'Merced River Basin'
 
-
-        if basin in ['KAWEAH','kaweah']:
+        if basin == 'Kaweah River Basin':
             legy = 0.52
             legy2 = 0.38
             pbbx = 0.45
             basin_name = 'kaweah'
-            database_name = 'Kaweah River Basin'
+            # database_name = 'Kaweah River Basin'
 
-
-        if basin in ['LAKES','lakes']:
+        if basin == 'Lakes Basin':
             btx = 0.26
             legy = 0.85
             legy2 = 0.88
             basin_name = 'lakes'
 
-        if basin in ['BRB','TUOL','Extended Tuolumne','tuolumne']:
+        if basin == 'Extended Tuolumne':
             # legy = 0.74
             legy = 0.75
             btx = 0.28
-            if basin != 'BRB':
-                basin_name = 'tuolumne'
-                database_name = 'Extended Tuolumne'
+            basin_name = 'tuolumne'
 
-            else:
-                basin_name = 'brb'
-                database_name = 'Boise River Basin'
-
+        if basin == 'Boise River Basin':
+            # legy = 0.74
+            legy = 0.75
+            btx = 0.28
+            basin_name = 'brb'
 
         # Total basin label
         if plotorder is not None:
             if len(plotorder) > 1:
                 sumorder = plotorder[1::]
                 swid = 0.25
+
             else:
                 sumorder = plotorder
                 swid = 0.45
-
-        # if ['Main'] in sumorder:
-        #     sumorder.replace('Main','Mammoth')
 
     return lims

@@ -91,8 +91,6 @@ def report(self):
         variables['TOTAL_RAT'] = '0'
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
-    # if hasattr(self,'orig_date'):
-    #     report_time = self.orig_date + ', revised ' + report_time
 
     numsubs = range(1,len(self.plotorder))
 
@@ -194,9 +192,9 @@ def report(self):
     variables['CHANGES_DEP_FIG'] = 'swe_change_depth_{}.png'.format(self.name_append)
     variables['TOTALS_FIG'] = 'basin_total_{}.png'.format(self.name_append)
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(self.name_append)
-    variables['HYP_FIG'] = 'hypsometry_{}.png'.format(self.name_append)
+    # variables['HYP_FIG'] = 'hypsometry_{}.png'.format(self.name_append)
     variables['MEAN_FIG'] = 'mean_swe_depth_{}.png'.format(self.name_append)
-    variables['DETAIL_FIG'] = 'mean_detail_{}.png'.format(self.name_append)
+    # variables['DETAIL_FIG'] = 'mean_detail_{}.png'.format(self.name_append)
     variables['DENSITY_FIG'] = 'density_{}.png'.format(self.name_append)
     variables['DENSITY_SUB_FIG'] = 'density_sub_{}.png'.format(self.name_append)
     variables['DENSITY_SWE_FIG'] = 'density_swe_{}.png'.format(self.name_append)
@@ -204,7 +202,7 @@ def report(self):
     variables['VALID_FIG'] = 'validation_{}.png'.format(self.name_append)
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(self.name_append)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(self.name_append)
-    variables['INFLOW_FIG'] = 'inflow_{}.png'.format(self.name_append)
+    # variables['INFLOW_FIG'] = 'inflow_{}.png'.format(self.name_append)
     variables['VERSION'] = snowav.__version__
 
     if (self.update_file is not None) and self.flt_flag :

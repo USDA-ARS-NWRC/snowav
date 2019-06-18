@@ -8,10 +8,9 @@ from matplotlib.dates import DateFormatter
 from snowav.database.tables import Basins
 import dateutil.parser
 from snowav.database.database import collect
-from snowav.plotting.figure import save
 from snowav import database
 import copy
-from snowav.plotting.figure import save
+from . import figure
 from snowav.plotting.plotlims import plotlims as plotlims
 
 
