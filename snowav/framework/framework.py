@@ -11,16 +11,20 @@ from snowav.database.database import check_fields,delete,run_metadata,write_csv
 class snowav(object):
 
     def __init__(self, config_file = None, external_logger = None, awsm = None):
-        '''
-        Initialize with config file, read config file, and run processing,
-        results storage, figures, and report with config_file options.
+    '''
+    Read config file, parse config options, process results, put results
+    on database, make figures, and make report.
 
-        Args
-            config_file: snowav config file
-            external_logger: awsm logger
-            awsm: awsm class if being run in awsm
+    Args
+    -----
+    config_file : str
+        snowav config file
+    external_logger : object
+        awsm logger
+    awsm : class
+        awsm class if being run in awsm
 
-        '''
+    '''
 
         if awsm is None and os.path.isfile(config_file):
             self.config_file = config_file
@@ -40,7 +44,7 @@ class snowav(object):
         figures(self)
 
         if self.forecast_flag:
-            self._logger.info(' starting forecast processing...')
+            self._logger.info(' Starting forecast processing...')
 
             # Check for existing fields, delete if necessary
             check_fields(self,

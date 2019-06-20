@@ -27,19 +27,15 @@ from sys import exit
 
 def read_config(self, external_logger=None, awsm=None):
     '''
-    Read snowav config file and assign fields.
+    Read snowav config file and assign options.
 
     Args
-        external_logger: awsm logger
-        awsm: awsm class, if this is passed, run_dir will be assigned from the
-            directory being created in awsm
-
-            awsm_mcfg = MasterConfig(modules = 'awsm')
-            smrf_mcfg = MasterConfig(modules = 'smrf')
-
-            # Read in the original users config
-            self.ucfg = get_user_config(configFile, mcfg=combined_mcfg)
-            self.configFile = configFile
+    ------
+    external_logger : object
+        awsm logger
+    awsm : awsm class
+        if this is passed, run_dir will be assigned from the directory being
+        created in awsm
 
     '''
 
@@ -112,17 +108,6 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.run_dirs.sort()
 
-    # pull from num2date nc snow
-    self.wy = 2019
-
-    # if awsm is not None:
-        # fmt_cfg = '%Y-%m-%d 23:00'
-        # end_date = (datetime.datetime.now() - timedelta(hours=24)).date()
-        # end_date = pd.to_datetime(end_date.strftime(fmt_cfg))
-        #
-        # self.start_date = ucfg.cfg['outputs']['start_date']
-        # self.end_date = end_date
-
     # self.summary = ucfg.cfg['outputs']['summary']
     # if type(self.summary) != list:
     #     self.summary = [self.summary]
@@ -138,7 +123,8 @@ def read_config(self, external_logger=None, awsm=None):
         self.for_run_name = ucfg.cfg['forecast']['run_name']
 
         if self.for_start_date >= self.for_end_date:
-            self.tmp_log.append('Error: [outputs]->start_date > [outputs]->end_date')
+            self.tmp_log.append(' Error: config option [forecast] start_date > '
+                                'end_date')
             exit()
 
         self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
@@ -161,7 +147,7 @@ def read_config(self, external_logger=None, awsm=None):
          (self.db_password is None) or
          (self.db_host is None) or
          (self.db_port is None)) ):
-        raise Exception('If using config option [database] mysql:, must also ' +
+        raise Exception('If using config option [database] mysql, must also '
                         'supply user, password, host, and port')
 
     sqlite = ucfg.cfg['database']['sqlite']
@@ -228,8 +214,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.plot_variables = ucfg.cfg['plots']['plot_variables']
 
     if (self.compare_runs_flag is True) and (self.plot_runs is None):
-        self.tmp_log.append('No runs listed in [results] -> plot_runs, so [] ' +
-        '-> being set to False')
+        self.tmp_log.append(' No runs listed in config option [plots] '
+                            'plot_runs, so being set to False')
         self.compare_runs_flag = False
 
     if self.update_file is not None:
@@ -241,9 +227,9 @@ def read_config(self, external_logger=None, awsm=None):
        (self.val_client is None) or
        (self.pre_val_stns is None) or
        (self.pre_val_lbls is None)):
-        self.tmp_log.append('[plots] -> precip_validate is being set to '
-            'to False, either [validate] -> pre_stations, pre_labels or '
-            'client is empty')
+        self.tmp_log.append(' Config option [plots] precip_validate is being '
+                            'set to False, check CoreConfig.ini for details '
+                            'and requirements')
 
         self.precip_validate_flag = False
 
@@ -251,9 +237,9 @@ def read_config(self, external_logger=None, awsm=None):
        (self.val_client is None) or
        (self.val_stns is None) or
        (self.val_lbls is None)):
-        self.tmp_log.append('[plots] -> stn_validate is being set to '
-            'to False, either [validate] -> stations, labels or '
-            'client is empty')
+        self.tmp_log.append(' Config option [plots] stn_validate is being '
+                            'set to False, check CoreConfig.ini for details '
+                            'and requirements')
 
         self.stn_validate_flag = False
 

@@ -22,8 +22,8 @@ def figures(self):
     print_args_dict: True to print args dictionary that is being used in each
     figure printed to screen. See CoreConfig.ini for more details.
 
-    swe_volume() must be called before cold_content() if you want to use the
-    same ylims for each.
+    Note: swe_volume() must be called before cold_content() if you want to use
+    the same ylims for each.
 
     '''
 
@@ -53,20 +53,20 @@ def figures(self):
             'percent_max':self.percent_max}
 
     fig_names = {}
+    connector = self.connector
+
+    # For each figure, first collect 2D array image, by-elevation
+    # DataFrame, and set figure-specific inputs
 
     if self.swi_flag:
-
-        # image
         image = np.zeros_like(self.outputs['swi_z'][0])
         for n in range(self.ixs,self.ixe):
             image = image + self.outputs['swi_z'][n]*self.depth_factor
 
-        # by-elevation dataframe
-        session = make_session(database = self.database)
-        df = collect(session,args['plotorder'],args['start_date'],args['end_date'],
-                     'swi_vol',args['run_name'],args['edges'],'sum')
+        df = collect(connector, args['plotorder'], args['start_date'],
+                    args['end_date'], 'swi_vol', args['run_name'],
+                    args['edges'], 'sum')
 
-        # update args with specific figure inputs
         args['df'] = df
         args['image'] = image
         args['title'] = 'Accumulated SWI\n{} to {}'.format(
@@ -76,14 +76,12 @@ def figures(self):
         fig_names['swi'] = swi(args, self._logger)
 
     if self.image_change_flag:
-
         image = self.outputs['swe_z'][self.ixs] - self.outputs['swe_z'][self.ixe]
 
-        session = make_session(database = self.database)
-        start = collect(session,args['plotorder'],args['start_date'],
+        start = collect(connector,args['plotorder'],args['start_date'],
                             args['start_date'],'swe_vol',args['run_name'],
                             args['edges'],'end')
-        end = collect(session,args['plotorder'],args['start_date'],
+        end = collect(connector,args['plotorder'],args['start_date'],
                           args['end_date'],'swe_vol',args['run_name'],
                           args['edges'],'end')
 
@@ -97,8 +95,7 @@ def figures(self):
         fig_names['image_change'] = image_change(args, self._logger)
 
     if self.swe_volume_flag:
-        session = make_session(database = self.database)
-        df = collect(session,args['plotorder'],args['start_date'],
+        df = collect(connector,args['plotorder'],args['start_date'],
                       args['end_date'],'swe_vol',args['run_name'],
                       args['edges'],'end')
 
@@ -111,8 +108,7 @@ def figures(self):
         fig_names['swe_volume'], args['ylims'] = swe_volume(args, self._logger)
 
     if self.cold_content_flag:
-        session = make_session(database = self.database)
-        df = collect(session,args['plotorder'],args['start_date'],
+        df = collect(connector,args['plotorder'],args['start_date'],
                       args['end_date'],'swe_unavail',args['run_name'],
                       args['edges'],'end')
 
@@ -127,7 +123,6 @@ def figures(self):
         fig_names['cold_content'] = cold_content(args, self._logger)
 
     if self.density_flag:
-
         image = self.outputs['density'][self.ixe]
 
         # self.density is assigned in process()
@@ -228,7 +223,7 @@ def save_fig(fig, paths):
     Args
     ----------
     fig : object
-        figure object
+        matplotlib figure object
     paths : str
         list of paths to save figure
 

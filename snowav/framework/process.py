@@ -77,7 +77,8 @@ def process(self, forecast=None):
 
         # delete anything currently on the database for same run and date
         for bid in self.plotorder:
-            delete(self, out_date, out_date, bid, self.run_name)
+            logger = delete(self.connector, out_date, out_date, bid, self.run_name)
+            self._logger.info(logger)
 
         # end processing at self.ixe
         if iters < ixs:

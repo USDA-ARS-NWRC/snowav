@@ -18,14 +18,15 @@ import copy
 import urllib.parse
 import mysql.connector
 
-def make_session(url = None, database = None):
+def make_session(connector):
     '''
     Make snowav database session.
 
     Args
     -------
-    url : str
-    database : str
+    connector : str
+        database connector, either path to sqlite database or mysqlconnector
+        string
 
     Returns
     -------
@@ -33,13 +34,12 @@ def make_session(url = None, database = None):
         snowav database session
     '''
 
-    print('db ', url, database)
+    try:
+        engine = create_engine(connector)
 
-    if url is not None:
-        engine = create_engine(url)
-
-    else:
-        engine = create_engine(database)
+    except:
+        raise Exception('Failed to make database connection with '
+                        '{}...'.format(connector))
 
     Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
@@ -47,14 +47,18 @@ def make_session(url = None, database = None):
 
     return session
 
-def insert(self, table, values):
+def insert(connector, table, values):
     '''
-    Inserts standard run results to the database. Uses database session created
-    in read_config()
+    Inserts standard run results to the database.
 
     Args
-        table: database table (RunMetadata, Results, or VariableUnits)
-        values: dictionary of values
+    --------
+    session : object
+        database session
+    table : str
+        database table (RunMetadata, Results, or VariableUnits)
+    values : dict
+        dictionary of values
 
     '''
 
@@ -64,10 +68,12 @@ def insert(self, table, values):
     for k,v in values.items():
         setattr(my_dbtable, k, v)
 
-    self.session.add(my_dbtable)
-    self.session.commit()
+    session = make_session(connector)
+    session.add(my_dbtable)
+    session.commit()
+    session.close()
 
-def collect(url, database, plotorder, start_date, end_date, value, run_name, edges, method):
+def collect(connector, plotorder, start_date, end_date, value, run_name, edges, method):
     '''
     Collect snowav database results into our standard dataframe with elevation
     rows and subbasin columns.
@@ -120,8 +126,6 @@ def collect(url, database, plotorder, start_date, end_date, value, run_name, edg
     if edges == 'total':
         edges = ['total']
 
-    session = make_session(url = self.url, database = database)
-
     if method == 'daily':
         df = pd.DataFrame(index = ['date_time'], columns=plotorder)
 
@@ -129,7 +133,7 @@ def collect(url, database, plotorder, start_date, end_date, value, run_name, edg
         df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
 
     for bid in plotorder:
-        results = query(session, start_date, end_date, run_name, bid, value)
+        results = query(connector, start_date, end_date, run_name, bid, value)
 
         if results.empty:
             raise IOError('Empty results for database query in '
@@ -198,31 +202,36 @@ def collect(url, database, plotorder, start_date, end_date, value, run_name, edg
                 else:
                     df.loc[elev,bid] = e['value'].sum()
 
-    session.close()
-
     return df
 
-def query(session, start_date, end_date, run_name, bid=None, value=None, rid=None):
+def query(connector, start_date, end_date, run_name, bid=None, value=None, rid=None):
     '''
-    Query and retrieve results from the database, using database session created
-    in read_config().
+    Retrieve results from snowav database.
 
     Args
-        start_date: (datetime)
-        end_date: (datetime)
-        run_name: identifier for run, specified in config file
-        bid: basin id in string format ('Boise River Basin')
-        value: value to query (i.e. 'swi_z')
-        rid: run_id
+    --------
+    start_date : datetime
+    end_date : datetime
+    run_name : str
+        identifier for run, specified in config file
+    bid : str
+        basin id in string format ('Boise River Basin')
+    value : str
+        value to query (i.e. 'swi_z')
+    rid : run_id
 
     Returns
-        df: dataframe of query results
+    ---------
+    df : DataFrame
+        dataframe of query results
 
     '''
+
+    session = make_session(connector)
 
     # Subset query with value and bid if desired
     if (value != None) and (bid != None):
-        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+        qry = session.query(Results).join(RunMetadata).filter(and_(
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
                         (RunMetadata.run_name == run_name),
@@ -232,7 +241,7 @@ def query(session, start_date, end_date, run_name, bid=None, value=None, rid=Non
     # Report queries here
     elif (value == None) and (bid != None) and rid != None:
         bids = [Basins.basins[n]['basin_id'] for n in bid]
-        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+        qry = session.query(Results).join(RunMetadata).filter(and_(
                                             (Results.date_time >= start_date),
                                             (Results.date_time <= end_date),
                                             (Results.run_id == rid),
@@ -240,88 +249,99 @@ def query(session, start_date, end_date, run_name, bid=None, value=None, rid=Non
                                             (Results.basin_id.in_(bids))))
 
     else:
-        qry = self.session.query(Results).join(RunMetadata).filter(and_(
+        qry = session.query(Results).join(RunMetadata).filter(and_(
                                             (Results.date_time >= start_date),
                                             (Results.date_time <= end_date),
                                             (RunMetadata.run_name == run_name)))
 
-    # x = self.session.query(Results).get(1)
-    # print(x.runmetadata.run_name)
     df = pd.read_sql(qry.statement, qry.session.connection())
+
+    session.close()
 
     return df
 
-def delete(self, start_date, end_date, bid, run_name):
+def delete(connector, start_date, end_date, bid, run_name):
     '''
-    Delete results from the database using database session created
-    in read_config(). This deletes values with basin_id == bid
+    Delete results from the database. This deletes values with basin_id == bid
     and run_name = run_name within the date range. If there are no more
     remaining records for that run_id (the entire run was deleted), then the
     RunMetadata and VariableUnits data are also removed.
 
-    Args
-        start_date: (datetime)
-        end_date: (datetime)
-        bid: basin name
-        run_name: identifier for run, specified in config file
+    Note: table deletion order matters because of database table relationships.
 
-    Table deletion order matters, by relationship.
+    Args
+    --------
+    start_date : datetime
+    end_date : datetime
+    bid : str
+        basin name
+    run_name : str
+        identifier for run, specified in config file
+
+    Returns
+    --------
+    logger
 
     '''
-    try:
 
-        self._logger.info(' Deleting records from bid={}, run_name={}, from {} '
-              'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
+    logger = []
+    session = make_session(connector)
 
-        # Get the run_id
-        qry = self.session.query(Results).join(RunMetadata).filter(and_(
-                        (Results.date_time >= start_date),
-                        (Results.date_time <= end_date),
-                        (RunMetadata.run_name == run_name),
-                        (Results.basin_id == Basins.basins[bid]['basin_id'])))
+    logger.append(' Deleting records from bid={}, run_name={}, from {} '
+          'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
 
-        df = pd.read_sql(qry.statement, qry.session.connection())
+    # Get the run_id
+    qry = session.query(Results).join(RunMetadata).filter(and_(
+                    (Results.date_time >= start_date),
+                    (Results.date_time <= end_date),
+                    (RunMetadata.run_name == run_name),
+                    (Results.basin_id == Basins.basins[bid]['basin_id'])))
 
-        # Delete by date range, run_id, and basin
+    df = pd.read_sql(qry.statement, qry.session.connection())
+
+    if not df.empty:
         for r in df.run_id.unique():
-            self.session.query(Results).filter(and_(
+            session.query(Results).filter(and_(
                 (Results.date_time >= start_date),
                 (Results.date_time <= end_date),
                 (Results.run_id == int(r)),
                 (Results.basin_id == Basins.basins[bid]['basin_id']))).delete()
 
-            self.session.flush()
+            session.flush()
 
-            # Query again, if no results from those run_id exist still, also remove
-            # the metadata and variableUnits
-            qry2 = self.session.query(Results).filter(Results.run_id == int(r))
+            # Query again, if no results from those run_id exist still, also
+            # remove the metadata and variableUnits
+            qry2 = session.query(Results).filter(Results.run_id == int(r))
             df2 = pd.read_sql(qry2.statement, qry2.session.connection())
 
             if df2.empty:
 
-                self._logger.info(' Deleting RunMetadata run_name={}, run_id={},'
+                logger.append(' Deleting RunMetadata run_name={}, run_id={},'
                                   ' from {} to {}'.format(run_name,
                                                           str(r),
                                                           start_date.date(),
                                                           end_date.date()))
 
-                q1 = self.session.query(VariableUnits).\
+                q1 = session.query(VariableUnits).\
                                 filter(VariableUnits.run_id == int(r)).first()
-                self.session.delete(q1)
+                session.delete(q1)
 
-                q2 = self.session.query(RunMetadata).\
+                q2 = session.query(RunMetadata).\
                                 filter(RunMetadata.run_id == int(r)).first()
-                self.session.delete(q2)
+                session.delete(q2)
 
-                self.session.flush()
+                session.flush()
 
-        self.session.commit()
+    session.commit()
+    session.close()
 
-    except:
-        print('Failed attempting to delete records from run_name={}, bid = {}, '
-              'from {} to {}'.format(run_name,bid,
-                                     start_date.date(),
-                                     end_date.date()))
+
+        # session.close()
+        # print('WARNING: failed attempting to delete records from run_name={}, '
+        #       'bid = {}, from {} to {}'.format(run_name,bid, start_date.date(),
+        #                                        end_date.date()))
+
+    return logger
 
 def create_tables(self=None, url=None):
     '''
@@ -393,8 +413,10 @@ def run_metadata(self, forecast=None):
 
     '''
 
-    qry = self.session.query(RunMetadata)
+    session = make_session(self.connector)
+    qry = session.query(RunMetadata)
     df = pd.read_sql(qry.statement, qry.session.connection())
+    session.close()
 
     # Increase each runid by 1
     if not df.run_id.values.size:
@@ -416,8 +438,7 @@ def run_metadata(self, forecast=None):
     if len(trdir) > rdir_strlim:
         trdir = self.run_dirs[0]
 
-    values = {
-              'run_id':runid,
+    values = {'run_id':runid,
               'run_name':run_name,
               'watershed_id':Watersheds.watersheds[self.plotorder[0]]['watershed_id'],
               'pixel':self.pixel,
@@ -429,10 +450,9 @@ def run_metadata(self, forecast=None):
               'data_location':trdir,
               'file_type':'',
               'config_file':self.config_file,
-              'proc_time':datetime.datetime.now()
-                }
+              'proc_time':datetime.datetime.now() }
 
-    snowav.database.database.insert(self, 'RunMetadata', values)
+    insert(self.connector, 'RunMetadata', values)
 
     # self.vars is defined in read_config(), and is also used in process()
     self.vid = {}
@@ -446,17 +466,17 @@ def run_metadata(self, forecast=None):
         if v == 'coldcont':
             u = 'MJ'
 
-        variables = {
-                     'run_id':runid,
+        variables = {'run_id':runid,
                      'variable':v,
                      'unit':u,
-                     'name':self.vars[v]
-                    }
+                     'name':self.vars[v]}
 
-        snowav.database.database.insert(self,'VariableUnits',variables)
+        insert(self.connector,'VariableUnits',variables)
 
         # After inserting into VariableUnits, get the existing id
-        x = self.session.query(VariableUnits).all()
+        session = make_session(self.connector)
+        x = session.query(VariableUnits).all()
+        session.close()
         self.vid[v] = copy.deepcopy(x[-1].id)
 
     # Add post-processing values
@@ -470,17 +490,17 @@ def run_metadata(self, forecast=None):
         if ('z' in v) :
             u = self.depthlbl
 
-        variables = {
-                     'run_id':runid,
+        variables = {'run_id':runid,
                      'variable':v,
                      'unit':u,
-                     'name':sum_vals[v]
-                    }
+                     'name':sum_vals[v]}
 
-        snowav.database.database.insert(self,'VariableUnits',variables)
+        insert(self.connector,'VariableUnits',variables)
 
         # After inserting into VariableUnits, get the existing id
-        x = self.session.query(VariableUnits).all()
+        session = make_session(self.connector)
+        x = session.query(VariableUnits).all()
+        session.close()
         self.vid[v] = copy.deepcopy(x[-1].id)
 
 def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
@@ -518,11 +538,39 @@ def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
             self.for_pflag = False
 
 
-def connect(sqlite, mysql, user = user, password = password, host = host,
-            port = port, logger = None):
+def connect(sqlite = None, mysql = None, plotorder = None, user = None,
+            password = None, host = None, port = None, logger = None):
     '''
     This establishes a connection with a database for results. If the specified
     sqlite database doesn't exist, it will be created.
+
+    Note: consider moving creation of mysql database to Makefile
+
+    Args
+    --------
+    sqlite : str
+        path to sqlite database
+    mysql : str
+        snowav mysql identifier
+    plotorder : list
+        list of basins
+    user : str
+        database user
+    password : str
+        database password
+    host : int
+        database host
+    port : int
+        database port
+    logger : list
+        snowav logger
+
+    Returns
+    ---------
+    basins : dict
+        dictionary of snowav basins and ids for database connection
+    logger : list
+        snowav logger
 
     '''
 
@@ -544,6 +592,7 @@ def connect(sqlite, mysql, user = user, password = password, host = host,
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
         logger.append(' Using {} for results...'.format(sqlite))
+        connector = sqlite
 
     if (mysql is not None) and (sqlite is None):
 
@@ -600,28 +649,20 @@ def connect(sqlite, mysql, user = user, password = password, host = host,
         cursor.close()
         cnx.close()
 
-    # watersheds = {'Boise River Basin':{'watershed_id':1,
-    #                                  'watershed_name':'',
-    #                                  'basins': '',
-    #                                  'shapefile':'empty'}}
-    #
-    # basins = {'Boise River Basin':{'watershed_id':1,
-    #                                'basin_id':1},
-    #           'Featherville':{'watershed_id':1,
-    #                           'basin_id':2}}
+        connector = db_engine
 
-    qry = self.session.query(Watershed)
+    qry = session.query(Watershed)
     ws = pd.read_sql(qry.statement, qry.session.connection())
 
-    qry = self.session.query(Basin)
+    qry = session.query(Basin)
     bs = pd.read_sql(qry.statement, qry.session.connection())
 
-    if self.plotorder[0] in ws['watershed_name'].values:
-        f = ws[ws['watershed_name'].values == self.plotorder[0]]
+    if plotorder[0] in ws['watershed_name'].values:
+        f = ws[ws['watershed_name'].values == plotorder[0]]
         wid = f['watershed_id'].values[0]
 
     else:
-        print('{} not found as a watershed in '.format(self.plotorder[0]) +
+        print('{} not found as a watershed in '.format(plotorder[0]) +
               'existing database, it is being added')
 
         if not ws.empty:
@@ -630,19 +671,17 @@ def connect(sqlite, mysql, user = user, password = password, host = host,
             wid = 1
 
         wval = Watershed(watershed_id = int(wid),
-                         watershed_name = self.plotorder[0])
+                         watershed_name = plotorder[0])
 
-        self.session.add(wval)
-        self.session.commit()
+        session.add(wval)
+        session.commit()
 
-    self.basins = {}
-    self.watersheds = {self.plotorder[0]:{'watershed_id':wid,
-                                     'watershed_name':'',
-                                     'basins': '',
-                                     'shapefile':''}}
+    basins = {}
+    watersheds = {plotorder[0]:{'watershed_id':wid, 'watershed_name':'',
+                                'basins': '', 'shapefile':''}}
 
     # Initialize basins within the watershed
-    for i,name in enumerate(self.plotorder):
+    for i,name in enumerate(plotorder):
 
         if name in bs['basin_name'].values:
             f = bs[bs['basin_name'].values == name]
@@ -661,13 +700,14 @@ def connect(sqlite, mysql, user = user, password = password, host = host,
                          basin_id = int(bid + i),
                          basin_name = name)
 
-            self.session.add(bval)
+            session.add(bval)
 
-        self.basins[name] = {'watershed_id':wid, 'basin_id':bid}
+        basins[name] = {'watershed_id':wid, 'basin_id':bid}
 
-    self.session.commit()
+    session.commit()
+    session.close()
 
-    return logger, database
+    return basins, connector, logger
 
 def write_csv(self):
     '''
