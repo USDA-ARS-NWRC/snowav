@@ -16,39 +16,11 @@ def cold_content(args, logger):
     Args
     ----------
     args : dict
-        dictionary of values and options for figure. See CoreConfig.ini
-            for more information. Use config option [plots]
-            print_args_dict: True to print args to the screen if desired.
+        dictionary with required inputs, see swi() figure for more information.
 
-            df: standard subbasin by elevation dataframe from
-                snowav.database.database.collect()
-                       Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
-                3000      0.008              0.008         0.000    0.000
-                ...
-            image: 2D array of cold content
-            swe: 2D array of SWE to mask cold content
-            title: figure title
-            directory: figure directory name
-            figs_path: base directory for saving figures
-            edges: array of elevation bins in min, max, step
-            plotorder: list of basins from topo.nc
-            labels: dictionary of labels to use with plotorder
-            lims: more figure specs from snowav.plotting.plotlims(plotorder)
-            masks: masks made from topo.nc and snowav_masks()
-            figsize: figure size
-            dpi: figure dpi
-            depthlbl: depth label
-            vollbl: volume label
-            dplcs: decimal places to round outputs
-            barcolors: list of colors for bar plots
-            xlims: xlims
-            elevlbl: elevation label
-            depth_clip: lower limit on image depths for plotting
-            percent_min: quantile min for image
-            percent_max: quantile max for image
+    logger : dict
+        snowav logger
 
-        logger : dict
-            snowav logger
     '''
     # print to screen for each figure if desired
     if args['print']:
@@ -170,7 +142,7 @@ def cold_content(args, logger):
     fig_name_short = 'cold_content_'
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
     if logger is not None:
-        logger.info(' saving {}{}{}.png'.format(args['figs_path'],fig_name,args['directory']))
+        logger.info(' saving {}'.format(fig_name))
     snowav.framework.figures.save_fig(fig, fig_name)
 
     return fig_name_short

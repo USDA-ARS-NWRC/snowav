@@ -1,18 +1,14 @@
 
 import os
-import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String
+from datetime import datetime
+from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, and_
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm import backref
-from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
-from sqlalchemy import and_
+from sqlalchemy.orm import backref, sessionmaker
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits
 import pandas as pd
+import snowav
 import smrf
 import awsm
-import snowav
-from snowav import database
 import numpy as np
 import copy
 import urllib.parse
@@ -73,8 +69,10 @@ def insert(connector, table, values):
     session.commit()
     session.close()
 
-def collect(connector, plotorder, start_date, end_date, value, run_name, edges, method):
+def collect(connector, plotorder, basins, start_date, end_date, value,
+            run_name, edges, method):
     '''
+
     Collect snowav database results into our standard dataframe with elevation
     rows and subbasin columns.
 
@@ -95,13 +93,13 @@ def collect(connector, plotorder, start_date, end_date, value, run_name, edges, 
     method : str
         options [end sum difference daily]
 
-
     Returns
     ----------
-    df : pandas DataFrame with subbasin columns and elevation labels
+    df : DataFrame
+        standard subbasin columns and elevation labels
 
                Extended Tuolumne  Tuolumne  Cherry Creek  Eleanor
-        3000               0.008     0.008         0.000    0.000
+        3000               0.000     0.000         0.000    0.000
         ...                  ...       ...           ...      ...
 
     '''
@@ -133,7 +131,7 @@ def collect(connector, plotorder, start_date, end_date, value, run_name, edges, 
         df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
 
     for bid in plotorder:
-        results = query(connector, start_date, end_date, run_name, bid, value)
+        results = query(connector, start_date, end_date, run_name, basins, bid, value)
 
         if results.empty:
             raise IOError('Empty results for database query in '
@@ -204,7 +202,8 @@ def collect(connector, plotorder, start_date, end_date, value, run_name, edges, 
 
     return df
 
-def query(connector, start_date, end_date, run_name, bid=None, value=None, rid=None):
+def query(connector, start_date, end_date, run_name, basins, bid = None,
+          value = None, rid = None):
     '''
     Retrieve results from snowav database.
 
@@ -227,20 +226,18 @@ def query(connector, start_date, end_date, run_name, bid=None, value=None, rid=N
 
     '''
 
+    basin_id = basins[bid]['watershed_id']
     session = make_session(connector)
 
-    # Subset query with value and bid if desired
     if (value != None) and (bid != None):
         qry = session.query(Results).join(RunMetadata).filter(and_(
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
                         (RunMetadata.run_name == run_name),
                         (Results.variable == value),
-                        (Results.basin_id == Basins.basins[bid]['basin_id'])))
+                        (Results.basin_id == basin_id)))
 
-    # Report queries here
     elif (value == None) and (bid != None) and rid != None:
-        bids = [Basins.basins[n]['basin_id'] for n in bid]
         qry = session.query(Results).join(RunMetadata).filter(and_(
                                             (Results.date_time >= start_date),
                                             (Results.date_time <= end_date),
@@ -260,14 +257,14 @@ def query(connector, start_date, end_date, run_name, bid=None, value=None, rid=N
 
     return df
 
-def delete(connector, start_date, end_date, bid, run_name):
+def delete(connector, basins, start_date, end_date, bid, run_name):
     '''
     Delete results from the database. This deletes values with basin_id == bid
     and run_name = run_name within the date range. If there are no more
     remaining records for that run_id (the entire run was deleted), then the
     RunMetadata and VariableUnits data are also removed.
 
-    Note: table deletion order matters because of database table relationships.
+    Note: deletion order matters because of table relationships.
 
     Args
     --------
@@ -285,17 +282,18 @@ def delete(connector, start_date, end_date, bid, run_name):
     '''
 
     logger = []
+    basin_id = basins[bid]['watershed_id']
     session = make_session(connector)
 
     logger.append(' Deleting records from bid={}, run_name={}, from {} '
-          'to {}'.format(bid, run_name,start_date.date(),end_date.date()))
+          'to {}'.format(bid, run_name, start_date.date(), end_date.date()))
 
     # Get the run_id
     qry = session.query(Results).join(RunMetadata).filter(and_(
                     (Results.date_time >= start_date),
                     (Results.date_time <= end_date),
                     (RunMetadata.run_name == run_name),
-                    (Results.basin_id == Basins.basins[bid]['basin_id'])))
+                    (Results.basin_id == basin_id)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
 
@@ -305,7 +303,7 @@ def delete(connector, start_date, end_date, bid, run_name):
                 (Results.date_time >= start_date),
                 (Results.date_time <= end_date),
                 (Results.run_id == int(r)),
-                (Results.basin_id == Basins.basins[bid]['basin_id']))).delete()
+                (Results.basin_id == basin_id))).delete()
 
             session.flush()
 
@@ -335,39 +333,31 @@ def delete(connector, start_date, end_date, bid, run_name):
     session.commit()
     session.close()
 
-
-        # session.close()
-        # print('WARNING: failed attempting to delete records from run_name={}, '
-        #       'bid = {}, from {} to {}'.format(run_name,bid, start_date.date(),
-        #                                        end_date.date()))
-
     return logger
 
-def create_tables(self=None, url=None):
+def create_tables(database, plotorder):
     '''
-    This function creates the Watersheds and Basins tables in the database
-    from classes defined in /snowav/database/tables.py
+    Creates database Watersheds and Basins tables. This is currently only
+    being called on database creation.
 
-    '''
+    Args
+    -------
+    database : str
+        database identifier
+    plotorder : list
 
-    if url is not None:
-        engine = create_engine(url)
-    else:
-        engine = create_engine(self.database)
+    Returns
+    --------
+    logger : list
 
-    Base.metadata.create_all(engine)
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
 
-    # if self.plotorder[0] not in Watersheds.watersheds.keys():
-    # print('{} not in database '.format(self.plotorder[0]) +
-    #       'watersheds, it is being added')
 
     qry = session.query(Watershed)
     df = pd.read_sql(qry.statement, qry.session.connection())
 
     if not df.empty:
         wid = np.max(df['watershed_id'].values) + 1
+
     else:
         wid = 1
 
@@ -376,40 +366,56 @@ def create_tables(self=None, url=None):
 
     if not df.empty:
         bid = np.max(df['basin_id'].values) + 1
+
     else:
         bid = 1
 
-    wval = Watershed(watershed_id = int(wid), watershed_name = self.plotorder[0])
+    '''
+
+    logger = []
+
+    engine = create_engine(database)
+    Base.metadata.create_all(engine)
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+
+    logger.append(' Adding watershed {} to database'.format(plotorder[0]))
+
+    # Initialize watershed
+    wval = Watershed(watershed_id = 1, watershed_name = plotorder[0])
     session.add(wval)
     session.commit()
 
     # Initialize basins within the watershed
-    for i,name in enumerate(self.plotorder):
-        print('{} not in database '.format(name) +
-              'basins, it is being added')
+    for i,name in enumerate(plotorder):
+        logger.append(' Adding basin {} to database'.format(name))
 
-        bval = Basin(watershed_id = int(wid),
-                     basin_id = int(bid + i),
+        bval = Basin(watershed_id = 1,
+                     basin_id = i + 1,
                      basin_name = name)
 
         session.add(bval)
 
     session.commit()
+    session.close()
 
-    if self is not None:
-        self.session = session
+    logger.append(' Completed initializing basins and watersheds')
 
-    print('Completed initializing basins and watersheds')
+    return logger
 
 def basins_dict():
     '''
-    Make the basins lookup dictionary. This will try to
+    Make the basins lookup dictionary.
+
     '''
 
-def run_metadata(self, forecast=None):
+def run_metadata(self, run_name):
     '''
-    Create run metadata entry for each snowav run, using database session
-    created in read_config().
+    Create database RunMetadata for each snowav run.
+
+    Args
+    ------
+    run_name : str
 
     '''
 
@@ -420,27 +426,19 @@ def run_metadata(self, forecast=None):
 
     # Increase each runid by 1
     if not df.run_id.values.size:
-        runid = 1
-    else:
-        runid = int(df['run_id'].max() + 1)
-
-    if forecast is not None:
-        run_name = self.for_run_name
-        self.for_run_id = runid
+        self.run_id = 1
 
     else:
-        run_name = self.run_name
-        self.run_id = runid
+        self.run_id = int(df['run_id'].max() + 1)
 
-    # From RunMetadata table, snowav/database/tables.py
-    rdir_strlim = 1200
+    # in most cases it's not practical to save all run_dirs
     trdir = ','.join(self.run_dirs)
-    if len(trdir) > rdir_strlim:
+    if len(trdir) > 1200:
         trdir = self.run_dirs[0]
 
-    values = {'run_id':runid,
+    values = {'run_id':self.run_id,
               'run_name':run_name,
-              'watershed_id':Watersheds.watersheds[self.plotorder[0]]['watershed_id'],
+              'watershed_id':self.basins[self.plotorder[0]]['watershed_id'],
               'pixel':self.pixel,
               'description':'',
               'smrf_version':'smrf'+ smrf.__version__,
@@ -450,11 +448,10 @@ def run_metadata(self, forecast=None):
               'data_location':trdir,
               'file_type':'',
               'config_file':self.config_file,
-              'proc_time':datetime.datetime.now() }
+              'proc_time':datetime.now() }
 
     insert(self.connector, 'RunMetadata', values)
 
-    # self.vars is defined in read_config(), and is also used in process()
     self.vid = {}
     for v in self.vars.keys():
         if (('vol' in v) or ('avail' in v)):
@@ -466,7 +463,7 @@ def run_metadata(self, forecast=None):
         if v == 'coldcont':
             u = 'MJ'
 
-        variables = {'run_id':runid,
+        variables = {'run_id':self.run_id,
                      'variable':v,
                      'unit':u,
                      'name':self.vars[v]}
@@ -475,9 +472,10 @@ def run_metadata(self, forecast=None):
 
         # After inserting into VariableUnits, get the existing id
         session = make_session(self.connector)
-        x = session.query(VariableUnits).all()
+        qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
         session.close()
-        self.vid[v] = copy.deepcopy(x[-1].id)
+        df = pd.read_sql(qry.statement, qry.session.connection())
+        self.vid[v] = df['id'].values[0]
 
     # Add post-processing values
     sum_vals = {'swi_vol_wy':'surface water input volume, water year total',
@@ -490,18 +488,19 @@ def run_metadata(self, forecast=None):
         if ('z' in v) :
             u = self.depthlbl
 
-        variables = {'run_id':runid,
+        variables = {'run_id':self.run_id,
                      'variable':v,
                      'unit':u,
                      'name':sum_vals[v]}
 
         insert(self.connector,'VariableUnits',variables)
 
-        # After inserting into VariableUnits, get the existing id
         session = make_session(self.connector)
-        x = session.query(VariableUnits).all()
+        qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
         session.close()
-        self.vid[v] = copy.deepcopy(x[-1].id)
+        df = pd.read_sql(qry.statement, qry.session.connection())
+        self.vid[v] = df['id'].values[0]
+
 
 def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
     '''
@@ -517,7 +516,7 @@ def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
         value: value to query (i.e. 'swi_z')
 
     '''
-
+    print('check fields, need to replace Basins!')
     qry = self.session.query(Results).join(RunMetadata).filter(and_(
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
@@ -539,7 +538,7 @@ def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
 
 
 def connect(sqlite = None, mysql = None, plotorder = None, user = None,
-            password = None, host = None, port = None, logger = None):
+            password = None, host = None, port = None):
     '''
     This establishes a connection with a database for results. If the specified
     sqlite database doesn't exist, it will be created.
@@ -562,20 +561,16 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
         database host
     port : int
         database port
-    logger : list
-        snowav logger
 
     Returns
     ---------
     basins : dict
         dictionary of snowav basins and ids for database connection
     logger : list
-        snowav logger
 
     '''
 
-    if logger is None:
-        logger = []
+    logger = []
 
     if sqlite is not None:
         fp = urllib.parse.urlparse(sqlite)
@@ -583,7 +578,8 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
         if (not os.path.isfile(fp.path)):
             database = sqlite
             logger.append(' Creating {} for results'.format(database))
-            create_tables(self)
+            log = create_tables(database, plotorder)
+            logger.append(log)
             engine = create_engine(sqlite)
 
         else:
@@ -623,7 +619,8 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
                   ' does not exist, it is being created...')
             query = ("CREATE DATABASE {};".format(mysql))
             cursor.execute(query)
-            create_tables(self, url = db_engine)
+            log = create_tables(db_engine, plotorder)
+            logger.append(log)
 
         else:
             query = ("SHOW DATABASES")
@@ -634,7 +631,8 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
             # This hasn't been tested with new docker mysql instance, could be
             # a point of failure...
             if tbls is None:
-                create_tables(self, url = db_engine)
+                log = create_tables(db_engine, plotorder)
+                logger.append(log)
 
             try:
                 engine = create_engine(db_engine)
@@ -662,8 +660,8 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
         wid = f['watershed_id'].values[0]
 
     else:
-        print('{} not found as a watershed in '.format(plotorder[0]) +
-              'existing database, it is being added')
+        logger.append(' {} not found as a watershed in '.format(plotorder[0]) +
+                      'existing database, it is being added')
 
         if not ws.empty:
             wid = np.max(ws['watershed_id'].values) + 1
@@ -688,8 +686,8 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
             bid = f['basin_id'].values[0]
 
         else:
-            print('{} not found as a basin in '.format(name) +
-                  'existing database, it is being added')
+            logger.append(' {} not found as a basin in '.format(name) +
+                          'existing database, it is being added')
 
             if not bs.empty:
                 bid = np.max(bs['basin_id'].values) + 1
@@ -724,7 +722,7 @@ def write_csv(self):
 
         # For all subbasins
         for bid in self.plotorder:
-            r = database.database.query(self, datetime.datetime(self.wy-1,10,1),
+            r = database.database.query(self, datetime(self.wy-1,10,1),
                                         self.end_date, self.run_name, bid, var)
 
             # For now, just write out totals

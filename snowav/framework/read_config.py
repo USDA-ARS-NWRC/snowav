@@ -66,7 +66,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.run_name = ucfg.cfg['snowav']['run_name']
     self.plotorder = ucfg.cfg['snowav']['masks']
 
-    if type(self.plotorder) != list:
+    if self.plotorder is not None and type(self.plotorder) != list:
         self.plotorder = [self.plotorder]
 
     self.plotlabels = ucfg.cfg['snowav']['plotlabels']
@@ -162,8 +162,8 @@ def read_config(self, external_logger=None, awsm=None):
                         'contains an invalid base path for the sqlite database')
 
     if self.mysql is not None and sqlite is not None:
-        raise Exception('Config [databasee] section contains both mysql and ' +
-                        'sqlite entries, please pick one...')
+        raise Exception('Config option [database] section contains both mysql '
+                        'and sqlite entries, pick one...')
 
     ####################################################
     #           validate                               #
@@ -177,9 +177,6 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #          plots                                   #
     ####################################################
-    self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
-    self.figsize = (ucfg.cfg['plots']['fig_length'],
-                    ucfg.cfg['plots']['fig_height'])
     self.dpi = ucfg.cfg['plots']['dpi']
     self.depth_clip = ucfg.cfg['plots']['depth_clip']
     self.percent_min = ucfg.cfg['plots']['percent_min']
@@ -187,9 +184,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.annot_x = ucfg.cfg['plots']['annot_x']
     self.annot_y = ucfg.cfg['plots']['annot_y']
     self.subs_fig = ucfg.cfg['plots']['subs_fig']
-    self.flow_file = ucfg.cfg['plots']['flow_file']
     self.density_flag = ucfg.cfg['plots']['density']
-    self.inflow_flag = ucfg.cfg['plots']['inflow']
     self.swi_flag = ucfg.cfg['plots']['swi']
     self.current_image_flag = ucfg.cfg['plots']['current_image']
     self.image_change_flag = ucfg.cfg['plots']['image_change']
@@ -205,46 +200,39 @@ def read_config(self, external_logger=None, awsm=None):
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
-
     self.update_file = ucfg.cfg['plots']['update_file']
     self.update_numbers = ucfg.cfg['plots']['update_numbers']
-
     self.plot_runs = ucfg.cfg['plots']['plot_runs']
     self.plot_labels = ucfg.cfg['plots']['plot_labels']
     self.plot_variables = ucfg.cfg['plots']['plot_variables']
+    self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
+    self.figsize = (ucfg.cfg['plots']['fig_length'],
+                    ucfg.cfg['plots']['fig_height'])
 
-    if (self.compare_runs_flag is True) and (self.plot_runs is None):
+    if self.compare_runs_flag and self.plot_runs is None:
         self.tmp_log.append(' No runs listed in config option [plots] '
                             'plot_runs, so being set to False')
         self.compare_runs_flag = False
 
     if self.update_file is not None:
         self.flt_flag = True
+
     else:
         self.flt_flag = False
 
-    if ((self.precip_validate_flag) is True and
-       (self.val_client is None) or
-       (self.pre_val_stns is None) or
-       (self.pre_val_lbls is None)):
+    if (self.precip_validate_flag and (self.val_client is None) or
+       (self.pre_val_stns is None) or (self.pre_val_lbls is None)):
         self.tmp_log.append(' Config option [plots] precip_validate is being '
-                            'set to False, check CoreConfig.ini for details '
-                            'and requirements')
+                            'set to False, see CoreConfig.ini for details')
 
         self.precip_validate_flag = False
 
-    if ((self.stn_validate_flag) is True and
-       (self.val_client is None) or
-       (self.val_stns is None) or
-       (self.val_lbls is None)):
+    if (self.stn_validate_flag and (self.val_client is None) or
+       (self.val_stns is None) or (self.val_lbls is None)):
         self.tmp_log.append(' Config option [plots] stn_validate is being '
-                            'set to False, check CoreConfig.ini for details '
-                            'and requirements')
+                            'set to False, see CoreConfig.ini for details')
 
         self.stn_validate_flag = False
-
-    # if self.stn_validate_flag:
-    # check that clients, etc., are there before getting all the way to figure
 
     ####################################################
     #          report                                  #
@@ -258,17 +246,42 @@ def read_config(self, external_logger=None, awsm=None):
     self.tex_file = ucfg.cfg['report']['tex_file']
     self.summary_file = ucfg.cfg['report']['summary_file']
     self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
-    self.swi_flag = ucfg.cfg['report']['swi']
-    self.current_image_flag = ucfg.cfg['report']['current_image']
-    self.image_change_flag = ucfg.cfg['report']['image_change']
-    self.cold_content_flag = ucfg.cfg['report']['cold_content']
-    self.swe_volume_flag = ucfg.cfg['report']['swe_volume']
-    self.basin_total_flag = ucfg.cfg['report']['basin_total']
-    self.pixel_swe_flag = ucfg.cfg['report']['pixel_swe']
-    self.stn_validate_flag = ucfg.cfg['report']['stn_validate']
-    self.precip_validate_flag = ucfg.cfg['report']['precip_validate']
-    self.compare_runs_flag = ucfg.cfg['report']['compare_runs']
-    self.precip_depth_flag = ucfg.cfg['report']['precip_depth']
+
+    self.rep_swi_flag = ucfg.cfg['report']['swi']
+    if not self.swi_flag:
+        self.rep_swi_flag = False
+
+    self.rep_current_image_flag = ucfg.cfg['report']['current_image']
+    if not self.current_image_flag:
+        self.rep_current_image_flag = False
+
+    self.rep_image_change_flag = ucfg.cfg['report']['image_change']
+    if not self.image_change_flag:
+        self.rep_image_change_flag = False
+
+    self.rep_cold_content_flag = ucfg.cfg['report']['cold_content']
+    if not self.cold_content_flag:
+        self.rep_cold_content_flag = False
+
+    self.rep_swe_volume_flag = ucfg.cfg['report']['swe_volume']
+    if not self.swe_volume_flag:
+        self.rep_swe_volume_flag = False
+
+    self.rep_basin_total_flag = ucfg.cfg['report']['basin_total']
+    if not self.basin_total_flag:
+        self.rep_basin_total_flag = False
+
+    self.rep_stn_validate_flag = ucfg.cfg['report']['stn_validate']
+    if not self.stn_validate_flag:
+        self.rep_stn_validate_flag = False
+
+    self.rep_compare_runs_flag = ucfg.cfg['report']['compare_runs']
+    if not self.compare_runs_flag:
+        self.rep_compare_runs_flag = False
+
+    self.rep_precip_depth_flag = ucfg.cfg['report']['precip_depth']
+    if not self.precip_depth_flag:
+        self.rep_precip_depth_flag = False
 
     # check paths to see if they need default snowav path
     if self.rep_path is None:

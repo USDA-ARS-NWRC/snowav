@@ -1,91 +1,103 @@
 
 import numpy as np
-from spatialnc import ipw
 import os
 import copy
 import pandas as pd
-import datetime
+from datetime import datetime, timedelta
 import logging
 import coloredlogs
 import netCDF4 as nc
 from snowav.database.package_results import package, post_process
 from snowav.database.database import delete
+from snowav.utils.utilities import precip
 import warnings
-from datetime import timedelta
 
-def process(self, forecast=None):
+def process(args):
     '''
-    This function processes and summarizes iSnobal outputs.
+    Process AWSM model results made in awsm_daily format, remove any existing
+    database results with the same run_name and date, and place results on
+    database. See README.md and CoreConfig.ini for more information.
 
-    It loops over each day in the specified directory and:
-        - sums total precip and rain from the ipw ppt ppt files
-        - loops over each daily_outputs ('swe_z', 'swe_vol', etc)
-        - loops over sub-basins
-        - loops over elevation band, and calculates volumes and mean depths
-            for each daily_outputs value in that elevation band
-        - once all elevation bands for each subbasin have been calculated,
-            'total' fields (either mean depth for the subbasin or total volume
-            for the subbasin) are calculated
-        - finally, that is sent to the database
+    Args
+    ------
+    args : dict
 
-        wy
-        outputs
-        ixs
-        ixe
-        rundirs_dict
-        edges
-        masks
-        nrows
-        ncols
-        vars
-        ixd
-        conversion_factor
-        depth_factor
-        wy
+    includes the following fields:
+        outputs : dict
+            from outputs()
+        ixs : int
+            starting index
+        ixe : int
+            ending index
+        rundirs_dict : dict
+        edges : array
+        masks : dict
+            from masks()
+        nrows : int
+        ncols : int
+        plotorder : list
+        connector : str
+        basins : dict
+        run_name : str
+        conversion_factor : float
+        depth_factor : float
+        wy : int
+        vars : dict
+            from parse()
+        ixd : array
+            from parse()
+        run_id : int
+        vollbl : str
+        depthlbl : str
+        vid : int
+            variable id
+        connector : str
+
+    Returns
+    -------
+    precip_total : array
+    rain_total : array
+    log : list
+    density : array
+        currently the last day of processing
+    flags : dict
 
     '''
 
-    # Suppress warnings - empty slices
     pd.options.mode.chained_assignment = None
     warnings.filterwarnings('ignore')
 
-    if forecast is not None:
-        outputs = self.for_outputs
-        ixs = self.for_ixs
-        ixe = self.for_ixe
-        rundirs_dict = self.for_rundirs_dict
-        forecast = forecast
-
-    else:
-        outputs = self.outputs
-        ixs = self.ixs
-        ixe = self.ixe
-        rundirs_dict = self.rundirs_dict
-
-    # based on an average of 60 W/m2 from TL paper
+    log = []
     cclimit = -5*1000*1000
-
-    # Daily, by elevation
-    dz = pd.DataFrame(0, index = self.edges, columns = self.masks.keys())
-
-    adj = 0
     t = 0
-    self.precip_total = np.zeros((self.nrows,self.ncols))
-    self.rain_total = np.zeros((self.nrows,self.ncols))
+    outputs = args['outputs']
+    ixs = args['ixs']
+    ixe = args['ixe']
+    rundirs_dict = args['rundirs_dict']
+    edges = args['edges']
+    masks = args['masks']
+    ixd = args['ixd']
+    plotorder = args['plotorder']
+    run_name = args['run_name']
+    fc = args['conversion_factor']
+    fd = args['depth_factor']
+    flags = {}
+    flags['precip'] = True
+    lbls = {}
+    lbls['depthlbl'] = args['depthlbl']
+    lbls['vollbl'] = args['vollbl']
+
+    dz = pd.DataFrame(0, index = edges, columns = masks.keys())
+    precip_total = np.zeros((args['nrows'],args['ncols']))
+    rain_total = np.zeros((args['nrows'],args['ncols']))
 
     for iters, out_date in enumerate(outputs['dates']):
 
-        # delete anything currently on the database for same run and date
-        for bid in self.plotorder:
-            logger = delete(self.connector, out_date, out_date, bid, self.run_name)
-            self._logger.info(logger)
-
-        # end processing at self.ixe
-        if iters < ixs:
-            continue
-
-        if iters > ixe:
-            break
+        # delete anything on the database with the same run_name and date
+        for bid in plotorder:
+            out = delete(args['connector'], args['basins'], out_date, out_date,
+                         bid, args['run_name'])
+            log.append(out[0])
 
         # Initialize output dataframes for every day
         daily_outputs = {'swe_vol':dz.copy(),
@@ -102,77 +114,52 @@ def process(self, forecast=None):
                          'evap_z':dz.copy(),
                          'coldcont':dz.copy()}
 
-        self.density = {}
-        for name in self.masks:
-            self.density[name] = {}
+        density = {}
+        for name in masks:
+            density[name] = {}
 
         # Get daily rain from hourly input data
-        hr = int(outputs['time'][iters])
-        sf = rundirs_dict[hr].replace('runs','data')
-        sf = sf.replace('run','data')
-        # ppt_path = sf.split('output')[0] + '/smrfOutputs/precip.nc'
-        ppt_path = sf + '/smrfOutputs/precip.nc'
-        percent_snow_path = ppt_path.replace('precip','percent_snow')
+        flag, path, pre, rain = precip(rundirs_dict[outputs['time'][iters]],
+                                       '/smrfOutputs/precip.nc')
 
-        precip = np.zeros((self.nrows,self.ncols))
-        rain = np.zeros((self.nrows,self.ncols))
+        if flag:
+            precip_total = precip_total + pre
+            rain_total = rain_total + rain
 
-        if os.path.isfile(ppt_path):
-            ppt = nc.Dataset(ppt_path, 'r')
-            percent_snow = nc.Dataset(percent_snow_path, 'r')
-
-            # For the wy2019 daily runs, precip.nc always has an extra hour...
-            if len(ppt.variables['precip'][:]) > 24:
-                nb = 24
-            else:
-                nb = len(ppt.variables['precip'][:])
-
-            for nb in range(0,nb):
-                # print(ppt_path,nb)
-                pre = ppt['precip'][nb]
-                ps = percent_snow['percent_snow'][nb]
-
-                rain = rain + np.multiply(pre,(1-ps))
-                precip = precip + copy.deepcopy(pre)
-
-            ppt.close()
-            percent_snow.close()
-
-        # self.precip_total = np.nansum(np.dstack((self.precip_total,copy.deepcopy(precip))),2)
-        # self.rain_total = np.nansum(np.dstack((self.rain_total,copy.deepcopy(rain))),2)
-        self.precip_total = self.precip_total + copy.deepcopy(precip)
-        self.rain_total = self.rain_total + copy.deepcopy(rain)
+        else:
+            log.append(' Expected to find {} but it is not a valid file, '
+                       'precip totals will be zero and precip figures '
+                       'will not be generated'.format(path))
 
         # Get a snow-free mask ready
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])
 
         # Loop over outputs (depths are copied, volumes are calculated)
-        for k in self.vars.keys():
+        for k in args['vars'].keys():
 
             # Mask by subbasin
-            for name in self.masks:
-                mask = copy.deepcopy(self.masks[name]['mask'])
+            for name in masks:
+                mask = copy.deepcopy(masks[name]['mask'])
                 mask = mask.astype(float)
-                # self.density[name] = {}
 
                 mask[mask < 1] = np.nan
-                elevbin = np.multiply(self.ixd,mask)
+                elevbin = ixd*mask
 
                 # If the key is something we've already calculated (i.e., not
                 # volume), get the masked subbasin output, otherwise it will be
                 # calculated below
                 if k in outputs.keys():
-                    mask_out = np.multiply(outputs[k][iters],mask)
+                    mask_out = outputs[k][iters]*mask
 
                 # make a subbasin, by elevation, snow-free mask
-                swe_mask_sub = np.multiply(copy.deepcopy(swe),mask)
-                cold_sub = np.multiply(cold,mask)
+                swe_mask_sub = copy.deepcopy(swe)*mask
+                cold_sub = cold*mask
 
                 # Now mask the subbasins by elevation band
-                for n in np.arange(0,len(self.edges)):
+                for n in np.arange(0,len(edges)):
                     ind = elevbin == n
-                    b = self.edges[n]
+                    b = edges[n]
 
                     # index for pixels with SWE, in subbasin, in elevation band,
                     # needed for mean values
@@ -180,7 +167,7 @@ def process(self, forecast=None):
 
                     # Assign values
                     if k == 'swe_z':
-                        mask_out = np.multiply(outputs['swe_z'][iters],mask)
+                        mask_out = outputs['swe_z'][iters]*mask
                         ccb = cold_sub[ind]
                         cind = ccb > cclimit
 
@@ -189,17 +176,10 @@ def process(self, forecast=None):
                         if swe_bin.size:
                             r = np.nansum(swe_bin[cind])
                             ru = np.nansum(swe_bin[~cind])
-
-                            daily_outputs['swe_unavail'].loc[b,name] = (
-                                        np.multiply(ru,self.conversion_factor) )
-                            daily_outputs['swe_avail'].loc[b,name] = (
-                                        np.multiply(r,self.conversion_factor) )
-                            daily_outputs['swe_z'].loc[b,name] = (
-                                        np.multiply(np.nanmean(swe_bin),
-                                                    self.depth_factor) )
-                            daily_outputs['swe_vol'].loc[b,name] = (
-                                        np.multiply(np.nansum(swe_bin),
-                                                    self.conversion_factor) )
+                            daily_outputs['swe_unavail'].loc[b,name] = ru*fc
+                            daily_outputs['swe_avail'].loc[b,name] = r*fc
+                            daily_outputs['swe_z'].loc[b,name] = np.nanmean(swe_bin)*fd
+                            daily_outputs['swe_vol'].loc[b,name] = np.nansum(swe_bin)*fc
 
                         else:
                             daily_outputs['swe_unavail'].loc[b,name] = np.nan
@@ -211,67 +191,57 @@ def process(self, forecast=None):
                         # Not masked out by pixels with snow
                         mask_out = np.multiply(outputs['swi_z'][iters],mask)
                         r = np.nansum(mask_out[ind])
-                        daily_outputs['swi_z'].loc[b,name] = (
-                                        np.multiply(np.nanmean(mask_out[ind]),
-                                                    self.depth_factor) )
-                        daily_outputs['swi_vol'].loc[b,name] = (
-                                        np.multiply(r,self.conversion_factor) )
+                        daily_outputs['swi_z'].loc[b,name] = np.nanmean(mask_out[ind])*fd
+                        daily_outputs['swi_vol'].loc[b,name] = r*fc
 
                     elif k in ['evap_z','depth']:
                         # masked out by pixels with snow -> [ix]
                         r = np.nanmean(mask_out[ind])
 
                         if k == 'depth':
-                            daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,self.depth_factor*1000) )
+                            daily_outputs[k].loc[b,name] = r*fd*1000
 
                         else:
-                            daily_outputs[k].loc[b,name] = (
-                                            np.multiply(r,self.depth_factor) )
+                            daily_outputs[k].loc[b,name] = r*fd
 
                     elif k in ['coldcont','density']:
                         # masked out by pixels with snow -> [ix]
                         daily_outputs[k].loc[b,name] = np.nanmean(mask_out[ind][ix])
-
-                        # print(name,n)
-                        self.density[name][self.edges[n]] = mask_out[ind][ix]
+                        density[name][edges[n]] = mask_out[ind][ix]
 
                     elif k == 'precip_z':
                         # not masked out by pixels with snow
                         nanmask = mask == 0
-                        mask_out = np.multiply(precip,mask)
+                        mask_out = pre*mask
                         mask_out[nanmask] = np.nan
                         r = np.nanmean(mask_out[ind])
                         rv = np.nansum(mask_out[ind])
 
-                        daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,self.depth_factor) )
-                        daily_outputs['precip_vol'].loc[b,name] = (
-                                        np.multiply(rv,self.conversion_factor) )
+                        daily_outputs[k].loc[b,name] = r*fd
+                        daily_outputs['precip_vol'].loc[b,name] = rv*fc
 
                     elif k == 'rain_z':
                         # not masked out by pixels with snow
                         nanmask = mask == 0
-                        mask_out = np.multiply(rain,mask)
+                        mask_out = rain*mask
                         mask_out[nanmask] = np.nan
 
                         r = np.nanmean(mask_out[ind])
-                        daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,self.depth_factor) )
+                        daily_outputs[k].loc[b,name] = r*fd
 
                 # Add basin total mean/volume field once all elevations are done
                 isub = swe_mask_sub > 0
 
                 if k in ['evap_z','coldcont']:
                     # Mask by snow-free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), self.depth_factor)
+                    out = outputs[k][iters]*mask
+                    total = np.nanmean(out)*fd
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'swe_z':
                     # calc swe_z derived values
                     out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), self.depth_factor)
+                    total = np.multiply(np.nanmean(out), fd)
 
                     s = np.nansum(daily_outputs['swe_vol'][name].values)
                     s1 = np.nansum(daily_outputs['swe_avail'][name].values)
@@ -284,20 +254,20 @@ def process(self, forecast=None):
 
                 if k == 'depth':
                     # Mask by snow-free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), self.depth_factor*1000)
+                    out = outputs[k][iters]*mask
+                    total = np.nanmean(out)*fd*1000
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'density':
                     # Mask by snow-free
-                    out = np.multiply(outputs[k][iters],mask)
+                    out = outputs[k][iters]*mask
                     total = np.nanmean(out[isub])
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                 if k == 'swi_z':
                     # Do not mask by snow free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), self.depth_factor)
+                    out = outputs[k][iters]*mask
+                    total = np.nanmean(out)*fd
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                     s = np.nansum(daily_outputs['swi_vol'][name].values)
@@ -305,9 +275,9 @@ def process(self, forecast=None):
 
                 if k == 'precip_z':
                     nanmask = mask == 0
-                    out = np.multiply(precip,mask)
+                    out = pre*mask
                     out[nanmask] = np.nan
-                    total = np.multiply(np.nanmean(out), self.depth_factor)
+                    total = np.nanmean(out)*fd
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
                     s = np.nansum(daily_outputs['precip_vol'][name].values)
@@ -315,52 +285,28 @@ def process(self, forecast=None):
 
                 if k == 'rain_z':
                     nanmask = mask == 0
-                    out = np.multiply(rain,mask)
+                    out = rain*mask
                     out[nanmask] = np.nan
 
-                    total = np.multiply(np.nanmean(out), self.depth_factor)
+                    total = np.nanmean(out)*fd
                     daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
             # Send daily results to database
             df = daily_outputs[k].copy()
             df = df.round(decimals = 3)
-
-            package(self, df, k, outputs['dates'][iters], forecast = forecast)
+            package(args['connector'], lbls, args['basins'], df, args['run_id'],
+                    args['vid'], k, out_date, run_name)
 
         # Add water year totals for swi and evap
-        if ((out_date.date() != datetime.datetime(self.wy-1,10,1).date()) and
-            (forecast is None)):
-            post_process(self, out_date)
+        # if (out_date.date() != datetime(args['wy']-1,10,1).date()):
+        #     post_process(self, out_date)
 
-        if ((out_date.date() != datetime.datetime(self.wy-1,10,1).date()) and
-            (forecast is None)):
-            post_process(self, out_date)
+        hr = int(outputs['time'][iters])
+        log.append(' processed: {}, elapsed hours: {}, date: {}'.format(
+                   rundirs_dict[outputs['time'][iters]],
+                   str(hr - t), out_date.date().strftime("%Y-%-m-%-d")))
 
-        # It's nice to see where we are...
-        if forecast is None:
-            prt = self.rundirs_dict[hr]
-
-        else:
-            prt = self.for_rundirs_dict[hr]
-
-        debug = ' processed: {}, elapsed hours: {}, date: {}'.format(
-                                        prt,
-                                        str(hr - t),
-                                        out_date.date().strftime("%Y-%-m-%-d"))
-
-        self._logger.debug(debug)
-
-        # Step this along so that we can see how many hours between outputs
+        # hours between outputs
         t = int(hr)
 
-    # Save images
-    swiz = np.zeros((self.nrows,self.ncols))
-    for n in range(0,len(outputs['swi_z'])):
-        swiz = swiz + outputs['swi_z'][n]
-
-    # self.end_date = self.end_date + timedelta(hours=1)
-
-    # np.save('{}{}'.format(self.figs_path,'swi_z.npy'),swiz)
-    # np.save('{}{}'.format(self.figs_path,'precip.npy'),self.precip_total)
-    # np.save('{}{}'.format(self.figs_path,'rain.npy'),self.rain_total)
-    # np.save('{}{}'.format(self.figs_path,'swe_z.npy'),outputs['swe_z'][self.ixe])
+    return flags, log, precip_total, rain_total, density

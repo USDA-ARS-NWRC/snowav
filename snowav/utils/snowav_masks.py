@@ -1,14 +1,16 @@
 
+
 import netCDF4 as nc
+import numpy as np
 import os
 
-def snowav_masks(dempath, plotorder = None, plotlabels = None, logger = None):
+def masks(dempath, plotorder = None, plotlabels = None):
     '''
     Load dem, build snowav masks dictionary from topo.nc file. See
     CoreConfig.ini for more information on some config options and behavior.
 
     Args
-    -----------
+    ---------
     dempath : str
         Path to topo.nc file, which is intended to be built by basin_setup
         package.
@@ -17,29 +19,17 @@ def snowav_masks(dempath, plotorder = None, plotlabels = None, logger = None):
         in dempath.
     plotlabels : list
         Optional, default is mask_names.
-    logger : list
-        Optional, temporary snowav logger.
 
     Returns
-    -----------
+    ---------
     out : dict
-        dictionary keys are:
-            dem: topo.nc dem
-            nrows: number of rows in dem
-            ncols: number of columns in dem
-            masks: snowav required dictionary of masks found in topo.nc file
-            plotorder: final version plotorder
-            labels: dictionary with with plotorder[plotlabels] for optional
-                different figure labels
 
     '''
 
     out = {}
     masks = {}
     labels = {}
-
-    if logger is None:
-        logger = []
+    logger = []
 
     if not os.path.isfile(dempath):
         raise Exception('dempath {} not a valid file'.format(dempath))
@@ -63,15 +53,13 @@ def snowav_masks(dempath, plotorder = None, plotlabels = None, logger = None):
 
     else:
         if len(plotorder) > len(mask_names):
-            raise Exception(' Given [snowav] mask: {} '.format(plotorder) +
-                            'to use with {}, but found '.format(dempath) +
-                            '{}'.format(mask_names))
+            raise Exception(' Config option [snowav] mask: {} for {}, but '
+                            'found {}'.format(plotorder, dempath, mask_names))
 
         for lbl in plotorder:
             if (lbl not in mask_names) and (lbl != 'Cherry Creek'):
-                raise Exception(' Given [snowav] masks: {} '.format(lbl) +
-                                'to use with {}, but found '.format(dempath) +
-                                '{}'.format(mask_names))
+                raise Exception(' Config option [snowav] mask: {} for {}, but '
+                                'found {}'.format(plotorder, dempath, mask_names))
 
     if plotlabels is None:
         for name in plotorder:
@@ -79,10 +67,9 @@ def snowav_masks(dempath, plotorder = None, plotlabels = None, logger = None):
 
     else:
         if len(plotlabels) != len(plotorder):
-            logger.append(' Given [snowav] plotlabels ' +
-                          '{} not equal to '.format(plotlabels) +
-                          '{}, setting plotlabels '.format(plotorder) +
-                          'to defaults')
+            logger.append(' Config option [snowav] plotlabels {} not equal to '
+                          '{}, setting plotlabels to '
+                          'defaults'.format(plotlabels, plotorder))
             for name in plotorder:
                 labels[name] = name
 
@@ -121,3 +108,60 @@ def snowav_masks(dempath, plotorder = None, plotlabels = None, logger = None):
     out['logger'] = logger
 
     return out
+
+def precip(hr, rundirs_dict, path):
+    '''
+    Get daily total precip and percent rain from hourly smrf outputs in
+    expected awsm_daily format.
+
+    Args
+    -----
+    hr : int
+    rundirs_dict : dict
+    path : str
+
+    Returns
+    -------
+    flag : bool
+    path : str
+    rain : array
+    precip : array
+
+    '''
+
+    sf = rundirs_dict[hr].replace('runs','data')
+    sf = sf.replace('run','data')
+    ppt_path = os.path.joint(sf,path)
+    percent_snow_path = ppt_path.replace('precip','percent_snow')
+
+    # precip = np.zeros((args['nrows'],args['ncols']))
+    # rain = np.zeros((args['nrows'],args['ncols']))
+
+    if os.path.isfile(ppt_path):
+        ppt = nc.Dataset(ppt_path, 'r')
+        percent_snow = nc.Dataset(percent_snow_path, 'r')
+
+        # For the wy2019 daily runs, precip.nc always has an extra hour, but
+        # in some WRF forecast runs there are fewer than 24...
+        if len(ppt.variables['precip'][:]) > 24:
+            nb = 24
+
+        else:
+            nb = len(ppt.variables['precip'][:])
+
+        for nb in range(0,nb):
+            pre = ppt['precip'][nb]
+            ps = percent_snow['percent_snow'][nb]
+
+            if nb == 0:
+                rain = np.multiply(pre,(1-ps))
+                precip = copy.deepcopy(pre)
+
+            else:
+                rain = rain + np.multiply(pre,(1-ps))
+                precip = precip + copy.deepcopy(pre)
+
+        ppt.close()
+        percent_snow.close()
+
+    return flag, ppt_path, rain, precip

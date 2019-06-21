@@ -1,18 +1,17 @@
 
-
 import sys
 import snowav
 import argparse
 import os
 from snowav.framework.framework import snowav
+from snowav.framework import framework
 
 def run():
 
     parser = argparse.ArgumentParser(description='Process AWSM model results, '
                                      'put results on database, create figures, '
-                                     'and make pdf report. SNOWAV expects '
-                                     'results in awsm_daily format and topo.nc '
-                                     'files created with basin_setup.')
+                                     'and make pdf report. See CoreConfig.ini '
+                                     'and README.md for more information.')
 
     parser.add_argument('-f', '--config_file', dest='config_file', type=str,
                         help='Path to snowav configuration file.')

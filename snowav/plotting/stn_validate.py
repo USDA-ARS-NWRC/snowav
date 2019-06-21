@@ -38,6 +38,8 @@ def stn_validate(snow):
     meta_sno.index = meta_sno['primary_id']
     meta_sno = meta_sno[~meta_sno.index.duplicated(keep='first')]
 
+    # CHECK IF EMPTY, SET FLAG TO FALSE IF SO
+
     swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
                             snow.end_date,freq='D'),
                             columns = stns)

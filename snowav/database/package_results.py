@@ -1,65 +1,62 @@
 
 import numpy as np
 import pandas as pd
-import datetime
-import snowav
-from snowav import database
+from snowav.database.database import insert, query
 from datetime import datetime
 from snowav.database.tables import Basins
 from snowav.database.tables import RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 
-def package(self, df, output, dtime, forecast=None):
+def package(connector, lbls, basins, df, run_id, vid, output, dtime, run_name):
     '''
-    This function sends process() results to the database.
+    Put process() results on the database.
 
     Args
-        df: results DataFrame
-        output: output variable ('swe_z')
-        dtime: datetime
+    ------
+    connector : str
+        database connector
+    lbls : dict
+    basins : dict
+    run_id : int
+    vid : int
+        variable id
+    df : DataFrame
+    output : str
+        output variable (i.e. 'swe_z')
+    dtime: datetime
 
     '''
 
-
-    if forecast is not None:
-        runid = self.for_run_id
-
-    else:
-        runid = self.run_id
-
-    # Make labels
     if ('z' in output) or ('depth' in output):
-        lbl = self.depthlbl
+        lbl = lbls['depthlbl']
     if ('vol' in output) or ('avail' in output):
-        lbl = self.vollbl
+        lbl = lbls['vollbl']
     if output == 'density':
         lbl = 'kg/m^3'
     if output == 'coldcont':
         lbl = 'MJ'
 
-    # By sub basin
-    for var in df:
+    for basin in df:
 
-        # By elevation band
-        for iters,val in enumerate(df[var].values):
+        for iters, val in enumerate(df[basin].values):
             if np.isnan(val):
                 val = None
+
             else:
                 val = float(val)
 
-            values = {'basin_id': Basins.basins[var]['basin_id'],
-                      'run_id':runid,
+            values = {'basin_id': basins[basin]['basin_id'],
+                      'run_id': run_id,
                       'date_time': dtime,
                       'variable': output,
-                      'variable_id': self.vid[output],
+                      'variable_id': vid[output],
                       'value': val,
-                      'elevation': str(df[var].index[iters])}
+                      'elevation': str(df[basin].index[iters])}
 
-            snowav.database.database.insert(self.connector,'Results',values)
-
+            insert(connector,'Results',values)
 
 def post_process(self, dtime):
     '''
-    This function post-processes water year total values for swi and evap.
+    Post-processes water year total values for swi and evap.
 
     '''
 
@@ -76,9 +73,8 @@ def post_process(self, dtime):
             lbl = self.vollbl
 
         for bid in self.plotorder:
-
-            r = database.database.query(self.connector, datetime(self.wy-1,10,1),
-                                        dtime, self.run_name, bid,val)
+            r = query(self.connector, datetime(self.wy-1,10,1), dtime,
+                      self.run_name, self.basins, bid, val)
 
             for e in self.edges:
                 v = r[(r['elevation'] == str(e))]
@@ -98,7 +94,7 @@ def post_process(self, dtime):
                           'value': sval,
                           'elevation': str(summary[bid].index[iters])}
 
-                snowav.database.database.insert(self.connector,'Results',values)
+                insert(self.connector,'Results',values)
 
             # add total as the sum
             if np.nansum(summary[bid].values) != np.nan:
@@ -114,4 +110,4 @@ def post_process(self, dtime):
                       'value': v,
                       'elevation': 'total'}
 
-            snowav.database.database.insert(self.connector,'Results',values)
+            insert(self.connector,'Results',values)

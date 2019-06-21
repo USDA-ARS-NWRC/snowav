@@ -17,34 +17,9 @@ def density(args, logger = None):
     Args
     ----------
     args : dict
-        dictionary of values and options for figure. See CoreConfig.ini
-            for more information. Use config option [plots]
-            print_args_dict: True to print args to the screen if desired.
+        dictionary with required inputs, see swi() figure for more information.
 
-            density: array assigned in process()
-            image: 2D array of density
-            title: figure title
-            directory: figure directory name
-            figs_path: base directory for saving figures
-            edges: array of elevation bins in min, max, step
-            plotorder: list of basins from topo.nc
-            labels: dictionary of labels to use with plotorder
-            lims: more figure specs from snowav.plotting.plotlims(plotorder)
-            masks: masks made from topo.nc and snowav_masks()
-            figsize: figure size
-            dpi: figure dpi
-            depthlbl: depth label
-            vollbl: volume label
-            dplcs: decimal places to round outputs
-            barcolors: list of colors for bar plots
-            xlims: xlims
-            elevlbl: elevation label
-            depth_clip: lower limit on image depths for plotting
-            percent_min: quantile min for image
-            percent_max: quantile max for image
-
-        logger : dict
-            snowav logger
+    logger : dict
 
     '''
 
@@ -141,8 +116,7 @@ def density(args, logger = None):
     fig_name_short = 'density_'
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
     if logger is not None:
-        logger.info(' saving {}{}{}.png'.format(args['figs_path'],
-                    fig_name,args['directory']))
+        logger.info(' saving {}'.format(fig_name))
 
     snowav.framework.figures.save_fig(fig, fig_name)
 

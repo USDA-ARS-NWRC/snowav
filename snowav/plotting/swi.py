@@ -14,12 +14,13 @@ def swi(args, logger=None):
     SWI figure, with depth image on the left and volume by elevation band on
     the right.
 
+    All other snowav figures reference this function for args description.
+
     Args
     ----------
     args : dict
         dictionary of values and options for figure. See CoreConfig.ini
-            for more information. Use config option [plots]
-            print_args_dict: True to print args to the screen if desired.
+            for more information.
 
             df: standard subbasin by elevation dataframe from
                 snowav.database.database.collect()
@@ -34,7 +35,7 @@ def swi(args, logger=None):
             plotorder: list of basins from topo.nc
             labels: dictionary of labels to use with plotorder
             lims: more figure specs from snowav.plotting.plotlims(plotorder)
-            masks: masks made from topo.nc and snowav_masks()
+            masks: masks made from topo.nc and masks()
             figsize: figure size
             dpi: figure dpi
             depthlbl: depth label
@@ -47,8 +48,8 @@ def swi(args, logger=None):
             percent_min: quantile min for image
             percent_max: quantile max for image
 
-        logger : dict
-            snowav logger
+    logger : list
+        snowav logger
 
     '''
 
@@ -179,8 +180,7 @@ def swi(args, logger=None):
     fig_name_short = 'swi_'
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
     if logger is not None:
-        logger.info(' saving {}{}{}.png'.format(args['figs_path'],
-                    fig_name,args['directory']))
+        logger.info(' saving {}'.format(fig_name))
     snowav.framework.figures.save_fig(fig, fig_name)
 
     return fig_name_short

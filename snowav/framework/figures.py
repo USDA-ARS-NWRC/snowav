@@ -1,5 +1,6 @@
 
 import numpy as np
+from datetime import datetime
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
 from snowav.plotting.cold_content import cold_content
@@ -18,9 +19,8 @@ from snowav.plotting.plotlims import plotlims as plotlims
 
 def figures(self):
     '''
-    Set up and call snowav figures. Set config option [plots]
-    print_args_dict: True to print args dictionary that is being used in each
-    figure printed to screen. See CoreConfig.ini for more details.
+    Set up and call snowav figures. See CoreConfig.ini and README.md for more on
+    config options and use.
 
     Note: swe_volume() must be called before cold_content() if you want to use
     the same ylims for each.
@@ -50,7 +50,8 @@ def figures(self):
             'xlims':self.xlims,
             'depth_clip':self.depth_clip,
             'percent_min':self.percent_min,
-            'percent_max':self.percent_max}
+            'percent_max':self.percent_max,
+            'basins':self.basins}
 
     fig_names = {}
     connector = self.connector
@@ -63,9 +64,9 @@ def figures(self):
         for n in range(self.ixs,self.ixe):
             image = image + self.outputs['swi_z'][n]*self.depth_factor
 
-        df = collect(connector, args['plotorder'], args['start_date'],
-                    args['end_date'], 'swi_vol', args['run_name'],
-                    args['edges'], 'sum')
+        df = collect(connector, args['plotorder'], args['basins'],
+                     args['start_date'], args['end_date'], 'swi_vol',
+                     args['run_name'], args['edges'], 'sum')
 
         args['df'] = df
         args['image'] = image
@@ -78,12 +79,12 @@ def figures(self):
     if self.image_change_flag:
         image = self.outputs['swe_z'][self.ixs] - self.outputs['swe_z'][self.ixe]
 
-        start = collect(connector,args['plotorder'],args['start_date'],
-                            args['start_date'],'swe_vol',args['run_name'],
-                            args['edges'],'end')
-        end = collect(connector,args['plotorder'],args['start_date'],
-                          args['end_date'],'swe_vol',args['run_name'],
-                          args['edges'],'end')
+        start = collect(connector, args['plotorder'], args['basins'],
+                        args['start_date'], args['start_date'],'swe_vol',
+                        args['run_name'], args['edges'],'end')
+        end = collect(connector, args['plotorder'], args['basins'],
+                      args['start_date'], args['end_date'], 'swe_vol',
+                      args['run_name'], args['edges'],'end')
 
         df = end - start
 
@@ -95,9 +96,9 @@ def figures(self):
         fig_names['image_change'] = image_change(args, self._logger)
 
     if self.swe_volume_flag:
-        df = collect(connector,args['plotorder'],args['start_date'],
-                      args['end_date'],'swe_vol',args['run_name'],
-                      args['edges'],'end')
+        df = collect(connector, args['plotorder'], args['basins'],
+                     args['start_date'], args['end_date'],'swe_vol',
+                     args['run_name'], args['edges'],'end')
 
         image = self.outputs['swe_z'][self.ixe]*self.depth_factor
 
@@ -108,9 +109,9 @@ def figures(self):
         fig_names['swe_volume'], args['ylims'] = swe_volume(args, self._logger)
 
     if self.cold_content_flag:
-        df = collect(connector,args['plotorder'],args['start_date'],
-                      args['end_date'],'swe_unavail',args['run_name'],
-                      args['edges'],'end')
+        df = collect(connector, args['plotorder'], args['basins'],
+                     args['start_date'], args['end_date'], 'swe_unavail',
+                     args['run_name'], args['edges'],'end')
 
         swe = self.outputs['swe_z'][self.ixe]
         image = self.outputs['coldcont'][self.ixe]*0.000001
@@ -160,7 +161,26 @@ def figures(self):
         flt_image_change(self)
 
     if self.basin_total_flag:
-        basin_total(self)
+
+        '''
+        clean up this and basin_total() still...
+
+        '''
+        wy_start = datetime(self.wy-1,10,1)
+        swi_summary = collect(connector, args['plotorder'], args['basins'],
+                              wy_start,args['end_date'],'swi_vol',
+                              args['run_name'],'total','daily')
+        df_swe = collect(connector, args['plotorder'], args['basins'],
+                              wy_start,args['end_date'],'swe_vol',
+                              args['run_name'],'total','daily')
+        df_swi = swi_summary.cumsum()
+
+        args['swi_summary'] = df_swi
+        args['swe_summary'] = df_swe
+        args['flag'] = False
+        args['wy'] = self.wy
+
+        fig_names['basin_total'] = basin_total(args, self._logger)
 
     if self.forecast_flag:
 
@@ -210,6 +230,8 @@ def figures(self):
             name, ylims = swe_volume(args, self._logger)
 
             if self.basin_total_flag:
+                args['flag'] = True
+
                 basin_total(self, forecast=self.for_run_name)
 
             if self.precip_depth_flag:

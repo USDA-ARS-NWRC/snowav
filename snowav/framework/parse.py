@@ -4,7 +4,7 @@ import numpy as np
 import os
 import copy
 import snowav.utils.get_topo_stats as ts
-from snowav.utils.snowav_masks import snowav_masks
+from snowav.utils.utilities import masks
 from snowav.framework.outputs import outputs
 import coloredlogs
 import netCDF4 as nc
@@ -19,7 +19,7 @@ def parse(self, external_logger=None):
     Parse options from config file after read_config().
 
     '''
-    
+
     self.barcolors = ['xkcd:cobalt',
                       'xkcd:mustard green',
                       'xkcd:lichen',
@@ -44,8 +44,8 @@ def parse(self, external_logger=None):
                  ('swe_avail','snow water equivalent available for melt'),
                  ('swe_unavail','snow water equivalent unavailable for melt')])
 
-    out = snowav_masks(self.dempath, plotorder = self.plotorder,
-                       plotlabels = self.plotlabels, logger = self.tmp_log)
+    out = masks(self.dempath, plotorder = self.plotorder,
+                plotlabels = self.plotlabels)
 
     self.dem = out['dem']
     self.masks = out['masks']
@@ -53,15 +53,20 @@ def parse(self, external_logger=None):
     self.ncols = out['ncols']
     self.plotorder = out['plotorder']
     self.labels = out['labels']
-    self.tmp_log = out['logger']
+
+    for log in out['logger']:
+        self.tmp_log.append(log)
 
     # Establish database connection.
     # This will make sqlite database if it doesn't exist
-    basins, cnx, self.tmp_log = connect(sqlite = self.sqlite, mysql = self.mysql,
+    self.basins, cnx, out = connect(sqlite = self.sqlite, mysql = self.mysql,
                                plotorder = self.plotorder, user = self.db_user,
                                password = self.db_password, host = self.db_host,
-                               port = self.db_port, logger = self.tmp_log)
+                               port = self.db_port)
     self.connector = cnx
+
+    for log in out:
+        self.tmp_log.append(log)
 
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
@@ -91,27 +96,16 @@ def parse(self, external_logger=None):
                            self.elev_bins[1],
                            self.elev_bins[2])
 
-    self.xlims = (0,len(edges))
-
-    # Conversion factors and labels
-    # Note! If new units are introduced, may need a second look at figure
-    # labels, database fields, and writing out variable csv...
     if self.units == 'TAF':
         self.conversion_factor = ((self.pixel**2)*0.000000810713194*0.001)
         self.depth_factor = 0.03937
         self.dem = self.dem * 3.28
-        self.ixd = np.digitize(self.dem,edges)
         self.depthlbl = 'in'
         self.vollbl = self.units
         self.elevlbl = 'ft'
 
-    if self.units == 'SI':
-        self.conversion_factor = ((self.pixel**2)*0.000000810713194*1233.48/1e9)
-        self.depth_factor = 1
-        self.ixd = np.digitize(self.dem,edges)
-        self.depthlbl = 'mm'
-        self.vollbl = '$km^3$'
-        self.elevlbl = 'm'
+    self.ixd = np.digitize(self.dem,edges)
+    self.xlims = (0,len(edges))
 
     # get standard run outputs
     out, dirs, rdict = outputs(run_dirs = self.run_dirs,
@@ -204,72 +198,27 @@ def parse(self, external_logger=None):
             flight_dates = np.append(flight_dates,wydate)
             pre_flight_dates = np.append(pre_flight_dates,wydate)
 
-        self.flight_outputs = {'swe_z':[],'depth':[], 'dates':[],
-                               'time':[], 'density':[]}
-        self.pre_flight_outputs = {'swe_z':[],'depth':[], 'dates':[],
-                               'time':[], 'density':[]}
-
-        self.flight_rundirs_dict = {}
-        flist = copy.deepcopy(self.run_dirs_flight)
-
-        for rd in flist:
-            path = rd
-
-            if (any(os.path.isfile(os.path.join(path, i)) for i in os.listdir(path))
-               and not (os.path.isfile(path))):
-
-                d = path.split('runs/run')[-1]
-                folder_date = datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
-
-                if ((folder_date.date() in [x.date() for x in flight_dates]) and
-                    (folder_date.date() <= self.end_date.date())):
-
-                    output = iSnobalReader(path,
-                                           self.filetype,
-                                           snowbands = [0,1,2],
-                                           wy = self.wy)
-
-                    self.flight_outputs['dates'] = np.append(self.flight_outputs['dates'],output.dates)
-                    self.flight_outputs['time'] = np.append(self.flight_outputs['time'],output.time)
-
-                    for t in output.time:
-                        self.flight_rundirs_dict[int(t)] = rd
-
-                    for n in range(0,len(output.snow_data[0])):
-                        self.flight_outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                        self.flight_outputs['depth'].append(output.snow_data[0][n,:,:])
-                        self.flight_outputs['density'].append(output.snow_data[1][n,:,:])
-
-                # Get the previous snow.nc as necessary
-                if ((folder_date.date() in [x.date()-timedelta(hours = 24) for x in pre_flight_dates]) and
-                    (folder_date.date() <= self.end_date.date())):
-
-                    output = iSnobalReader(path,
-                                           self.filetype,
-                                           snowbands = [0,1,2],
-                                           wy = self.wy)
-                    self.pre_flight_outputs['dates'] = np.append(self.pre_flight_outputs['dates'],output.dates)
-                    self.pre_flight_outputs['time'] = np.append(self.pre_flight_outputs['time'],output.time)
-
-                    for n in range(0,len(output.snow_data[0])):
-                        self.pre_flight_outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                        self.pre_flight_outputs['depth'].append(output.snow_data[0][n,:,:])
-                        self.pre_flight_outputs['density'].append(output.snow_data[1][n,:,:])
-
-                else:
-                    self.run_dirs_flight.remove(rd)
-
-            else:
-                self.run_dirs_flight.remove(rd)
+        # self.flight_rundirs_dict = {}
+        # flist = copy.deepcopy(self.run_dirs_flight)
+        out, dirs, rdict = outputs(run_dirs = self.run_dirs,
+                                   start_date = None,
+                                   end_date = None,
+                                   filetype = self.filetype,
+                                   wy = self.wy,
+                                   flight_dates = flight_dates,
+                                   pre_flight_dates = pre_flight_dates)
+        self.flight_outputs = out
+        self.run_dirs_flt = dirs
+        self.for_rundirs_dict = rdict
 
     # If there are no flights in the period, set to false for the flight diff
     # figure and report
-    if not self.run_dirs_flight:
+    if not self.run_dirs_flt:
         self.flt_flag = False
-
-    #############################
-    # ^ FLIGHT section done ^ #
-    #############################
+        self.tmp_log.append(' Config option [plots] update_file was supplied, '
+                            'but no snow.nc files were found in [run] run_dirs '
+                            'that fit the date range, no flight difference '
+                            'figure will be made')
 
     self.report_date = self.end_date + timedelta(hours=1)
     parts = self.report_name.split('.')
@@ -282,14 +231,33 @@ def parse(self, external_logger=None):
     config_copy = '{}{}{}'.format(self.figs_path, ext_shr, extf[1])
     generate_config(self.ucfg, config_copy)
 
-    ####################################################
-    #             log file                             #
-    ####################################################
     if external_logger == None:
         createLog(self)
     else:
         self._logger = external_logger
 
+    # set up process() inputs for standard run
+    self.pargs = {}
+    self.pargs['outputs'] = self.outputs
+    self.pargs['ixs'] = self.ixs
+    self.pargs['ixe'] = self.ixe
+    self.pargs['rundirs_dict'] = self.rundirs_dict
+    self.pargs['edges'] = self.edges
+    self.pargs['masks'] = self.masks
+    self.pargs['nrows'] = self.nrows
+    self.pargs['ncols'] = self.ncols
+    self.pargs['plotorder'] = self.plotorder
+    self.pargs['connector'] = self.connector
+    self.pargs['basins'] = self.basins
+    self.pargs['run_name'] = self.run_name
+    self.pargs['conversion_factor'] = self.conversion_factor
+    self.pargs['depth_factor'] = self.depth_factor
+    self.pargs['wy'] = self.wy
+    self.pargs['vars'] = self.vars
+    self.pargs['ixd'] = self.ixd
+    self.pargs['vollbl'] = self.vollbl
+    self.pargs['depthlbl'] = self.depthlbl
+    self.pargs['connector'] = self.connector
 
 def createLog(self):
     '''

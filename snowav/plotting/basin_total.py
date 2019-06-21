@@ -5,26 +5,33 @@ import seaborn as sns
 from datetime import datetime
 import pandas as pd
 from matplotlib.dates import DateFormatter
-from snowav.database.tables import Basins
 import dateutil.parser
-from snowav.database.database import collect
-from snowav import database
 import copy
-from . import figure
-from snowav.plotting.plotlims import plotlims as plotlims
+import snowav.framework.figures
 
 
-def basin_total(snow, forecast = None):
+def basin_total(args, logger = None):
     '''
-    Basin total daily SWE and SWI figure, as well as forecast basin total
-    if forecast is supplied.
+    Basin total SWE and SWI.
+
+    Args
+    ----------
+    args : dict
+        dictionary with required inputs, see swi() figure for more information.
+
+    logger : dict
+        snowav logger
 
     '''
 
-    wy_start = datetime(snow.wy-1,10,1)
-    end_date = snow.end_date
-    run_name = snow.run_name
-    name_append = snow.name_append
+
+    plotorder = args['plotorder']
+    labels = args['labels']
+    barcolors = args['barcolors']
+    barcolors.insert(0,'black')
+    swi_summary = args['swi_summary']
+    swe_summary = args['swe_summary']
+    swi_end_val = copy.deepcopy(swi_summary)
     swe_title = 'Basin SWE'
     swi_title = 'Basin SWI'
 
@@ -32,23 +39,14 @@ def basin_total(snow, forecast = None):
     sns.set_context("notebook")
 
     plt.close(8)
-    fig,(ax,ax1) = plt.subplots(num=8, figsize=snow.figsize,
-                                dpi=snow.dpi, nrows = 1, ncols = 2)
+    fig,(ax,ax1) = plt.subplots(num=8, figsize=args['figsize'],
+                                dpi=args['dpi'], nrows = 1, ncols = 2)
 
-    snow.barcolors.insert(0,'black')
+    for iters,name in enumerate(plotorder):
+        swe_summary[name].plot(ax=ax, color = barcolors[iters])
+        swi_summary[name].plot(ax=ax1,color = barcolors[iters], label='_nolegend_')
 
-    swi_summary = collect(snow,snow.plotorder,wy_start,end_date,'swi_vol',run_name,'total','daily')
-    swe_summary = collect(snow,snow.plotorder,wy_start,end_date,'swe_vol',run_name,'total','daily')
-    swi_summary = swi_summary.cumsum()
-    swi_end_val = copy.deepcopy(swi_summary)
-
-    # lims = plotlims(snow.basin, snow.plotorder)
-
-    for iters,name in enumerate(snow.plotorder):
-        swe_summary[name].plot(ax=ax, color = snow.barcolors[iters])
-        swi_summary[name].plot(ax=ax1,color = snow.barcolors[iters], label='_nolegend_')
-
-    if snow.flt_flag:
+    if args['flag']:
         for i,d in enumerate(snow.flight_diff_dates):
             if i == 0:
                 lb = 'flight update'.format(snow.wy)
@@ -58,10 +56,10 @@ def basin_total(snow, forecast = None):
             # ax1.axvline(x=d,linestyle=':',linewidth=0.75,color='k',label=lb)
 
     # add in other years
-    x_end_date = snow.end_date
+    x_end_date = args['end_date']
 
     # forecast
-    if forecast is not None:
+    if args['flag']:
         start_date = snow.for_start_date
         end_date = snow.for_end_date
         run_name = snow.for_run_name
@@ -122,8 +120,8 @@ def basin_total(snow, forecast = None):
                    color = 'r')
 
     ax1.yaxis.set_label_position("right")
-    ax1.set_xlim((datetime(snow.wy -1 , 10, 1),x_end_date))
-    ax.set_xlim((datetime(snow.wy - 1, 10, 1),x_end_date))
+    ax1.set_xlim((datetime(args['wy'] -1 , 10, 1),x_end_date))
+    ax.set_xlim((datetime(args['wy'] - 1, 10, 1),x_end_date))
     ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
     ax.legend(loc='upper left')
@@ -144,15 +142,19 @@ def basin_total(snow, forecast = None):
         tick.set_rotation(30)
         tick1.set_rotation(30)
 
-    ax1.set_ylabel(r'[{}]'.format(snow.vollbl))
+    ax1.set_ylabel(r'[{}]'.format(args['vollbl']))
     ax1.set_xlabel('')
     ax.set_xlabel('')
     ax.axes.set_title(swe_title)
     ax1.axes.set_title(swi_title)
-    ax.set_ylabel(r'[{}]'.format(snow.vollbl))
+    ax.set_ylabel(r'[{}]'.format(args['vollbl']))
 
-    del snow.barcolors[0]
+    del barcolors[0]
 
-    fig_name = '{}basin_total_{}.png'.format(snow.figs_path,name_append)
-    snow._logger.info(' saving {}basin_total_{}.png'.format(snow.figs_path,name_append))
-    save(fig, fig_name)
+    fig_name_short = 'basin_total_'
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    if logger is not None:
+        logger.info(' saving {}'.format(fig_name))
+    snowav.framework.figures.save_fig(fig, fig_name)
+
+    return fig_name_short
