@@ -44,11 +44,11 @@ def package(connector, lbls, basins, df, run_id, vid, output, dtime, run_name):
             else:
                 val = float(val)
 
-            values = {'basin_id': basins[basin]['basin_id'],
-                      'run_id': run_id,
+            values = {'basin_id': int(basins[basin]['basin_id']),
+                      'run_id': int(run_id),
                       'date_time': dtime,
                       'variable': output,
-                      'variable_id': vid[output],
+                      'variable_id': int(vid[output]),
                       'value': val,
                       'elevation': str(df[basin].index[iters])}
 

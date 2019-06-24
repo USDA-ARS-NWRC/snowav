@@ -51,7 +51,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \\ \VAR{FORE_TI
 \maketitle
 {
 	\begin{tikzpicture}[remember picture,overlay]
-	% \node [shift={(-18.2cm,-1.5cm)}] at (current page.north east) {\includegraphics[height=1.25cm]{\VAR{JPLLOGO}}};
 	\node [shift={(-19cm,-2.0cm)}] at (current page.north east) {\includegraphics[height=2.85cm]{\VAR{ASOLOGO}}};
   \node [shift={(-2.2cm,-1.75cm)}] at (current page.north east) {\includegraphics[height=1.65cm]{\VAR{ARSLOGO}}};
 
@@ -65,8 +64,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \\ \VAR{FORE_TI
 \thispagestyle{specialfooter}
 
 \VAR{SWE_SUMMARY_TPL}
-
-\VAR{PRECIP_SUMMARY_TPL}
 
 \par\vspace*{\fill}
 \noindent
@@ -96,12 +93,8 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \\ \VAR{FORE_TI
 \VAR{ACCUM_BYELEV}
 \clearpage
 
-% \VAR{DEPTH_BYELEV}
-
-% SWE and cold content
-% \VAR{RESULTS_FIG_TPL}
 \clearpage
-% SWE
+
 \VAR{SWE_FIG_TPL}
 
 \VAR{COLD_FIG_TPL}
@@ -109,7 +102,7 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \\ \VAR{FORE_TI
 \clearpage
 
 % Mean SWE and depth by elevation
-\VAR{MEAN_FIG_TPL}
+% \VAR{MEAN_FIG_TPL}
 
 % Change in SWE
 \VAR{CHANGES_FIG_TPL}
@@ -118,10 +111,6 @@ Water Year \VAR{WATERYEAR} \\ \VAR{START_DATE} to \VAR{END_DATE} \\ \VAR{FORE_TI
 
 % SWI
 \VAR{SWI_FIG_TPL}
-
-% Runoff efficiency
-\VAR{INFLOW_FIG_TPL}
-\clearpage
 
 % SWI, precip, rain
 \VAR{PDEP_FIG_TPL}

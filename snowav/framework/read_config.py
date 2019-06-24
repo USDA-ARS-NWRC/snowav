@@ -238,6 +238,7 @@ def read_config(self, external_logger=None, awsm=None):
     #          report                                  #
     ####################################################
     self.report_flag = ucfg.cfg['report']['report']
+    self.print_latex = ucfg.cfg['report']['print_latex']
     self.report_name = ucfg.cfg['report']['report_name']
     self.rep_title = ucfg.cfg['report']['report_title']
     self.rep_path = ucfg.cfg['report']['rep_path']
@@ -246,14 +247,11 @@ def read_config(self, external_logger=None, awsm=None):
     self.tex_file = ucfg.cfg['report']['tex_file']
     self.summary_file = ucfg.cfg['report']['summary_file']
     self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
+    self.flight_figs = ucfg.cfg['report']['flight_figs']
 
     self.rep_swi_flag = ucfg.cfg['report']['swi']
     if not self.swi_flag:
         self.rep_swi_flag = False
-
-    self.rep_current_image_flag = ucfg.cfg['report']['current_image']
-    if not self.current_image_flag:
-        self.rep_current_image_flag = False
 
     self.rep_image_change_flag = ucfg.cfg['report']['image_change']
     if not self.image_change_flag:

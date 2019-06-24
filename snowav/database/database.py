@@ -226,7 +226,7 @@ def query(connector, start_date, end_date, run_name, basins, bid = None,
 
     '''
 
-    basin_id = basins[bid]['watershed_id']
+    basin_id = int(basins[bid]['basin_id'])
     session = make_session(connector)
 
     if (value != None) and (bid != None):
@@ -241,7 +241,7 @@ def query(connector, start_date, end_date, run_name, basins, bid = None,
         qry = session.query(Results).join(RunMetadata).filter(and_(
                                             (Results.date_time >= start_date),
                                             (Results.date_time <= end_date),
-                                            (Results.run_id == rid),
+                                            (Results.run_id == int(rid)),
                                             (RunMetadata.run_name == run_name),
                                             (Results.basin_id.in_(bids))))
 
@@ -277,60 +277,50 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
 
     Returns
     --------
-    logger
+    logger : list
 
     '''
 
     logger = []
-    basin_id = basins[bid]['watershed_id']
+    basin_id = int(basins[bid]['basin_id'])
     session = make_session(connector)
 
-    logger.append(' Deleting records from bid={}, run_name={}, from {} '
+    logger.append(' Deleting existing database records for {}, {}, {} '
           'to {}'.format(bid, run_name, start_date.date(), end_date.date()))
 
     # Get the run_id
     qry = session.query(Results).join(RunMetadata).filter(and_(
-                    (Results.date_time >= start_date),
-                    (Results.date_time <= end_date),
-                    (RunMetadata.run_name == run_name),
-                    (Results.basin_id == basin_id)))
+                                        (Results.date_time >= start_date),
+                                        (Results.date_time <= end_date),
+                                        (RunMetadata.run_name == run_name),
+                                        (Results.basin_id == basin_id)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
+    unique_runs = df.run_id.unique()
 
     if not df.empty:
-        for r in df.run_id.unique():
-            session.query(Results).filter(and_(
-                (Results.date_time >= start_date),
-                (Results.date_time <= end_date),
-                (Results.run_id == int(r)),
-                (Results.basin_id == basin_id))).delete()
+        for r in unique_runs:
+            session.query(Results).filter(and_((Results.date_time >= start_date),
+                                    (Results.date_time <= end_date),
+                                    (Results.run_id == int(r)),
+                                    (Results.basin_id == basin_id))).delete()
 
-            session.flush()
+            session.commit()
 
-            # Query again, if no results from those run_id exist still, also
-            # remove the metadata and variableUnits
-            qry2 = session.query(Results).filter(Results.run_id == int(r))
-            df2 = pd.read_sql(qry2.statement, qry2.session.connection())
+        # Query again, if no results from those run_id exist still, also remove
+        # the metadata and variableUnits
+        qrym = session.query(Results).filter(Results.run_id == int(r))
+        dfm = pd.read_sql(qrym.statement, qrym.session.connection())
 
-            if df2.empty:
+        if dfm.empty:
+            logger.append(' Deleting RunMetadata run_name={}, run_id={}, from {} '
+                          'to {}'.format(run_name, str(r), start_date.date(),
+                          end_date.date()))
 
-                logger.append(' Deleting RunMetadata run_name={}, run_id={},'
-                                  ' from {} to {}'.format(run_name,
-                                                          str(r),
-                                                          start_date.date(),
-                                                          end_date.date()))
+            session.query(VariableUnits).filter(VariableUnits.run_id == int(r)).delete()
+            session.query(RunMetadata).filter(RunMetadata.run_id == int(r)).delete()
+            session.commit()
 
-                q1 = session.query(VariableUnits).\
-                                filter(VariableUnits.run_id == int(r)).first()
-                session.delete(q1)
-
-                q2 = session.query(RunMetadata).\
-                                filter(RunMetadata.run_id == int(r)).first()
-                session.delete(q2)
-
-                session.flush()
-
-    session.commit()
     session.close()
 
     return logger
@@ -419,6 +409,8 @@ def run_metadata(self, run_name):
 
     '''
 
+    watershed_id = int(self.basins[self.plotorder[0]]['watershed_id'])
+
     session = make_session(self.connector)
     qry = session.query(RunMetadata)
     df = pd.read_sql(qry.statement, qry.session.connection())
@@ -436,10 +428,10 @@ def run_metadata(self, run_name):
     if len(trdir) > 1200:
         trdir = self.run_dirs[0]
 
-    values = {'run_id':self.run_id,
+    values = {'run_id':int(self.run_id),
               'run_name':run_name,
-              'watershed_id':self.basins[self.plotorder[0]]['watershed_id'],
-              'pixel':self.pixel,
+              'watershed_id':int(watershed_id),
+              'pixel':int(self.pixel),
               'description':'',
               'smrf_version':'smrf'+ smrf.__version__,
               'awsm_version':'aswm'+ awsm.__version__,
@@ -579,7 +571,10 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
             database = sqlite
             logger.append(' Creating {} for results'.format(database))
             log = create_tables(database, plotorder)
-            logger.append(log)
+
+            for out in log:
+                logger.append(out)
+
             engine = create_engine(sqlite)
 
         else:
@@ -587,7 +582,7 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
         DBSession = sessionmaker(bind=engine)
         session = DBSession()
-        logger.append(' Using {} for results...'.format(sqlite))
+        logger.append(' Using {} for results'.format(sqlite))
         connector = sqlite
 
     if (mysql is not None) and (sqlite is None):
@@ -620,6 +615,10 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
             query = ("CREATE DATABASE {};".format(mysql))
             cursor.execute(query)
             log = create_tables(db_engine, plotorder)
+
+            for out in log:
+                logger.append(out)
+
             logger.append(log)
 
         else:
@@ -632,6 +631,10 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
             # a point of failure...
             if tbls is None:
                 log = create_tables(db_engine, plotorder)
+
+                for out in log:
+                    logger.append(out)
+
                 logger.append(log)
 
             try:

@@ -1,63 +1,44 @@
 
 from snowav.utils.MidpointNormalize import MidpointNormalize
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
 import matplotlib.colors as mcolors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
-import copy
 import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
-from snowav import database
-from snowav.database.tables import Basins
-from snowav.plotting.plotlims import plotlims as plotlims
-from datetime import timedelta
+import copy
+import snowav.framework.figures
 
-def precip_depth(snow, forecast=None):
+def precip_depth(args, logger = None):
     '''
-    SWI, precipitation, and rain as depths.
+    Depth of SWI, precipitation, and rain during the report period.
+
+    Args
+    ----------
+    args : dict
+        dictionary with required inputs, see swi() figure for more information.
+
+    logger : list
+        snowav logger
 
     '''
 
-    if forecast is None:
-        run_name = snow.run_name
-        outputs = copy.deepcopy(snow.outputs)
-        ixs = snow.ixs
-        ixe = snow.ixe
-        start_date = snow.start_date
-        end_date = snow.end_date
-        name_append = snow.name_append
-        title = ('Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
-                               snow.report_start.date().strftime("%Y-%-m-%-d"),
-                               snow.report_date.date().strftime("%Y-%-m-%-d")))
+    accum = args['swi_image']
+    precip = args['precip_image']
+    rain = args['rain_image']
+    accum_byelev = args['swi_df']
+    precip_byelev = args['precip_df']
+    rain_byelev = args['rain_df']
+    plotorder = args['plotorder']
+    barcolors = args['barcolors']
+    lims = args['lims']
+    masks = args['masks']
+    edges = args['edges']
 
+    mm = [args['percent_min'],args['percent_max']]
 
-    else:
-        run_name = snow.for_run_name
-        outputs = copy.deepcopy(snow.for_outputs)
-        ixs = snow.for_ixs
-        ixe = snow.for_ixe
-        start_date = snow.for_start_date
-        end_date = snow.for_end_date
-        rep_end = snow.for_end_date
-        name_append = snow.name_append + '_forecast'
-        title = ('Forecast Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
-                               start_date.date().strftime("%Y-%-m-%-d"),
-                               end_date.date().strftime("%Y-%-m-%-d")))
-
-    # Get all images first, so we can set global colorlims
-    accum = np.zeros((snow.nrows,snow.ncols))
-
-    for n in range(ixs,ixe):
-        accum = accum + outputs['swi_z'][n]
-
-    accum = np.multiply(accum, snow.depth_factor)
-    precip = np.multiply(snow.precip_total, snow.depth_factor)
-    rain = np.multiply(snow.rain_total, snow.depth_factor)
-
-    mm = [0.1,99.9]
     if np.nanpercentile(accum,mm)[1] > np.nanpercentile(precip,mm)[1]:
         z,qMax = np.nanpercentile(accum,mm)
     else:
@@ -70,47 +51,14 @@ def precip_depth(snow, forecast=None):
 
     clims = (qMin,qMax)
 
-    # Get accum by elevation
-    accum_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    for bid in snow.plotorder:
-        r = database.database.query(snow, start_date, end_date,
-                                    run_name, bid, 'swi_z')
-
-        for elev in snow.edges:
-            v = r[r['elevation'] == str(elev)]
-            accum_byelev.loc[elev,bid] = np.nansum(v['value'].values)
-
-    # Get precip by elevation
-    precip_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    for bid in snow.plotorder:
-        r = database.database.query(snow, start_date, end_date,
-                                    run_name, bid, 'precip_z')
-
-        for elev in snow.edges:
-            v = r[r['elevation'] == str(elev)]
-            precip_byelev.loc[elev,bid] = np.nansum(v['value'].values)
-
-    # Get rain by elevation
-    rain_byelev = pd.DataFrame(index = snow.edges, columns = snow.plotorder)
-
-    for bid in snow.plotorder:
-        r = database.database.query(snow, start_date, end_date,
-                                    run_name, bid, 'rain_z')
-
-        for elev in snow.edges:
-            v = r[r['elevation'] == str(elev)]
-            rain_byelev.loc[elev,bid] = np.nansum(v['value'].values)
-
     # Get bar plot ylims
     if accum_byelev.values.max() > precip_byelev.values.max():
-        if len(snow.plotorder) < 5:
+        if len(plotorder) < 5:
             yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.4
         else:
             yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.6
     else:
-        if len(snow.plotorder) < 5:
+        if len(plotorder) < 5:
             yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.4
         else:
             yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.6
@@ -122,24 +70,19 @@ def precip_depth(snow, forecast=None):
     sns.set_context("notebook")
 
     plt.close(0)
-    fig, ax = plt.subplots(num=0, figsize = (12,10),
-                                dpi=snow.dpi, nrows = 3, ncols = 2)
+    fig, ax = plt.subplots(num = 0, figsize = (12,10),dpi=args['dpi'],
+                           nrows = 3, ncols = 2)
 
     ################################################
     #           SWI                                #
     ################################################
 
-    # Get basin-specific lims
-    lims = plotlims(snow.basin, snow.plotorder)
-
-    # White background plasma_r cmocean.cm.thermal
     mymap = copy.deepcopy(cmap)
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
     accum[ixo] = np.nan
     mymap.set_bad('white',1.)
 
-    # Now set SWI-free to some color
     r = ~np.isnan(accum)
     r[r] &= accum[r] < 0.05
     accum[r] = -1
@@ -147,93 +90,71 @@ def precip_depth(snow, forecast=None):
 
     h = ax[0,0].imshow(accum, clim = clims, cmap = mymap)
 
-    # Basin boundaries
-    for name in snow.masks:
-        ax[0,0].contour(snow.masks[name]['mask'],cmap = 'Greys',linewidths = 1)
+    for name in masks:
+        ax[0,0].contour(masks[name]['mask'],cmap = 'Greys',linewidths = 1)
 
-    # if snow.basin == 'SJ':
-    #     fix1 = np.arange(1275,1377)
-    #     fix2 = np.arange(1555,1618)
-    #     ax[0,0].plot(fix1*0,fix1,'k')
-    #     ax[0,0].plot(fix2*0,fix2,'k')
-
-    # if snow.basin == 'LAKES':
-    #     ax[0,0].set_xlim(snow.imgx)
-    #     ax[0,0].set_ylim(snow.imgy)
-
-    # Do pretty stuff
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax[0,0])
     cax = divider.append_axes("right", size="4%", pad=0.2)
     cbar = plt.colorbar(h, cax = cax)
-    cbar.set_label('SWI [{}]'.format(snow.depthlbl))
+    cbar.set_label('[{}]'.format(args['depthlbl']))
     h.axes.set_title('Accumulated SWI')
 
-    if len(snow.plotorder) == 1:
-        sumorder = snow.plotorder
+    if len(plotorder) == 1:
+        sumorder = plotorder
         swid = 0.45
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) <= 4:
-        sumorder = snow.plotorder[1::]
+    elif len(plotorder) <= 4:
+        sumorder = plotorder[1::]
         swid = 0.25
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) == 5:
-        sumorder = snow.plotorder[1::]
+    elif len(plotorder) == 5:
+        sumorder = plotorder[1::]
         swid = 0.2
         wid = np.linspace(-0.3,0.3,len(sumorder))
-    elif len(snow.plotorder) > 5:
-        sumorder = snow.plotorder[1::]
+    elif len(plotorder) > 5:
+        sumorder = plotorder[1::]
         swid = 0.1
         wid = np.linspace(-0.4,0.4,len(sumorder))
 
     for iters,name in enumerate(sumorder):
         lbl = name
-        ax[0,1].bar(range(0,len(snow.edges))-wid[iters],
+        ax[0,1].bar(range(0,len(edges))-wid[iters],
                 accum_byelev[name],
-                color = snow.barcolors[iters], width = swid,
-                                                edgecolor = 'k',
-                                                label = lbl)
+                color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
 
-    ax[0,1].xaxis.set_ticks(range(0,len(snow.edges)))
-    #plt.tight_layout()
-    ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+    ax[0,1].xaxis.set_ticks(range(0,len(edges)))
+    ax[0,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
     edges_lbl = []
-    for i in range(0,len(snow.edges)):
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    for i in range(0,len(edges)):
+        edges_lbl.append(str(int(edges[int(i)])))
 
     ax[0,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[0,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
-
-    ax[0,1].set_ylabel('SWI [{}]'.format(snow.depthlbl))
-    #ax[0,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax[0,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[0,1].set_ylabel('[{}]'.format(args['depthlbl']))
     ax[0,1].yaxis.set_label_position("right")
     ax[0,1].yaxis.tick_right()
-
     ax[0,1].set_ylim((0,yMax))
 
-    # If there is meaningful snow-free area, include path and label
     if sum(sum(r)) > 1000:
         patches = [mpatches.Patch(color='grey', label='no SWI')]
         ax[0,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
 
-    # basin total and legend
-    if len(snow.plotorder) > 1:
+    if len(plotorder) > 1:
         ax[0,1].legend(loc=(lims.legx,lims.legy2),markerscale = 0.5)
-    # ax[0,1].text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-    #          transform=ax1.transAxes,fontsize = 10)
 
     ################################################
     #           Precip                             #
     ################################################
 
     mymap1 = copy.deepcopy(cmap1)
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
     precip[ixo] = np.nan
     mymap1.set_bad('white',1.)
@@ -244,67 +165,46 @@ def precip_depth(snow, forecast=None):
 
     h2 = ax[1,0].imshow(precip, interpolation='none', cmap = mymap1, clim = clims)
 
-    # if snow.basin == 'LAKES':
-    #     ax[1,0].set_xlim(snow.imgx)
-    #     ax[1,0].set_ylim(snow.imgy)
+    for name in masks:
+        ax[1,0].contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    # Basin boundaries
-    for name in snow.masks:
-        ax[1,0].contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
-
-    # if snow.basin == 'SJ':
-    #     fix1 = np.arange(1275,1377)
-    #     fix2 = np.arange(1555,1618)
-    #     ax[1,0].plot(fix1*0,fix1,'k')
-    #     ax[1,0].plot(fix2*0,fix2,'k')
-
-    # Do pretty stuff
     h2.axes.get_xaxis().set_ticks([])
     h2.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax[1,0])
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h2, cax = cax)
-    cbar.set_label(r'precip [{}]'.format(snow.depthlbl))
+    cbar.set_label(r'[{}]'.format(args['depthlbl']))
 
-    h2.axes.set_title('Total Precipitation')
+    h2.axes.set_title('Precipitation')
 
     for iters,name in enumerate(sumorder):
         lbl = name
-        ax[1,1].bar(range(0,len(snow.edges))-wid[iters],
-                precip_byelev[name],
-                color = snow.barcolors[iters], width = swid,
-                                                edgecolor = 'k',
-                                                label = lbl)
-        ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+        ax[1,1].bar(range(0,len(edges))-wid[iters], precip_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k',
+                    label = lbl)
 
-    ax[1,1].xaxis.set_ticks(range(0,len(snow.edges)))
-    #plt.tight_layout()
-    ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+        ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+
+    ax[1,1].xaxis.set_ticks(range(0,len(edges)))
+    ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
     edges_lbl = []
-    for i in range(0,len(snow.edges)):
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    for i in range(0,len(edges)):
+        edges_lbl.append(str(int(edges[int(i)])))
 
     ax[1,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[1,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
-
-    #ax[1,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
     ax[1,1].set_ylim((0,yMax))
-    ax[1,1].set_ylabel(r'precip [{}]'.format(snow.depthlbl))
+    ax[1,1].set_ylabel(r'[{}]'.format(args['depthlbl']))
     ax[1,1].yaxis.set_label_position("right")
     ax[1,1].tick_params(axis='x')
     ax[1,1].tick_params(axis='y')
     ax[1,1].yaxis.tick_right()
 
     patches = [mpatches.Patch(color='grey', label='no precip')]
-
-    # if sum(sum(r)) > 1000:
-    #     patches = [mpatches.Patch(color='grey', label='no precip')]
-    #     ax[1,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
-    #               loc=2, borderaxespad=0. )
 
     ################################################
     #           rain                                #
@@ -314,7 +214,7 @@ def precip_depth(snow, forecast=None):
     rain_byelev[ix] = 0
 
     mymap = copy.deepcopy(cmap1)
-    pmask = snow.masks[snow.plotorder[0]]['mask']
+    pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
     rain[ixo] = np.nan
     mymap.set_bad('white',1.)
@@ -325,72 +225,53 @@ def precip_depth(snow, forecast=None):
 
     h2 = ax[2,0].imshow(rain, interpolation='none', cmap = mymap, clim = clims)
 
-    # if snow.basin == 'LAKES':
-    #     ax[2,0].set_xlim(snow.imgx)
-    #     ax[2,0].set_ylim(snow.imgy)
+    for name in masks:
+        ax[2,0].contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
-    # Basin boundaries
-    for name in snow.masks:
-        ax[2,0].contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
-
-    # if snow.basin == 'SJ':
-    #     fix1 = np.arange(1275,1377)
-    #     fix2 = np.arange(1555,1618)
-    #     ax[2,0].plot(fix1*0,fix1,'k')
-    #     ax[2,0].plot(fix2*0,fix2,'k')
-
-    # Do pretty stuff
     h2.axes.get_xaxis().set_ticks([])
     h2.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax[2,0])
     cax = divider.append_axes("right", size="5%", pad=0.2)
     cbar = plt.colorbar(h2, cax = cax)
-    cbar.set_label(r'rain [{}]'.format(snow.depthlbl))
+    cbar.set_label(r'[{}]'.format(args['depthlbl']))
 
     h2.axes.set_title('Rain')
 
     for iters,name in enumerate(sumorder):
         lbl = name
-        ax[2,1].bar(range(0,len(snow.edges))-wid[iters],
-                rain_byelev[name],
-                color = snow.barcolors[iters], width = swid,
-                                                edgecolor = 'k',
-                                                label = lbl)
-        ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+        ax[2,1].bar(range(0,len(edges))-wid[iters],
+                    rain_byelev[name], color = barcolors[iters], width = swid,
+                    edgecolor = 'k', label = lbl)
 
-    # plt.tight_layout()
-    ax[2,1].xaxis.set_ticks(range(0,len(snow.edges)))
-    #plt.tight_layout()
-    ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
+        ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+
+    ax[2,1].xaxis.set_ticks(range(0,len(edges)))
+    ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
 
     edges_lbl = []
-    for i in range(0,len(snow.edges)):
-        edges_lbl.append(str(int(snow.edges[int(i)])))
+    for i in range(0,len(edges)):
+        edges_lbl.append(str(int(edges[int(i)])))
 
     ax[2,1].set_xticklabels(str(i) for i in edges_lbl)
     for tick in ax[2,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]+0.5))
-
-    #ax[2,1].set_xlim((snow.xlims[0]-0.5,snow.xlims[1]))
+    ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
     ax[2,1].set_ylim((0,yMax))
-    ax[2,1].set_ylabel(r'rain [{}]'.format(snow.depthlbl))
-    ax[2,1].set_xlabel('elevation [{}]'.format(snow.elevlbl))
+    ax[2,1].set_ylabel(r'[{}]'.format(args['depthlbl']))
+    ax[2,1].set_xlabel('elevation [{}]'.format(args['elevlbl']))
     ax[2,1].yaxis.set_label_position("right")
     ax[2,1].tick_params(axis='x')
     ax[2,1].tick_params(axis='y')
     ax[2,1].yaxis.tick_right()
 
-    # patches = [mpatches.Patch(color='grey', label='no rain')]
-    # if sum(sum(r)) > 1000:
-    #     patches = [mpatches.Patch(color='grey', label='no rain')]
-    #     ax[2,0].legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
-    #               loc=2, borderaxespad=0. )
-
-    plt.suptitle(title)
-    #plt.tight_layout()
+    plt.suptitle(args['title'])
     fig.subplots_adjust(top=0.92)
 
-    snow._logger.info(' saving {}precip_depth_{}.png'.format(snow.figs_path,name_append))
-    plt.savefig('{}precip_depth_{}.png'.format(snow.figs_path,name_append))
+    fig_name_short = 'precip_depth_'
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    if logger is not None:
+        logger.info(' saving {}'.format(fig_name))
+    snowav.framework.figures.save_fig(fig, fig_name)
+
+    return fig_name_short

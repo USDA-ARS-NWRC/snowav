@@ -9,6 +9,9 @@ water resource managers. See the CoreConfig.ini in this repo for more informatio
 
 ![image](https://raw.githubusercontent.com/USDA-ARS-NWRC/awsm/master/docs/_static/ModelSystemOverview_new.png)
 
+To do:
+- non-awsm_daily
+- supply dates only rather than 23:00 
 
 Currently snowav requires:
 - awsm model results in awsm_daily format, including  output files in the paths ```.../runs/runYYYYMMDD/snow.nc``` and ```.../runs/runYYYYMMDD/em.nc```
@@ -18,6 +21,7 @@ Currently snowav requires:
 snowav expects:
 
 - input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/precip.nc``` and ```.../data/dataYYYYMMDD/smrfOutputs/percent_snow.nc```. If these do not exist the precip figures will be turned off.
+- the lidar_depths_wy2019.nc file, specified in the config file in [plots] update_file, contains all relevant flights that have been flown. Flights in this file can be removed using [plots] update_numbers, but they can't be added.
 
 The standard manual snowav processing run is:
 ```

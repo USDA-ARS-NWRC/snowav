@@ -66,7 +66,7 @@ def parse(self, external_logger=None):
     self.connector = cnx
 
     for log in out:
-        self.tmp_log.append(log)
+        self.tmp_log.append(log[0])
 
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')

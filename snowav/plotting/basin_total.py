@@ -24,7 +24,6 @@ def basin_total(args, logger = None):
 
     '''
 
-
     plotorder = args['plotorder']
     labels = args['labels']
     barcolors = args['barcolors']
@@ -44,71 +43,23 @@ def basin_total(args, logger = None):
 
     for iters,name in enumerate(plotorder):
         swe_summary[name].plot(ax=ax, color = barcolors[iters])
-        swi_summary[name].plot(ax=ax1,color = barcolors[iters], label='_nolegend_')
+        swi_summary[name].plot(ax=ax1,color = barcolors[iters],
+                               label='_nolegend_')
 
-    if args['flag']:
-        for i,d in enumerate(snow.flight_diff_dates):
+    if args['flt_flag']:
+        for i,d in enumerate(args['flight_diff_dates']):
             if i == 0:
-                lb = 'flight update'.format(snow.wy)
+                lb = 'flight update'.format(args['wy'])
+
             else:
                 lb = '__nolabel__'
-            ax.axvline(x=d,linestyle=':',linewidth=0.75,color='k',label=lb)
-            # ax1.axvline(x=d,linestyle=':',linewidth=0.75,color='k',label=lb)
 
-    # add in other years
+            ax.axvline(x=d, linestyle=':', linewidth=0.75, color='k', label=lb)
+
     x_end_date = args['end_date']
 
     # forecast
     if args['flag']:
-        start_date = snow.for_start_date
-        end_date = snow.for_end_date
-        run_name = snow.for_run_name
-        name_append = snow.name_append + '_forecast'
-        swe_title = 'Forecast Basin SWE'
-        swi_title = 'Forecast Basin SWI'
-        x_end_date = snow.for_end_date
-
-        # Make df from database
-        swe_summary = pd.DataFrame(columns = snow.plotorder)
-        swi_summary = pd.DataFrame(columns = snow.plotorder)
-
-        for bid in snow.plotorder:
-            r = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swe_vol')
-
-            r2 = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swi_vol')
-
-            v = r[(r['elevation'] == 'total')]
-            v2 = r2[(r2['elevation'] == 'total')]
-
-            for iter,d in enumerate(v['date_time'].values):
-                swe_summary.loc[d,bid] = v['value'].values[iter]
-                swi_summary.loc[d,bid] = v2['value'].values[iter]
-
-        swi_summary.sort_index(inplace=True)
-
-        # as a starting spot, add actual run
-        swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
-        swi_summary = swi_summary.cumsum()
-
-        for iters,name in enumerate(snow.plotorder):
-            swe_summary[name].plot(ax=ax,
-                                   color = snow.barcolors[iters],
-                                   linestyle = ':',
-                                   label='_nolegend_')
-            swi_summary[name].plot(ax=ax1,
-                                   color = snow.barcolors[iters],
-                                   linestyle = ':',
-                                   label='_nolegend_')
 
         ax.axvline(x=snow.for_start_date,
                    linestyle = ':',
@@ -120,8 +71,8 @@ def basin_total(args, logger = None):
                    color = 'r')
 
     ax1.yaxis.set_label_position("right")
-    ax1.set_xlim((datetime(args['wy'] -1 , 10, 1),x_end_date))
-    ax.set_xlim((datetime(args['wy'] - 1, 10, 1),x_end_date))
+    ax1.set_xlim((datetime(args['wy']-1, 10, 1), x_end_date))
+    ax.set_xlim((datetime(args['wy']-1, 10, 1), x_end_date))
     ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
     ax.legend(loc='upper left')

@@ -51,13 +51,21 @@ def figures(self):
             'depth_clip':self.depth_clip,
             'percent_min':self.percent_min,
             'percent_max':self.percent_max,
-            'basins':self.basins}
+            'basins':self.basins,
+            'wy':self.wy,
+            'flag':False,
+            'flt_flag':self.flt_flag}
+
+    if self.flt_flag:
+        args['flight_dates'] = self.flight_diff_dates
 
     fig_names = {}
     connector = self.connector
 
-    # For each figure, first collect 2D array image, by-elevation
-    # DataFrame, and set figure-specific inputs
+    ########################################################
+    # For each figure, collect 2D array image, by-elevation
+    # DataFrame, and set any figure-specific args inputs
+    ########################################################
 
     if self.swi_flag:
         image = np.zeros_like(self.outputs['swi_z'][0])
@@ -133,39 +141,7 @@ def figures(self):
 
         fig_names['density'] = density(args, self._logger)
 
-    if self.stn_validate_flag:
-        stn_validate(self)
-
-    if self.compare_runs_flag:
-        compare_runs(self)
-
-    if self.precip_depth_flag:
-        precip_depth(self)
-
-    # # Write out current model SWE values at snow course locations
-    # if self.write_stn_csv_flag is True:
-    #     point_values(self.outputs['swe_z'][-1],
-    #                  self.stns_csv,
-    #                  (self.snow_x, self.snow_y),
-    #                  '{}model_pixel_swe_{}.csv'.format(self.figs_path,
-    #                  self.end_date.date().strftime("%Y%m%d")))
-
-    if self.precip_validate_flag:
-        precip_validate(self)
-
-    if self.basin_detail_flag:
-        basin_detail(self)
-
-    # Make flight difference figure in options in config file
-    if self.flt_flag:
-        flt_image_change(self)
-
     if self.basin_total_flag:
-
-        '''
-        clean up this and basin_total() still...
-
-        '''
         wy_start = datetime(self.wy-1,10,1)
         swi_summary = collect(connector, args['plotorder'], args['basins'],
                               wy_start,args['end_date'],'swi_vol',
@@ -177,10 +153,68 @@ def figures(self):
 
         args['swi_summary'] = df_swi
         args['swe_summary'] = df_swe
-        args['flag'] = False
-        args['wy'] = self.wy
 
         fig_names['basin_total'] = basin_total(args, self._logger)
+
+    if self.precip_depth_flag:
+        swi_image = np.zeros_like(self.outputs['swi_z'][0])
+        for n in range(self.ixs,self.ixe):
+            swi_image = swi_image + self.outputs['swi_z'][n]*self.depth_factor
+
+        swi_df = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'swi_z',
+                         args['run_name'], args['edges'], 'sum')
+        precip_df = collect(connector, args['plotorder'], args['basins'],
+                            args['start_date'], args['end_date'], 'precip_z',
+                            args['run_name'], args['edges'], 'sum')
+        rain_df = collect(connector, args['plotorder'], args['basins'],
+                          args['start_date'], args['end_date'], 'rain_z',
+                          args['run_name'], args['edges'], 'sum')
+
+        args['swi_image'] = swi_image
+        args['precip_image'] = self.precip_total*self.depth_factor
+        args['rain_image'] = self.rain_total*self.depth_factor
+        args['swi_df'] = swi_df
+        args['precip_df'] = precip_df
+        args['rain_df'] = rain_df
+        args['title'] = 'Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
+                        args['report_start'],args['report_date'])
+
+        fig_names['precip_depth'] = precip_depth(args, self._logger)
+
+    if self.stn_validate_flag:
+        
+        fig_names['valid'] = stn_validate(args, self._logger)
+
+    if self.compare_runs_flag:
+        compare_runs(self)
+
+    if self.flt_flag:
+        flt_image_change(self)
+
+    if self.basin_total_flag:
+        wy_start = datetime(self.wy-1,10,1)
+        swi_summary = collect(connector, args['plotorder'], args['basins'],
+                              wy_start,args['end_date'],'swi_vol',
+                              args['run_name'],'total','daily')
+        df_swe = collect(connector, args['plotorder'], args['basins'],
+                              wy_start,args['end_date'],'swe_vol',
+                              args['run_name'],'total','daily')
+        df_swi = swi_summary.cumsum()
+
+        args['swi_summary'] = df_swi
+        args['swe_summary'] = df_swe
+
+        fig_names['basin_total'] = basin_total(args, self._logger)
+
+    # if self.pixel_swe_flag:
+    #     print('still need to fix this one')
+
+    # if self.precip_validate_flag:
+    #     precip_validate(self)
+
+    # if self.basin_detail_flag:
+    #     basin_detail(self)
 
     if self.forecast_flag:
 
@@ -230,12 +264,56 @@ def figures(self):
             name, ylims = swe_volume(args, self._logger)
 
             if self.basin_total_flag:
+                '''
+        start_date = snow.for_start_date
+        end_date = snow.for_end_date
+        run_name = snow.for_run_name
+        name_append = snow.name_append + '_forecast'
+        swe_title = 'Forecast Basin SWE'
+        swi_title = 'Forecast Basin SWI'
+        x_end_date = snow.for_end_date
+
+        # Make df from database
+        swe_summary = pd.DataFrame(columns = snow.plotorder)
+        swi_summary = pd.DataFrame(columns = snow.plotorder)
+
+        for bid in snow.plotorder:
+            r = database.database.query(snow,
+                                        start_date,
+                                        end_date,
+                                        run_name,
+                                        bid,
+                                        'swe_vol')
+
+            r2 = database.database.query(snow,
+                                        start_date,
+                                        end_date,
+                                        run_name,
+                                        bid,
+                                        'swi_vol')
+
+            v = r[(r['elevation'] == 'total')]
+            v2 = r2[(r2['elevation'] == 'total')]
+
+            for iter,d in enumerate(v['date_time'].values):
+                swe_summary.loc[d,bid] = v['value'].values[iter]
+                swi_summary.loc[d,bid] = v2['value'].values[iter]
+
+        swi_summary.sort_index(inplace=True)
+
+        # as a starting spot, add actual run
+        swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
+        swi_summary = swi_summary.cumsum()
+                '''
+                # forecast True
                 args['flag'] = True
 
                 basin_total(self, forecast=self.for_run_name)
 
             if self.precip_depth_flag:
                 precip_depth(self, forecast=self.for_run_name)
+
+    self.fig_names = fig_names
 
 
 def save_fig(fig, paths):

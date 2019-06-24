@@ -18,7 +18,7 @@ def cold_content(args, logger):
     args : dict
         dictionary with required inputs, see swi() figure for more information.
 
-    logger : dict
+    logger : list
         snowav logger
 
     '''

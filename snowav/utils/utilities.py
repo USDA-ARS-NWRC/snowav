@@ -167,7 +167,7 @@ def precip(rundirs_dict, path):
         rain = None
         precip = None
 
-    return flag, ppt_path, rain, precip
+    return flag, ppt_path, precip, rain
 
 
 def getgitinfo():
