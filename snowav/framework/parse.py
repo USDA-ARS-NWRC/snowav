@@ -108,13 +108,14 @@ def parse(self, external_logger=None):
     self.xlims = (0,len(edges))
 
     # get standard run outputs
-    out, dirs, rdict = outputs(run_dirs = self.run_dirs,
-                               start_date = self.start_date,
-                               end_date = self.end_date,
-                               filetype = self.filetype,
-                               wy = self.wy)
+    out, all_dirs, dirs, rdict = outputs(run_dirs = self.run_dirs,
+                                         start_date = self.start_date,
+                                         end_date = self.end_date,
+                                         filetype = self.filetype,
+                                         wy = self.wy)
     self.outputs = out
     self.run_dirs = dirs
+    self.all_dirs = all_dirs
     self.rundirs_dict = rdict
 
     # If no dates are specified, use first and last
@@ -166,11 +167,11 @@ def parse(self, external_logger=None):
     # get forecast outputs
     if self.forecast_flag:
 
-        out, dirs, rdict = outputs(run_dirs = self.for_run_dirs,
-                                   start_date = None,
-                                   end_date = None,
-                                   filetype = self.filetype,
-                                   wy = self.wy)
+        out, alldirs, dirs, rdict = outputs(run_dirs = self.for_run_dirs,
+                                            start_date = None,
+                                            end_date = None,
+                                            filetype = self.filetype,
+                                            wy = self.wy)
         self.for_outputs = out
         self.for_run_dirs = dirs
         self.for_rundirs_dict = rdict
@@ -200,7 +201,7 @@ def parse(self, external_logger=None):
 
         # self.flight_rundirs_dict = {}
         # flist = copy.deepcopy(self.run_dirs_flight)
-        out, dirs, rdict = outputs(run_dirs = self.run_dirs,
+        out, x, dirs, rdict = outputs(run_dirs = self.run_dirs,
                                    start_date = None,
                                    end_date = None,
                                    filetype = self.filetype,

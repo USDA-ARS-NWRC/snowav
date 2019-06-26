@@ -9,71 +9,75 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
-from snowav.database.tables import Basins
-import datetime
 from datetime import timedelta
-from snowav.plotting.plotlims import plotlims as plotlims
 import netCDF4 as nc
-from snowav.database.database import collect
-# from . import figure
 from snowav.utils.wyhr import calculate_wyhr_from_date, calculate_date_from_wyhr
 
-def flt_image_change(snow):
+def flt_image_change(args, logger = None):
     '''
-    This plots a second image_change fig, intended for flight updates
+    Difference in SWE from one day prior to depth updates to the day of flight
+    updates.
 
+    Flight dates and update masks are pulled from file specified in config
+    [plots] update_file. The actual SWE changes are simply the differences
+    in snow.nc files for those dates.
+
+    Args
+    ----------
+    args : dict
+        dictionary with required inputs, see swi() figure for more information.
+
+    logger : list
+        snowav logger
     '''
 
-    file = snow.update_file
-    snow.flight_diff_fig_names = []
-    snow.flight_diff_dates = []
-    snow.flight_diff_datestr = []
-    snow.flight_delta_vol_df = {}
-    snow.flight_delta_percent_df = {}
+    file = args['update_file']
+    update_numbers = args['update_numbers']
+    start_date = args['start_date']
+    end_date = args['end_date']
+    flight_outputs = args['flight_outputs']
+    pre_flight_outputs = args['pre_flight_outputs']
+    masks = args['masks']
+    lims = args['lims']
+    barcolors = args['barcolor']
+    # snow.flight_diff_fig_names = []
+    # snow.flight_diff_dates = []
+    # snow.flight_diff_datestr = []
+    # snow.flight_delta_vol_df = {}
+    # snow.flight_delta_percent_df = {}
 
     p = nc.Dataset(file, 'r')
 
-    if snow.update_numbers is None:
+    if update_numbers is None:
         times = p.variables['time'][:]
+
     else:
-        times = p.variables['time'][snow.update_numbers]
+        times = p.variables['time'][update_numbers]
 
     # remove flight indices that might be after the report period
     idx = []
     for i, n in enumerate(times):
-        date = calculate_date_from_wyhr(int(n),snow.wy)
-        if date > snow.end_date:
+        date = calculate_date_from_wyhr(int(n),args['wy'])
+        if date > end_date:
             idx = np.append(idx,i)
 
     times = np.delete(times, idx)
 
     for i,time in enumerate(times):
-
-        depth = p.variables['depth'][i,:,:]
-        delta_swe = snow.flight_outputs['swe_z'][i][:] - snow.pre_flight_outputs['swe_z'][i][:]
-        delta_swe = np.multiply(delta_swe,snow.depth_factor)
+        depth = p.variables['depth'][update_numbers[i],:,:]
+        delta_swe = flight_outputs['swe_z'][i][:] - pre_flight_outputs['swe_z'][i][:]
+        delta_swe = delta_swe * args['depth_factor']
 
         # We will always make the difference between the previous day
-        start_date = snow.flight_outputs['dates'][i] - timedelta(hours = 24)
-        end_date = snow.flight_outputs['dates'][i]
+        start_date = flight_outputs['dates'][i] - timedelta(hours = 24)
+        end_date = flight_outputs['dates'][i]
 
-        delta_swe_byelev = collect(snow,
-                                   snow.plotorder,
-                                   start_date,
-                                   end_date,
-                                   'swe_vol',
-                                   snow.run_name,
-                                   snow.edges,
-                                   'difference')
-
-        end_swe_byelev = collect(snow,
-                                 snow.plotorder,
-                                 start_date,
-                                 end_date,
-                                 'swe_vol',
-                                 snow.run_name,
-                                 snow.edges,
-                                 'end')
+        delta_swe_byelev = collect(connector, args['plotorder'], args['basins'],
+                                   args['start_date'], args['end_date'],'swe_vol',
+                                   args['run_name'], args['edges'],'difference')
+        end_swe_byelev = collect(connector, args['plotorder'], args['basins'],
+                                 args['start_date'], args['end_date'], 'swe_vol',
+                                 args['run_name'], args['edges'],'end')
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
@@ -87,7 +91,7 @@ def flt_image_change(snow):
 
         ixf = delta_state == 0
         delta_state[ixf] = -100000
-        pmask = snow.masks[snow.plotorder[0]]['mask']
+        pmask = masks[plotorder[0]]['mask']
         ixo = pmask == 0
         delta_state[ixo] = np.nan
         cmap = copy.copy(mymap)
@@ -96,35 +100,26 @@ def flt_image_change(snow):
         sns.set_style('darkgrid')
         sns.set_context("notebook")
 
-        lims = plotlims(snow.basin, snow.plotorder)
-
         plt.close(i)
-        fig,(ax,ax1) = plt.subplots(num = i,
-                                    figsize = snow.figsize,
-                                    dpi = snow.dpi,
-                                    nrows = 1,
-                                    ncols = 2)
+        fig,(ax,ax1) = plt.subplots(num = i, figsize = args['figsize'],
+                                    dpi = args['dpi'], nrows = 1, ncols = 2)
 
         norm = MidpointNormalize(midpoint = 0,vmin = vMin-0.01,vmax = vMax+0.01)
         mask = np.ma.masked_array(depth.mask, ~depth.mask)
         delta_state[mask] = np.nan
 
         # h = ax.imshow(delta_state*mask,
-        h = ax.imshow(delta_state,
-                      interpolation = 'none',
-                      cmap = cmap,
-                      norm = norm)
+        h = ax.imshow(delta_state, cmap = cmap, norm = norm)
 
-        # Basin boundaries
-        for name in snow.masks:
-            ax.contour(snow.masks[name]['mask'],cmap = "Greys",linewidths = 1)
+        for name in masks:
+            ax.contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
 
         h.axes.get_xaxis().set_ticks([])
         h.axes.get_yaxis().set_ticks([])
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.2)
         cbar = plt.colorbar(h, cax = cax)
-        cbar.set_label(r'$\Delta$ SWE [{}]'.format(snow.depthlbl))
+        cbar.set_label(r'$\Delta$ SWE [{}]'.format(args['depthlbl']))
 
         start_date = start_date + timedelta(hours=1)
         d = end_date + timedelta(hours=1)
@@ -137,35 +132,34 @@ def flt_image_change(snow):
         # wid = 1/len(lims.sumorder)-sep
         # widths = np.arange((-1 + wid), (1 - wid), wid)
 
-        if snow.dplcs == 0:
-            tlbl = '{}: {} {}'.format(snow.plotorder[0],
-                                 str(int(delta_swe_byelev[snow.plotorder[0]].sum())),
-                                 snow.vollbl)
+        if args['dplcs'] == 0:
+            tlbl = '{}: {} {}'.format(plotorder[0],
+                                 str(int(delta_swe_byelev[plotorder[0]].sum())),
+                                 args['vollbl'])
         else:
-            tlbl = '{}: {} {}'.format(snow.plotorder[0],
-                                 str(np.round(delta_swe_byelev[snow.plotorder[0]].sum(),
-                                              snow.dplcs)),snow.vollbl)
+            tlbl = '{}: {} {}'.format(plotorder[0],
+                                 str(np.round(delta_swe_byelev[plotorder[0]].sum(),
+                                              args['dplcs'])),args['vollbl'])
 
-        for iters,name in enumerate(lims.plotorder):
-
-            if snow.dplcs == 0:
+        for iters,name in enumerate(plotorder):
+            if args['dplcs'] == 0:
                 lbl = '{}: {} {}'.format(name,
                                     str(int(delta_swe_byelev[name].sum())),
-                                    snow.vollbl)
+                                    args['vollbl'])
             else:
                 lbl = '{}: {} {}'.format(name,
                                     str(np.round(delta_swe_byelev[name].sum(),
-                                    snow.dplcs)),snow.vollbl)
+                                    args['dplcs'])),args['vollbl'])
 
             if iters == 0:
-                ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
-                        color = snow.barcolors[iters],
+                ax1.bar(range(0,len(args['edges'])),delta_swe_byelev[name],
+                        color = barcolors[iters],
                         edgecolor = 'k',label = lbl)
 
             else:
-                ax1.bar(range(0,len(snow.edges)),delta_swe_byelev[name],
+                ax1.bar(range(0,len(args['edges'])),delta_swe_byelev[name],
                         # bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
-                        color = snow.barcolors[iters],
+                        color = barcolors[iters],
                         edgecolor = 'k',
                         label = lbl,
                         alpha = 0.5)
@@ -177,7 +171,7 @@ def flt_image_change(snow):
             #         label = lbl)
 
         end_swe_byelev = end_swe_byelev.fillna(0)
-        datestr = snow.flight_outputs['dates'][i].date().strftime("%Y%m%d")
+        datestr = flight_outputs['dates'][i].date().strftime("%Y%m%d")
         # print('Change in SWE\n', delta_swe_byelev)
         # print('\nPercent Change in SWE\n', (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100)
         percent_delta_byelev = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100

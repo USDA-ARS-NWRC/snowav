@@ -41,6 +41,8 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
     ------
     outputs : dict
         dictionary of snow.nc and em.nc outputs within time period
+    dirs : list 
+        all dirs within run_dir
     run_dirs : list
         modified run_dirs, with paths outside of start_date, end_date removed
     rdict : dict
@@ -159,4 +161,4 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                 run_dirs.remove(path)
 
 
-    return outputs, run_dirs, rdict
+    return outputs, dirs, run_dirs, rdict

@@ -53,7 +53,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.tmp_warn = []
 
     ####################################################
-    #             snowav                               #
+    #            system                                #
     ####################################################
     self.loglevel = ucfg.cfg['snowav']['log_level'].upper()
     self.log_to_file = ucfg.cfg['snowav']['log_to_file']
@@ -98,19 +98,15 @@ def read_config(self, external_logger=None, awsm=None):
     self.all_subdirs = ucfg.cfg['run']['all_subdirs']
 
     if self.all_subdirs is True:
-        self.run_dirs = ([ucfg.cfg['run']['run_dirs'] + s for s in
-                        os.listdir(ucfg.cfg['run']['run_dirs'])
-                        if (os.path.isdir(ucfg.cfg['run']['run_dirs'] + s)) ])
+        self.run_dirs = ([ucfg.cfg['run']['directory'] + s for s in
+                        os.listdir(ucfg.cfg['run']['directory'])
+                        if (os.path.isdir(ucfg.cfg['run']['directory'] + s)) ])
     else:
-        self.run_dirs = ucfg.cfg['run']['run_dirs']
+        self.run_dirs = ucfg.cfg['run']['directory']
         if type(self.run_dirs) != list:
             self.run_dirs = [self.run_dirs]
 
     self.run_dirs.sort()
-
-    # self.summary = ucfg.cfg['outputs']['summary']
-    # if type(self.summary) != list:
-    #     self.summary = [self.summary]
 
     ####################################################
     #           forecast                               #
@@ -173,6 +169,10 @@ def read_config(self, external_logger=None, awsm=None):
     self.val_client = ucfg.cfg['validate']['client']
     self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
     self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
+    self.wxdb_user = ucfg.cfg['validate']['user']
+    self.wxdb_password = ucfg.cfg['validate']['password']
+    self.wxdb_host = ucfg.cfg['validate']['host']
+    self.wxdb_port = ucfg.cfg['validate']['port']
 
     ####################################################
     #          plots                                   #
@@ -198,20 +198,28 @@ def read_config(self, external_logger=None, awsm=None):
     self.stns_file = ucfg.cfg['plots']['stns_file']
     self.precip_validate_flag = ucfg.cfg['plots']['precip_validate']
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
+    self.compare_run_names = ucfg.cfg['plots']['compare_run_names']
+    self.compare_run_labels = ucfg.cfg['plots']['compare_run_labels']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
     self.update_file = ucfg.cfg['plots']['update_file']
     self.update_numbers = ucfg.cfg['plots']['update_numbers']
-    self.plot_runs = ucfg.cfg['plots']['plot_runs']
-    self.plot_labels = ucfg.cfg['plots']['plot_labels']
-    self.plot_variables = ucfg.cfg['plots']['plot_variables']
     self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
     self.figsize = (ucfg.cfg['plots']['fig_length'],
                     ucfg.cfg['plots']['fig_height'])
 
-    if self.compare_runs_flag and self.plot_runs is None:
-        self.tmp_log.append(' No runs listed in config option [plots] '
-                            'plot_runs, so being set to False')
+    if (self.compare_runs_flag and ((self.compare_run_names is None) or
+        (self.compare_run_labels is None))):
+        self.tmp_log.append(' Config option [plots] compare_runs set to True, '
+                            'but one of compare_run_names or compare_run_labels '
+                            'is empty, resetting compare_runs to False')
+        self.compare_runs_flag = False
+
+    if (self.compare_runs_flag and
+        (len(self.compare_run_names) != len(self.compare_run_labels))):
+        self.tmp_log.append(' Config option [plots] compare_runs set to True, '
+                            'must supply equal length compare_run_names and  '
+                            'compare_run_labels, resetting compare_runs to False')
         self.compare_runs_flag = False
 
     if self.update_file is not None:
@@ -228,7 +236,8 @@ def read_config(self, external_logger=None, awsm=None):
         self.precip_validate_flag = False
 
     if (self.stn_validate_flag and (self.val_client is None) or
-       (self.val_stns is None) or (self.val_lbls is None)):
+       (self.val_stns is None) or (self.val_lbls is None) or
+       (self.wxdb_user is None) or (self.wxdb_password is None) ):
         self.tmp_log.append(' Config option [plots] stn_validate is being '
                             'set to False, see CoreConfig.ini for details')
 

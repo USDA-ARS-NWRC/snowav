@@ -15,6 +15,9 @@ def swe_volume(args, logger = None):
     '''
     Current SWE depth and volume.
 
+    Note: scripts/sample_figure.py calls this function as an example. If
+    changes are made here update sample_figure.py if necessary.
+
     Args
     ----------
     args : dict

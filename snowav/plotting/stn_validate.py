@@ -1,80 +1,97 @@
 
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 import utm
 import netCDF4 as nc
 import mysql.connector
 import pandas as pd
 from datetime import datetime
-import copy
-from datetime import date
 import os
-from snowav.utils.wyhr import calculate_date_from_wyhr
 from snowav.utils.stats import nashsutcliffe
-from spotpy import objectivefunctions
+import snowav.framework.figures
 
-def stn_validate(snow):
+def stn_validate(args, logger = None):
+    '''
+    SWE validation at snow pillow sites.
 
-    rundirs = snow.lrdirs
-    stns = snow.val_stns
-    lbls = snow.val_lbls
-    client = snow.val_client
-    factor = 25.4
+    Requires proper config options for weather database connection and figure
+    creation, see CoreConfig.ini for more information.
 
-    qry = ('SELECT tbl_metadata.* FROM tbl_metadata INNER JOIN tbl_stations ON '
-          'tbl_metadata.id = tbl_stations.metadata_id WHERE tbl_stations.client'
-          '="{}";'.format(client))
+    Args
+    ----------
+    args : dict
+        dictionary with required inputs, see swi() figure for more information.
+    logger : list
 
-    cnx = mysql.connector.connect(user='markrobertson',
-                                  password='whatdystm?1',
-                                  host='10.200.28.137',
-                                  port=32768,
-                                  database='weather_db')
+    Returns
+    ------
+    logger : list
+    flag : bool
+        False if there are errors, will be used to remove stn_validate() figure
+        from the report
+    '''
 
-    meta_sno = pd.read_sql(qry, cnx)
-    meta_sno.index = meta_sno['primary_id']
-    meta_sno = meta_sno[~meta_sno.index.duplicated(keep='first')]
-
-    # CHECK IF EMPTY, SET FLAG TO FALSE IF SO
-
-    swe_meas = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                            snow.end_date,freq='D'),
-                            columns = stns)
+    rundirs = args['dirs']
+    stns = args['stns']
+    lbls = args['lbls']
+    client = args['client']
+    factor = args['factor']
+    end_date = args['end_date']
+    tbl = args['tbl']
+    var = args['var']
+    st_time = '{}-10-1 00:00:00'.format(str(args['wy'] - 1))
+    end_time = end_date.date().strftime("%Y-%-m-%-d")
+    ncxvec = args['snow_x']
+    ncyvec = args['snow_y']
+    stns = args['stns']
+    fig_name_short = 'validation_'
+    flag = True
+    px = args['px']
+    py = args['py']
 
     stns_pixel = []
     for sta in stns:
         stns_pixel = stns_pixel + ['{}_'.format(sta) + str(s) for s in range(0,9)]
 
-    swe_mod = pd.DataFrame(index = pd.date_range(datetime(snow.wy - 1,10,1),
-                           snow.end_date,freq='D'),
-                           columns = stns_pixel)
+    measure = pd.DataFrame(index = pd.date_range(datetime(args['wy']-1,10,1),
+                            end_date,freq='D'), columns = stns)
 
-    tbl = 'tbl_level1'
-    var = 'snow_water_equiv'
-    st_time = '{}-10-1 00:00:00'.format(str(snow.wy - 1))
-    end_time = snow.end_date.date().strftime("%Y-%-m-%-d")
-    ncxvec = snow.snow_x
-    ncyvec = snow.snow_y
+    model = pd.DataFrame(index = pd.date_range(datetime(args['wy']-1,10,1),
+                         end_date,freq='D'), columns = stns_pixel)
+
+    qry = ('SELECT tbl_metadata.* FROM tbl_metadata INNER JOIN tbl_stations ON '
+          'tbl_metadata.id = tbl_stations.metadata_id WHERE tbl_stations.client'
+          '="{}";'.format(client))
+
+    cnx = mysql.connector.connect(user=args['user'], password=args['password'],
+                                  host=args['host'], port=args['port'],
+                                  database='weather_db')
+
+    metadata = pd.read_sql(qry, cnx)
+
+    if metadata.empty:
+        flag = False
+        return
+
+    metadata.index = metadata['primary_id']
+    metadata = metadata[~metadata.index.duplicated(keep='first')]
 
     # station results
     for iters,stn in enumerate(stns):
-        cnx = mysql.connector.connect(user='markrobertson',
-                                      password='whatdystm?1',
-                                      host='10.200.28.137',
-                                      port='32768',database='weather_db')
+        cnx = mysql.connector.connect(user=args['user'],password=args['password'],
+                                      host=args['host'], port=args['port'],
+                                      database='weather_db')
 
-        var_qry = ('SELECT weather_db.{0}.date_time, weather_db.{0}.{1} FROM '
-                   'weather_db.{0} WHERE weather_db.{0}.date_time between "{2}" '
-                   'and "{3}" AND weather_db.{0}.station_id IN '
-                   ' ("{4}") ;'.format(tbl,var,st_time,end_time,stn))
+        qry = ('SELECT weather_db.{0}.date_time, weather_db.{0}.{1} FROM '
+               'weather_db.{0} WHERE weather_db.{0}.date_time between "{2}" '
+               'and "{3}" AND weather_db.{0}.station_id IN '
+               ' ("{4}") ;'.format(args['tbl'],args['var'],st_time,end_time,stn))
 
-        data = pd.read_sql(var_qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        data = pd.read_sql(qry, cnx, index_col=bytes(bytearray(b'date_time')))
         data.index.names=['date_time']
         dind = pd.date_range(st_time,end_time,freq='D')
-        swe_meas[stn] = data.reindex(dind)
+        measure[stn] = data.reindex(dind)
 
     sns.set_style('darkgrid')
     sns.set_context('notebook')
@@ -82,16 +99,16 @@ def stn_validate(snow):
     plt.close(9)
 
     if len(stns) <= 3:
-        fig, axs = plt.subplots(num=9,figsize=(6,6),dpi=200,nrows=3,ncols=1)
+        fig, axs = plt.subplots(num=9,figsize=(6,6),dpi=args['dpi'],nrows=3,ncols=1)
 
     if (len(stns) > 3) and (len(stns) <= 6):
-        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=3,ncols=2)
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=args['dpi'],nrows=3,ncols=2)
 
     if (len(stns) > 6) and (len(stns) <= 9):
-        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=3,ncols=3)
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=args['dpi'],nrows=3,ncols=3)
 
     if (len(stns) > 9) and (len(stns) <= 12):
-        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=200,nrows=4,ncols=3)
+        fig, axs = plt.subplots(num=9,figsize=(10,10),dpi=args['dpi'],nrows=4,ncols=3)
 
     axs = axs.flatten()
 
@@ -103,45 +120,38 @@ def stn_validate(snow):
         if len(stns) == 8:
             set_x_on = 5
 
-    px = (1,1,1,0,0,0,-1,-1,-1)
-    py = (1,0,-1,1,0,-1,1,0,-1)
-
     for rname in rundirs:
 
-        d = rname.split('runs/run')[-1]
-        folder_date = datetime(int(d[:4]),int(d[4:6]),int(d[6:8]))
+        # could add if args['ncfile'] == 'em.nc' change to data/smrf/precip
+        snowfile = os.path.join(rname, args['ncfile'])
+
+        if not os.path.isfile(snowfile):
+            raise Exception('In stn_validate(), {} not a valid file'.format(snowfile))
+
+        ncf = nc.Dataset(snowfile, 'r')
+        t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
 
         # Only load the rundirs that we need
-        if (folder_date.date() <= snow.end_date.date()):
-
-            ncf = nc.Dataset(os.path.join(rname,'snow.nc'), 'r')
-            # nctvec = ncf.variables['time'][:]
+        if (t.date() <= end_date.date()):
 
             for iters,stn in enumerate(stns):
-                ll = utm.from_latlon(meta_sno.ix[stn,'latitude'],meta_sno.ix[stn,'longitude'])
+                ll = utm.from_latlon(metadata.ix[stn,'latitude'],metadata.ix[stn,'longitude'])
                 xind = np.where(abs(ncxvec-ll[0]) == min(abs(ncxvec-ll[0])))[0]
                 yind = np.where(abs(ncyvec-ll[1]) == min(abs(ncyvec-ll[1])))[0]
 
                 if ((xind == 0) or (xind >= len(ncxvec)-1) or
                    (yind == 0) or (yind >= len(ncyvec)-1)):
-                    snow._logger.info('Station {} in [validate] outside of domain, exiting '
-                          'stn_validate()...'.format(stn))
-                    print('Station {} in [validate] outside of domain, exiting '
-                          'stn_validate()...'.format(stn))
-                    snow.stn_validate_flag = False
-
-                    if snow.exclude_figs != None:
-                        snow.exclude_figs = snow.exclude_figs + ['VALID']
-                    else:
-                        snow.exclude_figs = ['VALID']
+                    logger.info('Station {} in [validate] stations is '
+                                'outside of domain, exiting stn_validate() '
+                                'and not generating figure'.format(stn))
+                    flag = False
                     return
 
                 for ix, (n,m) in enumerate(zip(px,py)):
                     land_stn = stn + '_{}'.format(str(ix))
-                    swe = ncf.variables['specific_mass'][:,yind+m,xind+m][0][0][0]
-                    swe_mod.loc[folder_date.date(),land_stn] = swe
+                    swe = ncf.variables['specific_mass'][:,yind+m,xind+n][0][0][0]
+                    model.loc[t.date(),land_stn] = swe
 
-                    # z = snow.dem[yind,xind]
                     if (n == 0 and m == 0) and (rname == rundirs[-1]):
                         lbl = 'measured'
                         lblm = 'modeled'
@@ -149,20 +159,23 @@ def stn_validate(snow):
                         lbl = '__nolabel__'
                         lblm = 'modeled'
 
-                    axs[iters].plot(swe_meas[stn]/factor,'k',label=lbl)
-                    axs[iters].plot(swe_mod[land_stn]/factor,'b',linewidth = 0.75,label=lblm)
+                    axs[iters].plot(measure[stn]/factor,'k',label=lbl)
+                    axs[iters].plot(model[land_stn]/factor,'b',linewidth = 0.75,label=lblm)
                     axs[iters].set_title(lbls[iters])
-                    axs[iters].set_xlim((datetime(snow.wy - 1, 10, 1),snow.end_date))
+                    axs[iters].set_xlim((datetime(args['wy']-1, 10, 1),end_date))
 
             ncf.close()
 
+        else:
+            ncf.close()
+
     # Nash-Sutcliffe on pixel 0,0
-    if snow.nash_sut_flag:
+    if args['nash_sut_flag']:
         for iters,sta in enumerate(stns):
             pz_sta = sta + '_5'
-            stime = datetime(snow.wy-1,10,15)
-            nsv = nashsutcliffe(swe_meas[swe_meas.index>stime][stn].values.tolist(),
-                                swe_mod[swe_mod.index>stime][pz_sta].values.tolist())
+            stime = datetime(args['wy']-1,10,15)
+            nsv = nashsutcliffe(measure[measure.index>stime][stn].values.tolist(),
+                                model[model.index>stime][pz_sta].values.tolist())
             # nstr = '{} Nash-Sutcliffe:\n{}'.format(sta,str(np.round(nsv,2)))
             nstr = 'Nash-Sutcliffe:\n{}'.format(str(np.round(nsv,2)))
 
@@ -215,9 +228,9 @@ def stn_validate(snow):
             axs[n].set_xticklabels('')
 
     # Plot
-    swe_meas = swe_meas.replace('[]',np.nan)
-    maxm = np.nanmax(swe_meas.max().values/factor)
-    maxi = np.nanmax(swe_mod.max().values/factor)
+    measure = measure.replace('[]',np.nan)
+    maxm = np.nanmax(measure.max().values/factor)
+    maxi = np.nanmax(model.max().values/factor)
 
     if maxm > maxi:
         maxswe = maxm
@@ -230,8 +243,13 @@ def stn_validate(snow):
     axs[0].legend(['measured','modeled'],loc='upper left')
     axs[0].set_ylabel('SWE [in]')
 
-    plt.suptitle('Validation at Measured Sites')
+    plt.suptitle('SWE Validation at Snow Pillow Sites')
     plt.subplots_adjust(top=0.92)
 
-    snow._logger.info(' saving {}validation_{}.png'.format(snow.figs_path,snow.name_append))
-    plt.savefig('{}validation_{}.png'.format(snow.figs_path,snow.name_append))
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    if logger is not None:
+        logger.info(' saving {}'.format(fig_name))
+        
+    snowav.framework.figures.save_fig(fig, fig_name)
+
+    return fig_name_short, flag

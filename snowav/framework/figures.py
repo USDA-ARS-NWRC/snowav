@@ -183,14 +183,56 @@ def figures(self):
         fig_names['precip_depth'] = precip_depth(args, self._logger)
 
     if self.stn_validate_flag:
-        
-        fig_names['valid'] = stn_validate(args, self._logger)
+        args['dirs'] = self.all_dirs
+        args['stns'] = self.val_stns
+        args['lbls'] = self.val_lbls
+        args['client'] = self.val_client
+        args['factor'] = 25.4
+        args['user'] = self.wxdb_user
+        args['password'] = self.wxdb_password
+        args['host'] = self.wxdb_host
+        args['port'] = self.wxdb_port
+        args['snow_x'] = self.snow_x
+        args['snow_y'] = self.snow_y
+        args['stns'] = self.val_stns
+        args['nash_sut_flag'] = self.nash_sut_flag
+
+        # could change these for precip, px = 0, 'em.nc'
+        args['tbl'] = 'tbl_level1'
+        args['var'] = 'snow_water_equiv'
+        args['px'] = (1,1,1,0,0,0,-1,-1,-1)
+        args['py'] = (1,0,-1,1,0,-1,1,0,-1)
+        args['ncfile'] = 'snow.nc'
+
+        fig_names['valid'], flag = stn_validate(args, self._logger)
+
+        if not flag:
+            self.stn_validate_flag = False
 
     if self.compare_runs_flag:
-        compare_runs(self)
+        args['variables'] = ['swe_vol','swi_vol']
+        wy_start = datetime(self.wy-1,10,1)
+
+        if self.flt_flag:
+            args['flag'] = True
+        else:
+            args['flag'] = False
+
+        dict = {}
+        for var in args['variables']:
+            dict[var] = {}
+            for run in self.compare_run_names:
+                df = collect(connector, args['plotorder'][0], args['basins'],
+                             wy_start,args['end_date'],var,run,'total','daily')
+                dict[var][run] = df
+
+        args['dict'] = dict
+
+        compare_runs(args, self._logger)
 
     if self.flt_flag:
-        flt_image_change(self)
+
+        flt_image_change(args, self._logger)
 
     if self.basin_total_flag:
         wy_start = datetime(self.wy-1,10,1)
@@ -206,12 +248,6 @@ def figures(self):
         args['swe_summary'] = df_swe
 
         fig_names['basin_total'] = basin_total(args, self._logger)
-
-    # if self.pixel_swe_flag:
-    #     print('still need to fix this one')
-
-    # if self.precip_validate_flag:
-    #     precip_validate(self)
 
     # if self.basin_detail_flag:
     #     basin_detail(self)
@@ -265,45 +301,15 @@ def figures(self):
 
             if self.basin_total_flag:
                 '''
-        start_date = snow.for_start_date
-        end_date = snow.for_end_date
-        run_name = snow.for_run_name
-        name_append = snow.name_append + '_forecast'
-        swe_title = 'Forecast Basin SWE'
-        swi_title = 'Forecast Basin SWI'
-        x_end_date = snow.for_end_date
+                    for iter,d in enumerate(v['date_time'].values):
+                        swe_summary.loc[d,bid] = v['value'].values[iter]
+                        swi_summary.loc[d,bid] = v2['value'].values[iter]
 
-        # Make df from database
-        swe_summary = pd.DataFrame(columns = snow.plotorder)
-        swi_summary = pd.DataFrame(columns = snow.plotorder)
+                swi_summary.sort_index(inplace=True)
 
-        for bid in snow.plotorder:
-            r = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swe_vol')
-
-            r2 = database.database.query(snow,
-                                        start_date,
-                                        end_date,
-                                        run_name,
-                                        bid,
-                                        'swi_vol')
-
-            v = r[(r['elevation'] == 'total')]
-            v2 = r2[(r2['elevation'] == 'total')]
-
-            for iter,d in enumerate(v['date_time'].values):
-                swe_summary.loc[d,bid] = v['value'].values[iter]
-                swi_summary.loc[d,bid] = v2['value'].values[iter]
-
-        swi_summary.sort_index(inplace=True)
-
-        # as a starting spot, add actual run
-        swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
-        swi_summary = swi_summary.cumsum()
+                # as a starting spot, add actual run
+                swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
+                swi_summary = swi_summary.cumsum()
                 '''
                 # forecast True
                 args['flag'] = True
@@ -324,7 +330,7 @@ def save_fig(fig, paths):
     ----------
     fig : object
         matplotlib figure object
-    paths : str
+    paths : list
         list of paths to save figure
 
     '''
