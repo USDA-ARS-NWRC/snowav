@@ -1,46 +1,24 @@
 
-import logging
-import numpy as np
-from spatialnc import ipw
-from shutil import copyfile
-import os
-import copy
-import pandas as pd
-import datetime
-import snowav.utils.wyhr_to_datetime as wy
-import snowav.utils.get_topo_stats as ts
 from snowav.utils.utilities import get_snowav_path
-from snowav.utils.OutputReader import iSnobalReader
-from inicheck.tools import get_user_config, check_config
+from inicheck.tools import get_user_config, check_config, cast_all_variables
 from inicheck.output import generate_config, print_config_report
 from inicheck.config import MasterConfig
+import logging
 import coloredlogs
-import netCDF4 as nc
-from dateutil.relativedelta import relativedelta
-from sqlalchemy.orm import sessionmaker
-from collections import OrderedDict
-from snowav import database
-from datetime import timedelta
-from shutil import copyfile
-from sys import exit
-
+import os
+import pandas as pd
+import datetime
 
 def read_config(self, external_logger=None, awsm=None):
     '''
-    Read snowav config file and assign options.
-
-    Args
-    ------
-    external_logger : object
-        awsm logger
-    awsm : awsm class
-        if this is passed, run_dir will be assigned from the directory being
-        created in awsm
+    Read snowav config file.
 
     '''
 
     snowav_mcfg = MasterConfig(modules = 'snowav')
     ucfg = get_user_config(self.config_file, mcfg=snowav_mcfg)
+    ucfg.apply_recipes()
+    ucfg = cast_all_variables(ucfg, ucfg.mcfg)
     self.snowav_path = get_snowav_path()
 
     warnings, errors = check_config(ucfg)
@@ -53,7 +31,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.tmp_warn = []
 
     ####################################################
-    #            system                                #
+    #            snowav                                #
     ####################################################
     self.loglevel = ucfg.cfg['snowav']['log_level'].upper()
     self.log_to_file = ucfg.cfg['snowav']['log_to_file']
@@ -92,8 +70,8 @@ def read_config(self, external_logger=None, awsm=None):
 
     else:
         self.tmp_log.append('[run] start_date and/or end_date was not '
-                            'defined in config file, will be assigned as '
-                            'first and last available dates in run_dirs')
+                            'defined in config file, will be assigned '
+                            'by available dates in directory')
 
     self.all_subdirs = ucfg.cfg['run']['all_subdirs']
 
@@ -107,27 +85,6 @@ def read_config(self, external_logger=None, awsm=None):
             self.run_dirs = [self.run_dirs]
 
     self.run_dirs.sort()
-
-    ####################################################
-    #           forecast                               #
-    ####################################################
-    self.forecast_flag = ucfg.cfg['forecast']['report']
-
-    if self.forecast_flag:
-        self.for_start_date = ucfg.cfg['forecast']['start_date'].to_pydatetime()
-        self.for_end_date = ucfg.cfg['forecast']['end_date'].to_pydatetime()
-        self.for_run_name = ucfg.cfg['forecast']['run_name']
-
-        if self.for_start_date >= self.for_end_date:
-            self.tmp_log.append(' Error: config option [forecast] start_date > '
-                                'end_date')
-            exit()
-
-        self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
-                        os.listdir(ucfg.cfg['forecast']['run_dir'])
-                        if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s)) ])
-
-        self.for_run_dir.sort()
 
     ####################################################
     #         database
@@ -308,5 +265,42 @@ def read_config(self, external_logger=None, awsm=None):
     if self.figs_tpl_path is None:
         self.figs_tpl_path = os.path.join(self.snowav_path,
                                           'snowav/report/figs/')
+
+    ####################################################
+    #           forecast                               #
+    ####################################################
+    self.forecast_flag = ucfg.cfg['forecast']['report']
+
+    if self.forecast_flag:
+        self.for_start_date = ucfg.cfg['forecast']['start_date'].to_pydatetime()
+        self.for_end_date = ucfg.cfg['forecast']['end_date'].to_pydatetime()
+        self.for_run_name = ucfg.cfg['forecast']['run_name']
+
+        if self.for_start_date >= self.for_end_date:
+            self.tmp_log.append(' Error: config option [forecast] start_date > '
+                                'end_date')
+            raise Exception('Config option [forecast] start_date is greater '
+                            'than end_date')
+
+        self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
+                        os.listdir(ucfg.cfg['forecast']['run_dir'])
+                        if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s)) ])
+
+        self.for_run_dir.sort()
+
+    ####################################################
+    #           query                                  #
+    ####################################################
+    self.query_flag = ucfg.cfg['query']['query']
+    self.q_basins = ucfg.cfg['query']['basins']
+    self.q_value = ucfg.cfg['query']['value']
+    self.q_run_name = ucfg.cfg['query']['run_name']
+    self.q_print_all_runs = ucfg.cfg['query']['print_all_runs']
+    self.q_start_date = ucfg.cfg['query']['start_date']
+    self.q_end_date = ucfg.cfg['query']['end_date']
+    self.q_total = ucfg.cfg['query']['total']
+    self.q_output = ucfg.cfg['query']['output']
+    self.q_csv_base_path = ucfg.cfg['query']['csv_base_path']
+    self.q_database = ucfg.cfg['query']['database']
 
     self.ucfg = ucfg

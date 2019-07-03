@@ -1,69 +1,44 @@
 
+
 import os
 import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import and_
-from snowav.database.tables import (Base, RunMetadata, Watershed, Basin,
-Results, VariableUnits, Watersheds, Basins)
+from snowav.database.tables import (Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins)
 from sys import exit
 from inicheck.tools import get_user_config, check_config
 from inicheck.output import generate_config, print_config_report
 from inicheck.config import MasterConfig
 from snowav.utils.utilities import get_snowav_path
 import argparse
+from sys import exit
 
-def main():
+def query(self):
     '''
-    Makes simple calls to snowav database and either prints results to the
-    terminal or outputs to csv.
-
-    The CoreConfig is ./snowav/config/QueryCore.ini
-
-    snowav_query -f /home/markrobertson/wkspace/code/SNOWAV/scripts/database_query.ini
-
     '''
 
-    master_config = os.path.join(get_snowav_path(),'snowav/config/QueryCore.ini')
+    print('Config option [query] = True, running database query...')
 
-    parser = argparse.ArgumentParser(description="Examine and auto populate")
-
-    parser.add_argument('-f', '--config_file', dest='config_file', type=str,
-                        help='Path to configuration file.')
-
-    args = parser.parse_args()
-
-    # read the config file
-    mcfg = MasterConfig(path = master_config)
-    ucfg = get_user_config(args.config_file, mcfg=mcfg)
-    warnings, errors = check_config(ucfg)
-
-    if len(errors) > 0:
-        print_config_report(warnings, errors)
-        print("Errors in the config file. "
-              "See configuration status report above.")
-        exit()
-
-    # read in options
-    wy = ucfg.cfg['query']['wy']
-    basins = ucfg.cfg['query']['basins']
-    if type(basins) != list:
-        basins = [basins]
+    if type(self.q_basins) != list:
+        basins = [self.q_basins]
+    else:
+        basins = self.q_basins
 
     if basins[0] not in Watersheds.watersheds.keys():
         print('First basin in {}: [query] -> basins should be one of '
               '{}'.format(args.config_file,Watersheds.watersheds.keys()))
         exit()
 
-    value = ucfg.cfg['query']['value']
-    run_name = ucfg.cfg['query']['run_name']
-    start_date = ucfg.cfg['query']['start_date'].to_pydatetime()
-    end_date = ucfg.cfg['query']['end_date'].to_pydatetime()
-    total = ucfg.cfg['query']['total']
-    csv_base_path = ucfg.cfg['query']['csv_base_path']
-    output = ucfg.cfg['query']['output']
-    db = ucfg.cfg['query']['database']
-    print_runs = ucfg.cfg['query']['print_all_runs']
+    value = self.q_value
+    run_name = self.q_run_name
+    start_date = self.q_start_date
+    end_date = self.q_end_date
+    total = self.q_total
+    csv_base_path = self.q_csv_base_path
+    output = self.q_output
+    db = self.q_database
+    print_runs = self.q_print_all_runs
 
     # connect to database
     engine = create_engine(db)
@@ -174,5 +149,5 @@ def main():
         if output == 'csv':
             fqry.to_csv(csv_file)
 
-if __name__ == '__main__':
-    main()
+    print('query complete, exiting snowav. To process results, set [query] query = False')
+    exit()

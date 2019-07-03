@@ -1,10 +1,11 @@
 
 import os
-from sys import exit
+from snowav.framework.query import query
 from snowav.framework.read_config import read_config
 from snowav.framework.process import process
 from snowav.framework.parse import parse
 from snowav.framework.figures import figures
+from snowav.framework.query import query
 from snowav.report.report import report
 from snowav.database.database import check_fields,delete,run_metadata,write_csv
 
@@ -38,6 +39,10 @@ class snowav(object):
         else:
             raise Exception('No config instance passed, or config file does '
                             'not exist!')
+
+        # query existing database without processing
+        if self.query_flag:
+            query(self)
 
         # parse config options
         parse(self)

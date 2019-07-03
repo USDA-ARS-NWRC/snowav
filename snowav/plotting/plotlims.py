@@ -1,19 +1,24 @@
 
 def plotlims(plotorder):
     '''
+    Compile basin-specific limits for making tidy figures.
+
     Args
-        basin: ['TUOL','SJ','KINGS','KAWEAH','MERCED','BRB','LAKES']
-        plotorder: list of subbasin names (see database/tables.py)
+    ------
+    plotorder : list
+        subbasin names
 
     Returns
-        lims: class with basin-specific plot details
-            pbbx:
-            legx: legend x
-            legy: legend y
-            btx: basin total text x
-            bty: basin total text y
-            sumorder: list of subbasin to plot (omits total unless single basin)
-            swid: bar spacing
+    ------
+    lims : class
+        basin-specific plot details:
+        pbbx:
+        legx: legend x
+        legy: legend y
+        btx: basin total text x
+        bty: basin total text y
+        sumorder: list of subbasin to plot (omits total unless single basin)
+        swid: bar spacing
 
     '''
     basin = plotorder[0]

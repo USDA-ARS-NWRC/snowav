@@ -3,7 +3,7 @@ from codecs import open
 from os import path
 import os
 from subprocess import check_output
-#Grab and write the gitVersion from 'git describe'.
+
 gitVersion = ''
 gitPath = ''
 
@@ -13,6 +13,7 @@ if os.path.exists('./.git'):
 	try:
 		# if we are in a git repo, fetch most recent tags
 		check_output(["git fetch --tags"], shell=True)
+
 	except Exception as e:
 		print(e)
 		print('Unable to fetch most recent tags')
@@ -21,8 +22,10 @@ if os.path.exists('./.git'):
 		ls_proc = check_output(["git describe --tags"], shell=True, universal_newlines=True)
 		gitVersion = ls_proc
 		print('Checking most recent version')
+
 	except Exception as e:
 		print('Unable to get git tag and hash')
+
 # if not in git repo
 else:
 	print('Not in git repository')
@@ -43,29 +46,19 @@ with open(fname,'w') as f:
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-# with open('HISTORY.rst') as history_file:
-#     history = history_file.read()
+requirements = []
 
-requirements = [
-    # TODO: put package requirements here
-]
+setup_requirements = []
 
-setup_requirements = [
-    # TODO(micahsandusky5): put setup requirements (distutils extensions, etc.) here
-]
-
-test_requirements = [
-    # TODO: put package test requirements here
-]
+test_requirements = []
 
 setup(
     name='snowav',
     version='0.8.4',
     description="Snow and Water Model Analysis and Visualization ",
-    # long_description=readme ,
     author="Mark Robertson",
     author_email='mark.robertson@ars.usda.gov',
-    url='https://github.com/roberton-mark/SNOWAV',
+    url='https://github.com/USDA-ARS-NWRC/snowav',
     packages=['snowav',
 			  'scripts',
 			  'snowav.framework',
@@ -77,11 +70,8 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
-    scripts=['./scripts/snow.py',
-			 './scripts/snowav_day.py',
-		     './scripts/snowav_airflow.py',
-			 './scripts/snowav_query.py'],
-    install_requires=requirements,
+    scripts=['./scripts/snow.py'],
+    # install_requires=requirements,
     license="CC0 1.0",
     zip_safe=False,
     keywords='snowav',
@@ -97,10 +87,7 @@ setup(
     setup_requires=setup_requirements,
 
     entry_points={
-       'console_scripts': ['snowav = scripts.snow:run',
-	   					   'snowav_airflow = scripts.snowav_airflow:run',
-						   'snowav_query = scripts.snowav_query:main',
-						   'snowav_day = scripts.snowav_day:main'],
+       'console_scripts': ['snowav = scripts.snow:run'],
     }
 
 )

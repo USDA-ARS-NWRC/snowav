@@ -107,39 +107,53 @@ def parse(self, external_logger=None):
     self.ixd = np.digitize(self.dem,edges)
     self.xlims = (0,len(edges))
 
-    # get standard run outputs
     out, all_dirs, dirs, rdict = outputs(run_dirs = self.run_dirs,
                                          start_date = self.start_date,
                                          end_date = self.end_date,
                                          filetype = self.filetype,
                                          wy = self.wy)
+
     self.outputs = out
     self.run_dirs = dirs
     self.all_dirs = all_dirs
     self.rundirs_dict = rdict
 
     # If no dates are specified, use first and last
-    if (self.start_date is None) and (self.end_date is None):
+    if self.start_date is None and self.end_date is not None:
         self.start_date = self.outputs['dates'][0]
-        self.end_date = self.outputs['dates'][-1]
-
-        self.tmp_log.append(' Config options [run] start_date and/or end_date '
+        self.tmp_log.append(' Config options [run] start_date '
                             'not specified, assigning '
                             '{} and {}'.format(self.start_date,self.end_date))
+
+        e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
         self.ixs = 0
+        self.ixe = np.where(self.outputs['dates'] == e)[0][0]
+
+    elif self.start_date is not None and self.end_date is None:
+        self.end_date = self.outputs['dates'][-1]
+        self.tmp_log.append(' Config options [run] end_date '
+                            'not specified, assigning '
+                            '{} and {}'.format(self.start_date,self.end_date))
+
+        s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
         self.ixe = len(self.outputs['dates']) - 1
+        self.ixs = np.where(self.outputs['dates'] == s)[0][0]
 
     # Otherwise, get closest dates and make indices
     else:
-        s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
-        e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
-        self.ixs = np.where(self.outputs['dates'] == s)[0][0]
-        self.ixe = np.where(self.outputs['dates'] == e)[0][0]
+        # s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
+        # e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
+        # self.ixs = np.where(self.outputs['dates'] == s)[0][0]
+        # self.ixe = np.where(self.outputs['dates'] == e)[0][0]
+        self.start_date = self.outputs['dates'][0]
+        self.end_date = self.outputs['dates'][-1]
+        self.ixs = 0
+        self.ixe = len(self.outputs['dates']) - 1
 
     if ((self.start_date.date() < self.outputs['dates'][0].date())
         or (self.end_date.date() > self.outputs['dates'][-1].date())):
         raise Exception('ERROR! Config option [run] start_date or end_date '
-                        'outside of range in run_dirs')
+                        'outside of date range found in [run] directory')
 
     # Since model outputs at 23:00, step the figure and report dates to
     # show 00:00 the next day (unless start of water year)

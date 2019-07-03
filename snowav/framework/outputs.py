@@ -41,7 +41,7 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
     ------
     outputs : dict
         dictionary of snow.nc and em.nc outputs within time period
-    dirs : list 
+    dirs : list
         all dirs within run_dir
     run_dirs : list
         modified run_dirs, with paths outside of start_date, end_date removed
@@ -54,6 +54,9 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
     dirs = copy.deepcopy(run_dirs)
     outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],'depth':[],
                'dates':[], 'time':[], 'density':[], 'coldcont':[] }
+
+    start = copy.deepcopy(start_date)
+    end = copy.deepcopy(end_date)
 
     # Run this with standard processing, and forecast processing
     if flight_dates is None:
@@ -70,17 +73,17 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
             t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
             ncf.close()
 
+            if start_date is None:
+                start = copy.deepcopy(t)
+
+            if end_date is None:
+                end = copy.deepcopy(t)
+
             # Only load the rundirs that we need
-            if (t.date() >= start_date.date()) and (t.date() <= end_date.date()):
+            if (t.date() >= start.date()) and (t.date() <= end.date()):
 
-                # pass the reader start and end times
-                if (start_date is not None) and (end_date is not None):
-                    st_hr = calculate_wyhr_from_date(start_date)
-                    en_hr = calculate_wyhr_from_date(end_date)
-
-                else:
-                    st_hr = calculate_wyhr_from_date(t)
-                    en_hr = calculate_wyhr_from_date(t)
+                st_hr = calculate_wyhr_from_date(start)
+                en_hr = calculate_wyhr_from_date(end)
 
                 output = iSnobalReader(path, filetype, snowbands = [0,1,2],
                                        embands = [6,7,8,9], wy = wy,
@@ -101,16 +104,6 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                     outputs['swe_z'].append(output.snow_data[2][n,:,:])
                     outputs['depth'].append(output.snow_data[0][n,:,:])
                     outputs['density'].append(output.snow_data[1][n,:,:])
-
-                # Everything but 'dates' gets clipped in the reader
-                outputs['dates'] = np.asarray(([d for (d, remove) in
-                                        zip(outputs['dates'],
-                                        (outputs['dates'] > end_date))
-                                        if not remove]))
-                outputs['dates'] = np.asarray(([d for (d, remove) in
-                                        zip(outputs['dates'],
-                                        (outputs['dates'] < start_date))
-                                        if not remove]))
 
             else:
                 run_dirs.remove(path)
@@ -159,6 +152,5 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
             else:
                 run_dirs.remove(path)
-
 
     return outputs, dirs, run_dirs, rdict

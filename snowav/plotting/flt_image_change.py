@@ -40,6 +40,7 @@ def flt_image_change(args, logger = None):
     masks = args['masks']
     lims = args['lims']
     barcolors = args['barcolor']
+    edges = args['edges']
     # snow.flight_diff_fig_names = []
     # snow.flight_diff_dates = []
     # snow.flight_diff_datestr = []
@@ -81,7 +82,7 @@ def flt_image_change(args, logger = None):
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
-        vMin,vMax = np.nanpercentile(delta_state,[0.5,99.5])
+        vMin,vMax = np.nanpercentile(delta_state,[args['percent_min'],args['percent_max']])
 
         colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
         colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -104,7 +105,7 @@ def flt_image_change(args, logger = None):
         fig,(ax,ax1) = plt.subplots(num = i, figsize = args['figsize'],
                                     dpi = args['dpi'], nrows = 1, ncols = 2)
 
-        norm = MidpointNormalize(midpoint = 0,vmin = vMin-0.01,vmax = vMax+0.01)
+        norm = MidpointNormalize(midpoint = 0)
         mask = np.ma.masked_array(depth.mask, ~depth.mask)
         delta_state[mask] = np.nan
 
@@ -175,17 +176,17 @@ def flt_image_change(args, logger = None):
         # print('Change in SWE\n', delta_swe_byelev)
         # print('\nPercent Change in SWE\n', (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100)
         percent_delta_byelev = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100
-        delta_swe_byelev.to_csv('{}flight_diff_delta_{}_{}.csv'.format(snow.figs_path,snow.name_append,datestr))
-        percent_delta_byelev.to_csv('{}flight_diff_percent_{}_{}.csv'.format(snow.figs_path,snow.name_append,datestr))
+        delta_swe_byelev.to_csv('{}flight_diff_delta_{}_{}.csv'.format(args['figs_path'],args['directory'],datestr))
+        percent_delta_byelev.to_csv('{}flight_diff_percent_{}_{}.csv'.format(args['figs_path'],args['directory'],datestr))
 
-        snow.flight_delta_vol_df[snow.flight_outputs['dates'][i].date().strftime("%Y%m%d")] = delta_swe_byelev
-        snow.flight_delta_percent_df[snow.flight_outputs['dates'][i].date().strftime("%Y%m%d")] = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100
+        flight_delta_vol_df[flight_outputs['dates'][i].date().strftime("%Y%m%d")] = delta_swe_byelev
+        flight_delta_percent_df[flight_outputs['dates'][i].date().strftime("%Y%m%d")] = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100
 
         plt.tight_layout()
         xts = ax1.get_xticks()
         edges_lbl = []
         for x in xts[0:len(xts)-1]:
-            edges_lbl.append(str(int(snow.edges[int(x)])))
+            edges_lbl.append(str(int(edges[int(x)])))
 
         ax1.set_xticklabels(str(x) for x in edges_lbl)
         for tick in ax1.get_xticklabels():
@@ -196,8 +197,8 @@ def flt_image_change(args, logger = None):
         ymin = ylims[0] - abs(ylims[1] - ylims[0])*0.1
         ax1.set_ylim((ymin, ymax))
 
-        ax1.set_ylabel('{} - per elevation band'.format(snow.vollbl))
-        ax1.set_xlabel('elevation [{}]'.format(snow.elevlbl))
+        ax1.set_ylabel('{} - per elevation band'.format(args['vollbl']))
+        ax1.set_xlabel('elevation [{}]'.format(args['elevlbl']))
         ax1.axes.set_title('Change in SWE')
 
         ax1.yaxis.set_label_position("right")
@@ -205,7 +206,7 @@ def flt_image_change(args, logger = None):
         ax1.tick_params(axis='y')
         ax1.yaxis.tick_right()
 
-        if len(snow.plotorder) > 1:
+        if len(plotorder) > 1:
             ax1.legend(loc=(lims.legx,lims.legy))
 
         ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
@@ -214,15 +215,13 @@ def flt_image_change(args, logger = None):
         plt.tight_layout()
         fig.subplots_adjust(top=0.88)
 
-        snow.flight_diff_dates = np.append(snow.flight_diff_dates,
-                                        snow.flight_outputs['dates'][i].date())
-        snow.flight_diff_datestr = np.append(snow.flight_diff_datestr,
-                    snow.flight_outputs['dates'][i].date().strftime("%m/%d"))
+        flight_diff_dates = np.append(flight_diff_dates, flight_outputs['dates'][i].date())
+        flight_diff_datestr = np.append(flight_diff_datestr,flight_outputs['dates'][i].date().strftime("%m/%d"))
 
-        snow.flight_diff_fig_names = (snow.flight_diff_fig_names +
-            ['flight_diff_{}_{}.png'.format(snow.name_append,datestr)])
+        flight_diff_fig_names = (flight_diff_fig_names +
+            ['flight_diff_{}_{}.png'.format(args['directory'],datestr)])
 
-        fig_name = '{}flight_diff_{}_{}.png'.format(snow.figs_path,snow.name_append,datestr)
+        fig_name = '{}flight_diff_{}_{}.png'.format(args['figs_path'],args['name_append'],datestr)
         snow._logger.info(' saving {}'.format(fig_name))
         figure.save(fig, fig_name)
 
