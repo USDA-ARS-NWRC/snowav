@@ -15,23 +15,26 @@ from snowav.utils.utilities import masks
 import snowav.utils.get_topo_stats as ts
 from snowav.utils.wyhr import handle_year_stradling, calculate_date_from_wyhr
 
-def process(nc_path, topo_path, value):
+def process(nc_path, topo_path, value, log):
+    '''
+    Process single day snow.nc files from command line call.
+
+    Currently only processing swe_z and swe_vol values.
+
+    Args
+    ------
+    nc_path : str
+    topo_path : str
+    value : str
+    log : object
+
     '''
 
-    This version of process() is for the command line snowav_day, and
-    processes either a single snow.nc file, or two snow.nc files to
-    calculate a simple SWE volume difference. This could be expanded
-    to include other output variables.
-
-    '''
-
-    print('Using topo {}...'.format(topo_path))
+    log.info('Using topo {}...'.format(topo_path))
 
     out = masks(topo_path, plotorder = None, plotlabels = None)
     dem = out['dem']*3.28
     bmask = out['masks']
-    nrows = out['nrows']
-    ncols = out['ncols']
     plotorder = out['plotorder']
     labels = out['labels']
     depth_factor = 0.03937
@@ -43,8 +46,9 @@ def process(nc_path, topo_path, value):
     embands = [6,7,8,9]
     cclimit = -5*1000*1000
     show = False
-    name_append = ''
-    edges = np.arange(4000,14000,1000)
+    edges = np.arange(4000,15000,1000)
+    def_edges = np.arange(3000,14000,1000)
+    ixd = np.digitize(dem,edges)
 
     if type(nc_path) != list:
         nc_path = [nc_path]
@@ -53,6 +57,7 @@ def process(nc_path, topo_path, value):
 
     topo = ts.get_topo_stats(topo_path, filetype = 'netcdf')
     pixel = int(topo['dv'])
+    conversion_factor = ((pixel**2) * 0.000000810713194*0.001)
 
     ncf = nc.Dataset(nc_path[0])
     t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
@@ -60,30 +65,19 @@ def process(nc_path, topo_path, value):
     wy = handle_year_stradling(t) + 1
 
     vars = OrderedDict([('coldcont','cold content'),
-                 ('evap_z','evaporation depth'),
-                 ('rain_z','rain depth'),
-                 ('density','density'),
-                 ('depth','depth'),
-                 ('precip_z','precipitation depth'),
-                 ('precip_vol','precipitation volume'),
-                 ('swi_z','surface water input depth'),
-                 ('swi_vol','surface water input volume'),
                  ('swe_z','snow water equivalent depth'),
                  ('swe_vol','snow water equivalent volume'),
                  ('swe_avail','snow water equivalent available for melt'),
                  ('swe_unavail','snow water equivalent unavailable for melt')])
 
     results = {}
-
-    conversion_factor = ((pixel**2) * 0.000000810713194*0.001)
-    ixd = np.digitize(dem,edges)
-
+    results['df'] = {}
     outputs = {'swi_z':[],'evap_z':[],'snowmelt':[],'swe_z':[],'depth':[],
-               'dates':[],'time':[],'density':[],'coldcont':[]}
+               'dates':[],'time':[],'density':[],'coldcont':[], 'path':[]}
 
     rundirs_dict = {}
     for ncp in nc_path:
-        print('Loading {}...'.format(ncp))
+        log.info('Loading {}...'.format(ncp))
 
         path = ncp.split('snow.nc')[0]
         output = iSnobalReader(path, filetype, snowbands = snowbands,
@@ -100,20 +94,15 @@ def process(nc_path, topo_path, value):
 
         outputs['dates'] = np.append(outputs['dates'],output.dates)
         outputs['time'] = np.append(outputs['time'],output.time)
+        outputs['path'] = ncp
 
-        for t in output.time:
-            rundirs_dict[int(t)] = path
-
-    date = outputs['dates'][0]
-
-    # Daily, by elevation
-    dz = pd.DataFrame(0, index = edges, columns = bmask.keys())
+    dz = pd.DataFrame(0, index = def_edges, columns = bmask.keys())
 
     if len(outputs['dates']) > 1:
         if outputs['dates'][0] == outputs['dates'][1]:
             outputs['dates'][1] = outputs['dates'][1] + timedelta(hours=1/60)
 
-    print('Generating results for {}...'.format(value))
+    log.info('Generating results for {}...'.format(value))
 
     for iters, out_date in enumerate(outputs['dates']):
 
@@ -122,14 +111,6 @@ def process(nc_path, topo_path, value):
                          'swe_avail':dz.copy(),
                          'swe_unavail':dz.copy(),
                          'swe_z':dz.copy(),
-                         'swi_vol':dz.copy(),
-                         'swi_z':dz.copy(),
-                         'precip_vol':dz.copy(),
-                         'precip_z':dz.copy(),
-                         'depth':dz.copy(),
-                         'density':dz.copy(),
-                         'rain_z':dz.copy(),
-                         'evap_z':dz.copy(),
                          'coldcont':dz.copy()}
 
         # Get a snow-free mask ready
@@ -145,22 +126,22 @@ def process(nc_path, topo_path, value):
                 mask = mask.astype(float)
 
                 mask[mask < 1] = np.nan
-                elevbin = np.multiply(ixd,mask)
+                elevbin = ixd*mask
 
                 # If the key is something we've already calculated (i.e., not
                 # volume), get the masked subbasin output, otherwise it will be
                 # calculated below
                 if k in outputs.keys():
-                    mask_out = np.multiply(outputs[k][iters],mask)
+                    mask_out = outputs[k][iters]*mask
 
                 # make a subbasin, by elevation, snow-free mask
-                swe_mask_sub = np.multiply(copy.deepcopy(swe),mask)
-                cold_sub = np.multiply(cold,mask)
+                swe_mask_sub = copy.deepcopy(swe)*mask
+                cold_sub = cold*mask
 
                 # Now mask the subbasins by elevation band
-                for n in np.arange(0,len(edges)):
+                for n in np.arange(0,len(def_edges)):
                     ind = elevbin == n
-                    b = edges[n]
+                    b = def_edges[n]
 
                     # index for pixels with SWE, in subbasin, in elevation band,
                     # needed for mean values
@@ -168,7 +149,7 @@ def process(nc_path, topo_path, value):
 
                     # Assign values
                     if k == 'swe_z':
-                        mask_out = np.multiply(outputs['swe_z'][iters],mask)
+                        mask_out = outputs['swe_z'][iters]*mask
                         ccb = cold_sub[ind]
                         cind = ccb > cclimit
 
@@ -179,16 +160,10 @@ def process(nc_path, topo_path, value):
                             r = np.nansum(swe_bin[cind])
                             ru = np.nansum(swe_bin[~cind])
 
-                            daily_outputs['swe_unavail'].loc[b,name] = (
-                                        np.multiply(ru,conversion_factor) )
-                            daily_outputs['swe_avail'].loc[b,name] = (
-                                        np.multiply(r,conversion_factor) )
-                            daily_outputs['swe_z'].loc[b,name] = (
-                                        np.multiply(np.nanmean(swe_bin),
-                                                    depth_factor) )
-                            daily_outputs['swe_vol'].loc[b,name] = (
-                                        np.multiply(np.nansum(swe_bin),
-                                                    conversion_factor) )
+                            daily_outputs['swe_unavail'].loc[b,name] = ru*conversion_factor
+                            daily_outputs['swe_avail'].loc[b,name] = r*conversion_factor
+                            daily_outputs['swe_z'].loc[b,name] = np.nanmean(swe_bin)*depth_factor
+                            daily_outputs['swe_vol'].loc[b,name] = np.nansum(swe_bin)*conversion_factor
 
                         else:
                             daily_outputs['swe_unavail'].loc[b,name] = np.nan
@@ -196,80 +171,30 @@ def process(nc_path, topo_path, value):
                             daily_outputs['swe_z'].loc[b,name] = np.nan
                             daily_outputs['swe_vol'].loc[b,name] = np.nan
 
-                    elif k == 'swi_z':
-                        # Not masked out by pixels with snow
-                        mask_out = np.multiply(outputs['swi_z'][iters],mask)
-                        r = np.nansum(mask_out[ind])
-                        daily_outputs['swi_z'].loc[b,name] = (
-                                        np.multiply(np.nanmean(mask_out[ind]),
-                                                    depth_factor) )
-                        daily_outputs['swi_vol'].loc[b,name] = (
-                                        np.multiply(r,conversion_factor) )
-
-                    elif k in ['evap_z','depth']:
-                        # masked out by pixels with snow -> [ix]
-                        r = np.nanmean(mask_out[ind])
-
-                        if k == 'depth':
-                            daily_outputs[k].loc[b,name] = (
-                                        np.multiply(r,depth_factor*1000) )
-
-                        else:
-                            daily_outputs[k].loc[b,name] = (
-                                            np.multiply(r,depth_factor) )
-
-                    elif k in ['coldcont','density']:
-                        # masked out by pixels with snow -> [ix]
-                        daily_outputs[k].loc[b,name] = np.nanmean(mask_out[ind][ix])
 
                 # Add basin total mean/volume field once all elevations are done
                 isub = swe_mask_sub > 0
 
                 if k == 'swe_z':
                     # calc swe_z derived values
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), depth_factor)
+                    out = outputs[k][iters]*mask
+                    total = np.nanmean(out)*depth_factor
 
                     s = np.nansum(daily_outputs['swe_vol'][name].values)
                     s1 = np.nansum(daily_outputs['swe_avail'][name].values)
                     s2 = np.nansum(daily_outputs['swe_unavail'][name].values)
-                    # daily_outputs['swe_vol'].loc['total',name] = copy.deepcopy(s)
-                    # daily_outputs['swe_avail'].loc['total',name] = copy.deepcopy(s1)
-                    # daily_outputs['swe_unavail'].loc['total',name] = copy.deepcopy(s2)
 
-                    # daily_outputs[k].loc['total',name] = copy.deepcopy(total)
 
-                if k == 'depth':
-                    # Mask by snow-free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), depth_factor*1000)
-                    daily_outputs[k].loc['total',name] = copy.deepcopy(total)
+            if k == 'swe_vol':
+                df = daily_outputs[k].copy()
+                df = df.round(decimals = 3)
 
-                if k == 'density':
-                    # Mask by snow-free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.nanmean(out[isub])
-                    daily_outputs[k].loc['total',name] = copy.deepcopy(total)
+        results['df'][nc_path[iters]] = df.fillna(0)
 
-                if k == 'swi_z':
-                    # Do not mask by snow free
-                    out = np.multiply(outputs[k][iters],mask)
-                    total = np.multiply(np.nanmean(out), depth_factor)
-                    daily_outputs[k].loc['total',name] = copy.deepcopy(total)
-
-                    s = np.nansum(daily_outputs['swi_vol'][name].values)
-                    daily_outputs['swi_vol'].loc['total',name] = copy.deepcopy(s)
-
-            df = daily_outputs[k].copy()
-            df = df.round(decimals = 3)
-
-    # results[out_date] = daily_outputs[value]
-    results['df'] = df.fillna(0)
     results['outputs'] = outputs
     results['masks'] = bmask
     results['plotorder'] = plotorder
-    # results['lims'] = lims
-    results['edges'] = edges
+    results['edges'] = def_edges
     results['labels'] = labels
 
     return results

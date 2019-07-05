@@ -463,10 +463,11 @@ def report(self):
     # Save in reports and with figs
     rpath_1 = os.path.join(self.rep_path, '' + self.report_name)
     rpath_2 = os.path.join(self.figs_path, '' + self.report_name)
-    self._logger.info('Saving {}\nSaving {}'.format(rpath_1,rpath_2))
+    self._logger.info(' saving {}'.format(rpath_1))
+    self._logger.info(' saving {}'.format(rpath_2))
 
-    if not os.path.isdir(os.path.join(self.rep_path,'')):
-        os.makedirs(os.path.join(self.rep_path,''))
+    # if not os.path.isdir(os.path.join(self.rep_path,'')):
+    #     os.makedirs(os.path.join(self.rep_path,''))
 
     pdf.save_to(rpath_1)
     pdf.save_to(rpath_2)

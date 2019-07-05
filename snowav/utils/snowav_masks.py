@@ -10,7 +10,7 @@ def masks(dempath, plotorder = None, plotlabels = None):
     CoreConfig.ini for more information on some config options and behavior.
 
     Args
-    ---------
+    ------
     dempath : str
         Path to topo.nc file, which is intended to be built by basin_setup
         package.
@@ -21,7 +21,7 @@ def masks(dempath, plotorder = None, plotlabels = None):
         Optional, default is mask_names.
 
     Returns
-    ---------
+    ------
     out : dict
 
     '''

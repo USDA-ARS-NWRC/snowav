@@ -1,0 +1,20 @@
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{l c c c | c c | c c c }
+
+		% \toprule
+		& \multicolumn{3}{c }{\textbf{Current}} & \multicolumn{2}{c}{\textbf{Report Period}} & \multicolumn{3}{ c }{\textbf{Water Year}}\\
+
+		\toprule
+
+		\multirow{2}{*} {\bf{Basin} }	& SWE			& SWE 						& SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
+																	& [UNITS] & [$\%$ total] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
+		\midrule
+		SUB1_LBL	  & SUB1_SWE		& SUB1_PVOL  & SUB1_PM 		& SUB1_PERSWI 	& SUB1_SDEL			& SUB1_SWI  	& SUB1PRE_PM    & $\sim$SUB1_RAT	\\
+		SUB2_LBL	  & SUB2_SWE		& SUB2_PVOL  & SUB2_PM 		& SUB2_PERSWI		& SUB2_SDEL 		& SUB2_SWI 		& SUB2PRE_PM		& $\sim$SUB2_RAT	\\
+		\hline
+		TOT_LBL			& TOTAL_SWE 	& TOTAL_PVOL & TOTAL_PM 	& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	& $\sim$TOTAL_RAT	\\
+		\bottomrule
+	\end{tabular}
+	\caption{Snow storage and surface water inputs.}\label{table:1}
+\end{table}

@@ -8,18 +8,18 @@ import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
 import snowav.framework.figures
-from pandas.tools.plotting import table
-import six
+# from pandas.tools.plotting import table
+# import six
 
 def swe_volume(args, logger = None):
     '''
     Current SWE depth and volume.
 
-    Note: scripts/sample_figure.py calls this function as an example. If
-    changes are made here update sample_figure.py if necessary.
+    Note: scripts/sample_figure.py and command line tool in snow.py call this
+    function. If changes are made here update those calls as necessary.
 
     Args
-    ----------
+    ------
     args : dict
         dictionary with required inputs, see swi() figure for more information.
 
@@ -91,7 +91,6 @@ def swe_volume(args, logger = None):
     ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
 
     for iters,name in enumerate(lims.sumorder):
-
         if args['dplcs'] == 0:
             ukaf = str(np.int(np.nansum(df[name].values)))
         else:
@@ -150,5 +149,8 @@ def swe_volume(args, logger = None):
         logger.info(' saving {}'.format(fig_name))
 
     snowav.framework.figures.save_fig(fig, fig_name)
+
+    if 'show' in args.keys() and args['show']:
+        plt.show()
 
     return fig_name_short, swe_ylims

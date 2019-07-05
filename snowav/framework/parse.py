@@ -226,14 +226,14 @@ def parse(self, external_logger=None):
         self.run_dirs_flt = dirs
         self.for_rundirs_dict = rdict
 
-    # If there are no flights in the period, set to false for the flight diff
-    # figure and report
-    if not self.run_dirs_flt:
-        self.flt_flag = False
-        self.tmp_log.append(' Config option [plots] update_file was supplied, '
-                            'but no snow.nc files were found in [run] run_dirs '
-                            'that fit the date range, no flight difference '
-                            'figure will be made')
+        # If there are no flights in the period, set to false for the flight
+        # difference figure and report
+        if not self.run_dirs_flt:
+            self.flt_flag = False
+            self.tmp_log.append(' Config option [plots] update_file was '
+                                'supplied, but no snow.nc files were found in '
+                                '[run] directory that fit the date range, no '
+                                'flight difference figure will be made')
 
     self.report_date = self.end_date + timedelta(hours=1)
     parts = self.report_name.split('.')

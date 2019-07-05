@@ -5,9 +5,8 @@ from snowav.framework.read_config import read_config
 from snowav.framework.process import process
 from snowav.framework.parse import parse
 from snowav.framework.figures import figures
-from snowav.framework.query import query
 from snowav.report.report import report
-from snowav.database.database import check_fields,delete,run_metadata,write_csv
+from snowav.database.database import run_metadata
 
 class snowav(object):
 

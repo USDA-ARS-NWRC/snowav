@@ -85,7 +85,7 @@ def figures(self):
         fig_names['swi'] = swi(args, self._logger)
 
     if self.image_change_flag:
-        image = self.outputs['swe_z'][self.ixs] - self.outputs['swe_z'][self.ixe]
+        image = self.outputs['swe_z'][self.ixe] - self.outputs['swe_z'][self.ixs]
 
         start = collect(connector, args['plotorder'], args['basins'],
                         args['start_date'], args['start_date'],'swe_vol',

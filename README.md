@@ -32,9 +32,9 @@ To process a single snow.nc file and display simple SWE volume figure, without p
 $ snowav -t <topo.nc> -d <snow.nc>
 ```
 
-By default this will display SWE volume and save the figure in the snowav repo. Specify a figure save location with ```-p <path>```.
+By default this will display SWE volume and save the figure in the snowav repo. Specify a figure save location with ```-p <path>``` and include ``` -s ``` to display the figure.
 
-To create a simple difference between any two snow.nc files:
+For a simple difference between two snow.nc files:
 
 ```
 $ snowav -t <topo.nc> -A <snow.nc> -B <snow.nc>

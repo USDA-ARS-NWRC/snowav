@@ -17,6 +17,9 @@ def image_change(args, logger):
     Makes change in SWE figure, with spatial depth on the left and
     bar volume on right.
 
+    Note: command line tool in snow.py calls this function. If changes are made
+    here update that calls as necessary.
+
     Args
     ----------
     args : dict
@@ -24,7 +27,7 @@ def image_change(args, logger):
 
     logger : dict
         snowav logger
-        
+
     '''
 
     # print to screen for each figure if desired
@@ -151,5 +154,8 @@ def image_change(args, logger):
     if logger is not None:
         logger.info(' saving {}'.format(fig_name))
     snowav.framework.figures.save_fig(fig, fig_name)
+
+    if 'show' in args.keys() and args['show']:
+        plt.show()
 
     return fig_name_short
