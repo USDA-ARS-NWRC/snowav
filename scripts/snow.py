@@ -140,7 +140,8 @@ def run():
 
         df = results['df'][nc_path[1]] - results['df'][nc_path[0]]
         fargs['df'] = df
-        fargs['image'] = results['outputs']['swe_z'][1]-results['outputs']['swe_z'][0]
+        fargs['image'] = results['outputs']['swe_z'][1] \
+                         - results['outputs']['swe_z'][0]
         fargs['title'] = title
 
         log.info('Difference generated from:\n      {} '
