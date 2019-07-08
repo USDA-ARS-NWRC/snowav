@@ -195,7 +195,7 @@ class snowav(object):
                 flt_image_change(self)
 
             if self.basin_total_flag is True:
-                basin_total(self)                
+                basin_total(self)
 
             # WRF forecast
             if self.forecast_flag is True:

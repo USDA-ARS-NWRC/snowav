@@ -46,10 +46,14 @@ def flt_image_change(snow):
             idx = np.append(idx,i)
 
     times = np.delete(times, idx)
+    if snow.update_numbers is not None:
+        snow.update_numbers = [int(x) for x in snow.update_numbers]
 
-    for i,time in enumerate(times):
-
-        depth = p.variables['depth'][i,:,:]
+    for i, time in enumerate(times):
+        if snow.update_numbers is not None:
+            depth = p.variables['depth'][snow.update_numbers[i],:,:]
+        else:
+            depth = p.variables['depth'][i,:,:]
         delta_swe = snow.flight_outputs['swe_z'][i][:] - snow.pre_flight_outputs['swe_z'][i][:]
         delta_swe = np.multiply(delta_swe,snow.depth_factor)
 
