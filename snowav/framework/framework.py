@@ -66,7 +66,6 @@ class snowav(object):
             self.precip_depth_flag = False
             self.precip_validate_flag = False
 
-        # figures for standard run
         figures(self)
 
         # Do additional processing and figures if forecast is supplied. Some

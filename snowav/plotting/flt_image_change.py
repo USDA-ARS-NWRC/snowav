@@ -63,6 +63,7 @@ def flt_image_change(args, logger = None):
             idx = np.append(idx,i)
 
     times = np.delete(times, idx)
+
     if update_numbers is not None:
         update_numbers = [int(x) for x in update_numbers]
 
@@ -71,7 +72,7 @@ def flt_image_change(args, logger = None):
             depth = p.variables['depth'][update_numbers[i],:,:]
         else:
             depth = p.variables['depth'][i,:,:]
-            
+
         delta_swe = flight_outputs['swe_z'][i][:] - pre_flight_outputs['swe_z'][i][:]
         delta_swe = delta_swe * args['depth_factor']
 
