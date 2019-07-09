@@ -7,17 +7,17 @@ from snowav.database.database import connect, make_session, collect
 from snowav.utils.utilities import masks
 
 """
-See CoreConfig.ini for more options and details.
+See README.md and CoreConfig.ini for more options and details.
 
 """
 
-connector = 'sqlite:////home/markrobertson/mrworkspace/projects/snowav/snowav.db'
-dempath = '/home/markrobertson/mrworkspace/projects/snowav/inputs/tuolumne/topo/topo.nc'
+connector = 'sqlite:////<database.db>'
+dempath = '<topo.nc>'
 plotorder = ['Extended Tuolumne', 'Tuolumne', 'Cherry Creek', 'Eleanor']
 lims = plotlims(plotorder)
 edges = [3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000]
 
-ncf = nc.Dataset('/home/markrobertson/mrworkspace/projects/snowav/outputs/runs/run20190602/snow.nc')
+ncf = nc.Dataset('<snow.nc>')
 image = ncf['specific_mass'][:]
 ncf.close()
 
@@ -45,7 +45,7 @@ args = {'report_start': '',
         'start_date': start_date,
         'end_date': end_date,
         'directory': 'test',
-        'figs_path': '/home/markrobertson/mrworkspace/projects/snowav/results/tuol_wy2019_test/',
+        'figs_path': '<path>',
         'edges': edges,
         'plotorder': plotorder,
         'labels': labels,

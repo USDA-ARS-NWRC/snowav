@@ -31,8 +31,8 @@ def precip_validate(snow):
            'tbl_metadata.id=tbl_stations.metadata_id WHERE '
            'tbl_stations.client="KINGS_2019";')
 
-    cnx = mysql.connector.connect(user='markrobertson',
-                                  password='whatdystm?1',
+    cnx = mysql.connector.connect(user='',
+                                  password='',
                                   host='10.200.28.137',
                                   database='weather_db',
                                   port=32768)
@@ -53,8 +53,8 @@ def precip_validate(snow):
 
     # Get Snotel station results
     for iters,stn in enumerate(stns):
-        cnx = mysql.connector.connect(user='markrobertson',
-                                      password='whatdystm?1',
+        cnx = mysql.connector.connect(user='',
+                                      password='',
                                       host='10.200.28.137',
                                       port='32768',database='weather_db')
 

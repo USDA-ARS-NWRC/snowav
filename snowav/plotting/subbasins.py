@@ -7,8 +7,6 @@ import seaborn as sns
 import copy
 import cmocean
 import matplotlib.patches as mpatches
-from snowav import database
-from snowav.database.tables import Basins
 from snowav.plotting.plotlims import plotlims as plotlims
 import pandas as pd
 from matplotlib.ticker import FormatStrFormatter

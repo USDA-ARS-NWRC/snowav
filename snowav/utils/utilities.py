@@ -4,14 +4,17 @@ import os
 import netCDF4 as nc
 import numpy as np
 import copy
+from collections import OrderedDict
 
 def masks(dempath, plotorder = None, plotlabels = None):
     '''
     Load dem, build snowav masks dictionary from topo.nc file. See
     CoreConfig.ini for more information on some config options and behavior.
 
+    Currently 'Cherry Creek' is an exception.
+
     Args
-    ---------
+    ------
     dempath : str
         Path to topo.nc file, which is intended to be built by basin_setup
         package.
@@ -22,7 +25,7 @@ def masks(dempath, plotorder = None, plotlabels = None):
         Optional, default is mask_names.
 
     Returns
-    ---------
+    ------
     out : dict
 
     '''
@@ -39,6 +42,7 @@ def masks(dempath, plotorder = None, plotlabels = None):
     dem = ncf.variables['dem'][:]
 
     mask_names = [ncf.variables['mask'].long_name]
+    mask_names_total = ncf.variables['mask'].long_name
 
     for v in ncf.variables.items():
 
@@ -48,8 +52,6 @@ def masks(dempath, plotorder = None, plotlabels = None):
 
     if plotorder is None:
         plotorder = mask_names
-
-        # Exception for Cherry Creek
         plotorder =  ['Cherry Creek' if x=='Cherry' else x for x in plotorder]
 
     else:
@@ -74,6 +76,10 @@ def masks(dempath, plotorder = None, plotlabels = None):
             for name in plotorder:
                 labels[name] = name
 
+        elif plotlabels is None:
+            for name in plotorder:
+                labels[name] = name
+
         else:
             for i, name in enumerate(plotorder):
                 logger.append(' Assigning plot label {} '.format(plotlabels[i])+
@@ -85,16 +91,13 @@ def masks(dempath, plotorder = None, plotlabels = None):
 
     for lbl in plotorder:
 
-        # Exceptions
         if lbl == 'Cherry Creek':
             nclbl = 'Cherry'
-
         else:
             nclbl = lbl
 
-        if lbl != plotorder[0]:
+        if lbl != mask_names_total:
             masks[lbl] = {'mask':ncf[nclbl + ' mask'][:], 'label':lbl}
-
         else:
             masks[lbl] = {'mask':ncf['mask'][:], 'label':nclbl}
 
@@ -114,6 +117,8 @@ def precip(rundirs_dict, path):
     '''
     Get daily total precip and percent rain from hourly smrf outputs in
     expected awsm_daily format.
+
+    Needs testing for non-daily format!
 
     Args
     -----

@@ -9,7 +9,7 @@ from snowav.framework.outputs import outputs
 import coloredlogs
 import netCDF4 as nc
 from collections import OrderedDict
-from snowav.database.database import connect, make_session
+from snowav.database.database import connect
 from datetime import timedelta, datetime
 from inicheck.output import print_config_report, generate_config
 from snowav.utils.wyhr import handle_year_stradling, calculate_date_from_wyhr
@@ -57,16 +57,16 @@ def parse(self, external_logger=None):
     for log in out['logger']:
         self.tmp_log.append(log)
 
-    # Establish database connection.
-    # This will make sqlite database if it doesn't exist
-    self.basins, cnx, out = connect(sqlite = self.sqlite, mysql = self.mysql,
+    # Establish database connection
+    self.basins, cnx, out = connect(sqlite = self.sqlite, sql = self.mysql,
                                plotorder = self.plotorder, user = self.db_user,
                                password = self.db_password, host = self.db_host,
-                               port = self.db_port)
+                               port = self.db_port, convert = self.db_convert,
+                               add = self.add_basins)
     self.connector = cnx
 
     for log in out:
-        self.tmp_log.append(log[0])
+        self.tmp_log.append(log)
 
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
@@ -83,8 +83,10 @@ def parse(self, external_logger=None):
         self.wy = handle_year_stradling(t) + 1
 
     else:
-        raise Exception('Expecting to find {} to get '.format(sfile) +
-                        'topo stats, but it is not a valid file')
+        print('\nGiven config options, expecting to find:\n   {}\nto load topo '
+              'stats but is not a valid file\nCheck config [run] options, see '
+              'CoreConfig.ini for details\n'.format(sfile))
+        raise Exception('{} not a valid file'.format(sfile))
 
     # make the bins
     edges = np.arange(self.elev_bins[0],
@@ -117,6 +119,7 @@ def parse(self, external_logger=None):
     self.run_dirs = dirs
     self.all_dirs = all_dirs
     self.rundirs_dict = rdict
+    self.all_dirs_flt = copy.deepcopy(all_dirs)
 
     # If no dates are specified, use first and last
     if self.start_date is None and self.end_date is not None:
@@ -141,10 +144,6 @@ def parse(self, external_logger=None):
 
     # Otherwise, get closest dates and make indices
     else:
-        # s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
-        # e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
-        # self.ixs = np.where(self.outputs['dates'] == s)[0][0]
-        # self.ixe = np.where(self.outputs['dates'] == e)[0][0]
         self.start_date = self.outputs['dates'][0]
         self.end_date = self.outputs['dates'][-1]
         self.ixs = 0
@@ -172,11 +171,7 @@ def parse(self, external_logger=None):
               self.start_date.date().strftime("%Y%m%d") +
               '_' +
               self.end_date.date().strftime("%Y%m%d") )
-    self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
-
-    extf = os.path.splitext(os.path.split(self.config_file)[1])
-    ext_shr = self.directory
-    self.figs_path = os.path.join(self.save_path, '%s/'%(ext_shr))
+    self.figs_path = os.path.join(self.save_path, '{}/'.format(ext_shr))
 
     # get forecast outputs
     if self.forecast_flag:
@@ -211,20 +206,28 @@ def parse(self, external_logger=None):
             wydate = calculate_date_from_wyhr(int(time), self.wy)
             pre_wydate = calculate_date_from_wyhr(int(time-24), self.wy)
             flight_dates = np.append(flight_dates,wydate)
-            pre_flight_dates = np.append(pre_flight_dates,wydate)
+            pre_flight_dates = np.append(pre_flight_dates,pre_wydate)
 
-        # self.flight_rundirs_dict = {}
-        # flist = copy.deepcopy(self.run_dirs_flight)
-        out, x, dirs, rdict = outputs(run_dirs = self.run_dirs,
-                                   start_date = None,
-                                   end_date = None,
-                                   filetype = self.filetype,
-                                   wy = self.wy,
-                                   flight_dates = flight_dates,
-                                   pre_flight_dates = pre_flight_dates)
+        out, x, dirs, rdict = outputs(run_dirs = self.all_dirs_flt,
+                                      start_date = None,
+                                      end_date = None,
+                                      filetype = self.filetype,
+                                      wy = self.wy,
+                                      flight_dates = flight_dates)
+
         self.flight_outputs = out
         self.run_dirs_flt = dirs
         self.for_rundirs_dict = rdict
+        self.flight_diff_dates = out['dates']
+
+        out, x, dirs, rdict = outputs(run_dirs = self.all_dirs_flt,
+                                      start_date = None,
+                                      end_date = None,
+                                      filetype = self.filetype,
+                                      wy = self.wy,
+                                      flight_dates = pre_flight_dates)
+
+        self.pre_flight_outputs = out
 
         # If there are no flights in the period, set to false for the flight
         # difference figure and report
@@ -272,7 +275,6 @@ def parse(self, external_logger=None):
     self.pargs['ixd'] = self.ixd
     self.pargs['vollbl'] = self.vollbl
     self.pargs['depthlbl'] = self.depthlbl
-    self.pargs['connector'] = self.connector
 
 def createLog(self):
     '''

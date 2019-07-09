@@ -10,8 +10,6 @@ import copy
 import cmocean
 import matplotlib.patches as mpatches
 import pandas as pd
-from snowav import database
-from snowav.database.tables import Basins
 
 def swe_change(snow):
     '''

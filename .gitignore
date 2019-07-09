@@ -36,10 +36,5 @@ pip-delete-this-directory.txt
 *.py~
 *.swp
 
-# data folders
-snowav/data/*
-mydata/*
-scripts/database_query.ini
-
 #Git info stuff
 snowav/utils/gitinfo.py

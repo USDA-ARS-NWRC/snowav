@@ -52,7 +52,7 @@ class snowav(object):
         # process results
         self.pargs['run_id'] = self.run_id
         self.pargs['vid'] = self.vid
-        flags, out, pre, rain, density = process(self.pargs)
+        self.precip_flag, out, pre, rain, density = process(self.pargs)
 
         # gather process() outputs
         for log in out:
@@ -62,7 +62,7 @@ class snowav(object):
         self.rain_total = rain
         self.precip_total = pre
 
-        if not flags['precip']:
+        if not self.precip_flag:
             self.precip_depth_flag = False
             self.precip_validate_flag = False
 

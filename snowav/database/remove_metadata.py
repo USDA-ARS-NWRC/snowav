@@ -21,7 +21,7 @@ import mysql.connector
 '''
 mysql -h 172.17.0.2 -P 3306 -u mark -p
 
-snowav -b 'basin' -wy wy -db mysql+mysqlconnector://mark:whatdystm?1@172.17.0.2/snowav
+snowav -b 'basin' -wy wy -db mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
 
 '''
 
@@ -31,8 +31,8 @@ end_date = datetime.datetime(2019,9,30)
 # basins = ['Middle Fork','West Kings','Dinkey Creek','Middle South Fork','South Fork','Mill Creek','North Fork']
 basins = ['San Joaquin River Basin','South Fork','Main','Auberry','Redinger']
 
-user = 'mark'
-pwd = 'whatdystm?1'
+user = 'user'
+pwd = 'password'
 host = '172.17.0.2'
 port = '3306'
 db = 'snowav'

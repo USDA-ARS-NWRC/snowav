@@ -1,34 +1,36 @@
 
-
 import os
 import pandas as pd
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import and_
-from snowav.database.tables import (Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins)
-from sys import exit
-from inicheck.tools import get_user_config, check_config
-from inicheck.output import generate_config, print_config_report
-from inicheck.config import MasterConfig
-from snowav.utils.utilities import get_snowav_path
-import argparse
+from snowav.database.database import connect, make_session
+from snowav.database.tables import RunMetadata, Results, VariableUnits
 from sys import exit
 
 def query(self):
     '''
+    Query snow server snowav database. Requires correct database login
+    information in the config file [database] section.
+
+    See README.md and CoreConfig.ini for details and more information.
+
     '''
 
-    print('Config option [query] = True, running database query...')
+    print('\nConfig option [query] = True, running database query...')
+
+    if ((self.q_basins is None) or (self.q_run_name is None) or
+        (self.q_start_date is None) or (self.q_end_date is None)):
+        raise Exception('Required config [query] fields missing, '
+                        'see CoreConfig.ini')
 
     if type(self.q_basins) != list:
         basins = [self.q_basins]
     else:
         basins = self.q_basins
 
-    if basins[0] not in Watersheds.watersheds.keys():
-        print('First basin in {}: [query] -> basins should be one of '
-              '{}'.format(args.config_file,Watersheds.watersheds.keys()))
-        exit()
+    bdict, cnx, out = connect(sqlite = self.sqlite, sql = self.mysql,
+                              plotorder = basins, user = self.db_user,
+                              password = self.db_password, host = self.db_host,
+                              port = self.db_port, convert = self.db_convert)
 
     value = self.q_value
     run_name = self.q_run_name
@@ -40,19 +42,14 @@ def query(self):
     db = self.q_database
     print_runs = self.q_print_all_runs
 
-    # connect to database
-    engine = create_engine(db)
-    connection = engine.connect()
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
     # Make df from database
     db_val = pd.DataFrame(columns = basins)
+    session = make_session(self.q_database)
 
     for bid in basins:
 
         # Get available run_names for the watershed
-        wid = Basins.basins[basins[0]]['watershed_id']
+        wid = int(bdict[basins[0]]['watershed_id'])
 
         # print out all available runs for the time period if desired
         if print_runs is True:
@@ -72,7 +69,7 @@ def query(self):
                                                       (Results.date_time <= end_date),
                                                       (RunMetadata.run_name.in_(names)),
                                                       (RunMetadata.watershed_id == wid),
-                                                      (Results.basin_id == Basins.basins[bid]['basin_id'])))
+                                                      (Results.basin_id == int(bdict[bid]['basin_id']))))
 
             df = pd.read_sql(qry.statement, qry.session.connection())
 
@@ -80,8 +77,6 @@ def query(self):
                                                       (Results.date_time <= end_date),
                                                       (RunMetadata.run_name.in_(names)) ))
             df2 = pd.read_sql(qry2.statement, qry2.session.connection())
-
-            session.close()
 
             dash = '-'*100
             print('\n{}'.format(dash))
@@ -91,13 +86,11 @@ def query(self):
             for name in rid:
                 try:
                     stime = df[df['run_id'].isin(rid[name])]['date_time'].min().date().strftime("%Y-%-m-%-d")
-
                 except:
                     stime = 'nan'
 
                 try:
                     etime = df[df['run_id'].isin(rid[name])]['date_time'].max().date().strftime("%Y-%-m-%-d")
-
                 except:
                     etime  = 'nan'
 
@@ -105,17 +98,15 @@ def query(self):
 
             print('{}\n'.format(dash))
 
-
         bid_name = bid.replace(" ", "_")
         csv_file = '{}{}_{}_{}.csv'.format(csv_base_path,bid_name,run_name,value)
-
         qry = session.query(Results).join(RunMetadata).filter(and_(
                         (Results.date_time >= start_date),
                         (Results.date_time <= end_date),
                         (RunMetadata.run_name == run_name),
                         (RunMetadata.watershed_id == wid),
                         (Results.variable == value),
-                        (Results.basin_id == Basins.basins[bid]['basin_id'])))
+                        (Results.basin_id == int(bdict[bid]['basin_id']))))
 
         df = pd.read_sql(qry.statement, qry.session.connection())
 
@@ -141,13 +132,12 @@ def query(self):
                 print('\n\nsnowav database values \n'
                       'basin: {}\n'
                       'run_name: {}\n'
-                      # '{} to {}\n'
                       'value: {}\n\n'
-                      # '{}'.format(bid, run_name, start_date, end_date, value, fqry[cols]))
                       '{}'.format(bid, run_name, value, fqry[cols]))
 
         if output == 'csv':
             fqry.to_csv(csv_file)
 
-    print('query complete, exiting snowav. To process results, set [query] query = False')
+    session.close()
+    print('\nQuery complete, exiting snowav. To process results, set [query] query: False\n')
     exit()

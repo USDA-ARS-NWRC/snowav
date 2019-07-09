@@ -25,7 +25,6 @@ def read_config(self, external_logger=None, awsm=None):
     if errors != [] or warnings != []:
         print_config_report(warnings, errors)
 
-    # create blank log and error log because logger is not initialized yet
     self.tmp_log = []
     self.tmp_err = []
     self.tmp_warn = []
@@ -49,7 +48,7 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.plotlabels = ucfg.cfg['snowav']['plotlabels']
 
-    if type(self.plotlabels) != list:
+    if self.plotlabels is not None and type(self.plotlabels) != list:
         self.plotlabels = [self.plotlabels]
 
     ####################################################
@@ -65,11 +64,11 @@ def read_config(self, external_logger=None, awsm=None):
         self.end_date = self.end_date.to_pydatetime()
 
         if self.start_date >= self.end_date:
-            self.tmp_log.append('Error: [run] start_date >= [run] end_date')
+            self.tmp_log.append(' Error: [run] start_date >= [run] end_date')
             raise Exception('Error: [run] start_date >= [run] end_date')
 
     else:
-        self.tmp_log.append('[run] start_date and/or end_date was not '
+        self.tmp_log.append(' [run] start_date and/or end_date was not '
                             'defined in config file, will be assigned '
                             'by available dates in directory')
 
@@ -95,6 +94,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_password = ucfg.cfg['database']['password']
     self.db_host = ucfg.cfg['database']['host']
     self.db_port = ucfg.cfg['database']['port']
+    self.db_convert = ucfg.cfg['database']['convert_ws']
+    self.add_basins = ucfg.cfg['database']['add_basins']
     if ((self.mysql is not None) and
         ((self.db_user is None) or
          (self.db_password is None) or
@@ -138,8 +139,6 @@ def read_config(self, external_logger=None, awsm=None):
     self.depth_clip = ucfg.cfg['plots']['depth_clip']
     self.percent_min = ucfg.cfg['plots']['percent_min']
     self.percent_max = ucfg.cfg['plots']['percent_max']
-    self.annot_x = ucfg.cfg['plots']['annot_x']
-    self.annot_y = ucfg.cfg['plots']['annot_y']
     self.subs_fig = ucfg.cfg['plots']['subs_fig']
     self.density_flag = ucfg.cfg['plots']['density']
     self.swi_flag = ucfg.cfg['plots']['swi']
@@ -160,10 +159,22 @@ def read_config(self, external_logger=None, awsm=None):
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
     self.update_file = ucfg.cfg['plots']['update_file']
-    self.update_numbers = ucfg.cfg['plots']['update_numbers']
     self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
     self.figsize = (ucfg.cfg['plots']['fig_length'],
                     ucfg.cfg['plots']['fig_height'])
+    self.write_properties = ucfg.cfg['plots']['write_properties']
+    if self.write_properties is not None and type(self.write_properties) != list:
+        self.write_properties = [self.write_properties]
+
+    numbers = ucfg.cfg['plots']['update_numbers']
+
+    if numbers is not None:
+        if type(numbers) != list:
+            numbers = [numbers]
+        self.update_numbers = [x - 1 for x in numbers]
+
+    else:
+        self.update_numbers = None
 
     if (self.compare_runs_flag and ((self.compare_run_names is None) or
         (self.compare_run_labels is None))):
@@ -185,8 +196,8 @@ def read_config(self, external_logger=None, awsm=None):
     else:
         self.flt_flag = False
 
-    if (self.precip_validate_flag and (self.val_client is None) or
-       (self.pre_val_stns is None) or (self.pre_val_lbls is None)):
+    if (self.precip_validate_flag and ((self.val_client is None) or
+       (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
         self.tmp_log.append(' Config option [plots] precip_validate is being '
                             'set to False, see CoreConfig.ini for details')
 
@@ -205,15 +216,16 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     self.report_flag = ucfg.cfg['report']['report']
     self.print_latex = ucfg.cfg['report']['print_latex']
-    self.report_name = ucfg.cfg['report']['report_name']
-    self.rep_title = ucfg.cfg['report']['report_title']
-    self.rep_path = ucfg.cfg['report']['rep_path']
+    self.report_name = ucfg.cfg['report']['file']
+    self.rep_title = ucfg.cfg['report']['title']
+    self.rep_path = ucfg.cfg['report']['save_path']
     self.env_path = ucfg.cfg['report']['env_path']
     self.templ_path = ucfg.cfg['report']['templ_path']
     self.tex_file = ucfg.cfg['report']['tex_file']
-    self.summary_file = ucfg.cfg['report']['summary_file']
+    self.summary_file = ucfg.cfg['report']['summary']
     self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
     self.flight_figs = ucfg.cfg['report']['flight_figs']
+    self.tables = ucfg.cfg['report']['tables']
 
     self.rep_swi_flag = ucfg.cfg['report']['swi']
     if not self.swi_flag:
@@ -248,8 +260,6 @@ def read_config(self, external_logger=None, awsm=None):
         self.rep_precip_depth_flag = False
 
     # check paths to see if they need default snowav path
-    if self.rep_path is None:
-        self.rep_path = os.path.join(self.snowav_path,'snowav/data/')
     if self.env_path is None:
         self.env_path = os.path.join(self.snowav_path,
                                      'snowav/report/template/section_text/')
@@ -269,6 +279,7 @@ def read_config(self, external_logger=None, awsm=None):
     ####################################################
     #           forecast                               #
     ####################################################
+
     self.forecast_flag = ucfg.cfg['forecast']['report']
 
     if self.forecast_flag:

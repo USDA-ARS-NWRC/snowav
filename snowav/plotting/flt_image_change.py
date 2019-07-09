@@ -12,18 +12,22 @@ import pandas as pd
 from datetime import timedelta
 import netCDF4 as nc
 from snowav.utils.wyhr import calculate_wyhr_from_date, calculate_date_from_wyhr
+from snowav.database.database import collect, make_session
+import snowav.framework.figures
 
 def flt_image_change(args, logger = None):
     '''
-    Difference in SWE from one day prior to depth updates to the day of flight
+    Difference in SWE from one day prior to flight updates to the day of flight
     updates.
 
-    Flight dates and update masks are pulled from file specified in config
-    [plots] update_file. The actual SWE changes are simply the differences
-    in snow.nc files for those dates.
+    The file specified in [plots] update_file is used to get dates of flight
+    updates and the masks for which portions of the basin were updated. The
+    actual SWE differences are between the snow.nc files on the dates of the
+    flights and the day immediately prior. [plots] update_numbers is a 1-based
+    list of subsetting flights that can be applied.
 
     Args
-    ----------
+    ------
     args : dict
         dictionary with required inputs, see swi() figure for more information.
 
@@ -39,24 +43,28 @@ def flt_image_change(args, logger = None):
     pre_flight_outputs = args['pre_flight_outputs']
     masks = args['masks']
     lims = args['lims']
-    barcolors = args['barcolor']
+    barcolors = args['barcolors']
     edges = args['edges']
-    # snow.flight_diff_fig_names = []
-    # snow.flight_diff_dates = []
-    # snow.flight_diff_datestr = []
-    # snow.flight_delta_vol_df = {}
-    # snow.flight_delta_percent_df = {}
+    connector = args['connector']
+    plotorder = args['plotorder']
+    e = False
+    flight_diff_fig_names = []
+    flight_delta_vol_df = {}
 
     p = nc.Dataset(file, 'r')
 
     if update_numbers is None:
         times = p.variables['time'][:]
-
     else:
-        times = p.variables['time'][update_numbers]
+        if max(update_numbers) > len(p.variables['time']) - 1:
+            raise Exception('Max flight update_numbers greater than available '
+                            'flights')
+        else:
+            times = p.variables['time'][update_numbers]
 
     # remove flight indices that might be after the report period
     idx = []
+
     for i, n in enumerate(times):
         date = calculate_date_from_wyhr(int(n),args['wy'])
         if date > end_date:
@@ -80,16 +88,31 @@ def flt_image_change(args, logger = None):
         start_date = flight_outputs['dates'][i] - timedelta(hours = 24)
         end_date = flight_outputs['dates'][i]
 
-        delta_swe_byelev = collect(connector, args['plotorder'], args['basins'],
-                                   args['start_date'], args['end_date'],'swe_vol',
-                                   args['run_name'], args['edges'],'difference')
-        end_swe_byelev = collect(connector, args['plotorder'], args['basins'],
-                                 args['start_date'], args['end_date'], 'swe_vol',
-                                 args['run_name'], args['edges'],'end')
+        try:
+            delta_swe_byelev = collect(connector, args['plotorder'], args['basins'],
+                                       start_date, end_date,'swe_vol',
+                                       args['run_name'], args['edges'],'difference')
+        except:
+            e = True
+
+        try:
+            end_swe_byelev = collect(connector, args['plotorder'], args['basins'],
+                                     start_date, end_date, 'swe_vol',
+                                     args['run_name'], args['edges'],'end')
+        except:
+            e = True
+
+        if e:
+            print('Failed requesting database records for flight difference '
+                  'figure...\nThis may mean that [run] directory has not been '
+                  'processed with [snowav] run_name for the periods reflected '
+                  'in [plots] update_file...\nTry subsetting with [plots] '
+                  'update_numbers or processing the full [run] directory\n')
+
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
-        vMin,vMax = np.nanpercentile(delta_state,[args['percent_min'],args['percent_max']])
+        vMin,vMax = np.nanpercentile(delta_state,[2,98])
 
         colorsbad = plt.cm.Set1_r(np.linspace(0., 1, 1))
         colors1 = cmocean.cm.matter_r(np.linspace(0., 1, 127))
@@ -112,12 +135,18 @@ def flt_image_change(args, logger = None):
         fig,(ax,ax1) = plt.subplots(num = i, figsize = args['figsize'],
                                     dpi = args['dpi'], nrows = 1, ncols = 2)
 
-        norm = MidpointNormalize(midpoint = 0)
-        mask = np.ma.masked_array(depth.mask, ~depth.mask)
-        delta_state[mask] = np.nan
+        norm = MidpointNormalize(midpoint=0, vmin=vMin-0.01, vmax=vMax+0.01)
 
-        # h = ax.imshow(delta_state*mask,
-        h = ax.imshow(delta_state, cmap = cmap, norm = norm)
+        # this is primarily for awsm_test_cases, in which the flight update
+        # nc file doesn't contain mask information. wy2019-forward flight nc
+        # files *should* have a mask
+        if hasattr(depth,'mask'):
+            mask = np.ma.masked_array(depth.mask, ~depth.mask)
+            delta_state[mask] = np.nan
+            h = ax.imshow(delta_state*mask, cmap = cmap, norm = norm)
+
+        else:
+            h = ax.imshow(delta_state, cmap = cmap, norm = norm)
 
         for name in masks:
             ax.contour(masks[name]['mask'],cmap = "Greys",linewidths = 1)
@@ -135,11 +164,6 @@ def flt_image_change(args, logger = None):
         h.axes.set_title('Change in SWE from Snow Depth Update\n{}'
                          .format(start_date.date().strftime("%Y-%-m-%-d")))
 
-        # lims = plotlims(snow.basin, snow.plotorder)
-        # sep = 0.05
-        # wid = 1/len(lims.sumorder)-sep
-        # widths = np.arange((-1 + wid), (1 - wid), wid)
-
         if args['dplcs'] == 0:
             tlbl = '{}: {} {}'.format(plotorder[0],
                                  str(int(delta_swe_byelev[plotorder[0]].sum())),
@@ -149,7 +173,7 @@ def flt_image_change(args, logger = None):
                                  str(np.round(delta_swe_byelev[plotorder[0]].sum(),
                                               args['dplcs'])),args['vollbl'])
 
-        for iters,name in enumerate(plotorder):
+        for iters,name in enumerate(lims.sumorder):
             if args['dplcs'] == 0:
                 lbl = '{}: {} {}'.format(name,
                                     str(int(delta_swe_byelev[name].sum())),
@@ -166,28 +190,20 @@ def flt_image_change(args, logger = None):
 
             else:
                 ax1.bar(range(0,len(args['edges'])),delta_swe_byelev[name],
-                        # bottom = pd.DataFrame(delta_swe_byelev[lims.sumorder[0:iters]]).sum(axis = 1).values,
                         color = barcolors[iters],
                         edgecolor = 'k',
                         label = lbl,
                         alpha = 0.5)
 
-            # ax1.bar(range(0,len(snow.edges)) + widths[iters],
-            #         delta_swe_byelev[name],
-            #         width = wid,
-            #         color = snow.barcolors[iters],
-            #         label = lbl)
-
         end_swe_byelev = end_swe_byelev.fillna(0)
         datestr = flight_outputs['dates'][i].date().strftime("%Y%m%d")
-        # print('Change in SWE\n', delta_swe_byelev)
-        # print('\nPercent Change in SWE\n', (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100)
         percent_delta_byelev = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100
-        delta_swe_byelev.to_csv('{}flight_diff_delta_{}_{}.csv'.format(args['figs_path'],args['directory'],datestr))
-        percent_delta_byelev.to_csv('{}flight_diff_percent_{}_{}.csv'.format(args['figs_path'],args['directory'],datestr))
+        delta_swe_byelev.to_csv('{}flight_{}_{}_taf.csv'.format(args['figs_path'],
+                                                    args['directory'],datestr))
+        percent_delta_byelev.to_csv('{}flight_{}_{}_percent.csv'.format(args['figs_path'],
+                                                    args['directory'],datestr))
 
         flight_delta_vol_df[flight_outputs['dates'][i].date().strftime("%Y%m%d")] = delta_swe_byelev
-        flight_delta_percent_df[flight_outputs['dates'][i].date().strftime("%Y%m%d")] = (delta_swe_byelev.sum(skipna=True)/end_swe_byelev.sum())*100
 
         plt.tight_layout()
         xts = ax1.get_xticks()
@@ -204,7 +220,7 @@ def flt_image_change(args, logger = None):
         ymin = ylims[0] - abs(ylims[1] - ylims[0])*0.1
         ax1.set_ylim((ymin, ymax))
 
-        ax1.set_ylabel('{} - per elevation band'.format(args['vollbl']))
+        ax1.set_ylabel('{}'.format(args['vollbl']))
         ax1.set_xlabel('elevation [{}]'.format(args['elevlbl']))
         ax1.axes.set_title('Change in SWE')
 
@@ -222,14 +238,14 @@ def flt_image_change(args, logger = None):
         plt.tight_layout()
         fig.subplots_adjust(top=0.88)
 
-        flight_diff_dates = np.append(flight_diff_dates, flight_outputs['dates'][i].date())
-        flight_diff_datestr = np.append(flight_diff_datestr,flight_outputs['dates'][i].date().strftime("%m/%d"))
+        fig_name = '{}flight_{}_{}_diff.png'.format(args['figs_path'],args['directory'],datestr)
+        flight_diff_fig_names += ['flight_{}_{}_diff.png'.format(args['directory'],datestr)]
 
-        flight_diff_fig_names = (flight_diff_fig_names +
-            ['flight_diff_{}_{}.png'.format(args['directory'],datestr)])
+        if logger is not None:
+            logger.info(' saving {}'.format(fig_name))
 
-        fig_name = '{}flight_diff_{}_{}.png'.format(args['figs_path'],args['name_append'],datestr)
-        snow._logger.info(' saving {}'.format(fig_name))
-        figure.save(fig, fig_name)
+        snowav.framework.figures.save_fig(fig, fig_name)
 
     p.close()
+
+    return flight_diff_fig_names, flight_delta_vol_df

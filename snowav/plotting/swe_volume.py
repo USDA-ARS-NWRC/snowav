@@ -97,6 +97,7 @@ def swe_volume(args, logger = None):
             ukaf = str(np.round(np.nansum(df[name].values),args['dplcs']))
 
         if iters == 0:
+
             ax1.bar(range(0,len(edges)),df[name],
                     color = barcolors[iters],
                     edgecolor='k',

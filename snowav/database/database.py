@@ -134,21 +134,21 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
         results = query(connector, start_date, end_date, run_name, basins, bid, value)
 
         if results.empty:
-            raise IOError('Empty results for database query in '
-                          'database.collect(), check config file '
-                          'start_date, end_date, and that the run_name={} '
-                          'has results for {} to {}'. format(run_name,
-                          start_date, end_date))
+            raise Exception('Empty results for database query in '
+                            'database.collect(), check config file '
+                            'start_date, end_date, and that the run_name={} '
+                            'has results for {} to {}'. format(run_name,
+                            start_date, end_date))
 
         if method == 'daily':
             e = results[(results['elevation'] == 'total')
                         & (results['date_time'] >= start_date)
                         & (results['date_time'] <= end_date)]
             if e.empty:
-                raise IOError('Empty results for database query in '
-                              'database.collect(), for run_name={}, '
-                              'elev={}, {} to {}'. format(run_name, elev,
-                              start_date, end_date))
+                raise Exception('Empty results for database query in '
+                                'database.collect(), for run_name={}, '
+                                'elev={}, {} to {}'. format(run_name, elev,
+                                start_date, end_date))
             else:
                 e = e.set_index('date_time')
                 e.sort_index(inplace=True)
@@ -166,10 +166,10 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                 e = results[(results['elevation'] == str(elev))
                             & (results['date_time'] == end_date)]
                 if e.empty:
-                    raise IOError('Empty results for database query in '
-                                  'database.collect(), for run_name={}, '
-                                  'elev={}, {} to {}'. format(run_name, elev,
-                                  start_date, end_date))
+                    raise Exception('Empty results for database query in '
+                                    'database.collect(), for run_name={}, '
+                                    'elev={}, {} to {}'. format(run_name, elev,
+                                    start_date, end_date))
                 else:
                     df.loc[elev,bid] = e['value'].values
 
@@ -180,7 +180,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                 e = results[(results['elevation'] == str(elev))
                             & (results['date_time'] == end_date)]
                 if e.empty or s.empty:
-                    raise IOError('Empty results for database query in '
+                    raise Exception('Empty results for database query in '
                                   'database.collect(), for run_name={}, '
                                   'elev={}, {} to {}'. format(run_name, elev,
                                   start_date, end_date))
@@ -193,10 +193,10 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                             & (results['date_time'] >= start_date)
                             & (results['date_time'] <= end_date)]
                 if e.empty:
-                    raise IOError('Empty results for database query in '
-                                  'database.collect(), for run_name={}, '
-                                  'elev={}, {} to {}'. format(run_name, elev,
-                                  start_date, end_date))
+                    raise Exception('Empty results for database query in '
+                                    'database.collect(), for run_name={}, '
+                                    'elev={}, {} to {}'. format(run_name, elev,
+                                    start_date, end_date))
                 else:
                     df.loc[elev,bid] = e['value'].sum()
 
@@ -341,25 +341,6 @@ def create_tables(database, plotorder):
     logger : list
 
 
-
-    qry = session.query(Watershed)
-    df = pd.read_sql(qry.statement, qry.session.connection())
-
-    if not df.empty:
-        wid = np.max(df['watershed_id'].values) + 1
-
-    else:
-        wid = 1
-
-    qry = session.query(Basin)
-    df = pd.read_sql(qry.statement, qry.session.connection())
-
-    if not df.empty:
-        bid = np.max(df['basin_id'].values) + 1
-
-    else:
-        bid = 1
-
     '''
 
     logger = []
@@ -494,43 +475,9 @@ def run_metadata(self, run_name):
         self.vid[v] = df['id'].values[0]
 
 
-def check_fields(self,start_date,end_date,bid,run_name,value,forecast=None):
-    '''
-    This functions queries the database and returns True if any value exists
-    in the given date range, basin_id = id and run_name = run_name,
-    and False if not.
-
-    Args
-        start_date: (datetime)
-        end_date: (datetime)
-        bid: basin id in string format ('Boise River Basin')
-        run_name: identifier for run, specified in config file
-        value: value to query (i.e. 'swi_z')
-
-    '''
-    print('check fields, need to replace Basins!')
-    qry = self.session.query(Results).join(RunMetadata).filter(and_(
-                        (Results.date_time >= start_date),
-                        (Results.date_time <= end_date),
-                        (RunMetadata.run_name == run_name),
-                        (Results.basin_id == Basins.basins[bid]['basin_id']),
-                        (Results.variable == value))).first()
-
-    if forecast is None:
-        if qry is not None:
-            self.pflag = True
-        else:
-            self.pflag = False
-
-    if forecast is not None:
-        if qry is not None:
-            self.for_pflag = True
-        else:
-            self.for_pflag = False
-
-
-def connect(sqlite = None, mysql = None, plotorder = None, user = None,
-            password = None, host = None, port = None):
+def connect(sqlite = None, sql = None, plotorder = None, user = None,
+            password = None, host = None, port = None, convert = False,
+            add = False):
     '''
     This establishes a connection with a database for results. If the specified
     sqlite database doesn't exist, it will be created.
@@ -541,7 +488,7 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
     --------
     sqlite : str
         path to sqlite database
-    mysql : str
+    sql : str
         snowav mysql identifier
     plotorder : list
         list of basins
@@ -585,7 +532,7 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
         logger.append(' Using {} for results'.format(sqlite))
         connector = sqlite
 
-    if (mysql is not None) and (sqlite is None):
+    if (sql is not None) and (sqlite is None):
 
         cnx = mysql.connector.connect(user=user,
                                       password=password,
@@ -606,13 +553,13 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
         db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(user,
                                                                 password,
                                                                 host,
-                                                                mysql)
+                                                                sql)
 
         # If the database doesn't exist, create it, otherwise connect
-        if (mysql not in dbs):
-            logger.append(' Specified mysql database {} '.format(mysql) +
+        if (sql not in dbs):
+            logger.append(' Specified mysql database {} '.format(sql) +
                   ' does not exist, it is being created...')
-            query = ("CREATE DATABASE {};".format(mysql))
+            query = ("CREATE DATABASE {};".format(sql))
             cursor.execute(query)
             log = create_tables(db_engine, plotorder)
 
@@ -623,7 +570,7 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
         else:
             query = ("SHOW DATABASES")
-            cursor.execute('USE {}'.format(mysql))
+            cursor.execute('USE {}'.format(sql))
             cursor.execute('SHOW TABLES')
             tbls = cursor.fetchall()
 
@@ -645,7 +592,7 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
             except:
                 logger.append(' Failed trying to make database connection '
-                      'to {}'.format(mysql))
+                      'to {}'.format(sql))
 
         cursor.close()
         cnx.close()
@@ -657,6 +604,9 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
     qry = session.query(Basin)
     bs = pd.read_sql(qry.statement, qry.session.connection())
+
+    if convert:
+        plotorder[0] = convert_watershed_names(plotorder[0])
 
     if plotorder[0] in ws['watershed_name'].values:
         f = ws[ws['watershed_name'].values == plotorder[0]]
@@ -673,8 +623,19 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
         wval = Watershed(watershed_id = int(wid),
                          watershed_name = plotorder[0])
+        if add:
+            session.add(wval)
 
-        session.add(wval)
+        else:
+            logger.append(' Config option [database] add_basins: False, so '
+                          '{} will not be added'.format(plotorder[0]))
+
+            print('WARNING! Given current config options and topo.nc file, '
+                  'trying to use {} as a watershed, but it does not currently '
+                  'exist as a watershed in the database...\nCorrect [snowav] '
+                  'masks or consider changing [database] add_basins: True '
+                  'if you know what you are doing.'.format(plotorder[0]))
+
         session.commit()
 
     basins = {}
@@ -683,7 +644,6 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
     # Initialize basins within the watershed
     for i,name in enumerate(plotorder):
-
         if name in bs['basin_name'].values:
             f = bs[bs['basin_name'].values == name]
             bid = f['basin_id'].values[0]
@@ -701,7 +661,18 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
                          basin_id = int(bid + i),
                          basin_name = name)
 
-            session.add(bval)
+            if add:
+                session.add(bval)
+
+            else:
+                logger.append(' Config option [database] add_basins: False, so '
+                              '{} will not be added'.format(name))
+
+                print('WARNING! Given current config options and topo.nc file, '
+                      'trying to use {} as a basin, but it does not currently '
+                      'exist as a basin in the database...\nConsider '
+                      'changing [database] add_basins: True if you know what '
+                      'you are doing.'.format(name))
 
         basins[name] = {'watershed_id':wid, 'basin_id':bid}
 
@@ -710,37 +681,21 @@ def connect(sqlite = None, mysql = None, plotorder = None, user = None,
 
     return basins, connector, logger
 
-def write_csv(self):
+def convert_watershed_names(name):
     '''
-    This writes out variables, specified in the config file, from the database
-    to the figs_path directory
+    Convert watershed from topo.nc mask to existing snowav database version.
 
     '''
+    convert_list = ['Boise River Basin','Lakes Basin','Merced River Basin',
+                    'Kaweah River Basin','Kings River Basin']
 
-    # Initialize
-    out = pd.DataFrame(columns = self.plotorder)
+    if name in convert_list:
+        watershed = name.split(' ')[0]
 
-    # By variable
-    for var in self.write_csv:
+    elif name == 'San Joaquin River Basin':
+        watershed = 'San Joaquin'
 
-        # For all subbasins
-        for bid in self.plotorder:
-            r = database.database.query(self, datetime(self.wy-1,10,1),
-                                        self.end_date, self.run_name, bid, var)
+    else:
+        watershed = name
 
-            # For now, just write out totals
-            v = r[(r['elevation'] == 'total')]
-
-            for iter,d in enumerate(v['date_time'].values):
-                out.loc[d,bid] = v['value'].values[iter]
-
-
-        # SWI is cumulative
-        if var == 'swi_vol':
-            out = out.cumsum()
-
-        if self.vollbl == 'KAF':
-            out.to_csv(os.path.join(self.figs_path,var+'_'+self.vollbl+'.csv'))
-
-        if self.vollbl == 'SI':
-            out.to_csv(os.path.join(self.figs_path,var+'_'+'m3'+'.csv'))
+    return watershed

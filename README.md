@@ -2,12 +2,9 @@
 
 [![GitHub version](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav.svg)](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav)
 
-SNOw and Water model Analysis and Visualization was developed at the USDA Agricultural Research Service in Boise, Idaho. It processes model
-outputs from AWSM into formats and figures for water resource managers. See the CoreConfig.ini in this repo for more information on config options.
+SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho. It processes AWSM model outputs into formats and figures for water resource managers. See CoreConfig.ini for details on config options.
 
 ![image](https://raw.githubusercontent.com/USDA-ARS-NWRC/awsm/master/docs/_static/ModelSystemOverview_new.png)
-
-## Install
 
 ## Requirements
 Currently snowav requires:
@@ -18,10 +15,10 @@ Currently snowav requires:
 snowav expects:
 
 - input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/precip.nc``` and ```.../data/dataYYYYMMDD/smrfOutputs/percent_snow.nc```. If these do not exist the precip figures will be turned off.
-- the lidar_depths_wy2019.nc file, specified in the config file in [plots] update_file, contains all relevant flights that have been flown. Flights in this file can be removed from processing using [plots] update_numbers, but they can't be added.
+- the lidar_depths_wy2019.nc file, specified in the config file in [plots] update_file, contains all relevant flights that have been flown. Flights in this file can be removed from processing using [plots] *update_numbers*, but they can't be added.
 
 ## Usage
-The standard snowav model results database processing and figures run is:
+The standard snowav model processing, database placement, and figures run is:
 ```
 $ snowav -f config.ini
 ```
@@ -40,11 +37,42 @@ For a simple difference between two snow.nc files:
 $ snowav -t <topo.nc> -A <snow.nc> -B <snow.nc>
 ```
 
-## Notes
-- if depth updates have been applied, year-to-date precipitation values are no longer valid
+To query and output existing database records, either to the terminal or csv, see CoreConfig.ini [query] section and example below. If [query] *query: True* no other functionality other than the query will be run. This currently requires database login created from [database] section and *mysql: snowav*.
+```
+[query]
+query:              True
+basins:             Kaweah River Basin, North Fork
+value:              swe_vol
+run_name:           kaweah_wy2019_ops
+print_all_runs:     False
+start_date:         2019-3-15
+end_date:           2019-3-17
+total:              True
+output:             print
+csv_base_path:      /mnt/volumes/wkspace/projects/csv_output/
+database:           mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
+```
 
-## Figures from existing database
-If results have already been processed and put onto a database, figures can be created outside of a snowav processing run (see also script/sample_figure.py). See snowav.framework.figures for templates for additional figure creation.
+## Notes and Considerations
+**Be deliberate with the [snowav] *run_name* field!** This is how processing runs are identified on the database, and existing records with the same *run_name*, basin, and date range will be deleted and replaced during re-runs of the same snow.nc files. The *run_name* field should, in most cases and normal use, be connected with a specific [run] *directory*. We suggest using fields such as *tuol_wy2019_ops* and re-running snowav with *tuol_wy2019_ops* over the proper directory if modifications are made mid-season.
+
+Currently the figures listed below are created by default in both the [plots] and [reports] section. If any of them are set to *False* in [plots] they will be set to *False* in [reports] internally. For additional figures to be added to a report they must be *True* in both [plots] and [reports].
+
+- swi
+- image_change
+- cold_content  
+- swe_volume
+- basin_total
+- precip_depth
+
+If depth updates have been applied, year-to-date precipitation values in report Table 1 are no longer valid, although they will still appear. This table includes precipitation and rain derived from the HRRR inputs and does not account for mass that may be added or removed via snow depth updates.
+
+To help debugging the pdf report if it fails rendering to latex, set config option [report] *print_latex: True*. This will print the full latex file to the screen immediately prior to rendering.
+
+The SWE pillow validation figure [plots] *stn_validate* requires SWE fields on the existing weather database and [validate] fields to be filled in.
+
+## Figures from Existing Database Records
+If results have already been processed and put onto a database, figures can be created outside of a snowav processing run (see also scripts/sample_figure.py). See snowav.framework.figures for templates for additional figure creation. Also, if a standard snowav run is processed with [plots] *print_args_dict: True*, the full input dictionary for each figure will be printed to the screen.
 
 ```
 from datetime import datetime
@@ -56,13 +84,13 @@ from snowav.utils.utilities import masks
 
 """ See CoreConfig.ini for more options and details """
 
-connector = 'sqlite:////<path>.db'
-dempath = '/<path>/topo.nc'
+connector = 'sqlite:////<database.db>'
+dempath = '<topo.nc>'
 plotorder = ['Extended Tuolumne', 'Tuolumne', 'Cherry Creek', 'Eleanor']
 lims = plotlims(plotorder)
 edges = [3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000]
 
-ncf = nc.Dataset('/<path>/snow.nc')
+ncf = nc.Dataset('<snow.nc>')
 image = ncf['specific_mass'][:]
 ncf.close()
 
@@ -118,9 +146,4 @@ args['image'] = image[0,:,:]
 
 swe_volume(args, logger = None)
 
-
 ```
-
-## To do:
-- non-awsm_daily
-- supply dates only rather than 23:00

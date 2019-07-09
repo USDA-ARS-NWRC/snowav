@@ -31,8 +31,8 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
            + 'tbl_stations.station_id WHERE tbl_stations.client = '
            + '"'"{}"'" ;'.format(client))
 
-    cnx = mysql.connector.connect(user='markrobertson',
-                                  password='whatdystm?1',
+    cnx = mysql.connector.connect(user='',
+                                  password='',
                                   host='10.200.28.137',
                                   database='weather_db')
 
@@ -54,8 +54,8 @@ def air_temp(rundirs,dem,stns,lbls,client,wy,end_date,figs_path,name_append,star
 
     # Get Snotel station results
     for iters,stn in enumerate(stns):
-        cnx = mysql.connector.connect(user='markrobertson',
-                                      password='whatdystm?1',
+        cnx = mysql.connector.connect(user='',
+                                      password='',
                                       host='10.200.28.137',
                                       port='32768',database='weather_db')
 

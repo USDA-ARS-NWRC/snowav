@@ -45,7 +45,7 @@ def report(self):
     dpts = int(self.dplcs)
     cnx = self.connector
 
-    # Initialize variables to pass to latex file
+    # variables to pass to latex file
     variables = {}
 
     dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'swi_vol',
@@ -68,9 +68,12 @@ def report(self):
                     run_name,'total','end')
     variables['TOTAL_PM'] = dbval.sum().values.round(decimals=dpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
-                    run_name,'total','sum')
-    variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=dpts)[0]
+    if self.precip_flag:
+        dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
+                        run_name,'total','sum')
+        variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=dpts)[0]
+    else:
+        variables['TOTALPRE_PM'] = 0
 
     s = collect(cnx,plotorder[0],basins,start_date,start_date,'swe_vol',
                     run_name,'total','end')
@@ -89,14 +92,18 @@ def report(self):
     if float(end_swe) - float(start_swe) < 0.0:
         variables['SIGN'] = r'-'
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
-                    run_name,'total','sum')
-    total_rain = dbval.sum().values.round(decimals=dpts)[0]
+    if self.precip_flag:
+        dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
+                        run_name,'total','sum')
+        total_rain = dbval.sum().values.round(decimals=dpts)[0]
+    else:
+        total_rain = 0.0
 
     if variables['TOTALPRE_PM'] != 0:
-        variables['TOTAL_RAT'] = str(int((total_rain/variables['TOTALPRE_PM'])*100))
+        variables['TOTAL_RAT'] = r'$\sim$' + str(int((total_rain/variables['TOTALPRE_PM'])*100))
     else:
-        variables['TOTAL_RAT'] = '0'
+        variables['TOTAL_RAT'] = '-'
+        variables['TOTALPRE_PM'] = '-'
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
 
@@ -175,24 +182,27 @@ def report(self):
             variables['REPORT_TITLE'] = self.rep_title + r' \\ ASO Updates'
             fst = ' Model snow depths were updated with ASO snow depths on '
 
-            for i,d in enumerate(self.flight_diff_datestr):
-                if len(self.flight_diff_datestr) == 1:
-                    fst = fst + d + '.'
+            for i,d in enumerate(self.flight_diff_dates):
+                # self.flight_diff_dates
+                dn = d.date().strftime("%m/%d")
+                if len(self.flight_diff_dates) == 1:
+                    fst = fst + dn + '.'
 
-                if ((len(self.flight_diff_datestr) > 1) and
-                    (i < len(self.flight_diff_datestr) - 1)):
-                    fst = fst + d + ', '
+                if ((len(self.flight_diff_dates) > 1) and
+                    (i < len(self.flight_diff_dates) - 1)):
+                    fst = fst + dn + ', '
 
-                if ((len(self.flight_diff_datestr) > 1) and
-                    (i == len(self.flight_diff_datestr) - 1)):
-                    fst = fst + 'and ' + d + '.'
+                if ((len(self.flight_diff_dates) > 1) and
+                    (i == len(self.flight_diff_dates) - 1)):
+                    fst = fst + 'and ' + dn + '.'
 
             variables['FLTSENT'] = fst
 
         else:
             variables['REPORT_TITLE'] = self.rep_title
-            variables['FLTSENT'] = (' Model snow depths will be updated with '
-                                    'ASO snow depths as they become available.')
+            # variables['FLTSENT'] = (' Model snow depths will be updated with '
+            #                         'ASO snow depths as they become available.')
+            variables['FLTSENT'] = ('')            
 
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(self.wy)
@@ -249,67 +259,109 @@ def report(self):
 
     if len(self.plotorder) > 5:
         spacecmd = r'\resizebox{\textwidth}{!}{'
-
     else:
         spacecmd = r'{'
 
-    dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
-    swe_byelev = dbval.round(decimals=dpts)
-    swe_byelev.rename(index={'total':'mean'},inplace=True)
-    swe_byelev.index.name = 'Elevation'
-    variables['SWE_BYELEV'] = (r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(self.depthlbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
-                                spacecmd + swe_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
-                                r'} \\ \footnotesize{\textbf{Table 2:} Mean depth of SWE by elevation band.}')
+    ntables = len(self.tables)
+    mtables = 2
+    ptables = 0
 
-    dbval = collect(cnx,plotorder,basins,start_date,end_date,'swi_vol',run_name,dfindt,'sum')
-    swi_byelev = dbval.round(decimals=dpts)
-    variables['ACCUM_BYELEV'] = (r' \textbf{SWI [%s] by elevation, %s to %s}\\ \vspace{0.1cm} \\'
-                                %(self.vollbl,self.report_start.date().strftime("%Y-%-m-%-d"),
-                                  self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                  swi_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
-                                  r'} \\ \footnotesize{\textbf{Table 6:} Volume of SWI during the report period.} ' +
-                                  r'\\ \clearpage')
+    if 'swe_depth' in self.tables:
 
-    dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfindt,'end')
-    swe_byelev = dbval.round(decimals=dpts)
-    swe_byelev.rename(index={'total':'mean'},inplace=True)
-    swe_byelev.index.name = 'Elevation'
-    variables['SWEVOL_BYELEV'] = (r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                %(self.vollbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
-                                spacecmd + swe_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
-                                r'} \\ \footnotesize{\textbf{Table 5:} Volume of SWE by elevation band.}')
+        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
+        swe_byelev = dbval.round(decimals=dpts)
+        swe_byelev.rename(index={'total':'mean'},inplace=True)
+        swe_byelev.index.name = 'Elevation'
+        variables['SWE_BYELEV'] = (r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                    %(self.depthlbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
+                                    spacecmd + swe_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                    r'} \\ \footnotesize{\textbf{Table %s:} SWE depth.}'%(str(mtables)))
+        mtables += 1
+        ptables += 1
 
-    dbval = collect(cnx,plotorder,basins,start_date,start_date,'swe_z',run_name,dfindt,'end')
-    start_swe = dbval.round(decimals=dpts)
-    dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
-    end_swe = dbval.round(decimals=dpts)
-    dswe_byelev = end_swe - start_swe
-    dswe_byelev.rename(index={'total':'mean'},inplace=True)
-    dswe_byelev.index.name = 'Elevation'
-    variables['DSWE_BYELEV'] = (r'  \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                %(self.depthlbl,self.report_start.date().strftime("%Y-%-m-%-d"),
-                                  self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                  dswe_byelev[self.plotorder].to_latex(na_rep='-', column_format=colstr) +
-                                  r'} \\ \footnotesize{\textbf{Table 3:} Change in depth of SWE by elevation band.} ' +
-                                  r'\\ \clearpage')
+    else:
+        variables['SWE_BYELEV'] = ''
 
-    dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfind,'end')
-    swe_byelev = dbval.round(decimals=dpts)
-    value = swe_byelev.iloc[:-1].sum()
-    sweper_byelev = (swe_byelev/value*100).round(decimals = dpts)
-    sweper_byelev.index.name = 'Elevation'
+    if 'swe_vol' in self.tables:
+        ptables += 1
 
-    variables['SWEPER_BYELEV'] = (r'  \textbf{SWE volume, percent of basin total by elevation band, %s}\\ \vspace{0.1cm} \\'
-                                %(self.report_date.date().strftime("%Y-%-m-%-d"))+
-                                spacecmd + sweper_byelev[plotorder].round(1).to_latex(na_rep='-', column_format=colstr) +
-                                r'}  \\ \footnotesize{\textbf{Table 4:} Percent of SWE volume by elevation.} ')
-    variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
+        if ptables == 2:
+            clrpage = r'\clearpage'
+        else:
+            clrpage = ''
+        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfindt,'end')
+        swe_byelev = dbval.round(decimals=dpts)
+        swe_byelev.index.name = 'Elevation'
+        variables['SWEVOL_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
+                                    %(self.vollbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
+                                    spacecmd + swe_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                    r'} \\ \footnotesize{\textbf{Table %s:} SWE volume.}%s'%(str(mtables),clrpage))
+        mtables += 1
 
-    # If the basin total percents will be 0/nan, omit that table
-    # if ((sub == self.plotorder[0]) and
-    #     ((np.nansum(sum) < 0.001) or (np.nansum(sum) == np.nan))):
-    #     sum_flag = False
+    else:
+        variables['SWEVOL_BYELEV'] = ''
+
+    if 'swe_change' in self.tables:
+        ptables += 1
+
+        if ptables == 2:
+            clrpage = r'\clearpage'
+        else:
+            clrpage = ''
+        dbval = collect(cnx,plotorder,basins,start_date,start_date,'swe_z',run_name,dfindt,'end')
+        start_swe = dbval.round(decimals=dpts)
+        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
+        end_swe = dbval.round(decimals=dpts)
+        dswe_byelev = end_swe - start_swe
+        dswe_byelev.rename(index={'total':'mean'},inplace=True)
+        dswe_byelev.index.name = 'Elevation'
+        variables['DSWE_BYELEV'] = (r'  \normalsize \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
+                                    %(self.depthlbl,self.report_start.date().strftime("%Y-%-m-%-d"),
+                                      self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                      dswe_byelev[self.plotorder].to_latex(na_rep='-', column_format=colstr) +
+
+                                      r'} \\ \footnotesize{\textbf{Table %s:} Change in SWE.} %s'%(str(mtables),clrpage))
+        mtables += 1
+
+    else:
+        variables['DSWE_BYELEV'] = ''
+
+    if 'swe_percent' in self.tables:
+        ptables += 1
+        if (ptables % 2) == 0 and ptables != 0:
+            clrpage = r'\clearpage'
+        else:
+            clrpage = ''
+
+        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfind,'end')
+        swe_byelev = dbval.round(decimals=dpts)
+        value = swe_byelev.iloc[:-1].sum()
+        sweper_byelev = (swe_byelev/value*100).round(decimals = dpts)
+        sweper_byelev.index.name = 'Elevation'
+
+        variables['SWEPER_BYELEV'] = (r'  \normalsize \textbf{SWE volume, percent of basin total, %s}\\ \vspace{0.1cm} \\'
+                                    %(self.report_date.date().strftime("%Y-%-m-%-d"))+
+                                    spacecmd + sweper_byelev[plotorder].round(1).to_latex(na_rep='-', column_format=colstr) +
+                                    r'}  \\ \footnotesize{\textbf{Table %s:} Percent of total SWE volume.}%s'%(str(mtables),clrpage))
+        variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
+
+        mtables += 1
+
+    else:
+        variables['SWEPER_BYELEV'] = ''
+
+    if 'swi_vol' in self.tables:
+        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swi_vol',run_name,dfindt,'sum')
+        swi_byelev = dbval.round(decimals=dpts)
+        variables['ACCUM_BYELEV'] = (r' \normalsize \textbf{SWI [%s] by elevation, %s to %s}\\ \vspace{0.1cm} \\'
+                                    %(self.vollbl,self.report_start.date().strftime("%Y-%-m-%-d"),
+                                      self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                      swi_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
+                                      r'} \\ \footnotesize{\textbf{Table %s:} SWI volume. }'%(str(mtables)))
+        mtables += 1
+
+    else:
+        variables['ACCUM_BYELEV'] = ''
 
     variables['TOT_LBL'] = self.plotorder[0]
 
@@ -347,16 +399,14 @@ def report(self):
                     }
 
     # Define and load summary tables depending on number of subbasins
-    section_dict['PRECIP_SUMMARY_TPL'] = (self.figs_tpl_path
-                                          + 'precip_summary_%ssub.txt'%str(len(self.plotorder)) )
-    section_dict['SWE_SUMMARY_TPL'] = (self.figs_tpl_path
-                                          + 'swe_summary_%ssub.txt'%str(len(self.plotorder)) )
+    section_dict['SWE_SUMMARY_TPL'] = '{}swe_summary_{}sub.txt'.format(
+                                    self.figs_tpl_path,str(len(self.plotorder)))
 
-    # Remove if no flight options
+    # Remove if no flight
     if self.flt_flag is False:
         del section_dict['FLTCHANGES_FIG_TPL']
 
-    # Remove if no flight options
+    # Remove if no forecast
     if self.forecast_flag is False:
         del section_dict['SWEFORECAST_FIG_TPL']
         del section_dict['SWIFORECAST_FIG_TPL']
@@ -461,13 +511,11 @@ def report(self):
     pdf = build_pdf(tpl.render(variables))
 
     # Save in reports and with figs
-    rpath_1 = os.path.join(self.rep_path, '' + self.report_name)
-    rpath_2 = os.path.join(self.figs_path, '' + self.report_name)
-    self._logger.info(' saving {}'.format(rpath_1))
-    self._logger.info(' saving {}'.format(rpath_2))
+    rpath = os.path.join(self.figs_path, '' + self.report_name)
+    pdf.save_to(rpath)
+    self._logger.info(' saving {}'.format(rpath))
 
-    # if not os.path.isdir(os.path.join(self.rep_path,'')):
-    #     os.makedirs(os.path.join(self.rep_path,''))
-
-    pdf.save_to(rpath_1)
-    pdf.save_to(rpath_2)
+    if self.rep_path is not None:
+        rpath = os.path.join(self.rep_path, '' + self.report_name)
+        pdf.save_to(rpath)
+        self._logger.info(' saving {}'.format(rpath))

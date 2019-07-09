@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import logging
 import coloredlogs
 import netCDF4 as nc
-from snowav.database.package_results import package, post_process
+from snowav.database.package_results import package
 from snowav.database.database import delete
 from snowav.utils.utilities import precip
 import warnings
@@ -60,7 +60,7 @@ def process(args):
     log : list
     density : array
         currently the last day of processing
-    flags : dict
+    flag : bool
 
     '''
 
@@ -81,8 +81,6 @@ def process(args):
     run_name = args['run_name']
     fc = args['conversion_factor']
     fd = args['depth_factor']
-    flags = {}
-    flags['precip'] = True
     lbls = {}
     lbls['depthlbl'] = args['depthlbl']
     lbls['vollbl'] = args['vollbl']
@@ -127,9 +125,9 @@ def process(args):
             rain_total = rain_total + rain
 
         else:
-            log.append(' Expected to find {} but it is not a valid file, '
-                       'precip totals will be zero and precip figures '
-                       'will not be generated'.format(path))
+            log.append(' WARNING! Expected to find {} but it is not a valid '
+                       'file, precip will not be calculated or put on the '
+                       'database, no precip figures will be made'.format(path))
 
         # Get a snow-free mask ready
         swe = copy.deepcopy(outputs['swe_z'][iters])
@@ -209,7 +207,7 @@ def process(args):
                         daily_outputs[k].loc[b,name] = np.nanmean(mask_out[ind][ix])
                         density[name][edges[n]] = mask_out[ind][ix]
 
-                    elif k == 'precip_z':
+                    elif k == 'precip_z' and flag:
                         # not masked out by pixels with snow
                         nanmask = mask == 0
                         mask_out = pre*mask
@@ -220,7 +218,7 @@ def process(args):
                         daily_outputs[k].loc[b,name] = r*fd
                         daily_outputs['precip_vol'].loc[b,name] = rv*fc
 
-                    elif k == 'rain_z':
+                    elif k == 'rain_z' and flag:
                         # not masked out by pixels with snow
                         nanmask = mask == 0
                         mask_out = rain*mask
@@ -273,7 +271,7 @@ def process(args):
                     s = np.nansum(daily_outputs['swi_vol'][name].values)
                     daily_outputs['swi_vol'].loc['total',name] = copy.deepcopy(s)
 
-                if k == 'precip_z':
+                if k == 'precip_z' and flag:
                     nanmask = mask == 0
                     out = pre*mask
                     out[nanmask] = np.nan
@@ -283,7 +281,7 @@ def process(args):
                     s = np.nansum(daily_outputs['precip_vol'][name].values)
                     daily_outputs['precip_vol'].loc['total',name] = copy.deepcopy(s)
 
-                if k == 'rain_z':
+                if k == 'rain_z' and flag:
                     nanmask = mask == 0
                     out = rain*mask
                     out[nanmask] = np.nan
@@ -297,10 +295,6 @@ def process(args):
             package(args['connector'], lbls, args['basins'], df, args['run_id'],
                     args['vid'], k, out_date, run_name)
 
-        # Add water year totals for swi and evap
-        # if (out_date.date() != datetime(args['wy']-1,10,1).date()):
-        #     post_process(self, out_date)
-
         hr = int(outputs['time'][iters])
         log.append(' processed: {}, elapsed hours: {}, date: {}'.format(
                    rundirs_dict[outputs['time'][iters]],
@@ -309,4 +303,4 @@ def process(args):
         # hours between outputs
         t = int(hr)
 
-    return flags, log, precip_total, rain_total, density
+    return flag, log, precip_total, rain_total, density

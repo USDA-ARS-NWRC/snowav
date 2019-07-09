@@ -12,9 +12,10 @@ from snowav.plotting.image_change import image_change
 from snowav.plotting.precip_depth import precip_depth
 from snowav.plotting.stn_validate import stn_validate
 from snowav.plotting.swe_change import swe_change
+from snowav.plotting.write_properties import write_properties
 from snowav.plotting.swe_volume import swe_volume
 from snowav.plotting.plotlims import plotlims
-from snowav.database.database import collect, make_session
+from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
 
 def figures(self):
@@ -22,7 +23,8 @@ def figures(self):
     Set up and call snowav figures. See CoreConfig.ini and README.md for more on
     config options and use.
 
-    Note: swe_volume() must be called before cold_content() if you want to use
+    Notes:
+    - swe_volume() must be called before cold_content() if you want to use
     the same ylims for each.
 
     '''
@@ -62,10 +64,19 @@ def figures(self):
     fig_names = {}
     connector = self.connector
 
-    ########################################################
-    # For each figure, collect 2D array image, by-elevation
-    # DataFrame, and set any figure-specific args inputs
-    ########################################################
+    ##########################################################################
+    #       For each figure, collect 2D array image, by-elevation            #
+    #       DataFrame, and set any figure-specific args inputs               #
+    ##########################################################################
+    if self.flt_flag:
+        args['depth_factor'] = self.depth_factor
+        args['update_file'] = self.update_file
+        args['update_numbers'] = self.update_numbers
+        args['flight_outputs'] = self.flight_outputs
+        args['pre_flight_outputs'] = self.pre_flight_outputs
+        args['connector'] = connector
+
+        self.flight_diff_fig_names, self.flight_delta_vol_df = flt_image_change(args, self._logger)
 
     if self.swi_flag:
         image = np.zeros_like(self.outputs['swi_z'][0])
@@ -230,10 +241,6 @@ def figures(self):
 
         compare_runs(args, self._logger)
 
-    if self.flt_flag:
-
-        flt_image_change(args, self._logger)
-
     if self.basin_total_flag:
         wy_start = datetime(self.wy-1,10,1)
         swi_summary = collect(connector, args['plotorder'], args['basins'],
@@ -249,83 +256,84 @@ def figures(self):
 
         fig_names['basin_total'] = basin_total(args, self._logger)
 
-    # if self.basin_detail_flag:
-    #     basin_detail(self)
+    if self.write_properties is not None:
+        args['connector'] = self.connector
+        args['wy_start'] = datetime(self.wy-1,10,1)
+
+        write_properties(args, self.write_properties)
 
     if self.forecast_flag:
-
-        if self.image_change_flag:
-            image_change(self, forecast=self.for_run_name)
-
-        if self.swi_flag:
-
-            if forecast is None:
-                run_name = snow.run_name
-                outputs = copy.deepcopy(snow.outputs)
-                ixs = snow.ixs
-                ixe = snow.ixe
-                start_date = snow.start_date
-                end_date = snow.end_date
-                directory = snow.directory
-                title = 'Accumulated SWI\n{} to {}'.format(
-                                            snow.report_start.date().strftime("%Y-%-m-%-d"),
-                                            snow.report_date.date().strftime("%Y-%-m-%-d"))
-            swi(args)
-
-        if self.swe_volume_flag:
-            '''
-                if day is not None:
-                    figs_path = day.figs_path
-                    name_append = 'day'
-                    date_stamp = day.date.strftime("%Y-%-m-%-d %H:%M") + ' (UTC)'
-
-            '''
-
-            args['directory'] = self.directory + '_forecast'
-            args['run_name'] = self.for_run_name
-            args['start_date'] = self.for_start_date
-            args['end_date'] = self.for_end_date
-            args['title'] = 'Forecast SWE \n {}'.format(self.for_end_date.date().strftime("%Y-%-m-%-d"))
-
-            swe = collect(self,args['plotorder'],args['start_date'],
-                          args['end_date'],'swe_vol',args['run_name'],
-                          args['edges'],'end')
-
-            image = self.for_outputs['swe_z'][self.for_ixe]*self.depth_factor
-
-            args['df'] = swe
-            args['image'] = image
-            args['title'] = 'SWE {}'.format(args['report_end'])
-
-            name, ylims = swe_volume(args, self._logger)
-
-            if self.basin_total_flag:
-                '''
-                    for iter,d in enumerate(v['date_time'].values):
-                        swe_summary.loc[d,bid] = v['value'].values[iter]
-                        swi_summary.loc[d,bid] = v2['value'].values[iter]
-
-                swi_summary.sort_index(inplace=True)
-
-                # as a starting spot, add actual run
-                swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
-                swi_summary = swi_summary.cumsum()
-                '''
-                # forecast True
-                args['flag'] = True
-
-                basin_total(self, forecast=self.for_run_name)
-
-            if self.precip_depth_flag:
-                precip_depth(self, forecast=self.for_run_name)
+        print('Forecast figures in progress...')
+        # if self.image_change_flag:
+        #     image_change(self, forecast=self.for_run_name)
+        #
+        # if self.swi_flag:
+        #
+        #     if forecast is None:
+        #         run_name = snow.run_name
+        #         outputs = copy.deepcopy(snow.outputs)
+        #         ixs = snow.ixs
+        #         ixe = snow.ixe
+        #         start_date = snow.start_date
+        #         end_date = snow.end_date
+        #         directory = snow.directory
+        #         title = 'Accumulated SWI\n{} to {}'.format(
+        #                                     snow.report_start.date().strftime("%Y-%-m-%-d"),
+        #                                     snow.report_date.date().strftime("%Y-%-m-%-d"))
+        #     swi(args)
+        #
+        # if self.swe_volume_flag:
+        #     '''
+        #         if day is not None:
+        #             figs_path = day.figs_path
+        #             name_append = 'day'
+        #             date_stamp = day.date.strftime("%Y-%-m-%-d %H:%M") + ' (UTC)'
+        #
+        #     '''
+        #
+        #     args['directory'] = self.directory + '_forecast'
+        #     args['run_name'] = self.for_run_name
+        #     args['start_date'] = self.for_start_date
+        #     args['end_date'] = self.for_end_date
+        #     args['title'] = 'Forecast SWE \n {}'.format(self.for_end_date.date().strftime("%Y-%-m-%-d"))
+        #
+        #     swe = collect(self,args['plotorder'],args['start_date'],
+        #                   args['end_date'],'swe_vol',args['run_name'],
+        #                   args['edges'],'end')
+        #
+        #     image = self.for_outputs['swe_z'][self.for_ixe]*self.depth_factor
+        #
+        #     args['df'] = swe
+        #     args['image'] = image
+        #     args['title'] = 'SWE {}'.format(args['report_end'])
+        #
+        #     name, ylims = swe_volume(args, self._logger)
+        #
+        #     if self.basin_total_flag:
+        #         '''
+        #             for iter,d in enumerate(v['date_time'].values):
+        #                 swe_summary.loc[d,bid] = v['value'].values[iter]
+        #                 swi_summary.loc[d,bid] = v2['value'].values[iter]
+        #
+        #         swi_summary.sort_index(inplace=True)
+        #
+        #         # as a starting spot, add actual run
+        #         swi_summary.iloc[0,:] = swi_summary.iloc[0,:] + swi_end_val.iloc[-1,:].values
+        #         swi_summary = swi_summary.cumsum()
+        #         '''
+        #         # forecast True
+        #         args['flag'] = True
+        #
+        #         basin_total(self, forecast=self.for_run_name)
+        #
+        #     if self.precip_depth_flag:
+        #         precip_depth(self, forecast=self.for_run_name)
 
     self.fig_names = fig_names
 
 
 def save_fig(fig, paths):
     '''
-    Save figures.
-
     Args
     ----------
     fig : object

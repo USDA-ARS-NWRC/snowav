@@ -47,7 +47,7 @@ def basin_total(args, logger = None):
                                label='_nolegend_')
 
     if args['flt_flag']:
-        for i,d in enumerate(args['flight_diff_dates']):
+        for i,d in enumerate(args['flight_dates']):
             if i == 0:
                 lb = 'flight update'.format(args['wy'])
 

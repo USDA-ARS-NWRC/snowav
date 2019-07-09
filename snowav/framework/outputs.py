@@ -8,8 +8,7 @@ from snowav.utils.OutputReader import iSnobalReader
 import netCDF4 as nc
 
 def outputs(run_dirs = None, start_date = None, end_date = None,
-            filetype = None, wy = None, flight_dates = None,
-            pre_flight_dates = None):
+            filetype = None, wy = None, flight_dates = None):
     '''
     This uses start_date and end_date to load the snow.nc and em.nc of interest
     within a report period to the outputs format that will be used in process().
@@ -33,8 +32,6 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
     wy : int
         water year
     flight_dates : array
-        (optional)
-    pre_flight_dates : array
         (optional)
 
     Returns
@@ -70,43 +67,43 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                 raise Exception('{} not a valid file'.format(snowfile))
 
             ncf = nc.Dataset(snowfile)
-            t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
+            ta = nc.num2date(ncf.variables['time'][:],ncf.variables['time'].units)
             ncf.close()
 
             if start_date is None:
-                start = copy.deepcopy(t)
+                start = copy.deepcopy(ta[0])
 
             if end_date is None:
-                end = copy.deepcopy(t)
+                end = copy.deepcopy(ta[-1])
 
-            # Only load the rundirs that we need
-            if (t.date() >= start.date()) and (t.date() <= end.date()):
+            for idx,t in enumerate(ta):
 
-                st_hr = calculate_wyhr_from_date(start)
-                en_hr = calculate_wyhr_from_date(end)
+                # Only load the rundirs that we need
+                if (t.date() >= start.date()) and (t.date() <= end.date()):
 
-                output = iSnobalReader(path, filetype, snowbands = [0,1,2],
-                                       embands = [6,7,8,9], wy = wy,
-                                       time_start = st_hr, time_end = en_hr)
+                    st_hr = calculate_wyhr_from_date(start)
+                    en_hr = calculate_wyhr_from_date(end)
 
-                outputs['dates'] = np.append(outputs['dates'],output.dates)
-                outputs['time'] = np.append(outputs['time'],output.time)
+                    output = iSnobalReader(path, filetype, snowbands = [0,1,2],
+                                           embands = [6,7,8,9], wy = wy,
+                                           time_start = st_hr, time_end = en_hr)
 
-                # Make a dict for wyhr-rundir lookup
-                for t in output.time:
-                    rdict[int(t)] = path
+                    # Make a dict for wyhr-rundir lookup
+                    for ot in output.time:
+                        rdict[int(ot)] = path
 
-                for n in range(0,len(output.em_data[8])):
-                    outputs['swi_z'].append(output.em_data[8][n,:,:])
-                    outputs['snowmelt'].append(output.em_data[7][n,:,:])
-                    outputs['evap_z'].append(output.em_data[6][n,:,:])
-                    outputs['coldcont'].append(output.em_data[9][n,:,:])
-                    outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                    outputs['depth'].append(output.snow_data[0][n,:,:])
-                    outputs['density'].append(output.snow_data[1][n,:,:])
+                    outputs['swi_z'].append(output.em_data[8][idx,:,:])
+                    outputs['snowmelt'].append(output.em_data[7][idx,:,:])
+                    outputs['evap_z'].append(output.em_data[6][idx,:,:])
+                    outputs['coldcont'].append(output.em_data[9][idx,:,:])
+                    outputs['swe_z'].append(output.snow_data[2][idx,:,:])
+                    outputs['depth'].append(output.snow_data[0][idx,:,:])
+                    outputs['density'].append(output.snow_data[1][idx,:,:])
+                    outputs['dates'].append(output.dates[idx])
+                    outputs['time'].append(output.time[idx])
 
-            else:
-                run_dirs.remove(path)
+                else:
+                    run_dirs.remove(path)
 
     # Run this when flight updates are present to make custom outputs
     else:
@@ -118,39 +115,21 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                 raise Exception('{} not a valid file'.format(snowfile))
 
             ncf = nc.Dataset(snowfile)
-            t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
+            ta = nc.num2date(ncf.variables['time'][:],ncf.variables['time'].units)
             ncf.close()
 
-            # Only load the rundirs that we need
-            if ((t.date() in [x.date() for x in flight_dates]) and
-               (t.date() <= end_date.date())):
+            for idx,t in enumerate(ta):
+                if (t.date() in [x.date() for x in flight_dates]):
 
-                output = iSnobalReader(path, filetype, snowbands=[0,1,2], wy=wy)
-                outputs['dates'] = np.append(outputs['dates'],output.dates)
-                outputs['time'] = np.append(outputs['time'],output.time)
+                    output = iSnobalReader(path, filetype, snowbands=[0,1,2], wy=wy)
 
-                for t in output.time:
-                    rdict[int(t)] = path
+                    for ot in output.time:
+                        rdict[int(ot)] = path
 
-                for n in range(0,len(output.snow_data[0])):
-                    outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                    outputs['depth'].append(output.snow_data[0][n,:,:])
-                    outputs['density'].append(output.snow_data[1][n,:,:])
-
-            # Always get the previous snow.nc to do flight difference
-            if ((t.date() in [x.date()-timedelta(hours = 24) for x in pre_flight_dates]) and
-                (t.date() <= end_date.date())):
-
-                output = iSnobalReader(path, filetype, snowbands=[0,1,2], wy=wy)
-                outputs['dates'] = np.append(outputs['dates'],output.dates)
-                outputs['time'] = np.append(outputs['time'],output.time)
-
-                for n in range(0,len(output.snow_data[0])):
-                    outputs['swe_z'].append(output.snow_data[2][n,:,:])
-                    outputs['depth'].append(output.snow_data[0][n,:,:])
-                    outputs['density'].append(output.snow_data[1][n,:,:])
-
-            else:
-                run_dirs.remove(path)
+                    outputs['swe_z'].append(output.snow_data[2][idx,:,:])
+                    outputs['depth'].append(output.snow_data[0][idx,:,:])
+                    outputs['density'].append(output.snow_data[1][idx,:,:])
+                    outputs['dates'].append(output.dates[idx])
+                    outputs['time'].append(output.time[idx])
 
     return outputs, dirs, run_dirs, rdict
