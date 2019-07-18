@@ -74,14 +74,25 @@ def read_config(self, external_logger=None, awsm=None):
 
     self.all_subdirs = ucfg.cfg['run']['all_subdirs']
 
-    if self.all_subdirs is True:
-        self.run_dirs = ([ucfg.cfg['run']['directory'] + s for s in
-                        os.listdir(ucfg.cfg['run']['directory'])
-                        if (os.path.isdir(ucfg.cfg['run']['directory'] + s)) ])
+    if (ucfg.cfg['run']['directory'] is None) and (awsm is not None):
+        if self.all_subdirs is True:
+            self.run_dirs = ([awsm.pathr + s for s in
+                            os.listdir(awsm.pathr)
+                            if (os.path.isdir(awsm.pathr + s)) ])
+        else:
+            self.run_dirs = awsm.pathr
+            if type(self.run_dirs) != list:
+                self.run_dirs = [self.run_dirs]        
+
     else:
-        self.run_dirs = ucfg.cfg['run']['directory']
-        if type(self.run_dirs) != list:
-            self.run_dirs = [self.run_dirs]
+        if self.all_subdirs is True:
+            self.run_dirs = ([ucfg.cfg['run']['directory'] + s for s in
+                            os.listdir(ucfg.cfg['run']['directory'])
+                            if (os.path.isdir(ucfg.cfg['run']['directory'] + s)) ])
+        else:
+            self.run_dirs = ucfg.cfg['run']['directory']
+            if type(self.run_dirs) != list:
+                self.run_dirs = [self.run_dirs]
 
     self.run_dirs.sort()
 

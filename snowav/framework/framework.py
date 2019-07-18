@@ -32,7 +32,7 @@ class snowav(object):
             read_config(self)
 
         elif awsm is not None:
-            self.config_file = awsm.filename
+            self.config_file = awsm.configFile
             read_config(self, awsm = awsm)
 
         else:
