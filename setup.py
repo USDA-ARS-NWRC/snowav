@@ -64,6 +64,7 @@ setup(
 			  'snowav.framework',
 			  'snowav.database',
               'snowav.plotting',
+			  'snowav.inflow',
               'snowav.report',
               'snowav.utils'
 			  ],

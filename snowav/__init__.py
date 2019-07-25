@@ -7,6 +7,7 @@ __config_titles__ = {'snowav':'Overview',
                      'run':'Process directory and report period',
                      'validate':'Snow pillow validation figure',
                      'plots':'Figures',
+                     'inflow':'Reservoir inflow and SWI comparison',
                      'report':'Report',
                      'forecast':'WRF forecast',
                      'query':'Query existing database records'}

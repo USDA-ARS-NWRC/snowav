@@ -7,6 +7,7 @@ from snowav.framework.parse import parse
 from snowav.framework.figures import figures
 from snowav.report.report import report
 from snowav.database.database import run_metadata
+from snowav.inflow.inflow import excel_to_csv
 
 class snowav(object):
 
@@ -65,6 +66,22 @@ class snowav(object):
         if not self.precip_flag:
             self.precip_depth_flag = False
             self.precip_validate_flag = False
+
+        if self.inflow_flag:
+            args = {}
+            args['path'] = self.inflow_data
+            args['csv_file'] = self.summary_csv
+            args['basin_headings'] = self.basin_headings
+            args['inflow_headings'] = self.inflow_headings
+            args['file_base'] = self.file_base
+            args['sheet_name'] = self.sheet_name
+            args['skiprows'] = self.skiprows
+            args['date_idx'] = self.date_idx
+            args['wy'] = self.wy
+            args['overwrite'] = self.overwrite
+            args['convert'] = self.convert
+
+            excel_to_csv(args, self._logger)
 
         figures(self)
 

@@ -82,7 +82,7 @@ def read_config(self, external_logger=None, awsm=None):
         else:
             self.run_dirs = awsm.pathr
             if type(self.run_dirs) != list:
-                self.run_dirs = [self.run_dirs]        
+                self.run_dirs = [self.run_dirs]
 
     else:
         if self.all_subdirs is True:
@@ -324,5 +324,20 @@ def read_config(self, external_logger=None, awsm=None):
     self.q_output = ucfg.cfg['query']['output']
     self.q_csv_base_path = ucfg.cfg['query']['csv_base_path']
     self.q_database = ucfg.cfg['query']['database']
+
+    ####################################################
+    #           inflow                                 #
+    ####################################################
+    self.inflow_flag = ucfg.cfg['inflow']['inflow']
+    self.inflow_data = ucfg.cfg['inflow']['inflow_data']
+    self.summary_csv = ucfg.cfg['inflow']['summary_csv']
+    self.inflow_headings = ucfg.cfg['inflow']['inflow_headings']
+    self.basin_headings = ucfg.cfg['inflow']['basin_headings']
+    self.sheet_name = ucfg.cfg['inflow']['sheet_name']
+    self.skiprows = ucfg.cfg['inflow']['skiprows']
+    self.overwrite = ucfg.cfg['inflow']['overwrite']
+    self.file_base = ucfg.cfg['inflow']['file_base']
+    self.date_idx = ucfg.cfg['inflow']['date_idx']
+    self.convert = ucfg.cfg['inflow']['convert']
 
     self.ucfg = ucfg

@@ -1,5 +1,6 @@
 
 import numpy as np
+import pandas as pd
 from datetime import datetime
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
@@ -14,6 +15,7 @@ from snowav.plotting.stn_validate import stn_validate
 from snowav.plotting.swe_change import swe_change
 from snowav.plotting.write_properties import write_properties
 from snowav.plotting.swe_volume import swe_volume
+from snowav.inflow.inflow import inflow
 from snowav.plotting.plotlims import plotlims
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
@@ -255,6 +257,19 @@ def figures(self):
         args['swe_summary'] = df_swe
 
         fig_names['basin_total'] = basin_total(args, self._logger)
+
+    if self.inflow_flag:
+        wy_start = datetime(self.wy-1,10,1)
+        swi_summary = collect(connector, args['plotorder'], args['basins'],
+                              wy_start,args['end_date'],'swi_vol',
+                              args['run_name'],'total','daily')
+        df_swi = swi_summary.cumsum()
+
+        args['swi_summary'] = df_swi 
+        args['inflow_summary'] = pd.read_csv(self.summary_csv, parse_dates=[0], index_col = 0)
+        args['inflow_headings'] = self.inflow_headings
+
+        inflow(args, self._logger)
 
     if self.write_properties is not None:
         args['connector'] = self.connector
