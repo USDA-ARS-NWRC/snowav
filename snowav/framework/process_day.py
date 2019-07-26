@@ -32,7 +32,7 @@ def process(nc_path, topo_path, value, log):
 
     log.info('Using topo {}...'.format(topo_path))
 
-    out = masks(topo_path, plotorder = None, plotlabels = None)
+    out = masks(topo_path, False, plotorder = None, plotlabels = None)
     dem = out['dem']*3.28
     bmask = out['masks']
     plotorder = out['plotorder']
