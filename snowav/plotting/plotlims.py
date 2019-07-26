@@ -38,7 +38,7 @@ def plotlims(plotorder):
         btx = 0.31
         bty = 0.95
 
-        if basin == 'San Joaquin River Basin':
+        if 'San Joaquin' in basin:
             pbbx = 0.3
             legy = 0.69
             legy2 = 0.65
@@ -47,34 +47,34 @@ def plotlims(plotorder):
         if basin in ['RCEW']:
             pbbx = 0.1
 
-        if basin == 'Kings River Basin':
-            legy = 0.53
+        if 'Kings' in basin:
+            legy = 0.52
             legy2 = 0.39
             basin_name = 'kings'
 
-        if basin == 'Merced River Basin':
+        if 'Merced' in basin:
             legy = 0.58
             legy2 = 0.42
             basin_name = 'merced'
 
-        if basin == 'Kaweah River Basin':
+        if 'Kaweah' in basin:
             legy = 0.52
             legy2 = 0.38
             pbbx = 0.45
             basin_name = 'kaweah'
 
-        if basin == 'Lakes Basin':
+        if 'Lakes' in basin:
             btx = 0.26
             legy = 0.85
             legy2 = 0.88
             basin_name = 'lakes'
 
-        if basin == 'Extended Tuolumne':
+        if 'Tuolumne' in basin:
             legy = 0.75
             btx = 0.28
             basin_name = 'tuolumne'
 
-        if basin == 'Boise River Basin':
+        if 'Boise' in basin:
             legy = 0.75
             btx = 0.28
             basin_name = 'brb'

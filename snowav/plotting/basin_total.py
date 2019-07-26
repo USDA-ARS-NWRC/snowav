@@ -42,7 +42,8 @@ def basin_total(args, logger = None):
                                 dpi=args['dpi'], nrows = 1, ncols = 2)
 
     for iters,name in enumerate(plotorder):
-        swe_summary[name].plot(ax=ax, color = barcolors[iters])
+        swe_summary[name].plot(ax=ax, color = barcolors[iters],
+                               label = labels[name])
         swi_summary[name].plot(ax=ax1,color = barcolors[iters],
                                label='_nolegend_')
 

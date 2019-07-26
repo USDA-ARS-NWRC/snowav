@@ -14,6 +14,7 @@ import netCDF4 as nc
 from snowav.utils.wyhr import calculate_wyhr_from_date, calculate_date_from_wyhr
 from snowav.database.database import collect, make_session
 import snowav.framework.figures
+from sys import exit
 
 def flt_image_change(args, logger = None):
     '''
@@ -107,8 +108,18 @@ def flt_image_change(args, logger = None):
                   'figure...\nThis may mean that [run] directory has not been '
                   'processed with [snowav] run_name for the periods reflected '
                   'in [plots] update_file...\nTry subsetting with [plots] '
-                  'update_numbers or processing the full [run] directory\n')
+                  'update_numbers or processing the full [run] directory\n'
+                  'start_date: {}, end_date: {}'.format(start_date, end_date))
 
+            if logger is not None:
+                logger.info(' Failed requesting database records ending on {} '
+                            'for flight difference figure. This may mean that '
+                            '[run] directory has not been processed with '
+                            '[snowav] run_name for the periods reflected in '
+                            '[plots] update_file. Try subsetting with [plots] '
+                            'update_numbers or processing the full [run] '
+                            'directory.'.format(end_date))
+            exit()
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
