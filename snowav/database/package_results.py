@@ -33,9 +33,11 @@ def package(connector, lbls, basins, df, run_id, vid, output, dtime, run_name):
         lbl = 'kg/m^3'
     if output == 'coldcont':
         lbl = 'MJ'
+    print('pack re, ', basins)
+    # print('pack re, ', basin)
 
     for basin in df:
-
+        print(basin)
         for iters, val in enumerate(df[basin].values):
             if np.isnan(val):
                 val = None

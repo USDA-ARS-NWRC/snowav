@@ -84,7 +84,7 @@ def process(args):
     lbls = {}
     lbls['depthlbl'] = args['depthlbl']
     lbls['vollbl'] = args['vollbl']
-
+    print('process, ', masks.keys())
     dz = pd.DataFrame(0, index = edges, columns = masks.keys())
     precip_total = np.zeros((args['nrows'],args['ncols']))
     rain_total = np.zeros((args['nrows'],args['ncols']))
