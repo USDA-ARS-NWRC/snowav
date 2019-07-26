@@ -5,8 +5,9 @@ import netCDF4 as nc
 import numpy as np
 import copy
 from collections import OrderedDict
+from snowav.database.database import convert_watershed_names
 
-def masks(dempath, plotorder = None, plotlabels = None):
+def masks(dempath, convert, plotorder = None, plotlabels = None):
     '''
     Load dem, build snowav masks dictionary from topo.nc file. See
     CoreConfig.ini for more information on some config options and behavior.
@@ -18,6 +19,8 @@ def masks(dempath, plotorder = None, plotlabels = None):
     dempath : str
         Path to topo.nc file, which is intended to be built by basin_setup
         package.
+    convert : bool
+        Convert watershed name to existing snowav database
     plotorder : list
         Optional, default is all mask strings that appear in topo.nc file found
         in dempath.
@@ -56,12 +59,12 @@ def masks(dempath, plotorder = None, plotlabels = None):
 
     else:
         if len(plotorder) > len(mask_names):
-            raise Exception(' Config option [snowav] mask: {} for {}, but '
+            raise Exception(' Config option [snowav] masks: {} for {}, but '
                             'found {}'.format(plotorder, dempath, mask_names))
 
         for lbl in plotorder:
             if (lbl not in mask_names) and (lbl != 'Cherry Creek'):
-                raise Exception(' Config option [snowav] mask: {} for {}, but '
+                raise Exception(' Config option [snowav] masks: {} for {}, but '
                                 'found {}'.format(plotorder, dempath, mask_names))
 
     if plotlabels is None:
@@ -83,7 +86,7 @@ def masks(dempath, plotorder = None, plotlabels = None):
         else:
             for i, name in enumerate(plotorder):
                 logger.append(' Assigning plot label {} '.format(plotlabels[i])+
-                              'to mask {}'.format(name))
+                              'for topo.nc long_name field {}'.format(name))
                 labels[name] = plotlabels[i]
 
     nrows = len(dem[:,0])
@@ -102,6 +105,12 @@ def masks(dempath, plotorder = None, plotlabels = None):
             masks[lbl] = {'mask':ncf['mask'][:], 'label':nclbl}
 
     ncf.close()
+
+    if convert:
+        old_key = plotorder[0]
+        new_key = convert_watershed_names(old_key)
+        masks[new_key] = masks.pop(old_key)
+        labels[new_key] = labels.pop(old_key)
 
     out['dem'] = dem
     out['masks'] = masks

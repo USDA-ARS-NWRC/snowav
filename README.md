@@ -37,6 +37,8 @@ For a simple difference between two snow.nc files:
 $ snowav -t <topo.nc> -A <snow.nc> -B <snow.nc>
 ```
 
+For awsm >= 0.9.26, if awsm config field [awsm master] snowav_config is given a valid snowav config file, a full snowav run with that config will be run at the end of all awsm functionality.
+
 To query and output existing database records, either to the terminal or csv, see CoreConfig.ini [query] section and example below. If [query] *query: True* no other functionality other than the query will be run. This currently requires database login created from [database] section and *mysql: snowav*.
 ```
 [query]
@@ -54,22 +56,36 @@ database:           mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
 ```
 
 ## Notes and Considerations
-**Be deliberate with the [snowav] *run_name* field!** This is how processing runs are identified on the database, and existing records with the same *run_name*, basin, and date range will be deleted and replaced during re-runs of the same snow.nc files. The *run_name* field should, in most cases and normal use, be connected with a specific [run] *directory*. We suggest using fields such as *tuol_wy2019_ops* and re-running snowav with *tuol_wy2019_ops* over the proper directory if modifications are made mid-season.
+- **Be deliberate with the [snowav] *run_name* field!** This is how processing runs are identified on the database, and existing records with the same *run_name*, basin, and date range will be deleted and replaced during re-runs of the same snow.nc files. The *run_name* field should, in most cases and normal use, be connected with a specific [run] *directory*. We suggest using fields such as *tuol_wy2019_ops* and re-running snowav with *tuol_wy2019_ops* over the proper directory if modifications are made mid-season.
 
-Currently the figures listed below are created by default in both the [plots] and [reports] section. If any of them are set to *False* in [plots] they will be set to *False* in [reports] internally. For additional figures to be added to a report they must be *True* in both [plots] and [reports].
+- Currently the figures listed below are created by default in both the [plots] and [reports] section. If any of them are set to *False* in [plots] they will be set to *False* in [reports] internally. For additional figures to be added to a report they must be *True* in both [plots] and [reports].
+  - swi
+  - image_change
+  - cold_content  
+  - swe_volume
+  - basin_total
+  - precip_depth
 
-- swi
-- image_change
-- cold_content  
-- swe_volume
-- basin_total
-- precip_depth
 
-If depth updates have been applied, year-to-date precipitation values in report Table 1 are no longer valid, although they will still appear. This table includes precipitation and rain derived from the HRRR inputs and does not account for mass that may be added or removed via snow depth updates.
+- If depth updates have been applied, year-to-date precipitation values in report Table 1 are no longer valid, although they will still appear. This table includes precipitation and rain derived from the HRRR inputs and does not account for mass that may be added or removed via snow depth updates.
 
-To help debugging the pdf report if it fails rendering to latex, set config option [report] *print_latex: True*. This will print the full latex file to the screen immediately prior to rendering.
+- To help debugging the pdf report if it fails rendering to latex, set config option [report] *print_latex: True*. This will print the full latex file to the screen immediately prior to rendering.
 
-The SWE pillow validation figure [plots] *stn_validate* requires SWE fields on the existing weather database and [validate] fields to be filled in.
+- The SWE pillow validation figure [plots] *stn_validate* requires SWE fields on the existing weather database and [validate] fields to be filled in.
+
+- Topo.nc, masks, and plot labels <br/>
+Config field [snowav] *masks* can be left blank, and will default to the long_name fields in the topo.nc file. To subset the number of basins processed and plotted, use *masks* with a list: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/>
+To replace the plot labels, use the *plotlabels* field in combination with *masks*: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/> *plotlabels: San Joaquin, Mammoth, South Fork*
+
+[snowav]
+save_path:          /home/markrobertson/wkspace/results/sj/wy19/devel
+directory:          sj_wy2019_test
+elev_bins:          4000,14000,1000
+dempath:            /home/ops/wy2019/sanjoaquin/topo/topo.nc
+run_name:           sj_wy2019_test
+log_to_file:        False
+masks:              San Joaquin River Basin, Main, South Fork, Auberry, Redinger
+plotlabels:         San Joaquin, Mammoth, South Fork, Auberry, Redinger
 
 ## Figures from Existing Database Records
 If results have already been processed and put onto a database, figures can be created outside of a snowav processing run (see also scripts/sample_figure.py). See snowav.framework.figures for templates for additional figure creation. Also, if a standard snowav run is processed with [plots] *print_args_dict: True*, the full input dictionary for each figure will be printed to the screen.

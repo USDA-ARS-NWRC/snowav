@@ -44,7 +44,7 @@ def parse(self, external_logger=None):
                  ('swe_avail','snow water equivalent available for melt'),
                  ('swe_unavail','snow water equivalent unavailable for melt')])
 
-    out = masks(self.dempath, plotorder = self.plotorder,
+    out = masks(self.dempath, self.db_convert, plotorder = self.plotorder,
                 plotlabels = self.plotlabels)
 
     self.dem = out['dem']

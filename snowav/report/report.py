@@ -202,7 +202,7 @@ def report(self):
             variables['REPORT_TITLE'] = self.rep_title
             # variables['FLTSENT'] = (' Model snow depths will be updated with '
             #                         'ASO snow depths as they become available.')
-            variables['FLTSENT'] = ('')            
+            variables['FLTSENT'] = ('')
 
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(self.wy)
@@ -272,7 +272,7 @@ def report(self):
         swe_byelev = dbval.round(decimals=dpts)
         swe_byelev.rename(index={'total':'mean'},inplace=True)
         swe_byelev.index.name = 'Elevation'
-        variables['SWE_BYELEV'] = (r'  \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
+        variables['SWE_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                     %(self.depthlbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
                                     spacecmd + swe_byelev[plotorder].to_latex(na_rep='-', column_format=colstr) +
                                     r'} \\ \footnotesize{\textbf{Table %s:} SWE depth.}'%(str(mtables)))
@@ -319,7 +319,6 @@ def report(self):
                                     %(self.depthlbl,self.report_start.date().strftime("%Y-%-m-%-d"),
                                       self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
                                       dswe_byelev[self.plotorder].to_latex(na_rep='-', column_format=colstr) +
-
                                       r'} \\ \footnotesize{\textbf{Table %s:} Change in SWE.} %s'%(str(mtables),clrpage))
         mtables += 1
 

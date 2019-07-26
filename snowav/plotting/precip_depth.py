@@ -36,6 +36,7 @@ def precip_depth(args, logger = None):
     lims = args['lims']
     masks = args['masks']
     edges = args['edges']
+    labels = args['labels']
 
     mm = [args['percent_min'],args['percent_max']]
 
@@ -119,7 +120,7 @@ def precip_depth(args, logger = None):
         wid = np.linspace(-0.4,0.4,len(sumorder))
 
     for iters,name in enumerate(sumorder):
-        lbl = name
+        lbl = labels[name]
         ax[0,1].bar(range(0,len(edges))-wid[iters],
                 accum_byelev[name],
                 color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)

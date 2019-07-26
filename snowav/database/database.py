@@ -13,6 +13,7 @@ import numpy as np
 import copy
 import urllib.parse
 import mysql.connector
+from sys import exit
 
 def make_session(connector):
     '''
@@ -285,8 +286,8 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
     basin_id = int(basins[bid]['basin_id'])
     session = make_session(connector)
 
-    logger.append(' Deleting existing database records for {}, {}, {} '
-          'to {}'.format(bid, run_name, start_date.date(), end_date.date()))
+    logger.append(' Deleting existing database records for {}, {}, {} '.format(
+                  bid, run_name, start_date.date()))
 
     # Get the run_id
     qry = session.query(Results).join(RunMetadata).filter(and_(
@@ -534,10 +535,16 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
 
     if (sql is not None) and (sqlite is None):
 
-        cnx = mysql.connector.connect(user=user,
-                                      password=password,
-                                      host=host,
-                                      port=port)
+        try:
+            cnx = mysql.connector.connect(user=user,
+                                          password=password,
+                                          host=host,
+                                          port=port)
+        except:
+            print('Failed attempting to make database connection with '
+                  '{}:{}@{}/{}\nCheck config options in [database] '
+                  'section'.format(user,password,host,port))
+            exit()
         cursor = cnx.cursor()
 
         # Check if database exists, create if necessary
@@ -585,6 +592,8 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
                 logger.append(log)
 
             try:
+                logger.append(' Using database connection {}@{}/{} for '
+                              'results'.format(user, host, sql))
                 engine = create_engine(db_engine)
                 Base.metadata.create_all(engine)
                 DBSession = sessionmaker(bind=engine)
