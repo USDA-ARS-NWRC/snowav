@@ -265,9 +265,19 @@ def figures(self):
                               args['run_name'],'total','daily')
         df_swi = swi_summary.cumsum()
 
-        args['swi_summary'] = df_swi 
-        args['inflow_summary'] = pd.read_csv(self.summary_csv, parse_dates=[0], index_col = 0)
+        args['swi_summary'] = df_swi
+
+        if self.inflow_data is None:
+            raw = pd.read_csv(self.summary_csv, skiprows = 1,
+                              parse_dates=[0], index_col = 0)
+            args['inflow_summary'] = raw[self.basin_headings]
+
+        else:
+            args['inflow_summary'] = pd.read_csv(self.summary_csv,
+                                                 parse_dates=[0], index_col = 0)
+
         args['inflow_headings'] = self.inflow_headings
+        args['basin_headings'] = self.basin_headings
 
         inflow(args, self._logger)
 

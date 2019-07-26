@@ -11,7 +11,23 @@ def inflow(args, logger):
     '''
     Plot inflow and SWI.
 
-    Currently this is only configured for the Tuolumne.
+    Currently this is only configured for the Tuolumne and San Joaquin, and
+    requires some manipulation of csv files.
+
+    Used openoffice terminal command to create original csv file from xlsb
+    file from USBR:
+
+        $ soffice --headless --convert-to csv SJ.xlsb
+
+    pyxlsb also a possibility:
+
+        from pyxlsb import open_workbook as open_xlsb
+        df = []
+        wb = open_xlsb('<.xlsb>')
+        for n in range(1,10):
+            sheet = wb.get_sheet(n)
+            for row in sheet.rows():
+                df.append([item.v for item in row])
 
     Args
     ----------
@@ -25,6 +41,7 @@ def inflow(args, logger):
 
     inflow_summary = args['inflow_summary']
     inflow_headings = args['inflow_headings']
+    basin_headings = args['basin_headings']
     inflow_summary = inflow_summary.cumsum()
 
     plotorder = args['plotorder']
@@ -42,7 +59,7 @@ def inflow(args, logger):
     f = plt.figure(num=0, figsize=(8,5), dpi=args['dpi'])
     a = plt.gca()
 
-    for iters, (name, basin) in enumerate(zip(plotorder[1::], inflow_headings)):
+    for iters, (name, basin) in enumerate(zip(basin_headings, inflow_headings)):
         if iters == 0:
             lblswi = 'SWI'
             lblin = 'inflow'
@@ -119,25 +136,27 @@ def excel_to_csv(args, logger):
     else:
         csv = pd.read_csv(csv_file, parse_dates=[0], index_col = 0)
 
-    files = os.listdir(path)
+    # if no path is supplied we just read in existing csv
+    if path is not None:
+        files = os.listdir(path)
 
-    for file in files:
-        if file_base in file:
-            # get date from loading in full file
-            f = pd.read_excel(os.path.join(path,file),
-                              sheet_name = sheet_name,
-                              skiprows = 0)
-            inflow_date = pd.to_datetime(f[date_heading].values[date_idx])
-            data = pd.read_excel(os.path.join(path,file),
-                                 sheet_name=sheet_name,
-                                 skiprows=skiprows)
+        for file in files:
+            if file_base in file:
+                # get date from loading in full file
+                f = pd.read_excel(os.path.join(path,file),
+                                  sheet_name = sheet_name,
+                                  skiprows = 0)
+                inflow_date = pd.to_datetime(f[date_heading].values[date_idx])
+                data = pd.read_excel(os.path.join(path,file),
+                                     sheet_name=sheet_name,
+                                     skiprows=skiprows)
 
-            if not inflow_date.date() in csv.index or overwrite:
-                for basin,heading in zip(basin_headings,inflow_headings):
-                    if logger is not None:
-                        logger.info(' Assigning basin inflow in {}: {}, {} to '
-                                      '{}'.format(file, inflow_date, heading, basin))
-                    csv.loc[inflow_date,basin] = data[heading].values[11]*convert
+                if not inflow_date.date() in csv.index or overwrite:
+                    for basin,heading in zip(basin_headings,inflow_headings):
+                        if logger is not None:
+                            logger.info(' Assigning basin inflow in {}: {}, {} to '
+                                          '{}'.format(file, inflow_date, heading, basin))
+                        csv.loc[inflow_date,basin] = data[heading].values[11]*convert
 
     csv.sort_index(inplace=True)
     csv.to_csv(csv_file)

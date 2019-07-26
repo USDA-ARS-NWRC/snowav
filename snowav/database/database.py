@@ -8,12 +8,16 @@ from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results,
 import pandas as pd
 import snowav
 import smrf
-import awsm
 import numpy as np
 import copy
 import urllib.parse
 import mysql.connector
 from sys import exit
+import warnings
+
+warnings.filterwarnings("ignore")
+import awsm
+warnings.filterwarnings("default")
 
 def make_session(connector):
     '''

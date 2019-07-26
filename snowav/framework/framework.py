@@ -67,7 +67,7 @@ class snowav(object):
             self.precip_depth_flag = False
             self.precip_validate_flag = False
 
-        if self.inflow_flag:
+        if self.inflow_flag and self.inflow_data is not None:
             args = {}
             args['path'] = self.inflow_data
             args['csv_file'] = self.summary_csv
