@@ -77,16 +77,6 @@ database:           mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
 Config field [snowav] *masks* can be left blank, and will default to the long_name fields in the topo.nc file. To subset the number of basins processed and plotted, use *masks* with a list: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/>
 To replace the plot labels, use the *plotlabels* field in combination with *masks*: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/> *plotlabels: San Joaquin, Mammoth, South Fork*
 
-[snowav]
-save_path:          /home/markrobertson/wkspace/results/sj/wy19/devel
-directory:          sj_wy2019_test
-elev_bins:          4000,14000,1000
-dempath:            /home/ops/wy2019/sanjoaquin/topo/topo.nc
-run_name:           sj_wy2019_test
-log_to_file:        False
-masks:              San Joaquin River Basin, Main, South Fork, Auberry, Redinger
-plotlabels:         San Joaquin, Mammoth, South Fork, Auberry, Redinger
-
 Setting config option [inflow] *inflow: True* triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets.
 
 ## Figures from Existing Database Records
