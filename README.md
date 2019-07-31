@@ -79,6 +79,9 @@ To replace the plot labels, use the *plotlabels* field in combination with *mask
 
 Setting config option [inflow] *inflow: True* triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets.
 
+## SNOWAV processing utility
+The snowav processing utility snowav.utils.utilities.calculate can be used to make simple calculations on snow.nc and em.nc files. See scripts.sample_process.py for an example.
+
 ## Figures from Existing Database Records
 If results have already been processed and put onto a database, figures can be created outside of a snowav processing run (see also scripts/sample_figure.py). See snowav.framework.figures for templates for additional figure creation. Also, if a standard snowav run is processed with [plots] *print_args_dict: True*, the full input dictionary for each figure will be printed to the screen.
 

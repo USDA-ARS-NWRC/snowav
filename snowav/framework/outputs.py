@@ -70,6 +70,8 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
             ta = nc.num2date(ncf.variables['time'][:],ncf.variables['time'].units)
             ncf.close()
 
+            ta = np.sort(ta)
+
             if start_date is None:
                 start = copy.deepcopy(ta[0])
 

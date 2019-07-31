@@ -275,6 +275,7 @@ def parse(self, external_logger=None):
     self.pargs['ixd'] = self.ixd
     self.pargs['vollbl'] = self.vollbl
     self.pargs['depthlbl'] = self.depthlbl
+    self.pargs['pixel'] = self.pixel
 
 def createLog(self):
     '''

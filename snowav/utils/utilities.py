@@ -7,6 +7,123 @@ import copy
 from collections import OrderedDict
 from snowav.database.database import convert_watershed_names
 
+from matplotlib import pyplot as plt
+
+def calculate(array, pixel, masks = None, method = 'sum', convert = None,
+              units = 'TAF', decimals = 3):
+    '''
+    Calculate values from iSnobal output snow.nc and em.nc files
+    and convert to desired units:
+        mean SWE depth
+        total SWE volume
+        total 'available' SWE volume (based on cold content)
+        total 'unavailable' SWE volume (based on cold content)
+        mean snow depth
+        total SWI volume
+        mean SWI depth
+        mean evaporation
+        total cold content
+        mean density
+
+    Applies all masks that are passed. Typically this is a basin mask, an
+    elevation bin mask, and a snow mask if a 0 value has meaning for the
+    calculated value (such as a mean density).
+
+    This is referenced as an example in scripts.sample_process.py and README,
+    so if changes are made those may require updating.
+
+    Args
+    ------
+    array : np.array
+        iSnobal model outputs from snow.nc or em.nc file
+    pixel : int
+        [m] model pixel size
+    masks : list
+        list of np.array or bool masks, optional
+    method : str
+        method of calcution, options are 'sum', 'mean'
+    convert : str
+        conversion property, options are 'depth', 'snow_depth', 'volume', None
+    units : str
+        conversion units, options are 'TAF', 'SI'
+    decimals : int
+
+    Returns
+    ------
+    value : np.array
+
+    '''
+
+    method_options = ['sum','mean']
+    unit_options = ['TAF','SI']
+    convert_options = ['depth','snow_depth','volume', None]
+
+    if convert not in convert_options:
+        raise Exception('convert options are {}'.format(convert_options))
+
+    if method not in method_options:
+        raise Exception('method options are {}'.format(method_options))
+
+    if units not in unit_options:
+        raise Exception('units options are {}'.format(unit_options))
+
+    if units == 'TAF':
+
+        # mm to inches
+        if convert == 'depth':
+            factor = 0.03937
+
+        # m to inches
+        if convert == 'snow_depth':
+            factor = 39.37
+
+        # mm/pixel to TAF
+        if convert == 'volume':
+            factor = (pixel**2)*0.000000810713194*0.001
+
+    if units == 'SI':
+
+        # mm to cm
+        if convert == 'depth':
+            factor = 0.1
+
+        # snow depth remains m
+        if convert == 'snow_depth':
+            factor = 1
+
+        # mm/pixel to MM^3
+        if convert == 'volume':
+            factor = (pixel**2)*0.000000810713194*1233.48/1e9
+
+    if convert is None:
+        factor = 1
+
+    if masks is not None:
+        if type(masks) != list:
+            masks = [masks]
+
+        for i,mask in enumerate(masks):
+            if mask.shape != array.shape:
+                raise Exception('mask {}, {} and array {} do not '
+                                'match'.format(i,mask.shape,array.shape))
+
+            # use nan because output zero values have meaning
+            mask = mask.astype('float')
+            mask[mask < 1] = np.nan
+            array = array * mask
+
+    # make calculation and convert
+    if method == 'sum':
+        value = np.nansum(array) * factor
+
+    if method == 'mean':
+        value = np.nanmean(array) * factor
+
+    value = value.round(decimals)
+
+    return value
+
+
 def masks(dempath, convert, plotorder = None, plotlabels = None):
     '''
     Load dem, build snowav masks dictionary from topo.nc file. See
