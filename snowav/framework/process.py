@@ -9,7 +9,7 @@ import coloredlogs
 import netCDF4 as nc
 from snowav.database.package_results import package
 from snowav.database.database import delete
-from snowav.utils.utilities import calculate, precip
+from snowav.utils.utilities import calculate, precip, snow_line
 
 import warnings
 
@@ -39,6 +39,7 @@ def process(args):
     log = []
     cclimit = -5*1000*1000
     t = 0
+    dem = args['dem']
     outputs = args['outputs']
     rundirs_dict = args['rundirs_dict']
     edges = args['edges']
@@ -48,6 +49,7 @@ def process(args):
     lbls = {}
     lbls['depthlbl'] = args['depthlbl']
     lbls['vollbl'] = args['vollbl']
+    lbls['elevlbl'] = args['elevlbl']
     raw_out = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont']
     precip_path = '/smrfOutputs/precip.nc'
 
@@ -76,7 +78,8 @@ def process(args):
                          'density':dz.copy(),
                          'rain_z':dz.copy(),
                          'evap_z':dz.copy(),
-                         'coldcont':dz.copy()}
+                         'coldcont':dz.copy(),
+                         'snow_line':pd.DataFrame(0, index = ['total'], columns = masks.keys())}
 
         density = {}
         for name in masks:
@@ -95,7 +98,6 @@ def process(args):
                        'file, precip will not be calculated or put on the '
                        'database, no precip figures will be made'.format(path))
 
-        # Get a snow-free mask ready
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])
 
@@ -107,16 +109,17 @@ def process(args):
                 mask = copy.deepcopy(masks[name]['mask'])
                 elevbin = ixd*mask
 
+                snow_mask = swe > 0
+                avail_mask = cold > cclimit
+                unavail_mask = cold <= cclimit
+
                 if k in raw_out:
                     o = copy.deepcopy(outputs[k][iters])
 
-                # Now mask the subbasins by elevation band
+                # elevation band
                 for n in np.arange(0,len(edges)):
                     b = edges[n]
                     elev_mask = elevbin == n
-                    snow_mask = swe > 0
-                    avail_mask = cold > cclimit
-                    unavail_mask = cold <= cclimit
 
                     # list of masks
                     be = [mask, elev_mask]
@@ -157,22 +160,23 @@ def process(args):
                         daily_outputs[k].loc[b,name] = calculate(rain, pixel, be, 'mean', 'depth')
 
                 if k == 'evap_z':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean', 'depth')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', 'depth')
 
                 if k == 'coldcont':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean')
 
                 if k == 'swe_z':
                     daily_outputs['swe_vol'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume')
                     daily_outputs['swe_avail'].loc['total',name] = calculate(o, pixel, ba, 'sum','volume')
                     daily_outputs['swe_unavail'].loc['total',name] = calculate(o, pixel, bu, 'sum','volume')
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, bu, 'mean','depth')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean','depth')
+                    daily_outputs['snow_line'].loc['total',name] = snow_line(o, dem, mask, args['snow_limit'])
 
                 if k == 'depth':
                     daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean', 'snow_depth')
 
                 if k == 'density':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean')
 
                 if k == 'swi_z':
                     daily_outputs[k].loc['total',name] = calculate(o,pixel,mask,'mean','depth')
@@ -185,11 +189,15 @@ def process(args):
                 if k == 'rain_z' and flag:
                     daily_outputs[k].loc['total',name] = calculate(rain, pixel, mask, 'mean', 'depth')
 
-            # Send daily results to database
             df = daily_outputs[k].copy()
             df = df.round(decimals = 3)
             package(args['connector'], lbls, args['basins'], df, args['run_id'],
                     args['vid'], k, out_date, args['run_name'])
+
+            # snow line
+            if k == 'swe_z':
+                package(args['connector'], lbls, args['basins'], daily_outputs['snow_line'],
+                        args['run_id'], args['vid'], 'snow_line', out_date, args['run_name'])
 
         hr = int(outputs['time'][iters])
         log.append(' processed: {}, elapsed hours: {}, date: {}'.format(

@@ -7,8 +7,6 @@ import copy
 from collections import OrderedDict
 from snowav.database.database import convert_watershed_names
 
-from matplotlib import pyplot as plt
-
 def calculate(array, pixel, masks = None, method = 'sum', convert = None,
               units = 'TAF', decimals = 3):
     '''
@@ -123,6 +121,46 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
     return value
 
+def snow_line(array, dem, masks = None, limit = 1):
+    '''
+    Calculate mean snow line in image.
+
+    Args
+    ------
+    array : np.array
+        iSnobal model outputs from snow.nc or em.nc file
+    masks : list
+        list of np.array or bool masks, optional
+
+    Returns
+    ------
+    value : int
+        mean value of dem where array > limit
+    '''
+
+    if masks is not None:
+        if type(masks) != list:
+            masks = [masks]
+
+        for i,mask in enumerate(masks):
+            if mask.shape != array.shape:
+                raise Exception('mask {}, {} and array {} do not '
+                                'match'.format(i,mask.shape,array.shape))
+
+            # use nan because output zero values have meaning
+            mask = mask.astype('float')
+            mask[mask < 1] = np.nan
+            array = array * mask
+
+    ix = array > limit
+
+    if not np.isnan(np.nanmean(dem[ix])):
+        value = int(np.nanmean(dem[ix]))
+
+    else:
+        value = np.nan
+
+    return value
 
 def masks(dempath, convert, plotorder = None, plotlabels = None):
     '''

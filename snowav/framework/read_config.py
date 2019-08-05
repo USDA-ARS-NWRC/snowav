@@ -8,6 +8,7 @@ import coloredlogs
 import os
 import pandas as pd
 import datetime
+import copy
 
 def read_config(self, external_logger=None, awsm=None):
     '''
@@ -144,6 +145,23 @@ def read_config(self, external_logger=None, awsm=None):
     self.wxdb_port = ucfg.cfg['validate']['port']
 
     ####################################################
+    #           diagnostics                            #
+    ####################################################
+    self.diagnostics_flag = ucfg.cfg['diagnostics']['diagnostics']
+    self.diag_basins = ucfg.cfg['diagnostics']['basins']
+    self.diag_limit = ucfg.cfg['diagnostics']['limit']
+
+    if self.diagnostics_flag:
+        if self.diag_basins is not None:
+            for basin in self.diag_basins:
+                if basin not in self.plotorder:
+                    self.tmp_log.append(' Config option [diagnostics] basin: {} '
+                                        'does not match what was supplied in '
+                                        '[snowav] masks: {}, diagnostics set '
+                                        'to False'.format(basin, plotorder))
+                    self.diagnostics_flag = False
+
+    ####################################################
     #          plots                                   #
     ####################################################
     self.dpi = ucfg.cfg['plots']['dpi']
@@ -210,7 +228,7 @@ def read_config(self, external_logger=None, awsm=None):
     if (self.precip_validate_flag and ((self.val_client is None) or
        (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
         self.tmp_log.append(' Config option [plots] precip_validate is being '
-                            'set to False, see CoreConfig.ini for details')
+                            'set to False')
 
         self.precip_validate_flag = False
 
@@ -218,7 +236,7 @@ def read_config(self, external_logger=None, awsm=None):
        (self.val_stns is None) or (self.val_lbls is None) or
        (self.wxdb_user is None) or (self.wxdb_password is None) ):
         self.tmp_log.append(' Config option [plots] stn_validate is being '
-                            'set to False, see CoreConfig.ini for details')
+                            'set to False')
 
         self.stn_validate_flag = False
 

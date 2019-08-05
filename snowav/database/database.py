@@ -111,17 +111,17 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
 
     value_options = ['swe_z','swe_vol','density','precip_z','precip_vol',
                      'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
-                     'swi_z','swi_vol','depth']
+                     'swi_z','swi_vol','depth','snow_line','mean_air_temp']
 
     method_options = ['sum','difference','daily','end']
 
     if value not in value_options:
         raise Exception('value={} call to database.collect() '.format(value) +
-                        'must be one of {}'.format(options))
+                        'must be one of {}'.format(value_options))
 
     if method not in method_options:
         raise Exception('method={} call to database collect() '.format(method) +
-                        'must be one of {}'.format(options))
+                        'must be one of {}'.format(method_options))
 
     if type(plotorder) != list:
         plotorder = [plotorder]
@@ -157,6 +157,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
             else:
                 e = e.set_index('date_time')
                 e.sort_index(inplace=True)
+
                 if bid == plotorder[0]:
                     df = e[['value']].copy()
                     df = df.rename(columns={'value':bid})
@@ -454,6 +455,19 @@ def run_metadata(self, run_name):
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
         self.vid[v] = df['id'].values[0]
+
+    # snow_line
+    variables = {'run_id':self.run_id,
+                 'variable':'snow_line',
+                 'unit':self.elevlbl,
+                 'name':'snow_line'}
+
+    insert(self.connector,'VariableUnits',variables)
+    session = make_session(self.connector)
+    qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
+    session.close()
+    df = pd.read_sql(qry.statement, qry.session.connection())
+    self.vid['snow_line'] = df['id'].values[0]
 
     # Add post-processing values
     sum_vals = {'swi_vol_wy':'surface water input volume, water year total',

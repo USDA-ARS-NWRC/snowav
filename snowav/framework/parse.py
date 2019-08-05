@@ -275,7 +275,10 @@ def parse(self, external_logger=None):
     self.pargs['ixd'] = self.ixd
     self.pargs['vollbl'] = self.vollbl
     self.pargs['depthlbl'] = self.depthlbl
+    self.pargs['elevlbl'] = self.elevlbl
     self.pargs['pixel'] = self.pixel
+    self.pargs['dem'] = self.dem
+    self.pargs['snow_limit'] = self.diag_limit
 
 def createLog(self):
     '''

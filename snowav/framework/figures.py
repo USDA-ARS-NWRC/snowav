@@ -1,6 +1,7 @@
 
 import numpy as np
 import pandas as pd
+import copy
 from datetime import datetime
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
@@ -16,6 +17,7 @@ from snowav.plotting.swe_change import swe_change
 from snowav.plotting.write_properties import write_properties
 from snowav.plotting.swe_volume import swe_volume
 from snowav.inflow.inflow import inflow
+from snowav.plotting.diagnostics import diagnostics
 from snowav.plotting.plotlims import plotlims
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
@@ -194,6 +196,71 @@ def figures(self):
                         args['report_start'],args['report_date'])
 
         fig_names['precip_depth'] = precip_depth(args, self._logger)
+
+    if self.diagnostics_flag:
+        wy_start = datetime(self.wy-1,10,1)
+        precip = collect(connector, args['plotorder'], args['basins'],
+                         wy_start, args['end_date'], 'precip_z',
+                         args['run_name'], args['edges'], 'daily')
+        precip_per = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'precip_z',
+                         args['run_name'], args['edges'], 'daily')
+        swe = collect(connector, args['plotorder'], args['basins'],
+                         wy_start, args['end_date'], 'swe_z',
+                         args['run_name'], args['edges'], 'daily')
+        swe_per = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'swe_z',
+                         args['run_name'], args['edges'], 'daily')
+        density = collect(connector, args['plotorder'], args['basins'],
+                         wy_start, args['end_date'], 'density',
+                         args['run_name'], args['edges'], 'daily')
+        density_per = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'density',
+                         args['run_name'], args['edges'], 'daily')
+        snow_line = collect(connector, args['plotorder'], args['basins'],
+                         wy_start, args['end_date'], 'snow_line',
+                         args['run_name'], args['edges'], 'daily')
+        snow_line_per = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'snow_line',
+                         args['run_name'], args['edges'], 'daily')
+
+        snow_line_per = snow_line_per.fillna(0)
+        first_row = snow_line_per.iloc[[0]].values[0]
+        snow_line_per = snow_line_per.apply(lambda row: row - first_row, axis=1)
+        args['snow_line'] = snow_line
+        args['snow_line_per'] = snow_line_per
+
+        swe = swe.fillna(0)
+        swe_per = swe_per.fillna(0)
+        first_row = swe_per.iloc[[0]].values[0]
+        swe_per = swe_per.apply(lambda row: row - first_row, axis=1)
+
+        density = density.fillna(0)
+        density_per = density_per.fillna(0)
+        first_row = density_per.iloc[[0]].values[0]
+        density_per = density_per.apply(lambda row: row - first_row, axis=1)
+
+        precip = precip.fillna(0)
+        precip_per = precip_per.fillna(0)
+        precip = precip.cumsum()
+        precip_per = precip_per.cumsum()
+        first_row = precip_per.iloc[[0]].values[0]
+        precip_per = precip_per.apply(lambda row: row - first_row, axis=1)
+
+        if self.diag_basins is None:
+            args['dbasins'] = copy.deepcopy(self.plotorder)
+        else:
+            args['dbasins'] = self.diag_basins
+
+        args['precip'] = precip
+        args['precip_per'] = precip_per
+        args['swe'] = swe
+        args['swe_per'] = swe_per
+        args['density'] = density
+        args['density_per'] = density_per
+        args['elevlbl'] = self.elevlbl
+
+        diagnostics(args, self._logger)
 
     if self.stn_validate_flag:
         args['dirs'] = self.all_dirs
