@@ -101,11 +101,15 @@ def precip_depth(args, logger = None):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[{}]'.format(args['depthlbl']))
     h.axes.set_title('Accumulated SWI')
-
+    xlims = args['xlims']
     if len(plotorder) == 1:
         sumorder = plotorder
-        swid = 0.45
-        wid = np.linspace(-0.3,0.3,len(sumorder))
+        swid = 0.4
+        wid = [-0.1, 0.1]
+        # xl = list(xlims)
+        # xl[0] = xl[0] + 0.25
+        # xl[1] = xl[1] + 0.25
+        # xlims = tuple(xl)
     elif len(plotorder) <= 4:
         sumorder = plotorder[1::]
         swid = 0.25
@@ -121,12 +125,17 @@ def precip_depth(args, logger = None):
 
     for iters,name in enumerate(sumorder):
         lbl = labels[name]
-        ax[0,1].bar(range(0,len(edges))-wid[iters],
-                accum_byelev[name],
-                color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
+        if len(plotorder) == 1:
+            ax[0,1].bar(range(0,len(edges)),
+                    accum_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
+        else:
+            ax[0,1].bar(range(0,len(edges))-wid[iters],
+                    accum_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
 
     ax[0,1].xaxis.set_ticks(range(0,len(edges)))
-    ax[0,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[0,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
 
     edges_lbl = []
     for i in range(0,len(edges)):
@@ -136,7 +145,7 @@ def precip_depth(args, logger = None):
     for tick in ax[0,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[0,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[0,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
     ax[0,1].set_ylabel('[{}]'.format(args['depthlbl']))
     ax[0,1].yaxis.set_label_position("right")
     ax[0,1].yaxis.tick_right()
@@ -180,14 +189,20 @@ def precip_depth(args, logger = None):
 
     for iters,name in enumerate(sumorder):
         lbl = name
-        ax[1,1].bar(range(0,len(edges))-wid[iters], precip_byelev[name],
-                    color = barcolors[iters], width = swid, edgecolor = 'k',
-                    label = lbl)
 
-        ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+        if len(plotorder) == 1:
+            ax[1,1].bar(range(0,len(edges)),
+                    precip_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
+        else:
+            ax[1,1].bar(range(0,len(edges))-wid[iters],
+                    precip_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
+
+        ax[1,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
 
     ax[1,1].xaxis.set_ticks(range(0,len(edges)))
-    ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[1,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
 
     edges_lbl = []
     for i in range(0,len(edges)):
@@ -197,7 +212,7 @@ def precip_depth(args, logger = None):
     for tick in ax[1,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[1,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[1,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
     ax[1,1].set_ylim((0,yMax))
     ax[1,1].set_ylabel(r'[{}]'.format(args['depthlbl']))
     ax[1,1].yaxis.set_label_position("right")
@@ -240,14 +255,19 @@ def precip_depth(args, logger = None):
 
     for iters,name in enumerate(sumorder):
         lbl = name
-        ax[2,1].bar(range(0,len(edges))-wid[iters],
-                    rain_byelev[name], color = barcolors[iters], width = swid,
-                    edgecolor = 'k', label = lbl)
+        if len(plotorder) == 1:
+            ax[2,1].bar(range(0,len(edges)),
+                    rain_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
+        else:
+            ax[2,1].bar(range(0,len(edges))-wid[iters],
+                    rain_byelev[name],
+                    color = barcolors[iters], width = swid, edgecolor = 'k', label = lbl)
 
-        ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+        ax[2,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
 
     ax[2,1].xaxis.set_ticks(range(0,len(edges)))
-    ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[2,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
 
     edges_lbl = []
     for i in range(0,len(edges)):
@@ -257,7 +277,7 @@ def precip_depth(args, logger = None):
     for tick in ax[2,1].get_xticklabels():
         tick.set_rotation(30)
 
-    ax[2,1].set_xlim((args['xlims'][0]-0.5,args['xlims'][1]-0.5))
+    ax[2,1].set_xlim((xlims[0]-0.5,xlims[1]-0.5))
     ax[2,1].set_ylim((0,yMax))
     ax[2,1].set_ylabel(r'[{}]'.format(args['depthlbl']))
     ax[2,1].set_xlabel('elevation [{}]'.format(args['elevlbl']))

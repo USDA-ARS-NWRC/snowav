@@ -60,16 +60,16 @@ def basin_total(args, logger = None):
     x_end_date = args['end_date']
 
     # forecast
-    if args['flag']:
-
-        ax.axvline(x=snow.for_start_date,
-                   linestyle = ':',
-                   linewidth = 0.75,
-                   color = 'r')
-        ax1.axvline(x=snow.for_start_date,
-                   linestyle = ':',
-                   linewidth = 0.75,
-                   color = 'r')
+    # if args['forecast_flag']:
+        # print('basin_total forecast in progress')
+        # ax.axvline(x=snow.for_start_date,
+        #            linestyle = ':',
+        #            linewidth = 0.75,
+        #            color = 'r')
+        # ax1.axvline(x=snow.for_start_date,
+        #            linestyle = ':',
+        #            linewidth = 0.75,
+        #            color = 'r')
 
     ax1.yaxis.set_label_position("right")
     ax1.set_xlim((datetime(args['wy']-1, 10, 1), x_end_date))

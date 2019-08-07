@@ -93,7 +93,7 @@ def diagnostics(args, logger):
 
         if args['flt_flag']:
             for i,d in enumerate(args['flight_dates']):
-                if n == 0:
+                if n == 0 and i == 0:
                     lb = 'flight'.format(args['wy'])
                 else:
                     lb = '__nolabel__'

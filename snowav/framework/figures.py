@@ -7,7 +7,6 @@ from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
 from snowav.plotting.cold_content import cold_content
 from snowav.plotting.compare_runs import compare_runs
-from snowav.plotting.current_image import current_image
 from snowav.plotting.density import density
 from snowav.plotting.flt_image_change import flt_image_change
 from snowav.plotting.image_change import image_change
@@ -168,6 +167,8 @@ def figures(self):
 
         args['swi_summary'] = df_swi
         args['swe_summary'] = df_swe
+        args['forecast_flag'] = self.forecast_flag
+        args['flt_flag'] = self.flt_flag
 
         fig_names['basin_total'] = basin_total(args, self._logger)
 
@@ -304,26 +305,14 @@ def figures(self):
             for run in self.compare_run_names:
                 df = collect(connector, args['plotorder'][0], args['basins'],
                              wy_start,args['end_date'],var,run,'total','daily')
+                if var == 'swi_vol':
+                    df = df.cumsum()
+                    
                 dict[var][run] = df
 
         args['dict'] = dict
 
         compare_runs(args, self._logger)
-
-    if self.basin_total_flag:
-        wy_start = datetime(self.wy-1,10,1)
-        swi_summary = collect(connector, args['plotorder'], args['basins'],
-                              wy_start,args['end_date'],'swi_vol',
-                              args['run_name'],'total','daily')
-        df_swe = collect(connector, args['plotorder'], args['basins'],
-                              wy_start,args['end_date'],'swe_vol',
-                              args['run_name'],'total','daily')
-        df_swi = swi_summary.cumsum()
-
-        args['swi_summary'] = df_swi
-        args['swe_summary'] = df_swe
-
-        fig_names['basin_total'] = basin_total(args, self._logger)
 
     if self.inflow_flag:
         wy_start = datetime(self.wy-1,10,1)
