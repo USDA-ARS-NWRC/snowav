@@ -108,3 +108,5 @@ class snowav(object):
 
         if self.report_flag:
             report(self)
+
+        self._logger.info(' Completed snowav processing!')

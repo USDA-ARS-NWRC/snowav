@@ -87,8 +87,7 @@ setup(
     ],
     setup_requires=setup_requirements,
 
-    entry_points={
-       'console_scripts': ['snowav = scripts.snow:run'],
-    }
+    entry_points={'console_scripts': ['snowav = scripts.snow:run']},
+	test_suite='tests'
 
 )

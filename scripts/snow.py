@@ -165,5 +165,23 @@ def run():
         swe_volume(fargs, None)
         log.info('Saved figure in {}'.format(args.figs_path))
 
+def can_i_snowav(config_file):
+    '''
+    Function that wraps snowav run in try/except for test case.
+
+    Args
+    ------
+    config_file : str
+        path to config file
+    '''
+
+    try:
+        snowav(config_file = config_file)
+        return True
+
+    except Exception as e:
+        print(e)
+        return False
+
 if __name__ == '__main__':
     run()
