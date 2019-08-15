@@ -65,6 +65,10 @@ def parse(self, external_logger=None):
                                add = self.add_basins)
     self.connector = cnx
 
+    if self.print_db_connection:
+        print('\nConfig option [snowav] print_db_connection: True\nbasins: '
+              '{}\nconnection: {}\n'.format(self.basins,self.connector))
+
     for log in out:
         self.tmp_log.append(log)
 

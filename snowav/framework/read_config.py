@@ -43,6 +43,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.dempath = ucfg.cfg['snowav']['dempath']
     self.run_name = ucfg.cfg['snowav']['run_name']
     self.plotorder = ucfg.cfg['snowav']['masks']
+    self.print_db_connection = ucfg.cfg['snowav']['print_db_connection']
 
     if self.plotorder is not None and type(self.plotorder) != list:
         self.plotorder = [self.plotorder]
