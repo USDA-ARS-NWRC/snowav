@@ -37,12 +37,12 @@ def make_session(connector):
 
     try:
         engine = create_engine(connector)
+        Base.metadata.create_all(engine)
 
     except:
         raise Exception('Failed to make database connection with '
-                        '{}...'.format(connector))
+                        '{}'.format(connector))
 
-    Base.metadata.create_all(engine)
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
