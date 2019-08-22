@@ -54,7 +54,7 @@ test_requirements = []
 
 setup(
     name='snowav',
-    version='0.9.2',
+    version='0.10.0',
     description="Snow and Water Model Analysis and Visualization ",
     author="Mark Robertson",
     author_email='mark.robertson@ars.usda.gov',
