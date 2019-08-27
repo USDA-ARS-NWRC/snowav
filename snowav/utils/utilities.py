@@ -6,6 +6,8 @@ import numpy as np
 import copy
 from collections import OrderedDict
 from snowav.database.database import convert_watershed_names
+from tablizer.tablizer import summarize, store, get_existing_records
+from tablizer.inputs import Inputs
 
 def calculate(array, pixel, masks = None, method = 'sum', convert = None,
               units = 'TAF', decimals = 3):
@@ -338,6 +340,44 @@ def precip(rundirs_dict, path):
 
     return flag, ppt_path, precip, rain
 
+
+def input_summary(path, variable, methods, percentiles, database, location,
+                  run_name, basin_id, run_id, masks):
+    '''
+    Summarize smrf outputs with tablizer.
+
+    Args
+    ------
+    path : str
+    variable : str
+    methods : list
+    percentiles : list
+    database : str
+    location : str
+    run_name : str
+    basin_id : int
+    run_id : int
+    masks : list
+
+    '''
+
+    ncf = nc.Dataset(path, 'r')
+    array = ncf.variables[variable][:]
+    dates = ncf.variables['time'][:]
+    date_units = ncf.variables['time'].units
+    ncf.close()
+
+    if len(array[:]) > 24:
+        nb = 24
+    else:
+        nb = len(array[:])
+
+    for nb in range(0,nb):
+        date = nc.num2date(dates[nb],date_units)
+        slice = array[nb,:,:]
+        results = summarize(slice, date, methods, [percentiles[0], percentiles[1]], 3, masks)
+        store(results, variable, database, location, run_name, basin_id,
+              run_id, date)
 
 def getgitinfo():
     """gitignored file that contains specific SNOWAV version and path

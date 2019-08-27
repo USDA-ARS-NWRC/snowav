@@ -162,6 +162,25 @@ def read_config(self, external_logger=None, awsm=None):
                                         'to False'.format(basin, plotorder))
                     self.diagnostics_flag = False
 
+    self.inputs_flag = ucfg.cfg['diagnostics']['inputs_table']
+    self.inputs_variables = ucfg.cfg['diagnostics']['inputs_variables']
+    self.inputs_percentiles = ucfg.cfg['diagnostics']['inputs_percentiles']
+    self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
+    # self.inputs_methods = copy.deepcopy(inputs_methods)
+
+    # for m in inputs_methods:
+    #     if 'percentile' in m:
+    #         self.inputs_methods.remove(m)
+    #         self.inputs_methods.append('{}_{}'.format(m,str(self.inputs_percentiles[0])))
+    #         self.inputs_methods.append('{}_{}'.format(m,str(self.inputs_percentiles[1])))
+
+    if self.inputs_flag:
+        s = [x + ', ' for x in self.inputs_variables]
+        self.tmp_log.append(' Using variables {} for inputs summary'.format(''.join(s)))
+
+        s = [x + ', ' for x in self.inputs_methods]
+        self.tmp_log.append(' Using methods {} for inputs summary'.format(''.join(s)))
+
     ####################################################
     #          plots                                   #
     ####################################################
@@ -183,6 +202,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.nash_sut_flag = ucfg.cfg['plots']['disp_nash_sut']
     self.stns_file = ucfg.cfg['plots']['stns_file']
     self.precip_validate_flag = ucfg.cfg['plots']['precip_validate']
+    self.inputs_fig_flag = ucfg.cfg['plots']['inputs']
+    self.plots_inputs_variables = ucfg.cfg['plots']['inputs_variables']
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.compare_run_names = ucfg.cfg['plots']['compare_run_names']
     self.compare_run_labels = ucfg.cfg['plots']['compare_run_labels']

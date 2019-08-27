@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import copy
 from datetime import datetime
+from tablizer.tablizer import get_existing_records
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
 from snowav.plotting.cold_content import cold_content
@@ -15,6 +16,7 @@ from snowav.plotting.stn_validate import stn_validate
 from snowav.plotting.swe_change import swe_change
 from snowav.plotting.write_properties import write_properties
 from snowav.plotting.swe_volume import swe_volume
+from snowav.plotting.inputs import inputs
 from snowav.inflow.inflow import inflow
 from snowav.plotting.diagnostics import diagnostics
 from snowav.plotting.plotlims import plotlims
@@ -307,7 +309,7 @@ def figures(self):
                              wy_start,args['end_date'],var,run,'total','daily')
                 if var == 'swi_vol':
                     df = df.cumsum()
-                    
+
                 dict[var][run] = df
 
         args['dict'] = dict
@@ -342,6 +344,47 @@ def figures(self):
         args['wy_start'] = datetime(self.wy-1,10,1)
 
         write_properties(args, self.write_properties)
+
+    if self.inputs_fig_flag:
+        # plots_inputs_variables
+        df = get_existing_records(connector, 'sqlite')
+        df = df.set_index('date_time')
+        ivalue = {}
+        y = {}
+
+        for var in self.plots_inputs_variables:
+            ivalue[var] = {}
+
+            for basin in args['basins']:
+                bid = args['basins'][basin]['basin_id']
+                ivalue[var][basin] = {}
+
+                for func in self.inputs_methods:
+
+                    if 'percentile' in func:
+                        nfunc = '{}_{}'.format(func,str(self.inputs_percentiles[0]))
+                        ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
+                                       (df['variable'] == var) &
+                                       (df['basin_id'] == int(bid)) &
+                                       (df['run_name'] == args['run_name'])]
+
+                        nfunc = '{}_{}'.format(func,str(self.inputs_percentiles[1]))
+
+                        ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
+                                       (df['variable'] == var) &
+                                       (df['basin_id'] == int(bid)) &
+                                       (df['run_name'] == args['run_name'])]
+                    else:
+                        ivalue[var][basin][func] =  df[(df['function'] == func) &
+                                       (df['variable'] == var) &
+                                       (df['basin_id'] == int(bid)) &
+                                       (df['run_name'] == args['run_name'])]
+
+        # also get date_time
+        args['inputs'] = ivalue
+        args['inputs_methods'] = self.inputs_methods
+
+        inputs(args, self._logger)
 
     if self.forecast_flag:
         print('Forecast figures in progress...')

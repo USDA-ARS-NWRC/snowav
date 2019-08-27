@@ -6,6 +6,7 @@ latex>=0.6
 mysql-connector-python>=8.0
 seaborn>=0.8
 SQLAlchemy>=1.3
+tablizer
 
 # These are required both in snowav and smrf and/or awsm
 bumpversion>=0.5

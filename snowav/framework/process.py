@@ -9,8 +9,9 @@ import coloredlogs
 import netCDF4 as nc
 from snowav.database.package_results import package
 from snowav.database.database import delete
-from snowav.utils.utilities import calculate, precip, snow_line
-
+from snowav.utils.utilities import calculate, precip, snow_line, input_summary
+from tablizer.defaults import Units
+import time
 import warnings
 
 def process(args):
@@ -89,6 +90,7 @@ def process(args):
         flag, path, pre, rain = precip(rundirs_dict[outputs['time'][iters]],
                                        precip_path)
 
+
         if flag:
             precip_total = precip_total + pre
             rain_total = rain_total + rain
@@ -97,6 +99,39 @@ def process(args):
             log.append(' WARNING! Expected to find {} but it is not a valid '
                        'file, precip will not be calculated or put on the '
                        'database, no precip figures will be made'.format(path))
+
+        if args['inputs_flag']:
+            mask_list = []
+            for name in masks:
+                mask_list.append(copy.deepcopy(masks[name]['mask']))
+
+            variable = 'air_temp'
+            methods = args['inputs_methods']
+            percentiles = args['inputs_percentiles']
+            location = args['connector']
+            run_name = args['run_name']
+            basins = args['basins']
+            run_id = args['run_id']
+
+            if os.path.splitext(location)[1] == '.db':
+                db = 'sqlite'
+            else:
+                db = 'sql'
+
+            sf = rundirs_dict[outputs['time'][iters]].replace('runs','data')
+            sf = sf.replace('run','data') + '/smrfOutputs/'
+            inputs = os.listdir(sf)
+
+            for input in inputs:
+                input_path = os.path.join(sf,input)
+                variable = os.path.splitext(input)[0]
+
+                if variable in args['inputs_variables']:
+                    for basin in basins:
+                        basin_id = int(basins[basin]['basin_id'])
+
+                        input_summary(input_path, variable, methods, percentiles,
+                                      db, location, run_name, basin_id, run_id, masks[basin]['mask'])
 
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])
