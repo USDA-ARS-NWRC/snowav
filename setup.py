@@ -46,7 +46,10 @@ with open(fname,'w') as f:
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-requirements = []
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
+# requirements = []
 
 setup_requirements = []
 
@@ -72,7 +75,7 @@ setup(
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
     scripts=['./scripts/snow.py'],
-    # install_requires=requirements,
+    install_requires=required,
     license="CC0 1.0",
     zip_safe=False,
     keywords='snowav',

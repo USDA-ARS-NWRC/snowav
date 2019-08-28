@@ -1,7 +1,10 @@
 import pandas as pd
 import numpy as np
 from spatialnc import ipw
-from smrf.utils import utils
+try:
+    from smrf.utils import utils
+except:
+    print('Could not import smrf')
 import os
 import glob
 import pytz

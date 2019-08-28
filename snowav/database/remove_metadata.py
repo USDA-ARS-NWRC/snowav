@@ -8,8 +8,14 @@ from sqlalchemy.orm import backref
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits, Watersheds, Basins
 from sqlalchemy import and_
 import pandas as pd
-import smrf
-import awsm
+try:
+    import smrf
+except:
+    print('Could not import smrf')
+try:
+    import awsm
+except:
+    print('Could not import awsm')
 import snowav
 from snowav import database
 import numpy as np

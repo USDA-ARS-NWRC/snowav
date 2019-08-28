@@ -7,7 +7,6 @@ from sqlalchemy.orm import backref, sessionmaker
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits
 import pandas as pd
 import snowav
-import smrf
 import numpy as np
 import copy
 import urllib.parse
@@ -15,9 +14,23 @@ import mysql.connector
 from sys import exit
 import warnings
 
-warnings.filterwarnings("ignore")
-import awsm
-warnings.filterwarnings("default")
+
+try:
+    import smrf
+    smrf_version = smrf.__version__
+except:
+    print('Could not import smrf')
+    smrf_version = 'unknown'
+
+try:
+    warnings.filterwarnings("ignore")
+    import awsm
+    warnings.filterwarnings("default")
+    awsm_version = awsm.__version__
+
+except:
+    print('Could not import awsm')
+    awsm_version = 'unknown'
 
 def make_session(connector):
     '''
@@ -420,8 +433,8 @@ def run_metadata(self, run_name):
               'watershed_id':int(watershed_id),
               'pixel':int(self.pixel),
               'description':'',
-              'smrf_version':'smrf'+ smrf.__version__,
-              'awsm_version':'aswm'+ awsm.__version__,
+              'smrf_version':'smrf'+ smrf_version,
+              'awsm_version':'aswm'+ awsm_version,
               'snowav_version':'snowav'+ snowav.__version__,
               'data_type':'',
               'data_location':trdir,
