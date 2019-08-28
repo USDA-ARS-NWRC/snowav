@@ -46,7 +46,10 @@ with open(fname,'w') as f:
 with open('README.md') as readme_file:
     readme = readme_file.read()
 
-requirements = []
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
+# requirements = []
 
 setup_requirements = []
 
@@ -54,7 +57,7 @@ test_requirements = []
 
 setup(
     name='snowav',
-    version='0.10.0',
+    version='0.10.1',
     description="Snow and Water Model Analysis and Visualization ",
     author="Mark Robertson",
     author_email='mark.robertson@ars.usda.gov',
@@ -72,7 +75,7 @@ setup(
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
     scripts=['./scripts/snow.py'],
-    # install_requires=requirements,
+    install_requires=required,
     license="CC0 1.0",
     zip_safe=False,
     keywords='snowav',
