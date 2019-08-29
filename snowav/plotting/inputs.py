@@ -71,8 +71,8 @@ def inputs(args, logger):
                 for tick in a[idx].get_yticklabels():
                     tick.set_fontsize(6)
 
-    a[0].legend(loc=2, fontsize=6)
-    a[1].legend(loc=2, fontsize=6)
+    # a[0].legend(loc=2, fontsize=6)
+    # a[1].legend(loc=2, fontsize=6)
     plt.tight_layout()
 
     fig_name_short = 'inputs_'
