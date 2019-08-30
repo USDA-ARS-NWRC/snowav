@@ -100,7 +100,7 @@ def report(self):
         total_rain = 0.0
 
     if variables['TOTALPRE_PM'] != 0:
-        variables['TOTAL_RAT'] = r'$\sim$' + str(int((total_rain/variables['TOTALPRE_PM'])*100))
+        variables['TOTAL_RAT'] = str(int((total_rain/variables['TOTALPRE_PM'])*100))
     else:
         variables['TOTAL_RAT'] = '-'
         variables['TOTALPRE_PM'] = '-'
