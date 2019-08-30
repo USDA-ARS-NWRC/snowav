@@ -125,26 +125,15 @@ def parse(self, external_logger=None):
     self.rundirs_dict = rdict
     self.all_dirs_flt = copy.deepcopy(all_dirs)
 
-    # If no dates are specified, use first and last
-    if self.start_date is None and self.end_date is not None:
-        self.start_date = self.outputs['dates'][0]
-        self.tmp_log.append(' Config options [run] start_date '
-                            'not specified, assigning '
-                            '{} and {}'.format(self.start_date,self.end_date))
 
-        e = min(self.outputs['dates'],key=lambda x: abs(x-self.end_date))
-        self.ixs = 0
-        self.ixe = np.where(self.outputs['dates'] == e)[0][0]
-
-    elif self.start_date is not None and self.end_date is None:
+    if self.start_date is not None and self.end_date is None:
         self.end_date = self.outputs['dates'][-1]
         self.tmp_log.append(' Config options [run] end_date '
                             'not specified, assigning '
                             '{} and {}'.format(self.start_date,self.end_date))
 
-        s = min(self.outputs['dates'],key=lambda x: abs(x-self.start_date))
+        self.ixs = 0
         self.ixe = len(self.outputs['dates']) - 1
-        self.ixs = np.where(self.outputs['dates'] == s)[0][0]
 
     # Otherwise, get closest dates and make indices
     else:
