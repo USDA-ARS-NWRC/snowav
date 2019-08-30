@@ -685,8 +685,7 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
     # Initialize basins within the watershed
     for i,name in enumerate(plotorder):
         if name in bs['basin_name'].values:
-            f = bs[bs['basin_name'].values == name]
-            bid = f['basin_id'].values[0]
+            bid = int(bs[(bs['watershed_id'] == wid) & (bs['basin_name'] == name)]['basin_id'].values)
 
         else:
             logger.append(' {} not found as a basin in '.format(name) +
