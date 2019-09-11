@@ -274,6 +274,7 @@ def parse(self, external_logger=None):
     self.pargs['snow_limit'] = self.diag_limit
     self.pargs['inputs_flag'] = self.inputs_flag
     self.pargs['inputs_methods'] = self.inputs_methods
+    self.pargs['inputs_basins'] = self.inputs_basins
     self.pargs['inputs_variables'] = self.inputs_variables
     self.pargs['inputs_percentiles'] = self.inputs_percentiles
 

@@ -75,7 +75,7 @@ def diagnostics(args, logger):
         # wy density
         a[4].plot(args['density'][name], label = name, color = clr, linewidth = 1)
         a[4].set_ylabel(r'density [$kg/m^3$]')
-        a[4].set_ylim((175,600))
+        a[4].set_ylim((150,600))
 
         # report period density
         a[5].plot(args['density_per'][name], label = name, color = clr, linewidth = 1)

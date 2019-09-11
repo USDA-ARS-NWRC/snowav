@@ -166,13 +166,20 @@ def read_config(self, external_logger=None, awsm=None):
     self.inputs_variables = ucfg.cfg['diagnostics']['inputs_variables']
     self.inputs_percentiles = ucfg.cfg['diagnostics']['inputs_percentiles']
     self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
-    # self.inputs_methods = copy.deepcopy(inputs_methods)
+    self.inputs_basins = ucfg.cfg['diagnostics']['inputs_basins']
 
-    # for m in inputs_methods:
-    #     if 'percentile' in m:
-    #         self.inputs_methods.remove(m)
-    #         self.inputs_methods.append('{}_{}'.format(m,str(self.inputs_percentiles[0])))
-    #         self.inputs_methods.append('{}_{}'.format(m,str(self.inputs_percentiles[1])))
+    if self.inputs_flag:
+        if self.inputs_basins is not None:
+            for basin in self.inputs_basins:
+                if basin not in self.plotorder:
+                    self.tmp_log.append(' Config option [diagnostics] '
+                                        'inputs_basins: {} does not match what '
+                                        'was supplied in [snowav] masks: {}, '
+                                        'inputs set to '
+                                        'False'.format(basin, plotorder))
+                    self.inputs_flag = False
+        else:
+            self.inputs_basins = copy.deepcopy(self.plotorder)
 
     if self.inputs_flag:
         s = [x + ', ' for x in self.inputs_variables]
@@ -261,6 +268,14 @@ def read_config(self, external_logger=None, awsm=None):
                             'set to False')
 
         self.stn_validate_flag = False
+
+    for var in self.plots_inputs_variables:
+        if var not in self.inputs_variables:
+            self.plots_inputs_variables.remove(var)
+            self.tmp_log.append(' Config option [plots] inputs_variables '
+                                'value {} not present in [diagnostics] '
+                                'inputs_variables, being removed'.format(var))
+
 
     ####################################################
     #          report                                  #

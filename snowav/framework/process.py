@@ -80,7 +80,8 @@ def process(args):
                          'rain_z':dz.copy(),
                          'evap_z':dz.copy(),
                          'coldcont':dz.copy(),
-                         'snow_line':pd.DataFrame(0, index = ['total'], columns = masks.keys())}
+                         'snow_line':pd.DataFrame(0, index = ['total'],
+                                                  columns = masks.keys())}
 
         density = {}
         for name in masks:
@@ -127,11 +128,12 @@ def process(args):
                 variable = os.path.splitext(input)[0]
 
                 if variable in args['inputs_variables']:
-                    for basin in basins:
+                    for basin in args['inputs_basins']:
                         basin_id = int(basins[basin]['basin_id'])
 
                         input_summary(input_path, variable, methods, percentiles,
-                                      db, location, run_name, basin_id, run_id, masks[basin]['mask'])
+                                      db, location, run_name, basin_id, run_id,
+                                      masks[basin]['mask'])
 
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])
@@ -165,10 +167,14 @@ def process(args):
                     besu = [mask, elev_mask, snow_mask, unavail_mask]
 
                     if k == 'swe_z':
-                        daily_outputs['swe_unavail'].loc[b,name] = calculate(o, pixel, besu, 'sum','volume')
-                        daily_outputs['swe_avail'].loc[b,name] = calculate(o, pixel, besa, 'sum','volume')
-                        daily_outputs['swe_z'].loc[b,name] = calculate(o, pixel, be, 'mean','depth')
-                        daily_outputs['swe_vol'].loc[b,name] = calculate(o, pixel, be, 'sum','volume')
+                        daily_outputs['swe_unavail'].loc[b,name] = \
+                                    calculate(o, pixel, besu, 'sum','volume')
+                        daily_outputs['swe_avail'].loc[b,name] = \
+                                    calculate(o, pixel, besa, 'sum','volume')
+                        daily_outputs['swe_z'].loc[b,name] = \
+                                    calculate(o, pixel, be, 'mean','depth')
+                        daily_outputs['swe_vol'].loc[b,name] = \
+                                    calculate(o, pixel, be, 'sum','volume')
 
                     if k == 'swi_z':
                         daily_outputs[k].loc[b,name] = calculate(o,pixel,be,'mean','depth')

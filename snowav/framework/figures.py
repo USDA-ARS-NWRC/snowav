@@ -346,16 +346,24 @@ def figures(self):
         write_properties(args, self.write_properties)
 
     if self.inputs_fig_flag:
-        # plots_inputs_variables
-        df = get_existing_records(connector, 'sqlite')
+
+        if self.mysql is not None:
+            dbs = 'sql'
+
+        else:
+            dbs = 'sqlite'
+
+        df = get_existing_records(connector, dbs)
         df = df.set_index('date_time')
+        df.sort_index(inplace=True)
+
         ivalue = {}
-        y = {}
+        p = []
 
         for var in self.plots_inputs_variables:
             ivalue[var] = {}
 
-            for basin in args['basins']:
+            for basin in self.inputs_basins:
                 bid = args['basins'][basin]['basin_id']
                 ivalue[var][basin] = {}
 
@@ -363,12 +371,21 @@ def figures(self):
 
                     if 'percentile' in func:
                         nfunc = '{}_{}'.format(func,str(self.inputs_percentiles[0]))
+
+                        if ((var == self.plots_inputs_variables[0]) and
+                             (basin == self.inputs_basins[0])):
+                            p.append(nfunc)
+
                         ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
                                        (df['variable'] == var) &
                                        (df['basin_id'] == int(bid)) &
                                        (df['run_name'] == args['run_name'])]
 
                         nfunc = '{}_{}'.format(func,str(self.inputs_percentiles[1]))
+
+                        if ((var == self.plots_inputs_variables[0]) and
+                             (basin == self.inputs_basins[0])):
+                            p.append(nfunc)
 
                         ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
                                        (df['variable'] == var) &
@@ -380,9 +397,14 @@ def figures(self):
                                        (df['basin_id'] == int(bid)) &
                                        (df['run_name'] == args['run_name'])]
 
-        # also get date_time
+                        if ((var == self.plots_inputs_variables[0]) and
+                             (basin == self.inputs_basins[0])):
+                            p.append(func)
+
         args['inputs'] = ivalue
-        args['inputs_methods'] = self.inputs_methods
+        args['inputs_methods'] = p
+        args['var_list'] = self.plots_inputs_variables
+        args['inputs_basins'] = self.inputs_basins
 
         inputs(args, self._logger)
 
