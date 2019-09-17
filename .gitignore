@@ -37,7 +37,7 @@ pip-delete-this-directory.txt
 *.swp
 
 # Tests
-tests/lakes/results/lakes_tests/20190401_20190402/
+tests/lakes/results/*
 
 #Git info stuff
 snowav/utils/gitinfo.py
