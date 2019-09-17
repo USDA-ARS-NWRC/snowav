@@ -106,22 +106,18 @@ def flt_image_change(args, logger = None):
             e = True
 
         if e:
-            print('Failed requesting database records for flight difference '
-                  'figure...\nThis may mean that [run] directory has not been '
-                  'processed with [snowav] run_name for the periods reflected '
-                  'in [plots] update_file...\nTry subsetting with [plots] '
-                  'update_numbers or processing the full [run] directory\n'
-                  'start_date: {}, end_date: {}'.format(start_date, end_date))
-
             if logger is not None:
                 logger.info(' Failed requesting database records ending on {} '
                             'for flight difference figure. This may mean that '
                             '[run] directory has not been processed with '
-                            '[snowav] run_name for the periods reflected in '
+                            '[snowav] run_name: {} for the periods in '
                             '[plots] update_file. Try subsetting with [plots] '
                             'update_numbers or processing the full [run] '
-                            'directory.'.format(end_date))
-            exit()
+                            'directory.'.format(end_date, args['run_name']))
+                logger.info(' Flight figures being set to False...')
+
+            # Returning empty lists will set flights to False
+            return [], []
 
         # Make copy so that we can add nans for the plots
         delta_state = copy.deepcopy(delta_swe)
@@ -155,6 +151,10 @@ def flt_image_change(args, logger = None):
         # files *should* have a mask
         if hasattr(depth,'mask'):
             mask = np.ma.masked_array(depth.mask, ~depth.mask)
+            if mask.shape != delta_state.shape:
+                raise Exception('Dimensions {}: {} do not match snow.nc: {}'.format(
+                                file, mask.shape, delta_state.shape))
+
             delta_state[mask] = np.nan
             h = ax.imshow(delta_state*mask, cmap = cmap, norm = norm)
 

@@ -8,7 +8,7 @@ SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho. 
 
 ## Requirements
 Currently snowav requires:
-- awsm model results in awsm_daily format, including output files in the paths ```.../runs/runYYYYMMDD/snow.nc``` and ```.../runs/runYYYYMMDD/em.nc```
+- awsm model results in awsm_daily format, including output files in the paths ```.../runs/runYYYYMMDD/snow.nc``` and ```.../runs/runYYYYMMDD/em.nc```, and input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/```
 - topo.nc files that have been created by the basin_setup package
 - correct date information in all snow.nc files
 
@@ -77,10 +77,54 @@ database:           mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
 Config field [snowav] *masks* can be left blank, and will default to the long_name fields in the topo.nc file. To subset the number of basins processed and plotted, use *masks* with a list: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/>
 To replace the plot labels, use the *plotlabels* field in combination with *masks*: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/> *plotlabels: San Joaquin, Mammoth, South Fork*
 
-Setting config option [inflow] *inflow: True* triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets.
+- Setting config option [inflow] *inflow: True* triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets.
 
-## SNOWAV processing utility
+- Config option [diagnostics] *inputs_table: True* and associated fields will trigger summary processing of smrf input data (see CoreConfig.ini for more information). Use [plots] *inputs: True* to make figures for inputs data.
+
+## SNOWAV Processing Utility
 The snowav processing utility snowav.utils.utilities.calculate can be used to make simple calculations on snow.nc and em.nc files. See scripts.sample_process.py for an example.
+
+## DataFrame from Existing Database Records
+This simple sample script shows pulling a DataFrame of existing database records. Use this in combination with a snowav query to find and pull records that you want.
+
+```
+from datetime import datetime
+from snowav.database.database import connect, collect
+from snowav.utils.utilities import masks
+
+# These settings will change depending on the basin, time frame, run, and value
+# you are interested in
+dempath = '/home/ops/wy2019/kings/topo/topo.nc'
+start_date = datetime(2019,3,1)
+end_date = datetime(2019,7,30)
+value = 'swe_vol'
+run_name = 'kings_wy2019_ops'
+
+# These are logins for the snowav database, and shouldn't need to change
+sql = 'snowav'
+user = ''
+password = ''
+host = '172.17.0.2'
+port  = '3306'
+
+value_options = ['swe_vol','swe_z','swi_vol','swi_z','precip_vol','precip_z',
+                 'density','coldcont','depth','evap_z']
+
+if value not in value_options:
+    raise Exception("'value' must be one of {}".format(value_options))
+
+# Get the list of basins we want by reading the topo.nc file
+out = masks(dempath, False)
+basin_list = out['plotorder']
+
+# Establish the snowav database connection and get the 'basins' dictionary we
+# need for pulling results
+basins, cnx, out = connect(None,sql,basin_list,user,password,host,port,True)
+
+# Get snowav database results in a DataFrame
+df = collect(cnx, basin_list, basins, start_date, end_date, value, run_name,
+             'total', 'daily')
+```
 
 ## Figures from Existing Database Records
 If results have already been processed and put onto a database, figures can be created outside of a snowav processing run (see also scripts/sample_figure.py). See snowav.framework.figures for templates for additional figure creation. Also, if a standard snowav run is processed with [plots] *print_args_dict: True*, the full input dictionary for each figure will be printed to the screen.

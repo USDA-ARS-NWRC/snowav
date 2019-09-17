@@ -114,12 +114,16 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
     # make calculation and convert
     if method == 'sum':
-        value = np.nansum(array) * factor
+        if np.sum(np.isnan(array)) == array.size:
+            value = np.nan
+        else:
+            value = np.nansum(array) * factor
 
     if method == 'mean':
         value = np.nanmean(array) * factor
 
-    value = value.round(decimals)
+    if not np.isnan(value):
+        value = value.round(decimals)
 
     return value
 

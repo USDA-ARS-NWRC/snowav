@@ -95,7 +95,8 @@ def inputs(args, logger):
     plt.tight_layout()
 
     fig_name_short = 'inputs_'
-    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,
+                                   args['directory'])
     if logger is not None:
         logger.info(' saving {}'.format(fig_name))
     snowav.framework.figures.save_fig(f, fig_name)
@@ -104,7 +105,8 @@ def inputs(args, logger):
         a[idx].set_xlim((args['start_date'], args['end_date']))
 
     fig_name_short = 'inputs_period_'
-    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
+    fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,
+                                   args['directory'])
     if logger is not None:
         logger.info(' saving {}'.format(fig_name))
     snowav.framework.figures.save_fig(f, fig_name)

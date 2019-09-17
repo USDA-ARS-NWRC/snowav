@@ -8,7 +8,7 @@ from snowav.utils.OutputReader import iSnobalReader
 import netCDF4 as nc
 
 def outputs(run_dirs = None, start_date = None, end_date = None,
-            filetype = None, wy = None, flight_dates = None):
+            filetype = None, wy = None, flight_dates = None, loglevel = None):
     '''
     This uses start_date and end_date to load the snow.nc and em.nc of interest
     within a report period to the outputs format that will be used in process().
@@ -47,6 +47,7 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
     '''
 
+    log = []
     rdict = {}
     dirs = copy.deepcopy(run_dirs)
     outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],'depth':[],
@@ -60,6 +61,9 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
         for path in dirs:
             snowfile = os.path.join(path, 'snow.nc')
+
+            if loglevel == 'DEBUG':
+                log.append(' Reading date: {}'.format(snowfile))
 
             # Consider making this a warning, with an else: .remove(path)
             # to catch other files that are in these directories
@@ -82,6 +86,8 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
                 # Only load the rundirs that we need
                 if (t.date() >= start.date()) and (t.date() <= end.date()):
+
+                    log.append(' Loading: {}'.format(snowfile))
 
                     st_hr = calculate_wyhr_from_date(start)
                     en_hr = calculate_wyhr_from_date(end)
@@ -134,4 +140,4 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                     outputs['dates'].append(output.dates[idx])
                     outputs['time'].append(output.time[idx])
 
-    return outputs, dirs, run_dirs, rdict
+    return outputs, dirs, run_dirs, rdict, log

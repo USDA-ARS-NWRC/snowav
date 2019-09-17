@@ -11,7 +11,7 @@ import os
 from snowav.utils.stats import nashsutcliffe
 import snowav.framework.figures
 
-def stn_validate(args, logger = None):
+def stn_validate(args, logger):
     '''
     SWE validation at snow pillow sites.
 
@@ -31,6 +31,8 @@ def stn_validate(args, logger = None):
         False if there are errors, will be used to remove stn_validate() figure
         from the report
     '''
+
+    logger.debug(' Beginning stn_validate()...')
 
     rundirs = args['dirs']
     stns = args['stns']
@@ -88,7 +90,8 @@ def stn_validate(args, logger = None):
                'and "{3}" AND weather_db.{0}.station_id IN '
                ' ("{4}") ;'.format(args['tbl'],args['var'],st_time,end_time,stn))
 
-        data = pd.read_sql(qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        # data = pd.read_sql(qry, cnx, index_col=bytes(bytearray(b'date_time')))
+        data = pd.read_sql(qry, cnx, index_col='date_time')
         data.index.names=['date_time']
         dind = pd.date_range(st_time,end_time,freq='D')
         measure[stn] = data.reindex(dind)
@@ -121,6 +124,7 @@ def stn_validate(args, logger = None):
             set_x_on = 5
 
     for rname in rundirs:
+        logger.debug(' Loading pixel values in {}...'.format(rname.split('runs')[-1]))
 
         # could add if args['ncfile'] == 'em.nc' change to data/smrf/precip
         snowfile = os.path.join(rname, args['ncfile'])
@@ -249,7 +253,7 @@ def stn_validate(args, logger = None):
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])
     if logger is not None:
         logger.info(' saving {}'.format(fig_name))
-        
+
     snowav.framework.figures.save_fig(fig, fig_name)
 
     return fig_name_short, flag

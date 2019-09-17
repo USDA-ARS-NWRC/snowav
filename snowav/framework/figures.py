@@ -83,6 +83,9 @@ def figures(self):
 
         self.flight_diff_fig_names, self.flight_delta_vol_df = flt_image_change(args, self._logger)
 
+        if self.flight_diff_fig_names == []:
+            self.flt_flag = False
+
     if self.swi_flag:
         image = np.zeros_like(self.outputs['swi_z'][0])
         for n in range(self.ixs,self.ixe):
@@ -214,10 +217,10 @@ def figures(self):
         swe_per = collect(connector, args['plotorder'], args['basins'],
                          args['start_date'], args['end_date'], 'swe_z',
                          args['run_name'], args['edges'], 'daily')
-        density = collect(connector, args['plotorder'], args['basins'],
+        rho = collect(connector, args['plotorder'], args['basins'],
                          wy_start, args['end_date'], 'density',
                          args['run_name'], args['edges'], 'daily')
-        density_per = collect(connector, args['plotorder'], args['basins'],
+        rho_per = collect(connector, args['plotorder'], args['basins'],
                          args['start_date'], args['end_date'], 'density',
                          args['run_name'], args['edges'], 'daily')
         snow_line = collect(connector, args['plotorder'], args['basins'],
@@ -238,10 +241,10 @@ def figures(self):
         first_row = swe_per.iloc[[0]].values[0]
         swe_per = swe_per.apply(lambda row: row - first_row, axis=1)
 
-        density = density.fillna(0)
-        density_per = density_per.fillna(0)
-        first_row = density_per.iloc[[0]].values[0]
-        density_per = density_per.apply(lambda row: row - first_row, axis=1)
+        rho = rho.fillna(0)
+        rho_per = rho_per.fillna(0)
+        first_row = rho_per.iloc[[0]].values[0]
+        rho_per = rho_per.apply(lambda row: row - first_row, axis=1)
 
         precip = precip.fillna(0)
         precip_per = precip_per.fillna(0)
@@ -259,8 +262,8 @@ def figures(self):
         args['precip_per'] = precip_per
         args['swe'] = swe
         args['swe_per'] = swe_per
-        args['density'] = density
-        args['density_per'] = density_per
+        args['density'] = rho
+        args['density_per'] = rho_per
         args['elevlbl'] = self.elevlbl
 
         diagnostics(args, self._logger)
@@ -349,7 +352,6 @@ def figures(self):
 
         if self.mysql is not None:
             dbs = 'sql'
-
         else:
             dbs = 'sqlite'
 

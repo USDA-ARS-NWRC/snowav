@@ -14,12 +14,12 @@ import mysql.connector
 from sys import exit
 import warnings
 
-
+# Fix these two by pulling smrf and awsm versions from netcdf
 try:
     import smrf
     smrf_version = smrf.__version__
 except:
-    print('Could not import smrf')
+    print('Could not import smrf, database smrf version will be "unknown"')
     smrf_version = 'unknown'
 
 try:
@@ -29,7 +29,7 @@ try:
     awsm_version = awsm.__version__
 
 except:
-    print('Could not import awsm')
+    print('Could not import awsm, database smrf version will be "unknown"')
     awsm_version = 'unknown'
 
 def make_session(connector):
@@ -176,7 +176,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                     df = df.rename(columns={'value':bid})
 
                 else:
-                    df.loc[e.index,bid] = e['value'].values
+                    df[bid] = e['value']
 
             df.sort_index(inplace=True)
 
@@ -190,7 +190,11 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                                     'elev={}, {} to {}'. format(run_name, elev,
                                     start_date, end_date))
                 else:
-                    df.loc[elev,bid] = e['value'].values
+                    if e['value'].values[0] is None:
+                        df.loc[elev,bid] = np.nan
+                    else:
+                        df.loc[elev,bid] = e['value'].values
+
 
         if method == 'difference':
             for elev in edges:
@@ -217,7 +221,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                                     'elev={}, {} to {}'. format(run_name, elev,
                                     start_date, end_date))
                 else:
-                    df.loc[elev,bid] = e['value'].sum()
+                    df.loc[elev,bid] = e['value'].sum(skipna=False)
 
     return df
 
@@ -304,7 +308,7 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
     basin_id = int(basins[bid]['basin_id'])
     session = make_session(connector)
 
-    logger.append(' Deleting existing database records for {}, {}, {} '.format(
+    logger.append(' Deleting existing records for {}, {}, {} '.format(
                   bid, run_name, start_date.date()))
 
     # Get the run_id
@@ -467,7 +471,7 @@ def run_metadata(self, run_name):
         qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
-        self.vid[v] = df['id'].values[0]
+        self.vid[v] = df[df['variable'] == v]['id'].values[0]
 
     # snow_line
     variables = {'run_id':self.run_id,
@@ -504,7 +508,8 @@ def run_metadata(self, run_name):
         qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
-        self.vid[v] = df['id'].values[0]
+
+        self.vid[v] = df[df['variable'] == v]['id'].values[0]
 
 
 def connect(sqlite = None, sql = None, plotorder = None, user = None,

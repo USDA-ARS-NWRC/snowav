@@ -8,6 +8,7 @@ from snowav.framework.figures import figures
 from snowav.report.report import report
 from snowav.database.database import run_metadata
 from snowav.inflow.inflow import excel_to_csv
+from datetime import datetime
 
 class snowav(object):
 
@@ -56,8 +57,8 @@ class snowav(object):
         self.precip_flag, out, pre, rain, density = process(self.pargs)
 
         # gather process() outputs
-        for log in out:
-            self._logger.info(log)
+        # for log in out:
+        #     self._logger.info(log)
 
         self.density = density
         self.rain_total = rain
@@ -109,4 +110,6 @@ class snowav(object):
         if self.report_flag:
             report(self)
 
-        self._logger.info(' Completed snowav processing!')
+        elapsed = str(datetime.now() - self.proc_time_start)
+
+        self._logger.info(' Completed snowav processing, elapsed time: {}'.format(elapsed))

@@ -7,7 +7,7 @@ import logging
 import coloredlogs
 import os
 import pandas as pd
-import datetime
+from datetime import datetime
 import copy
 
 def read_config(self, external_logger=None, awsm=None):
@@ -15,6 +15,8 @@ def read_config(self, external_logger=None, awsm=None):
     Read snowav config file.
 
     '''
+
+    print('Reading {} and loading files...'.format(self.config_file))
 
     snowav_mcfg = MasterConfig(modules = 'snowav')
     ucfg = get_user_config(self.config_file, mcfg=snowav_mcfg)
@@ -30,6 +32,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.tmp_err = []
     self.tmp_warn = []
 
+    self.proc_time_start = datetime.now()
+
     ####################################################
     #            snowav                                #
     ####################################################
@@ -43,7 +47,6 @@ def read_config(self, external_logger=None, awsm=None):
     self.dempath = ucfg.cfg['snowav']['dempath']
     self.run_name = ucfg.cfg['snowav']['run_name']
     self.plotorder = ucfg.cfg['snowav']['masks']
-    self.print_db_connection = ucfg.cfg['snowav']['print_db_connection']
 
     if self.plotorder is not None and type(self.plotorder) != list:
         self.plotorder = [self.plotorder]
@@ -109,6 +112,8 @@ def read_config(self, external_logger=None, awsm=None):
     self.db_port = ucfg.cfg['database']['port']
     self.db_convert = ucfg.cfg['database']['convert_ws']
     self.add_basins = ucfg.cfg['database']['add_basins']
+    self.db_overwrite = ucfg.cfg['database']['overwrite']
+
     if ((self.mysql is not None) and
         ((self.db_user is None) or
          (self.db_password is None) or
@@ -168,18 +173,16 @@ def read_config(self, external_logger=None, awsm=None):
     self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
     self.inputs_basins = ucfg.cfg['diagnostics']['inputs_basins']
 
-    if self.inputs_flag:
-        if self.inputs_basins is not None:
-            for basin in self.inputs_basins:
-                if basin not in self.plotorder:
-                    self.tmp_log.append(' Config option [diagnostics] '
-                                        'inputs_basins: {} does not match what '
-                                        'was supplied in [snowav] masks: {}, '
-                                        'inputs set to '
-                                        'False'.format(basin, plotorder))
-                    self.inputs_flag = False
-        else:
-            self.inputs_basins = copy.deepcopy(self.plotorder)
+    # if self.inputs_flag:
+    if self.inputs_basins is not None and self.plotorder is not None:
+        for basin in self.inputs_basins:
+            if basin not in self.plotorder:
+                self.tmp_log.append(' Config option [diagnostics] '
+                                    'inputs_basins: {} does not match what '
+                                    'was supplied in [snowav] masks: {}, '
+                                    'inputs set to '
+                                    'False'.format(basin, plotorder))
+                self.inputs_flag = False
 
     if self.inputs_flag:
         s = [x + ', ' for x in self.inputs_variables]
@@ -204,7 +207,6 @@ def read_config(self, external_logger=None, awsm=None):
     self.swe_volume_flag = ucfg.cfg['plots']['swe_volume']
     self.swe_change_flag = ucfg.cfg['plots']['swe_change']
     self.basin_total_flag = ucfg.cfg['plots']['basin_total']
-    self.pixel_swe_flag = ucfg.cfg['plots']['pixel_swe']
     self.stn_validate_flag = ucfg.cfg['plots']['stn_validate']
     self.nash_sut_flag = ucfg.cfg['plots']['disp_nash_sut']
     self.stns_file = ucfg.cfg['plots']['stns_file']

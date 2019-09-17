@@ -8,9 +8,10 @@ import logging
 import coloredlogs
 import netCDF4 as nc
 from snowav.database.package_results import package
-from snowav.database.database import delete
+from snowav.database.database import delete, query
 from snowav.utils.utilities import calculate, precip, snow_line, input_summary
 from tablizer.defaults import Units
+from tablizer.tablizer import get_existing_records
 import time
 import warnings
 
@@ -53,18 +54,43 @@ def process(args):
     lbls['elevlbl'] = args['elevlbl']
     raw_out = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont']
     precip_path = '/smrfOutputs/precip.nc'
+    proc_list = copy.deepcopy([*args['vars'].keys()])
 
-    dz = pd.DataFrame(0, index = edges, columns = masks.keys())
+    dz = pd.DataFrame(np.nan, index = edges, columns = masks.keys())
     precip_total = np.zeros((args['nrows'],args['ncols']))
     rain_total = np.zeros((args['nrows'],args['ncols']))
 
     for iters, out_date in enumerate(outputs['dates']):
 
+        # assume to start that we are processing everything
+        proc_list = copy.deepcopy([*args['vars'].keys()])
+
+        pass_flag = False
+
         # delete anything on the database with the same run_name and date
         for bid in args['plotorder']:
-            out = delete(args['connector'], args['basins'], out_date, out_date,
-                         bid, args['run_name'])
-            log.append(out[0])
+            results = query(args['connector'], out_date, out_date,
+                            args['run_name'], args['basins'], bid, 'swe_vol')
+
+            if not results.empty:
+                if not args['db_overwrite']:
+                    if bid == args['plotorder'][0]:
+                        logging.info(' Skipping outputs for {}, {}, '
+                                     'database records exist...'.format(bid, out_date.strftime("%Y-%-m-%-d %H:00")))
+                    else:
+                        logging.debug(' Skipping outputs for {}, {}, '
+                                     'database records exist...'.format(bid, out_date.strftime("%Y-%-m-%-d %H:00")))
+                    pass_flag = True
+                    proc_list = ['density']
+
+                else:
+                    out = delete(args['connector'], args['basins'], out_date,
+                                 out_date, bid, args['run_name'])
+                    if out != []:
+                        if bid == args['plotorder'][0]:
+                            logging.info(out[0])
+                        else:
+                            logging.debug(out[0])
 
         # Initialize output dataframes for every day
         daily_outputs = {'swe_vol':dz.copy(),
@@ -91,13 +117,12 @@ def process(args):
         flag, path, pre, rain = precip(rundirs_dict[outputs['time'][iters]],
                                        precip_path)
 
-
         if flag:
             precip_total = precip_total + pre
             rain_total = rain_total + rain
 
         else:
-            log.append(' WARNING! Expected to find {} but it is not a valid '
+            logging.info(' WARNING! Expected to find {} but it is not a valid '
                        'file, precip will not be calculated or put on the '
                        'database, no precip figures will be made'.format(path))
 
@@ -123,26 +148,65 @@ def process(args):
             sf = sf.replace('run','data') + '/smrfOutputs/'
             inputs = os.listdir(sf)
 
+            df = get_existing_records(args['connector'], args['dbs'])
+            df = df.set_index('date_time')
+            df.sort_index(inplace=True)
+
             for input in inputs:
                 input_path = os.path.join(sf,input)
                 variable = os.path.splitext(input)[0]
 
                 if variable in args['inputs_variables']:
                     for basin in args['inputs_basins']:
+
                         basin_id = int(basins[basin]['basin_id'])
 
-                        input_summary(input_path, variable, methods, percentiles,
-                                      db, location, run_name, basin_id, run_id,
-                                      masks[basin]['mask'])
+                        dfs = df[((df['variable'] == variable) &
+                                 (df['run_name'] == run_name) &
+                                 (df['basin_id'] == basin_id))]
+                        idx = dfs.index
+
+                        if not idx.contains(out_date) or (idx.contains(out_date) and args['db_overwrite']):
+                            if ((basin == args['inputs_basins'][0]) and
+                                (variable == args['inputs_variables'][0])):
+                                logging.info(' Processing inputs for {}, {}, '
+                                             '{} '.format(variable, basin,
+                                             out_date.strftime("%Y-%-m-%-d %H:00")))
+                            else:
+                                logging.debug(' Processing inputs for {}, {}, '
+                                             '{} '.format(variable, basin,
+                                             out_date.strftime("%Y-%-m-%-d %H:00")))
+
+                            input_summary(input_path, variable, methods,
+                                          percentiles, db, location, run_name,
+                                          basin_id, run_id, masks[basin]['mask'])
+
+                        if idx.contains(out_date) and not args['db_overwrite']:
+                            if ((basin == args['inputs_basins'][0]) and
+                                (variable == args['inputs_variables'][0])):
+                                logging.info(' Skipping inputs for {}, {}, '
+                                             '{}, database records exist...'
+                                             ''.format(variable, basin, out_date.strftime("%Y-%-m-%-d %H:00")))
+                            else:
+                                logging.debug(' Skipping inputs for {}, {}, '
+                                             '{}, database records exist...'
+                                             ''.format(variable, basin, out_date.strftime("%Y-%-m-%-d %H:00")))
 
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])
 
         # Loop over outputs (depths are copied, volumes are calculated)
-        for k in args['vars'].keys():
+        for k in proc_list:
 
             # Mask by subbasin
             for name in masks:
+                if name == args['plotorder'][0]:
+                    logging.info(' Processing {}, {}, {} '.format(k, name,
+                                 rundirs_dict[outputs['time'][iters]].split('/')[-1]))
+                else:
+                    logging.debug(' Processing {}, {}, {} '.format(k, name,
+                                 rundirs_dict[outputs['time'][iters]].split('/')[-1]))
+
                 mask = copy.deepcopy(masks[name]['mask'])
                 elevbin = ixd*mask
 
@@ -171,10 +235,10 @@ def process(args):
                                     calculate(o, pixel, besu, 'sum','volume')
                         daily_outputs['swe_avail'].loc[b,name] = \
                                     calculate(o, pixel, besa, 'sum','volume')
-                        daily_outputs['swe_z'].loc[b,name] = \
-                                    calculate(o, pixel, be, 'mean','depth')
                         daily_outputs['swe_vol'].loc[b,name] = \
                                     calculate(o, pixel, be, 'sum','volume')
+                        daily_outputs['swe_z'].loc[b,name] = \
+                                    calculate(o, pixel, be, 'mean','depth')
 
                     if k == 'swi_z':
                         daily_outputs[k].loc[b,name] = calculate(o,pixel,be,'mean','depth')
@@ -191,7 +255,16 @@ def process(args):
 
                     if k == 'density':
                         daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean')
-                        density[name][edges[n]] = calculate(o, pixel, bes, 'mean')
+
+                        if out_date == outputs['dates'][-1]:
+                            od = copy.deepcopy(o)
+                            ml = [mask, elev_mask, snow_mask]
+                            for m in ml:
+                                m = m.astype('float')
+                                m[m < 1] = np.nan
+                                od = od * m
+
+                            density[name][edges[n]] = copy.deepcopy(od)
 
                     if k == 'precip_z' and flag:
                         daily_outputs[k].loc[b,name] = calculate(pre, pixel, be, 'mean', 'depth')
@@ -232,18 +305,23 @@ def process(args):
 
             df = daily_outputs[k].copy()
             df = df.round(decimals = 3)
-            package(args['connector'], lbls, args['basins'], df, args['run_id'],
-                    args['vid'], k, out_date, args['run_name'])
 
-            # snow line
-            if k == 'swe_z':
-                package(args['connector'], lbls, args['basins'], daily_outputs['snow_line'],
-                        args['run_id'], args['vid'], 'snow_line', out_date, args['run_name'])
+            if not pass_flag:
+                package(args['connector'], lbls, args['basins'], df, args['run_id'],
+                        args['vid'], k, out_date, args['run_name'])
+
+                # snow line
+                if k == 'swe_z':
+                    package(args['connector'], lbls, args['basins'], daily_outputs['snow_line'],
+                            args['run_id'], args['vid'], 'snow_line', out_date, args['run_name'])
 
         hr = int(outputs['time'][iters])
-        log.append(' processed: {}, elapsed hours: {}, date: {}'.format(
-                   rundirs_dict[outputs['time'][iters]],
-                   str(hr - t), out_date.date().strftime("%Y-%-m-%-d")))
+        stamp = datetime.now().strftime("%Y-%-m-%-d %H:%M:%S")
+        if not pass_flag:
+            logging.info(' Completed {}, hours: {}, date: {}, at: {} UTC'.format(
+                         rundirs_dict[outputs['time'][iters]].split('/')[-1],
+                         str(hr - t), out_date.date().strftime("%Y-%-m-%-d"),
+                         stamp))
 
         t = int(hr)
 

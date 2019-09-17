@@ -65,12 +65,14 @@ def parse(self, external_logger=None):
                                add = self.add_basins)
     self.connector = cnx
 
-    if self.print_db_connection:
-        print('\nConfig option [snowav] print_db_connection: True\nbasins: '
-              '{}\nconnection: {}\n'.format(self.basins,self.connector))
-
     for log in out:
         self.tmp_log.append(log)
+
+    if self.loglevel == 'DEBUG':
+        for basin in self.basins:
+            self.tmp_log.append(' {}: {}'.format(basin, self.basins[basin]))
+
+        self.tmp_log.append(' Connection: {}'.format(self.connector))
 
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
@@ -113,18 +115,28 @@ def parse(self, external_logger=None):
     self.ixd = np.digitize(self.dem,edges)
     self.xlims = (0,len(edges))
 
-    out, all_dirs, dirs, rdict = outputs(run_dirs = self.run_dirs,
-                                         start_date = self.start_date,
-                                         end_date = self.end_date,
-                                         filetype = self.filetype,
-                                         wy = self.wy)
+    if self.loglevel == 'DEBUG' and self.log_to_file is not True:
+        print('Reading files in {}...'.format(self.run_dirs[0].split('runs')[0]))
+
+    out, all_dirs, dirs, rdict, log = outputs(run_dirs = self.run_dirs,
+                                              start_date = self.start_date,
+                                              end_date = self.end_date,
+                                              filetype = self.filetype,
+                                              wy = self.wy,
+                                              loglevel = self.loglevel)
+
+    for l in log:
+        self.tmp_log.append(l)
+
+    if out['dates'] == []:
+        raise Exception('Supplied [run] directory, start_date, and end_date '
+              'give no valid snow files')
 
     self.outputs = out
     self.run_dirs = dirs
     self.all_dirs = all_dirs
     self.rundirs_dict = rdict
     self.all_dirs_flt = copy.deepcopy(all_dirs)
-
 
     if self.start_date is not None and self.end_date is None:
         self.end_date = self.outputs['dates'][-1]
@@ -169,11 +181,12 @@ def parse(self, external_logger=None):
     # get forecast outputs
     if self.forecast_flag:
 
-        out, alldirs, dirs, rdict = outputs(run_dirs = self.for_run_dirs,
-                                            start_date = None,
-                                            end_date = None,
-                                            filetype = self.filetype,
-                                            wy = self.wy)
+        out, alldirs, dirs, rdict, log = outputs(run_dirs = self.for_run_dirs,
+                                                 start_date = None,
+                                                 end_date = None,
+                                                 filetype = self.filetype,
+                                                 wy = self.wy,
+                                                 loglevel = self.loglevel)
         self.for_outputs = out
         self.for_run_dirs = dirs
         self.for_rundirs_dict = rdict
@@ -187,9 +200,17 @@ def parse(self, external_logger=None):
 
         if self.update_numbers is None:
             times = p.variables['time'][:]
-
         else:
-            times = p.variables['time'][self.update_numbers]
+            if sum([x > len(p.variables['time']) for x in self.update_numbers]) > 0:
+                self.tmp_log.append(' Value in [plots] update_numbers out of '
+                                    'range, max is {}, flight update figs '
+                                    'being set to False'.format(len(p.variables['time'])))
+                times = []
+                self.flt_flag = False
+
+            else:
+                times = p.variables['time'][self.update_numbers]
+
         p.close()
 
         flight_dates = []
@@ -201,24 +222,29 @@ def parse(self, external_logger=None):
             flight_dates = np.append(flight_dates,wydate)
             pre_flight_dates = np.append(pre_flight_dates,pre_wydate)
 
-        out, x, dirs, rdict = outputs(run_dirs = self.all_dirs_flt,
-                                      start_date = None,
-                                      end_date = None,
-                                      filetype = self.filetype,
-                                      wy = self.wy,
-                                      flight_dates = flight_dates)
+        if self.loglevel == 'DEBUG' and self.log_to_file is not True:
+            print('Reading files in {} for flight updates...'.format(self.run_dirs[0].split('runs')[0]))
+
+        out, x, dirs, rdict, log = outputs(run_dirs = self.all_dirs_flt,
+                                           start_date = None,
+                                           end_date = None,
+                                           filetype = self.filetype,
+                                           wy = self.wy,
+                                           flight_dates = flight_dates,
+                                           loglevel = self.loglevel)
 
         self.flight_outputs = out
         self.run_dirs_flt = dirs
         self.for_rundirs_dict = rdict
         self.flight_diff_dates = out['dates']
 
-        out, x, dirs, rdict = outputs(run_dirs = self.all_dirs_flt,
-                                      start_date = None,
-                                      end_date = None,
-                                      filetype = self.filetype,
-                                      wy = self.wy,
-                                      flight_dates = pre_flight_dates)
+        out, x, dirs, rdict, log = outputs(run_dirs = self.all_dirs_flt,
+                                           start_date = None,
+                                           end_date = None,
+                                           filetype = self.filetype,
+                                           wy = self.wy,
+                                           loglevel = self.loglevel,
+                                           flight_dates = pre_flight_dates)
 
         self.pre_flight_outputs = out
 
@@ -247,6 +273,9 @@ def parse(self, external_logger=None):
     else:
         self._logger = external_logger
 
+    if self.inputs_basins is None:
+        self.inputs_basins = [self.plotorder[0]]
+
     # set up process() inputs for standard run
     self.pargs = {}
     self.pargs['outputs'] = self.outputs
@@ -261,6 +290,7 @@ def parse(self, external_logger=None):
     self.pargs['connector'] = self.connector
     self.pargs['basins'] = self.basins
     self.pargs['run_name'] = self.run_name
+    self.pargs['db_overwrite'] = self.db_overwrite
     self.pargs['conversion_factor'] = self.conversion_factor
     self.pargs['depth_factor'] = self.depth_factor
     self.pargs['wy'] = self.wy
@@ -277,6 +307,10 @@ def parse(self, external_logger=None):
     self.pargs['inputs_basins'] = self.inputs_basins
     self.pargs['inputs_variables'] = self.inputs_variables
     self.pargs['inputs_percentiles'] = self.inputs_percentiles
+    if self.mysql is not None:
+        self.pargs['dbs'] = 'sql'
+    else:
+        self.pargs['dbs'] = 'sqlite'
 
 def createLog(self):
     '''
@@ -313,7 +347,7 @@ def createLog(self):
         # let user know
         print('Logging to file: {}'.format(logfile))
 
-    fmt = '%(levelname)s:%(name)s:%(message)s'
+    fmt = '%(levelname)s:%(module)s:%(message)s'
 
     if logfile is not None:
 

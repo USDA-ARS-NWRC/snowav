@@ -136,7 +136,15 @@ def query(self):
                       '{}'.format(bid, run_name, value, fqry[cols]))
 
         if output == 'csv':
-            fqry.to_csv(csv_file)
+            if total:
+                fqry.to_csv(csv_file)
+            else:
+                for e in fqry.elevation.unique().tolist():
+                    banded = fqry.copy()
+                    banded = banded.set_index('date_time')
+                    banded = banded[banded['elevation'] == e]
+                    banded = pd.DataFrame(banded['value'].rename('{} {} [ft]'.format(value, e)))
+                    banded.to_csv('{}_{}.csv'.format(csv_file.split('.csv')[0],e))
 
     session.close()
     print('\nQuery complete, exiting snowav. To process results, set [query] query: False\n')

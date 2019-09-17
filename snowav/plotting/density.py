@@ -82,10 +82,11 @@ def density(args, logger = None):
 
     for i,name in enumerate(lims.sumorder):
         for iter,edge in enumerate(edges):
+            data = density[name][edge].flatten()
+            data = data[~np.isnan(data)]
 
-            if np.nansum(density[name][edge]) > 0:
-
-                bp = ax1.boxplot(density[name][edge],
+            if np.nansum(data) > 0:
+                bp = ax1.boxplot(data,
                                  positions=[iter + widths[i]],
                                  widths=wid)
 

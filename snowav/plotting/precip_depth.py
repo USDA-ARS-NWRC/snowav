@@ -53,16 +53,16 @@ def precip_depth(args, logger = None):
     clims = (qMin,qMax)
 
     # Get bar plot ylims
-    if accum_byelev.values.max() > precip_byelev.values.max():
+    if np.nanmax(accum_byelev.values) > np.nanmax(precip_byelev.values):
         if len(plotorder) < 5:
-            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.4
+            yMax = np.nanmax(accum_byelev.values) + np.nanmax(accum_byelev.values)*0.4
         else:
-            yMax = accum_byelev.values.max() + accum_byelev.values.max()*0.6
+            yMax = np.nanmax(accum_byelev.values) + np.nanmax(accum_byelev.values)*0.6
     else:
         if len(plotorder) < 5:
-            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.4
+            yMax = np.nanmax(precip_byelev.values) + np.nanmax(precip_byelev.values)*0.4
         else:
-            yMax = precip_byelev.values.max() + precip_byelev.values.max()*0.6
+            yMax = np.nanmax(precip_byelev.values) + np.nanmax(precip_byelev.values)*0.6
 
     cmap = cmocean.cm.dense
     cmap1 = plt.cm.nipy_spectral_r

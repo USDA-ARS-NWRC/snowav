@@ -1,0 +1,22 @@
+{
+
+    "license": "other-open",
+    "title": "Snow and Water Model Analysis and Visualization (SNOWAV)",
+    "version": "v0.10.3",
+    "upload_type": "software",
+    "keywords": [
+        "snow modeling",
+        "water resources",
+		    "energy balance",
+        "water supply forecasting",
+        "automated water supply model"
+    ],
+    "creators": [
+        {"affiliation": "USDA Agricultural Research Service",
+         "name": "Mark Robertson",
+			   "orcid": "0000-0003-4621-0161"}
+    ],
+
+    "access_right": "open"
+
+}
