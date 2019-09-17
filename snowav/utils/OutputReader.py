@@ -1,17 +1,13 @@
 import pandas as pd
 import numpy as np
 from spatialnc import ipw
-try:
-    from smrf.utils import utils
-except:
-    print('Could not import smrf')
+from snowav.utils.wyhr import calculate_wyhr_from_date
 import os
 import glob
 import pytz
 from netCDF4 import Dataset
 import netCDF4 as nc
 import warnings
-
 
 class iSnobalReader():
     def __init__(self, outputdir, filetype='netcdf', timesteps=None, embands=None,
@@ -240,7 +236,7 @@ class iSnobalReader():
             # calculate new date
             dtt = t
             # convert to wyhr
-            wyhr = utils.water_day(dtt.replace(tzinfo=pytz.timezone('utc') ))[0]*24
+            wyhr = calculate_wyhr_from_date(dtt)
             # store wyhr in time array
             time[ix] = wyhr
 
