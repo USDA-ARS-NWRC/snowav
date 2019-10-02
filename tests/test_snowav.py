@@ -74,6 +74,28 @@ def check_utils_calculate():
 
     return result
 
+def check_gold_results():
+    ''' '''
+    connector = 'sqlite:///'+os.path.abspath('./tests/lakes/results/results.db')
+    plotorder = ['Lakes Basin']
+    basins = {'Lakes Basin': {'watershed_id': 1, 'basin_id': 1}}
+    start_date = datetime(2019,4,1,23,0,0)
+    end_date = datetime(2019,4,2,23,0,0)
+    value = 'swe_vol'
+    run_name_gold = 'gold'
+    edges = [8000,9000,10000,11000]
+    gold_values = [3.075, 13.63, 9.543, 0.494]
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+
+    result = True
+    for ix, edge in enumerate(edges):
+        if (gold.iloc[ix,0] - gold_values[ix]) != 0.0:
+            result = False
+
+    return result
+
 def compare_database_swe_vol():
     ''' Compare 'gold' and 'test' swe_vol. '''
 
@@ -130,25 +152,92 @@ def compare_database_swi_vol():
 
     return result
 
-def check_figure_creation():
+
+    # swe = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_tes.png'
+    # swi = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
+    # cold = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
+    # swe_change = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
+    # swe_volume = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
+    # precip_depth = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
+    # diagnostics = './tests/lakes/results/lakes_test_20190401_20190402/diagnostics_lakes_test.png'
+    # report = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
+
+def check_swi_figure():
     """ Simple check if .png figures were created. """
-
     result = True
-    swe = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
-    swi = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
-
-    if not os.path.isfile(os.path.abspath(swe)):
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
         result = False
-    else:
-        os.remove(os.path.abspath(swe))
-
-    if not os.path.isfile(os.path.abspath(swi)):
-        result = False
-    else:
-        os.remove(os.path.abspath(swi))
 
     return result
 
+def check_swe_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_cold_content_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_inputs_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/inputs_lakes_test.png'
+    fig2 = './tests/lakes/results/lakes_test_20190401_20190402/inputs_period_lakes_test.png'
+
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    if not os.path.isfile(os.path.abspath(fig2)):
+        result = False
+
+    return result
+
+def check_swe_change_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_diagnostics_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/diagnostics_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_precip_depth_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_report():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
 
 class TestStandardLakes(unittest.TestCase):
     ''' Test snowav processing using wy2019 Lakes basin for comparison.'''
@@ -172,6 +261,12 @@ class TestStandardLakes(unittest.TestCase):
     	a = check_utils_calculate()
     	assert(a)
 
+    def test_gold_results(self):
+    	''' Check that gold results are on database '''
+
+    	a = check_gold_results()
+    	assert(a)
+
     def test_database_swe_vol(self):
     	''' Standard and current swe_vol DataFrames '''
 
@@ -184,11 +279,74 @@ class TestStandardLakes(unittest.TestCase):
     	a = compare_database_swi_vol()
     	assert(a)
 
-    def test_figure_creation(self):
-    	""" Output png files for swe and swi figures"""
+    def test_swe_figure(self):
+    	""" Output swe figure .png"""
 
-    	a = check_figure_creation()
+    	a = check_swe_figure()
     	assert(a)
+
+    def test_inputs_figure(self):
+    	""" Output swe figure .png"""
+
+    	a = check_inputs_figure()
+    	assert(a)
+
+    def test_swe_change_figure(self):
+    	""" Output swe change figure .png"""
+
+    	a = check_swe_change_figure()
+    	assert(a)
+
+    def test_swi_figure(self):
+    	""" Output swi figure .png"""
+
+    	a = check_swi_figure()
+    	assert(a)
+
+    def test_cold_content_figure(self):
+    	""" Output cold content figure .png"""
+
+    	a = check_cold_content_figure()
+    	assert(a)
+
+    def test_diagnostics_figure(self):
+    	""" Output diagnostics figure .png"""
+
+    	a = check_diagnostics_figure()
+    	assert(a)
+
+    def test_report(self):
+    	""" Output report .pdf """
+
+    	a = check_report()
+    	assert(a)
+
+    @classmethod
+    def tearDownClass(self):
+        """ Remove figures and report """
+        basin_total = './tests/lakes/results/lakes_test_20190401_20190402/basin_total_lakes_test.png'
+        swe_change = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
+        swe_vol = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
+        swi_vol = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
+        precip_depth = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
+        cold_content = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
+        diagnostics = './tests/lakes/results/lakes_test_20190401_20190402/diagnostics_lakes_test.png'
+        inputs = './tests/lakes/results/lakes_test_20190401_20190402/inputs_lakes_test.png'
+        inputs_period = './tests/lakes/results/lakes_test_20190401_20190402/inputs_period_lakes_test.png'
+        report = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
+        config = './tests/lakes/results/lakes_test_20190401_20190402/lakes_test_20190401_20190402.ini'
+
+        os.remove(os.path.abspath(basin_total))
+        os.remove(os.path.abspath(swe_vol))
+        os.remove(os.path.abspath(swi_vol))
+        os.remove(os.path.abspath(swe_change))
+        os.remove(os.path.abspath(precip_depth))
+        os.remove(os.path.abspath(cold_content))
+        os.remove(os.path.abspath(diagnostics))
+        os.remove(os.path.abspath(inputs))
+        os.remove(os.path.abspath(inputs_period))
+        os.remove(os.path.abspath(report))
+        os.remove(os.path.abspath(config))        
 
 if __name__ == '__main__':
     unittest.main()
