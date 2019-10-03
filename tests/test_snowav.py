@@ -2,18 +2,16 @@
 """
 Initial unittest for snowav processing, using wy2019 results in the Lakes Basin.
 
-tests/ includes 'gold' data in tests/lakes/results/results.db, with
-run_name: gold on the database. The end-to-end snowav run generated here places
-run_name: test results and compares.
+Tests:
+- end-to-end snowav run
+- simple topo.nc read and masks creation
+- volume and depth calculations for SWE volume and mean depth
+- database 'gold' and current values for swe_z, swe_vol, swe_unavail, precip_z,
+    swi_z, swi_vol, and density
+- standard figure .png creation
+- report .pdf creation
 
-These tests in the Lakes should be expanded, including tests for:
-    config options and parsing
-    elevation bin calculations
-    report creation
-    query
-    flights
-
-Tests could also be expanded by including a Tuolumne dataset and multi-day
+Tests could be expanded by including a Tuolumne dataset and multi-day
 snow.nc files.
 
 """
@@ -26,12 +24,29 @@ from snowav.utils.utilities import calculate, masks
 from scripts.snow import can_i_snowav
 from datetime import datetime
 from snowav.utils.OutputReader import iSnobalReader
+import matplotlib
+matplotlib.use('agg')
+
+topo_path = './tests/lakes/topo/topo.nc'
+db_path = './tests/lakes/results/gold.db'
+tbl_path = './tests/lakes/gold/lakes_report_table.txt'
+run_name_gold = 'lakes_wy2019_gold'
+run_name_test = 'test'
+start_date = datetime(2019,4,1,23,0,0)
+end_date = datetime(2019,4,2,23,0,0)
+plotorder = ['Lakes']
+connector = 'sqlite:///'+os.path.abspath(db_path)
+edges = [8000,9000,10000,11000]
+
+# This basins dictionary matches the current snowav database.
+# Note: this will differ from new sqlite databases created in >v0.10.0
+basins = {'Lakes': {'watershed_id': 4, 'basin_id': 16}}
 
 def check_utils_masks():
     ''' Test mask creation from topo.nc file. '''
 
     result = True
-    dem = os.path.abspath('./tests/lakes/topo/topo.nc')
+    dem = os.path.abspath(topo_path)
     out = masks(dem, False)
 
     if out['nrows'] != 168:
@@ -50,7 +65,7 @@ def check_utils_calculate():
 
     result = True
     path = os.path.abspath('./tests/lakes/gold/runs/run20190402/')
-    dem = os.path.abspath('./tests/lakes/topo/topo.nc')
+    dem = os.path.abspath(topo_path)
     filetype = 'netcdf'
     wy = 2019
     pixel = 50
@@ -75,15 +90,9 @@ def check_utils_calculate():
     return result
 
 def check_gold_results():
-    ''' '''
-    connector = 'sqlite:///'+os.path.abspath('./tests/lakes/results/results.db')
-    plotorder = ['Lakes Basin']
-    basins = {'Lakes Basin': {'watershed_id': 1, 'basin_id': 1}}
-    start_date = datetime(2019,4,1,23,0,0)
-    end_date = datetime(2019,4,2,23,0,0)
+    ''' Check database 'gold' values '''
+
     value = 'swe_vol'
-    run_name_gold = 'gold'
-    edges = [8000,9000,10000,11000]
     gold_values = [3.075, 13.63, 9.543, 0.494]
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
@@ -99,15 +108,7 @@ def check_gold_results():
 def compare_database_swe_vol():
     ''' Compare 'gold' and 'test' swe_vol. '''
 
-    connector = 'sqlite:///'+os.path.abspath('./tests/lakes/results/results.db')
-    plotorder = ['Lakes Basin']
-    basins = {'Lakes Basin': {'watershed_id': 1, 'basin_id': 1}}
-    start_date = datetime(2019,4,1,23,0,0)
-    end_date = datetime(2019,4,2,23,0,0)
     value = 'swe_vol'
-    run_name_gold = 'gold'
-    run_name_test = 'test'
-    edges = [8000,9000,10000,11000]
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
@@ -127,15 +128,7 @@ def compare_database_swe_vol():
 def compare_database_swi_vol():
     ''' Compare 'gold' and 'test' swi_vol. '''
 
-    connector = 'sqlite:///'+os.path.abspath('./tests/lakes/results/results.db')
-    plotorder = ['Lakes Basin']
-    basins = {'Lakes Basin': {'watershed_id': 1, 'basin_id': 1}}
-    start_date = datetime(2019,4,1,23,0,0)
-    end_date = datetime(2019,4,2,23,0,0)
     value = 'swi_vol'
-    run_name_gold = 'gold'
-    run_name_test = 'test'
-    edges = [8000,9000,10000,11000]
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'sum')
@@ -146,21 +139,67 @@ def compare_database_swi_vol():
 
     if test_result.sum().any() != 0:
         result = False
-
     else:
         result = True
 
     return result
 
+def compare_database_density():
+    ''' Compare 'gold' and 'test' density. '''
 
-    # swe = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_tes.png'
-    # swi = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
-    # cold = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
-    # swe_change = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
-    # swe_volume = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
-    # precip_depth = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
-    # diagnostics = './tests/lakes/results/lakes_test_20190401_20190402/diagnostics_lakes_test.png'
-    # report = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
+    value = 'density'
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+    else:
+        result = True
+
+    return result
+
+def compare_database_precip():
+    ''' Compare 'gold' and 'test' precip. '''
+
+    value = 'precip_z'
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, 'total', 'sum')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, 'total', 'sum')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+    else:
+        result = True
+
+    return result
+
+def compare_database_unavail():
+    ''' Compare 'gold' and 'test' swe_unavail. '''
+
+    value = 'swe_unavail'
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+    else:
+        result = True
+
+    return result
 
 def check_swi_figure():
     """ Simple check if .png figures were created. """
@@ -230,6 +269,27 @@ def check_precip_depth_figure():
 
     return result
 
+# def compare_report_table():
+#     """  """
+#
+#     result = True
+#
+#     with open (tbl_path, "r") as myfile:
+#         gold_table = myfile.readlines()
+#
+#     section_dict = {'SWE_SUMMARY_TPL':'./snowav/report/figs/swe_summary_1sub.txt'}
+#     variables = {'TOT_LBL': 'Lakes', 'SWE_IN': '46.785', 'DEPLBL': 'in',
+#                  'TOTAL_SDEL': '0.374', 'WATERYEAR': '2019', 'REPORT_TIME': '2019-10-3 19:43',
+#                  'TOTALPRE_PM': '0.669', 'SWEPER_BYELEV': '', 'TOTAL_SAV': '4.052',
+#                  'PER_SWI': '0.014','VERSION': '0.10.3', 'TOTAL_PVOL': '100',
+#                  'START_DATE': 'April 2', 'TOTAL_PM': '46.785', 'UNITS': 'TAF',
+#                  'TOTAL_SWE': '26.742', 'END_DATE': 'April 3', 'VOLLBL': 'TAF',
+#                  'SWI_IN': '0.014',  'TOTAL_SWI': '0.014', 'SIGN': '$+$',  'TOTAL_RAT': '0'}
+#
+#     new_variables = fill_variables(section_dict, variables, None, None, None, 'TAF')
+#     print(new_variables)
+#     return result
+
 def check_report():
     """ Simple check if .png figures were created. """
     result = True
@@ -250,13 +310,13 @@ class TestStandardLakes(unittest.TestCase):
         flag = can_i_snowav(config_file)
 
     def test_utils_masks(self):
-        ''' Utils masks '''
+        ''' Check masks dictionary utility '''
 
         a = check_utils_masks()
         assert(a)
 
     def test_utils_calculate(self):
-    	''' Utils calculate '''
+    	''' Check calculate utility '''
 
     	a = check_utils_calculate()
     	assert(a)
@@ -268,16 +328,40 @@ class TestStandardLakes(unittest.TestCase):
     	assert(a)
 
     def test_database_swe_vol(self):
-    	''' Standard and current swe_vol DataFrames '''
+    	''' Gold and current swe_vol DataFrames '''
 
     	a = compare_database_swe_vol()
     	assert(a)
 
     def test_database_swi_vol(self):
-    	""" Standard and current swi_vol DataFrames """
+    	""" Gold and current swi_vol DataFrames """
 
     	a = compare_database_swi_vol()
     	assert(a)
+
+    def test_database_density(self):
+    	""" Gold and current density DataFrames """
+
+    	a = compare_database_density()
+    	assert(a)
+
+    def test_database_precip(self):
+    	""" Gold and current precip DataFrames """
+
+    	a = compare_database_precip()
+    	assert(a)
+
+    def test_database_unavail(self):
+    	""" Gold and current swe_unavail DataFrames """
+
+    	a = compare_database_unavail()
+    	assert(a)
+
+    # def test_report_table(self):
+    # 	""" Report table """
+    #
+    # 	a = compare_report_table()
+    # 	assert(a)
 
     def test_swe_figure(self):
     	""" Output swe figure .png"""
@@ -324,17 +408,20 @@ class TestStandardLakes(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         """ Remove figures and report """
-        basin_total = './tests/lakes/results/lakes_test_20190401_20190402/basin_total_lakes_test.png'
-        swe_change = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
-        swe_vol = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
-        swi_vol = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
-        precip_depth = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
-        cold_content = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
-        diagnostics = './tests/lakes/results/lakes_test_20190401_20190402/diagnostics_lakes_test.png'
-        inputs = './tests/lakes/results/lakes_test_20190401_20190402/inputs_lakes_test.png'
-        inputs_period = './tests/lakes/results/lakes_test_20190401_20190402/inputs_period_lakes_test.png'
-        report = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
-        config = './tests/lakes/results/lakes_test_20190401_20190402/lakes_test_20190401_20190402.ini'
+
+        base = './tests/lakes/results/lakes_test_20190401_20190402/'
+
+        basin_total = '{}basin_total_lakes_test.png'.format(base)
+        swe_change = '{}swe_change_lakes_test.png'.format(base)
+        swe_vol = '{}swe_volume_lakes_test.png'.format(base)
+        swi_vol = '{}swi_lakes_test.png'.format(base)
+        precip_depth = '{}precip_depth_lakes_test.png'.format(base)
+        cold_content = '{}cold_content_lakes_test.png'.format(base)
+        diagnostics = '{}diagnostics_lakes_test.png'.format(base)
+        inputs = '{}inputs_lakes_test.png'.format(base)
+        inputs_period = '{}inputs_period_lakes_test.png'.format(base)
+        report = '{}SnowpackSummary20190403.pdf'.format(base)
+        config = '{}lakes_test_20190401_20190402.ini'.format(base)
 
         os.remove(os.path.abspath(basin_total))
         os.remove(os.path.abspath(swe_vol))
@@ -346,7 +433,13 @@ class TestStandardLakes(unittest.TestCase):
         os.remove(os.path.abspath(inputs))
         os.remove(os.path.abspath(inputs_period))
         os.remove(os.path.abspath(report))
-        os.remove(os.path.abspath(config))        
+        # os.remove(os.path.abspath(config))
+
+        if os.path.isfile('{}swe_vol_test_TAF.csv'.format(base)):
+            os.remove('{}swe_vol_test_TAF.csv'.format(base))
+
+        if os.path.isfile('{}swi_vol_test_TAF.csv'.format(base)):
+            os.remove('{}swi_vol_test_TAF.csv'.format(base))
 
 if __name__ == '__main__':
     unittest.main()

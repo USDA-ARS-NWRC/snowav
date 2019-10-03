@@ -76,10 +76,12 @@ def process(args):
                 if not args['db_overwrite']:
                     if bid == args['plotorder'][0]:
                         logging.info(' Skipping outputs for {}, {}, '
-                                     'database records exist...'.format(bid, out_date.strftime("%Y-%-m-%-d %H:00")))
+                                     'database records exist...'.format(bid,
+                                     out_date.strftime("%Y-%-m-%-d %H:00")))
                     else:
                         logging.debug(' Skipping outputs for {}, {}, '
-                                     'database records exist...'.format(bid, out_date.strftime("%Y-%-m-%-d %H:00")))
+                                     'database records exist...'.format(bid,
+                                     out_date.strftime("%Y-%-m-%-d %H:00")))
                     pass_flag = True
                     proc_list = ['density']
 
@@ -186,11 +188,13 @@ def process(args):
                                 (variable == args['inputs_variables'][0])):
                                 logging.info(' Skipping inputs for {}, {}, '
                                              '{}, database records exist...'
-                                             ''.format(variable, basin, out_date.strftime("%Y-%-m-%-d %H:00")))
+                                             ''.format(variable, basin,
+                                             out_date.strftime("%Y-%-m-%-d %H:00")))
                             else:
                                 logging.debug(' Skipping inputs for {}, {}, '
                                              '{}, database records exist...'
-                                             ''.format(variable, basin, out_date.strftime("%Y-%-m-%-d %H:00")))
+                                             ''.format(variable, basin,
+                                             out_date.strftime("%Y-%-m-%-d %H:00")))
 
         swe = copy.deepcopy(outputs['swe_z'][iters])
         cold = copy.deepcopy(outputs['coldcont'][iters])

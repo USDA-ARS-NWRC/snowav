@@ -5,8 +5,20 @@ sudo: required
 language: python
 
 python:
-  - "3.4"
   - "3.5"
+
+# configure a headless display to test plot generation
+dist: xenial
+
+services:
+  - xvfb
+
+before_install:
+  - sudo apt-get install -y texlive-base texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
 
 script:
   - python setup.py test
+
+branches:
+  - master
+  - devel

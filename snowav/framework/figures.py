@@ -1,4 +1,5 @@
 
+import os
 import numpy as np
 import pandas as pd
 import copy
@@ -22,6 +23,10 @@ from snowav.plotting.diagnostics import diagnostics
 from snowav.plotting.plotlims import plotlims
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
+import matplotlib as mpl
+if os.environ.get('DISPLAY','') == '':
+    # print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
 
 def figures(self):
     '''

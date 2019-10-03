@@ -7,10 +7,10 @@
 
 		\toprule
 
-		\multirow{2}{*} {\bf{Basin} }	& SWE			& SWE 						& SWE 		 		& SWI 					& $\Delta$SWE 	& SWI 				& Precip 		& Rain 								\\
-																	& [UNITS] & [$\%$ total] 		& [DEPLBL] 		& [UNITS]				& [UNITS] 			& [UNITS] 		& [DEPLBL]	& [$\%$ precip]				\\
+		\multirow{2}{*} {\bf{Basin} } & SWE & SWE & SWE & SWI & $\Delta$SWE & SWI & Precip & Rain \\
+		& [UNITS] & [$\%$ total] & [DEPLBL] & [UNITS]	& [UNITS] & [UNITS] & [DEPLBL] & [$\%$ precip] \\
 		\midrule
-		TOT_LBL			& TOTAL_SWE 	& TOTAL_PVOL & TOTAL_PM 	& PER_SWI 			& TOTAL_SDEL 		& TOTAL_SWI 	& TOTALPRE_PM 	&  TOTAL_RAT	\\
+		TOT_LBL & TOTAL_SWE & TOTAL_PVOL & TOTAL_PM & PER_SWI & TOTAL_SDEL & TOTAL_SWI & TOTALPRE_PM & TOTAL_RAT \\
 
 		\bottomrule
 	\end{tabular}
