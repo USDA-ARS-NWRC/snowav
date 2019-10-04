@@ -83,13 +83,13 @@ def run():
 
     # Must use either single snow.nc, or difference between two snow.nc
     if args.nc_path is not None:
-        nc_path = [args.nc_path]
+        nc_path = [os.path.abspath(args.nc_path)]
         diff = False
         if not os.path.isfile(nc_path[0]):
             raise Exception('{} not a valid file name'.format(nc_path[0]))
 
     elif (args.snow_a is not None) and (args.snow_b is not None):
-        nc_path = [args.snow_a] + [args.snow_b]
+        nc_path = [os.path.abspath(args.snow_a)] + [os.path.abspath(args.snow_b)]
         diff = True
 
         for path in nc_path:
@@ -105,7 +105,7 @@ def run():
     coloredlogs.install(fmt='%(levelname)-5s %(message)s', level=level,
                         level_styles={'info':{'color':'green'}},logger=log)
 
-    results = process(nc_path, args.topo_path, args.value, log)
+    results = process(nc_path, os.path.abspath(args.topo_path), args.value, log)
 
     barcolors = ['xkcd:cobalt', 'xkcd:mustard green', 'xkcd:lichen',
                  'xkcd:pale green', 'xkcd:blue green', 'xkcd:bluish purple',
@@ -128,7 +128,7 @@ def run():
              'dpi':250,
              'dplcs':1,
              'xlims':(0,len(results['edges'])),
-             'figs_path':args.figs_path,
+             'figs_path':os.path.abspath(args.figs_path),
              'directory':'cli'}
 
     # difference between two snow.nc files
@@ -146,7 +146,7 @@ def run():
 
         log.info('Difference generated from:\n      {} '
                  'subtract\n      {}'.format(nc_path[1],nc_path[0]))
-        log.info('Saved figure in {}'.format(args.figs_path))
+        log.info('Saved figure in {}'.format(os.path.abspath(args.figs_path)))
 
         image_change(fargs, None)
         exit()
@@ -160,7 +160,7 @@ def run():
 
         fargs['image'] = results['outputs']['swe_z'][0]/25.4
         fargs['title'] = '{}, {}'.format(args.value,title)
-        fargs['df'] = results['df'][args.nc_path]
+        fargs['df'] = results['df'][os.path.abspath(args.nc_path)]
 
         swe_volume(fargs, None)
         log.info('Saved figure in {}'.format(args.figs_path))

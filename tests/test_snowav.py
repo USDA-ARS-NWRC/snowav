@@ -24,6 +24,7 @@ from snowav.utils.utilities import calculate, masks
 from scripts.snow import can_i_snowav
 from datetime import datetime
 from snowav.utils.OutputReader import iSnobalReader
+import subprocess
 import matplotlib
 matplotlib.use('agg')
 
@@ -260,6 +261,15 @@ def check_diagnostics_figure():
 
     return result
 
+def check_density_figure():
+    """ Simple check if .png figures were created. """
+    result = True
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/density_lakes_test.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
 def check_precip_depth_figure():
     """ Simple check if .png figures were created. """
     result = True
@@ -269,32 +279,24 @@ def check_precip_depth_figure():
 
     return result
 
-# def compare_report_table():
-#     """  """
-#
-#     result = True
-#
-#     with open (tbl_path, "r") as myfile:
-#         gold_table = myfile.readlines()
-#
-#     section_dict = {'SWE_SUMMARY_TPL':'./snowav/report/figs/swe_summary_1sub.txt'}
-#     variables = {'TOT_LBL': 'Lakes', 'SWE_IN': '46.785', 'DEPLBL': 'in',
-#                  'TOTAL_SDEL': '0.374', 'WATERYEAR': '2019', 'REPORT_TIME': '2019-10-3 19:43',
-#                  'TOTALPRE_PM': '0.669', 'SWEPER_BYELEV': '', 'TOTAL_SAV': '4.052',
-#                  'PER_SWI': '0.014','VERSION': '0.10.3', 'TOTAL_PVOL': '100',
-#                  'START_DATE': 'April 2', 'TOTAL_PM': '46.785', 'UNITS': 'TAF',
-#                  'TOTAL_SWE': '26.742', 'END_DATE': 'April 3', 'VOLLBL': 'TAF',
-#                  'SWI_IN': '0.014',  'TOTAL_SWI': '0.014', 'SIGN': '$+$',  'TOTAL_RAT': '0'}
-#
-#     new_variables = fill_variables(section_dict, variables, None, None, None, 'TAF')
-#     print(new_variables)
-#     return result
-
 def check_report():
     """ Simple check if .png figures were created. """
     result = True
     fig = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
     if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
+def check_cli_process():
+    ''' Check command line snow.nc processing '''
+
+    result = True
+    cmd = 'snowav -t {} -d ./tests/lakes/gold/runs/run20190402/snow.nc -v swe_vol -no-s'.format(topo_path)
+    process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+    output, error = process.communicate()
+
+    if error is not None:
         result = False
 
     return result
@@ -308,6 +310,12 @@ class TestStandardLakes(unittest.TestCase):
 
         config_file = os.path.abspath('tests/lakes/snowav_lakes_test.ini')
         flag = can_i_snowav(config_file)
+
+    def test_cli_process(self):
+        ''' Check command line process \n'''
+
+        a = check_cli_process()
+        assert(a)
 
     def test_utils_masks(self):
         ''' Check masks dictionary utility '''
@@ -357,11 +365,11 @@ class TestStandardLakes(unittest.TestCase):
     	a = compare_database_unavail()
     	assert(a)
 
-    # def test_report_table(self):
-    # 	""" Report table """
-    #
-    # 	a = compare_report_table()
-    # 	assert(a)
+    def test_density_figure(self):
+    	""" Output density figure .png"""
+
+    	a = check_density_figure()
+    	assert(a)
 
     def test_swe_figure(self):
     	""" Output swe figure .png"""
@@ -416,6 +424,7 @@ class TestStandardLakes(unittest.TestCase):
         swe_vol = '{}swe_volume_lakes_test.png'.format(base)
         swi_vol = '{}swi_lakes_test.png'.format(base)
         precip_depth = '{}precip_depth_lakes_test.png'.format(base)
+        density = '{}density_lakes_test.png'.format(base)
         cold_content = '{}cold_content_lakes_test.png'.format(base)
         diagnostics = '{}diagnostics_lakes_test.png'.format(base)
         inputs = '{}inputs_lakes_test.png'.format(base)
@@ -426,6 +435,7 @@ class TestStandardLakes(unittest.TestCase):
         os.remove(os.path.abspath(basin_total))
         os.remove(os.path.abspath(swe_vol))
         os.remove(os.path.abspath(swi_vol))
+        os.remove(os.path.abspath(density))
         os.remove(os.path.abspath(swe_change))
         os.remove(os.path.abspath(precip_depth))
         os.remove(os.path.abspath(cold_content))
@@ -433,7 +443,10 @@ class TestStandardLakes(unittest.TestCase):
         os.remove(os.path.abspath(inputs))
         os.remove(os.path.abspath(inputs_period))
         os.remove(os.path.abspath(report))
-        # os.remove(os.path.abspath(config))
+        os.remove(os.path.abspath(config))
+
+        if os.path.isfile(os.path.abspath('./swe_volume_cli.png')):
+            os.remove(os.path.abspath('./swe_volume_cli.png'))
 
         if os.path.isfile('{}swe_vol_test_TAF.csv'.format(base)):
             os.remove('{}swe_vol_test_TAF.csv'.format(base))
