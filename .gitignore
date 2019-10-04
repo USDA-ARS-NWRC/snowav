@@ -38,6 +38,7 @@ pip-delete-this-directory.txt
 
 # Tests
 tests/lakes/results/lakes_test_20190401_20190402/*
+tests/lakes/results/gold.db
 
 #Git info stuff
 snowav/utils/gitinfo.py
