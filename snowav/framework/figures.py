@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import copy
-from datetime import datetime
+from datetime import datetime, timedelta
 from tablizer.tablizer import get_existing_records
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
@@ -14,18 +14,18 @@ from snowav.plotting.flt_image_change import flt_image_change
 from snowav.plotting.image_change import image_change
 from snowav.plotting.precip_depth import precip_depth
 from snowav.plotting.stn_validate import stn_validate
-from snowav.plotting.swe_change import swe_change
 from snowav.plotting.write_properties import write_properties
 from snowav.plotting.swe_volume import swe_volume
 from snowav.plotting.inputs import inputs
 from snowav.inflow.inflow import inflow
 from snowav.plotting.diagnostics import diagnostics
 from snowav.plotting.plotlims import plotlims
+from snowav.plotting.point_values import point_values
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
 import matplotlib as mpl
+
 if os.environ.get('DISPLAY','') == '':
-    # print('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 
 def figures(self):
@@ -299,6 +299,80 @@ def figures(self):
 
         if not flag:
             self.stn_validate_flag = False
+
+    if self.point_values_flag and self.point_values:
+
+        # check that self.point_values_date falls within options
+        pv_date = self.point_values_date
+
+        if pv_date is None:
+            self._logger.info(' Value in [validate] point_values_date being '
+                              'assigned to {}'.format(
+                              self.end_date.date().strftime("%Y-%m-%d")))
+            pv_date = self.end_date
+
+        if pv_date < self.start_date or pv_date > self.end_date:
+            self._logger.info(' Value in [validate] point_values_date outside '
+                              'of range in [run] start_date - end_date, '
+                              'point_values_date being assigned to {}'.format(
+                              self.end_date.date().strftime("%Y-%m-%d")))
+            pv_date = self.end_date
+            idx = -1
+
+        else:
+            # get index for self.outputs for that date
+            x = np.abs([date - pv_date for date in self.outputs['dates']])
+            idx = x.argmin(0)
+
+        model_date = self.outputs['dates'][idx]
+        model_date = model_date.date().strftime('%Y-%m-%d')
+        course_date = self.point_values_date.date().strftime('%Y-%m-%d')
+        nsubplots = (self.point_values_settings[3]*self.point_values_settings[4]-1)-1
+
+        for idxp, value in enumerate(self.point_values_properties):
+            pflag = True
+            df = pd.read_csv(self.point_values_csv[idxp])
+
+            if self.point_values_heading[idxp] is not None:
+                check_headings = [self.point_values_heading[idxp],'name',
+                                  'latitude','longitude']
+            else:
+                check_headings = ['name', 'latitude', 'longitude']                                  
+
+            for head in check_headings:
+                if head not in df.columns.tolist():
+                    self._logger.warn(' {} not in headings {} in {}'.format(
+                                      head, df.columns.tolist(),
+                                      self.point_values_csv[idxp]))
+                    pflag = False
+
+            if not pflag:
+                continue
+
+            if len(df.name.unique()) > nsubplots:
+                self._logger.warn(' Number of subplots that will be generated in '
+                                  'point_values() may not fit well with settings '
+                                  'inpoint_values_settings, consider increasing '
+                                  'nrows and/or ncols')
+
+            fig_name = '{}model_pixel_{}_{}.csv'.format(self.figs_path,
+                        value, self.end_date.date().strftime("%Y%m%d"))
+
+            if value == 'swe_z':
+                factor = self.depth_factor
+
+            if value == 'density':
+                factor = 1
+
+            if value == 'depth':
+                factor = 39.37
+
+            array = self.outputs[value][idx]*factor
+
+            point_values(array, value, df, (self.snow_x, self.snow_y), fig_name,
+                         self.dem, self.figs_path, self.veg_type,
+                         self.point_values_heading[idxp], model_date, course_date,
+                         self.point_values_settings, self.pixel, self._logger)
 
     if self.compare_runs_flag:
         args['variables'] = ['swe_vol','swi_vol']

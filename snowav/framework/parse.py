@@ -48,6 +48,7 @@ def parse(self, external_logger=None):
                 plotlabels = self.plotlabels)
 
     self.dem = out['dem']
+    self.veg_type = out['veg_type']    
     self.masks = out['masks']
     self.nrows = out['nrows']
     self.ncols = out['ncols']

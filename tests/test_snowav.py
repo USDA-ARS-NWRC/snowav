@@ -202,6 +202,28 @@ def compare_database_unavail():
 
     return result
 
+def check_point_values_figures():
+    """ Simple check if .png figures were created. """
+    result = True
+
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/validation_map_swe_z.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/validation_list_swe_z.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/validation_veg_map.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/validation_locations.png'
+    if not os.path.isfile(os.path.abspath(fig)):
+        result = False
+
+    return result
+
 def check_swi_figure():
     """ Simple check if .png figures were created. """
     result = True
@@ -365,6 +387,12 @@ class TestStandardLakes(unittest.TestCase):
     	a = compare_database_unavail()
     	assert(a)
 
+    def test_point_values_figures(self):
+    	""" Output density figure .png"""
+
+    	a = check_point_values_figures()
+    	assert(a)
+
     def test_density_figure(self):
     	""" Output density figure .png"""
 
@@ -419,40 +447,30 @@ class TestStandardLakes(unittest.TestCase):
 
         base = './tests/lakes/results/lakes_test_20190401_20190402/'
 
-        basin_total = '{}basin_total_lakes_test.png'.format(base)
-        swe_change = '{}swe_change_lakes_test.png'.format(base)
-        swe_vol = '{}swe_volume_lakes_test.png'.format(base)
-        swi_vol = '{}swi_lakes_test.png'.format(base)
-        precip_depth = '{}precip_depth_lakes_test.png'.format(base)
-        density = '{}density_lakes_test.png'.format(base)
-        cold_content = '{}cold_content_lakes_test.png'.format(base)
-        diagnostics = '{}diagnostics_lakes_test.png'.format(base)
-        inputs = '{}inputs_lakes_test.png'.format(base)
-        inputs_period = '{}inputs_period_lakes_test.png'.format(base)
-        report = '{}SnowpackSummary20190403.pdf'.format(base)
-        config = '{}lakes_test_20190401_20190402.ini'.format(base)
+        figs = ['basin_total_lakes_test.png',
+                'swe_change_lakes_test.png',
+                'swe_volume_lakes_test.png',
+                'swi_lakes_test.png',
+                'precip_depth_lakes_test.png',
+                'density_lakes_test.png',
+                'cold_content_lakes_test.png',
+                'diagnostics_lakes_test.png',
+                'validation_list_swe_z.png',
+                'validation_map_swe_z.png',
+                'validation_veg_map.png',
+                'validation_locations.png',
+                'swe_volume_cli.png',
+                'swe_vol_test_TAF.csv',
+                'swi_vol_test_TAF.csv',
+                'model_pixel_swe_z_20190402.csv',
+                'inputs_lakes_test.png',
+                'inputs_period_lakes_test.png',
+                'SnowpackSummary20190403.pdf',
+                'lakes_test_20190401_20190402.ini']
 
-        os.remove(os.path.abspath(basin_total))
-        os.remove(os.path.abspath(swe_vol))
-        os.remove(os.path.abspath(swi_vol))
-        os.remove(os.path.abspath(density))
-        os.remove(os.path.abspath(swe_change))
-        os.remove(os.path.abspath(precip_depth))
-        os.remove(os.path.abspath(cold_content))
-        os.remove(os.path.abspath(diagnostics))
-        os.remove(os.path.abspath(inputs))
-        os.remove(os.path.abspath(inputs_period))
-        os.remove(os.path.abspath(report))
-        os.remove(os.path.abspath(config))
-
-        if os.path.isfile(os.path.abspath('./swe_volume_cli.png')):
-            os.remove(os.path.abspath('./swe_volume_cli.png'))
-
-        if os.path.isfile('{}swe_vol_test_TAF.csv'.format(base)):
-            os.remove('{}swe_vol_test_TAF.csv'.format(base))
-
-        if os.path.isfile('{}swi_vol_test_TAF.csv'.format(base)):
-            os.remove('{}swi_vol_test_TAF.csv'.format(base))
+        for fig in figs:
+            if os.path.isfile(os.path.abspath('{}{}'.format(base,fig))):
+                os.remove(os.path.abspath('{}{}'.format(base,fig)))
 
 if __name__ == '__main__':
     unittest.main()

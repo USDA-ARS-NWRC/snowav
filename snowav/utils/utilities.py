@@ -204,6 +204,7 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
 
     ncf = nc.Dataset(dempath, 'r')
     dem = ncf.variables['dem'][:]
+    veg_type = ncf.variables['veg_type'][:]
 
     mask_names = [ncf.variables['mask'].long_name]
     mask_names_total = ncf.variables['mask'].long_name
@@ -274,6 +275,7 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
         labels[new_key] = labels.pop(old_key)
 
     out['dem'] = dem
+    out['veg_type'] = veg_type
     out['masks'] = masks
     out['nrows'] = nrows
     out['ncols'] = ncols

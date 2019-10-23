@@ -149,6 +149,49 @@ def read_config(self, external_logger=None, awsm=None):
     self.wxdb_password = ucfg.cfg['validate']['password']
     self.wxdb_host = ucfg.cfg['validate']['host']
     self.wxdb_port = ucfg.cfg['validate']['port']
+    self.point_values = ucfg.cfg['validate']['point_values']
+    self.point_values_csv = ucfg.cfg['validate']['point_values_csv']
+    self.point_values_date = ucfg.cfg['validate']['point_values_date']
+    self.point_values_properties = ucfg.cfg['validate']['point_values_properties']
+    self.point_values_heading = ucfg.cfg['validate']['point_values_heading']
+    self.point_values_settings = ucfg.cfg['validate']['point_values_settings']
+
+    if len(self.point_values_settings) != 14:
+        self.tmp_log.append(' Expected [validate] point_values_settings to '
+                            'have 14 values, point_values being set to False')
+        self.point_values = False
+
+    for n in range(0,10):
+        self.point_values_settings[n] = int(self.point_values_settings[n])
+
+    if type(self.point_values_properties) != list:
+        self.point_values_properties = [self.point_values_properties]
+
+    if type(self.point_values_heading) != list:
+        self.point_values_heading = [self.point_values_heading]
+
+    if type(self.point_values_csv) != list:
+        self.point_values_csv = [self.point_values_csv]
+
+    if self.point_values and self.point_values_csv is None:
+        self.point_values = False
+        self.tmp_log.append(' Config option [validate] point_values_csv '
+                            'was not supplied, point_values being set '
+                            'to False')
+
+    if self.point_values and self.point_values_date is None:
+        self.point_values = False
+        self.tmp_log.append(' Config option [validate] point_values_date '
+                            'was not supplied, point_values being set '
+                            'to False')
+
+    if not (len(self.point_values_csv) == len(self.point_values_properties) ==
+            len(self.point_values_heading)):
+        self.tmp_log.append(' Must supply the same number of [validate] '
+                            'point_values_csv, point_values_properties, '
+                            'and point_values_heading values, point_values '
+                            'being set to False')
+
 
     ####################################################
     #           diagnostics                            #
@@ -205,7 +248,6 @@ def read_config(self, external_logger=None, awsm=None):
     self.image_change_flag = ucfg.cfg['plots']['image_change']
     self.cold_content_flag = ucfg.cfg['plots']['cold_content']
     self.swe_volume_flag = ucfg.cfg['plots']['swe_volume']
-    self.swe_change_flag = ucfg.cfg['plots']['swe_change']
     self.basin_total_flag = ucfg.cfg['plots']['basin_total']
     self.stn_validate_flag = ucfg.cfg['plots']['stn_validate']
     self.nash_sut_flag = ucfg.cfg['plots']['disp_nash_sut']
@@ -223,6 +265,7 @@ def read_config(self, external_logger=None, awsm=None):
     self.figsize = (ucfg.cfg['plots']['fig_length'],
                     ucfg.cfg['plots']['fig_height'])
     self.write_properties = ucfg.cfg['plots']['write_properties']
+    self.point_values_flag = ucfg.cfg['plots']['point_values']
     if self.write_properties is not None and type(self.write_properties) != list:
         self.write_properties = [self.write_properties]
 
