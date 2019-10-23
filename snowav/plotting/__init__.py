@@ -9,7 +9,6 @@ from . import inputs
 from . import plotlims
 from . import point_values
 from . import precip_depth
-from . import swe_change
 from . import swe_volume
 from . import stn_validate
 from . import swi
