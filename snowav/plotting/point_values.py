@@ -1,20 +1,13 @@
 
 import numpy as np
-import matplotlib
 from matplotlib import pyplot as plt
+import matplotlib.colors
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 import utm
-import netCDF4 as nc
 import pandas as pd
-from datetime import datetime
-import copy
-from datetime import date
-import os
-import warnings
 import cmocean
 import snowav.framework.figures
-import matplotlib.gridspec as gridspec
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
@@ -66,9 +59,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         cols = ['station','x','y','model x','model y', header,
                 '9 pixel median']
 
-    stns = df['name']
     pixel_swe = pd.DataFrame(columns = cols)
-    # ps = pd.DataFrame(columns= cols)
 
     # get closest model pixel
     for i in df.index:
@@ -144,19 +135,11 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         a2 = plt.gca()
 
         plt.close(3)
-        f3 = plt.figure(num=3,figsize=(width,height-2),dpi=dpi)
+        f3 = plt.figure(num=3,figsize=(width,height-2),dpi=400)
         a3 = plt.gca()
 
         lvls = list(np.arange(np.min(dem.flatten()), np.max(dem.flatten()), 500))
 
-        a3.imshow(veg_type, cmap = plt.cm.get_cmap('Vega20'), alpha = 0.75)
-        a3.contour(dem, colors = 'k', levels=lvls, linewidths = 0.15)
-
-        vegmap = plt.cm.get_cmap('brg', len(np.unique(veg_type)))
-
-        swe_values = pixel_swe[header].values
-
-        cvals = plt.cm.YlGn
         snow_map = cmocean.cm.haline_r
 
         # get min/max for all sub-domains
@@ -186,9 +169,13 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
 
         g_min = 0
         veg = np.unique(veg)
+        vl = list(veg)
+        norm = matplotlib.colors.BoundaryNorm(vl,len(vl))
+
+        h3 = a3.imshow(veg_type, cmap ='Vega20', norm = norm, alpha = 0.75)
+        a3.contour(dem, colors = 'k', levels=lvls, linewidths = 0.15)
 
         place = np.linspace(g_min,g_max,256)
-        stns = stns.tolist() + [' ']
 
         for idx, v in enumerate(pixel_swe.station.unique()):
             mflag = False
@@ -232,7 +219,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                 l1 = [int(x)*snow_sec.shape[0]+npix-1 for x in range(npix-1,npix+2)] + \
                      [int(x)*snow_sec.shape[0]+npix for x in range(npix-1,npix+2)] + \
                      [int(x)*snow_sec.shape[0]+npix+1 for x in range(npix-1,npix+2)]
-
+                zo = 1
                 if idx == 0:
                     ml = 'model, pixel containing point'
                     vl = 'validation'
@@ -260,12 +247,15 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                         if idx == 1 and idx2 == l1[-1]:
                             sl = 'model, $\pm$1 pixel'
 
-                    a2.plot(idx, v2, '{}{}'.format(clr, mkr), markersize = 7, label = sl)
+                        if idx2 in l1:
+                            zo = 2
+
+                    a2.plot(idx, v2, '{}{}'.format(clr, mkr), markersize = 7, label = sl, zorder = zo)
 
                     sl = '__nolabel__'
 
-                a2.plot(idx, course, 'kP', markersize = 10, label = vl)
-                a2.plot(idx, swe, 'rX', markersize = 10, label = ml)
+                a2.plot(idx, course, 'kP', markersize = 10, label = vl, zorder = 4)
+                a2.plot(idx, swe, 'rX', markersize = 10, label = ml, zorder = 3)
 
                 lvls = list(np.arange(np.min(s.flatten()), np.max(s.flatten()), levels))
                 ixs = int(np.where(abs(place-course) == min(abs(place-course)))[0])
@@ -295,18 +285,17 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                 vegmap = plt.cm.get_cmap('Vega20')
 
                 a1[idx].contour(dem, colors = 'k', levels=lvls, linewidths = 0.25)
-                h1 = a1[idx].imshow(veg_type, cmap = vegmap, clim =
-                                    (min(np.unique(veg_type[(iy-npix):(iy+npix+1),(ix-npix):(ix+npix+1)].flatten())),
-                                     max(np.unique(veg_type[(iy-npix):(iy+npix+1),(ix-npix):(ix+npix+1)].flatten()))))
+                h1 = a1[idx].imshow(veg_type, cmap ='Vega20', norm = norm)
                 a1[idx].scatter(x = ix, y = iy, marker = '^', s=ss, c = 'k',
                                edgecolors = 'k', linewidths = 0.5)
                 a1[idx].get_xaxis().set_ticks([])
                 a1[idx].get_yaxis().set_ticks([])
-                a1[idx].set_ylim((iy - (npix + 0.5), iy + npix + 0.5))
+
+                a1[idx].set_ylim( (iy + npix + 0.5),(iy - (npix + 0.5)))
                 a1[idx].set_xlim((ix - (npix + 0.5), ix + npix + 0.5))
                 a1[idx].set_title(v, fontsize = font_small)
 
-                a3.scatter(x = ix, y = iy, marker = '*', s=ss-10, c = 'k',
+                a3.scatter(x = ix, y = iy, marker = 's', s=10, color="None",
                            edgecolors = 'k', linewidths = 0.5)
                 a3.annotate(v, (ix+5, iy-5), fontsize = font_small-1, color = 'k')
 
@@ -320,7 +309,6 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                                    edgecolors = 'k', linewidths = 0.5)
                     a1[idx].annotate(str(vs), (nx, ny), fontsize = font_small - 3, color = 'w')
 
-
         # tack on another subplot for legend and colorbar
         a[idx+1].imshow(output, cmap = snow_map, alpha = 0)
         a[idx+1].set_title('', fontsize = font_small)
@@ -333,9 +321,9 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         cbar.ax.tick_params(labelsize=font_medium)
         cbar.set_label(cbarlabel, fontsize = font_medium)
         cbar.ax.xaxis.set_label_position('top')
-        cstr = ('Values in pixel containing coordinates\n'
-              'model: {}\nvalidation: {}\ncontour interval: {} '
-              'ft\npixel width: {} m, {} ft'.format(model_date, course_date,
+        cstr = (r'Validation pixel $\pm${} pixels'
+              '\nmodel: {}\nvalidation: {}\ncontour interval: {} '
+              'ft\npixel width: {} m, {} ft'.format(npix, model_date, course_date,
               levels, str(pixel), str(int(pixel*3.28))))
         a[idx+1].text(annot_x2, annot_y2,cstr,horizontalalignment='left',
                     transform=a[idx+1].transAxes,fontsize = font_medium)
@@ -358,7 +346,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
             f1.delaxes(a1[n])
 
         a2.set_ylabel(cbarlabel)
-        a2.set_xticks(list(range(0,len(stns))))
+        a2.set_xticks(list(range(0,len(pixel_swe.station.unique()))))
         a2.set_xticklabels(pixel_swe.station.unique(), rotation = 90, fontsize = font_small - 1)
         a2.set_xlim((-0.5,len(pixel_swe.station.unique())))
         a2.legend(loc = 2)
@@ -367,6 +355,11 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
 
         a3.get_xaxis().set_ticks([])
         a3.get_yaxis().set_ticks([])
+        divider3 = make_axes_locatable(a3)
+        cax3 = divider3.append_axes("right", size="4%", pad=0.2)
+        cbar3 = plt.colorbar(h3, cax = cax3, ticks = list(veg))
+        cbar3.ax.tick_params()
+        cbar3.set_label('vegetation type classification')
 
         f.tight_layout()
         f1.tight_layout()
@@ -392,6 +385,5 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         fig_name = '{}{}.png'.format(figs_path,fig_name_short)
         logger.info(' saving {}'.format(fig_name))
         snowav.framework.figures.save_fig(f3, fig_name)
-
 
         return
