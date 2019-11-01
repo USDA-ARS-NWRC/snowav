@@ -9,6 +9,7 @@ import pandas as pd
 import cmocean
 import snowav.framework.figures
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+import copy
 
 def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                  heading, model_date, course_date, settings, pixel, logger):
@@ -43,7 +44,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
     '''
 
     if value == 'swe_z':
-        header = cbarlabel = 'swe [in]'
+        header = cbarlabel = 'SWE [in]'
 
     if value == 'density':
         header = 'density [kg/m^3]'
@@ -167,6 +168,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                 if vmax > g_max:
                     g_max = vmax
 
+        ymin = copy.deepcopy(g_min)
         g_min = 0
         veg = np.unique(veg)
         vl = list(veg)
@@ -176,6 +178,10 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         a3.contour(dem, colors = 'k', levels=lvls, linewidths = 0.15)
 
         place = np.linspace(g_min,g_max,256)
+
+        sep = 0.05
+        wid = 1/len(pixel_swe.station.unique())-sep
+        widths = np.arange((-1 + wid), (1 - wid), wid)
 
         for idx, v in enumerate(pixel_swe.station.unique()):
             mflag = False
@@ -216,46 +222,39 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
 
                 s = dem[(iy-npix):(iy+npix+1),(ix-npix):(ix+npix+1)]
                 snow_sec = output[(iy-npix):(iy+npix+1),(ix-npix):(ix+npix+1)]
+
                 l1 = [int(x)*snow_sec.shape[0]+npix-1 for x in range(npix-1,npix+2)] + \
                      [int(x)*snow_sec.shape[0]+npix for x in range(npix-1,npix+2)] + \
                      [int(x)*snow_sec.shape[0]+npix+1 for x in range(npix-1,npix+2)]
                 zo = 1
                 if idx == 0:
-                    ml = 'model, pixel containing point'
+                    ml = 'model'
                     vl = 'validation'
-                    sl = r'model, $\pm${} pixels'.format(npix)
+                    sl = r'$\pm${} pixels'.format(npix)
+                    bl1 = r'$\pm$1 pixel'.format(npix)
 
                 else:
                     ml = '__nolabel__'
                     vl = '__nolabel__'
                     sl = '__nolabel__'
+                    bl1 = '__nolabel__'
 
-                for idx2, v2 in enumerate(list(snow_sec.flatten())):
-                    clr = 'b'
-                    mkr = '.'
+                hv = a2.plot(idx, course, 'bP', markersize = 5, label = vl, zorder = 4)
+                hs = a2.plot(idx, swe, 'rX', markersize = 5, label = ml, zorder = 3)
+                b1 = a2.boxplot(snow_sec.flatten(), positions = [idx - 0.22],widths = 0.18, showfliers = False)
+                b2 = a2.boxplot(snow_sec.flatten()[l1], positions = [idx + 0.22], widths = 0.18, showfliers = False)
+                a2.plot(0,ymin,'dimgray', label = sl)
+                a2.plot(0,ymin,'forestgreen', label = bl1)
+                if idx == 0:
+                    astr = 'val-mod [in], %:\n{}\n{}%'.format(round((course-swe),1),int((swe/course)*100))
+                else:
+                    astr = '{}\n{}%'.format(round((course-swe),1),int((swe/course)*100))
 
-                    if idx == 0 and idx2 == 0:
-                        sl = r'model, $\pm${} pixels'.format(npix)
-                    else:
-                        sl = '__nolabel__'
+                a2.annotate(astr, (idx - 0.25, ymin - 2 ), fontsize = font_small, color = 'k')
 
-                    if idx2 in l1:
-                        clr = 'g'
-                        mkr = 'X'
-                        mkrs = 10
-
-                        if idx == 1 and idx2 == l1[-1]:
-                            sl = 'model, $\pm$1 pixel'
-
-                        if idx2 in l1:
-                            zo = 2
-
-                    a2.plot(idx, v2, '{}{}'.format(clr, mkr), markersize = 7, label = sl, zorder = zo)
-
-                    sl = '__nolabel__'
-
-                a2.plot(idx, course, 'kP', markersize = 10, label = vl, zorder = 4)
-                a2.plot(idx, swe, 'rX', markersize = 10, label = ml, zorder = 3)
+                for prop in ['boxes','whiskers','fliers','caps']:
+                    plt.setp(b1[prop], color = 'dimgray')
+                    plt.setp(b2[prop], color = 'forestgreen')
 
                 lvls = list(np.arange(np.min(s.flatten()), np.max(s.flatten()), levels))
                 ixs = int(np.where(abs(place-course) == min(abs(place-course)))[0])
@@ -348,8 +347,8 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         a2.set_ylabel(cbarlabel)
         a2.set_xticks(list(range(0,len(pixel_swe.station.unique()))))
         a2.set_xticklabels(pixel_swe.station.unique(), rotation = 90, fontsize = font_small - 1)
-        a2.set_xlim((-0.5,len(pixel_swe.station.unique())))
-        a2.legend(loc = 2)
+        a2.set_xlim((-1,len(pixel_swe.station.unique())+1))
+        a2.legend(loc='upper left')
         a2.grid(linewidth = 0.25)
         a2.set_title('Validation and Model Pixel Values, {}'.format(model_date))
 
