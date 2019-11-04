@@ -169,7 +169,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                     g_max = vmax
 
         ymin = copy.deepcopy(g_min)
-        g_min = 0
+        # g_min = 0
         veg = np.unique(veg)
         vl = list(veg)
         norm = matplotlib.colors.BoundaryNorm(vl,len(vl))
@@ -275,8 +275,12 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
 
                 a[idx].get_xaxis().set_ticks([])
                 a[idx].get_yaxis().set_ticks([])
-                a[idx].set_ylim((iy - (npix + 0.5), iy + npix + 0.5))
+                # a[idx].set_ylim((iy - (npix + 0.5), iy + npix + 0.5))
+                # a[idx].set_xlim((ix - (npix + 0.5), ix + npix + 0.5))
+
+                a[idx].set_ylim((iy + npix + 0.5),(iy - (npix + 0.5)))
                 a[idx].set_xlim((ix - (npix + 0.5), ix + npix + 0.5))
+
                 a[idx].set_title(v, fontsize = font_small)
 
                 # legend of sorts
@@ -290,7 +294,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
                 a1[idx].get_xaxis().set_ticks([])
                 a1[idx].get_yaxis().set_ticks([])
 
-                a1[idx].set_ylim( (iy + npix + 0.5),(iy - (npix + 0.5)))
+                a1[idx].set_ylim((iy + npix + 0.5),(iy - (npix + 0.5)))
                 a1[idx].set_xlim((ix - (npix + 0.5), ix + npix + 0.5))
                 a1[idx].set_title(v, fontsize = font_small)
 
@@ -315,7 +319,7 @@ def point_values(output, value, df, imgxy, filename, dem, figs_path, veg_type,
         a[idx+1].get_yaxis().set_ticks([])
         a[idx+1].axis('off')
         cbaxes = inset_axes(a[idx+1], width="90%", height="10%", loc=8)
-        cbar = f.colorbar(h, cax=cbaxes, ticks = [0, int(g_max/2), int(g_max)],
+        cbar = f.colorbar(h, cax=cbaxes, ticks = [int(g_min + 1), int(((g_max - g_min)/2) + g_min), int(g_max)],
                           orientation='horizontal')
         cbar.ax.tick_params(labelsize=font_medium)
         cbar.set_label(cbarlabel, fontsize = font_medium)
