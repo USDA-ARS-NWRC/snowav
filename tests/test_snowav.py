@@ -304,7 +304,7 @@ def check_precip_depth_figure():
 def check_report():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/SnowpackSummary20190403.pdf'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/snowpacksummary20190403.pdf'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 

@@ -4,6 +4,7 @@ import argparse
 import os
 import coloredlogs
 import logging
+import pandas as pd
 from snowav.framework.framework import snowav
 from snowav.framework import framework
 from snowav.framework.process_day import process
@@ -22,6 +23,10 @@ def run():
 
     parser.add_argument('-f', '--config_file', dest='config_file', type=str,
                         help='Path to snowav configuration file.')
+
+    parser.add_argument('-end_date', '--end-date', dest='end_date', type=str,
+                        help='End date that will override what is given in the '
+                        'config file, intended for airflow application.')
 
     parser.add_argument('-t', '--topo_path', dest='topo_path', type=str,
                         help='Path to topo.nc file.')
@@ -66,7 +71,17 @@ def run():
             raise Exception('Config file {} does not '
                             'exist'.format(args.config_file))
 
-        snowav(config_file = args.config_file)
+        if args.end_date is not None:
+            try:
+                end_date = pd.to_datetime(args.end_date)
+            except:
+                raise Exception('pandas failed parsing {} to datetime'.format(
+                    args.end_date))
+
+        else:
+            end_date = None
+
+        snowav(config_file = args.config_file, end_date = end_date)
         exit()
 
     ###########################################################################

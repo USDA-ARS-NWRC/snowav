@@ -48,7 +48,7 @@ def parse(self, external_logger=None):
                 plotlabels = self.plotlabels)
 
     self.dem = out['dem']
-    self.veg_type = out['veg_type']    
+    self.veg_type = out['veg_type']
     self.masks = out['masks']
     self.nrows = out['nrows']
     self.ncols = out['ncols']
@@ -105,7 +105,7 @@ def parse(self, external_logger=None):
                            self.elev_bins[1],
                            self.elev_bins[2])
 
-    if self.units == 'TAF':
+    if self.units == 'taf':
         self.conversion_factor = ((self.pixel**2)*0.000000810713194*0.001)
         self.depth_factor = 0.03937
         self.dem = self.dem * 3.28

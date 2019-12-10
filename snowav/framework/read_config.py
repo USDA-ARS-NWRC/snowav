@@ -10,7 +10,7 @@ import pandas as pd
 from datetime import datetime
 import copy
 
-def read_config(self, external_logger=None, awsm=None):
+def read_config(self, external_logger = None, awsm = None, end_date = None):
     '''
     Read snowav config file.
 
@@ -48,13 +48,13 @@ def read_config(self, external_logger=None, awsm=None):
     self.run_name = ucfg.cfg['snowav']['run_name']
     self.plotorder = ucfg.cfg['snowav']['masks']
 
-    if self.plotorder is not None and type(self.plotorder) != list:
-        self.plotorder = [self.plotorder]
+    if self.plotorder is not None:
+        self.plotorder = [x.title() for x in self.plotorder]
 
     self.plotlabels = ucfg.cfg['snowav']['plotlabels']
 
-    if self.plotlabels is not None and type(self.plotlabels) != list:
-        self.plotlabels = [self.plotlabels]
+    if self.plotlabels is not None:
+        self.plotorder = [x.title() for x in self.plotlabels]
 
     ####################################################
     #           run                                    #
@@ -63,6 +63,15 @@ def read_config(self, external_logger=None, awsm=None):
     self.dplcs = ucfg.cfg['run']['decimals']
     self.start_date = ucfg.cfg['run']['start_date']
     self.end_date = ucfg.cfg['run']['end_date']
+
+    if end_date is not None:
+        self.end_date = end_date
+        self.tmp_log.append(' Overriding config end_date with '
+                            '{} given with snowav call'.format(end_date))
+
+        if self.end_date <= self.start_date:
+            raise Exception('end_date {} earlier than start_date {}'.format(
+                            self.end_date, self.start_date))
 
     if self.start_date is not None and self.end_date is not None:
         self.start_date = self.start_date.to_pydatetime()
@@ -90,10 +99,14 @@ def read_config(self, external_logger=None, awsm=None):
                 self.run_dirs = [self.run_dirs]
 
     else:
+        directory = ucfg.cfg['run']['directory']
+
+        if len(directory) == 1:
+            directory = directory[0]
+
         if self.all_subdirs is True:
-            self.run_dirs = ([ucfg.cfg['run']['directory'] + s for s in
-                            os.listdir(ucfg.cfg['run']['directory'])
-                            if (os.path.isdir(ucfg.cfg['run']['directory'] + s)) ])
+            self.run_dirs = ([directory + s for s in os.listdir(directory)
+                            if (os.path.isdir(directory + s))])
         else:
             self.run_dirs = ucfg.cfg['run']['directory']
             if type(self.run_dirs) != list:
@@ -215,6 +228,9 @@ def read_config(self, external_logger=None, awsm=None):
     self.inputs_percentiles = ucfg.cfg['diagnostics']['inputs_percentiles']
     self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
     self.inputs_basins = ucfg.cfg['diagnostics']['inputs_basins']
+
+    if self.inputs_basins is not None:
+        self.inputs_basins = [x.title() for x in self.inputs_basins]
 
     # if self.inputs_flag:
     if self.inputs_basins is not None and self.plotorder is not None:

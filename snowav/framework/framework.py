@@ -12,7 +12,8 @@ from datetime import datetime
 
 class snowav(object):
 
-    def __init__(self, config_file = None, external_logger = None, awsm = None):
+    def __init__(self, config_file = None, external_logger = None, awsm = None,
+                 end_date = None):
         '''
         Read config file, parse config options, process results, put results
         on database, make figures, and make pdf report.
@@ -31,11 +32,11 @@ class snowav(object):
         # Get config options
         if awsm is None and os.path.isfile(config_file):
             self.config_file = config_file
-            read_config(self)
+            read_config(self, end_date = end_date)
 
         elif awsm is not None:
             self.config_file = awsm.configFile
-            read_config(self, awsm = awsm)
+            read_config(self, awsm = awsm, end_date = end_date)
 
         else:
             raise Exception('No config instance passed, or config file does '
