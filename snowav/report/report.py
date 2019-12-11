@@ -245,16 +245,16 @@ def report(self):
         variables['SUBBASINS_FIG'] = '{}'.format(self.subs_fig)
 
     # Logos
-    variables['ARSLOGO'] = self.figs_tpl_path + 'ARS.jpg'
-    variables['ASOLOGO'] = self.figs_tpl_path + 'ASO.jpg'
-    variables['USDALOGO'] = self.figs_tpl_path + 'USDA.png'
-    variables['JPLLOGO'] = self.figs_tpl_path + 'JPL.jpg'
-    variables['CDWRLOGO'] = self.figs_tpl_path + 'CDWR.png'
-    variables['USBRLOGO'] = self.figs_tpl_path + 'USBR.jpg'
-    variables['NRCSLOGO'] = self.figs_tpl_path + 'NRCS.jpg'
-    variables['KRWALOGO'] = self.figs_tpl_path + 'KRWA.jpg'
-    variables['FRIANTLOGO'] = self.figs_tpl_path + 'FRIANT.jpg'
-    variables['AWSMLOGO'] = self.figs_tpl_path + 'logo.png'
+    variables['ARSLOGO'] = os.path.join(self.figs_tpl_path, 'ARS.jpg')
+    variables['ASOLOGO'] = os.path.join(self.figs_tpl_path, 'ASO.jpg')
+    variables['USDALOGO'] = os.path.join(self.figs_tpl_path, 'USDA.png')
+    variables['JPLLOGO'] = os.path.join(self.figs_tpl_path, 'JPL.jpg')
+    variables['CDWRLOGO'] = os.path.join(self.figs_tpl_path, 'CDWR.png')
+    variables['USBRLOGO'] = os.path.join(self.figs_tpl_path, 'USBR.jpg')
+    variables['NRCSLOGO'] = os.path.join(self.figs_tpl_path, 'NRCS.jpg')
+    variables['KRWALOGO'] = os.path.join(self.figs_tpl_path, 'KRWA.jpg')
+    variables['FRIANTLOGO'] = os.path.join(self.figs_tpl_path, 'FRIANT.jpg')
+    variables['AWSMLOGO'] = os.path.join(self.figs_tpl_path, 'logo.png')
 
     dfind = [str(i) for i in self.edges]
     dfindt = [str(i) for i in self.edges] + ['total']
@@ -390,26 +390,26 @@ def report(self):
     # Summary sections and fig template have variable strings
     # (e.g. CHANGES_FIG) that need to be replaced
     section_dict = {'SUMMARY':self.summary_file,
-                    'CHANGES_FIG_TPL':self.figs_tpl_path + 'changes_fig_tpl.txt',
-                    'SWI_FIG_TPL':self.figs_tpl_path + 'swi_fig_tpl.txt',
-                    'TOTALS_FIG_TPL':self.figs_tpl_path + 'totals_fig_tpl.txt',
-                    'MULTITOTSWE_FIG_TPL':self.figs_tpl_path + 'multitotswe_fig_tpl.txt',
-                    'VALID_FIG_TPL':self.figs_tpl_path + 'valid_fig_tpl.txt',
-                    'FLTCHANGES_FIG_TPL':self.figs_tpl_path + 'flt_fig_tpl.txt',
-                    'PDEP_FIG_TPL':self.figs_tpl_path + 'pdep_fig_tpl.txt',
-                    'COLD_FIG_TPL':self.figs_tpl_path + 'cold_fig_tpl.txt',
-                    'SWE_FIG_TPL':self.figs_tpl_path + 'swe_fig_tpl.txt',
-                    'SUBBASINS_FIG_TPL':self.figs_tpl_path + 'subbasins_fig_tpl.txt',
-                    'SWEFORECAST_FIG_TPL':self.figs_tpl_path + 'forecastswe_fig_tpl.txt',
-                    'SWIFORECAST_FIG_TPL':self.figs_tpl_path + 'forecastswi_fig_tpl.txt',
-                    'CHANGESFORECAST_FIG_TPL':self.figs_tpl_path + 'forecastchanges_fig_tpl.txt',
-                    'TOTALSFORECAST_FIG_TPL':self.figs_tpl_path + 'forecasttotals_fig_tpl.txt',
-                    'PDEPFORECAST_FIG_TPL':self.figs_tpl_path + 'forecastpdep_fig_tpl.txt'
+                    'CHANGES_FIG_TPL':os.path.join(self.figs_tpl_path, 'changes_fig_tpl.txt'),
+                    'SWI_FIG_TPL':os.path.join(self.figs_tpl_path, 'swi_fig_tpl.txt'),
+                    'TOTALS_FIG_TPL':os.path.join(self.figs_tpl_path, 'totals_fig_tpl.txt'),
+                    'MULTITOTSWE_FIG_TPL':os.path.join(self.figs_tpl_path, 'multitotswe_fig_tpl.txt'),
+                    'VALID_FIG_TPL':os.path.join(self.figs_tpl_path, 'valid_fig_tpl.txt'),
+                    'FLTCHANGES_FIG_TPL':os.path.join(self.figs_tpl_path, 'flt_fig_tpl.txt'),
+                    'PDEP_FIG_TPL':os.path.join(self.figs_tpl_path, 'pdep_fig_tpl.txt'),
+                    'COLD_FIG_TPL':os.path.join(self.figs_tpl_path, 'cold_fig_tpl.txt'),
+                    'SWE_FIG_TPL':os.path.join(self.figs_tpl_path, 'swe_fig_tpl.txt'),
+                    'SUBBASINS_FIG_TPL':os.path.join(self.figs_tpl_path, 'subbasins_fig_tpl.txt'),
+                    'SWEFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastswe_fig_tpl.txt'),
+                    'SWIFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastswi_fig_tpl.txt'),
+                    'CHANGESFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastchanges_fig_tpl.txt'),
+                    'TOTALSFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecasttotals_fig_tpl.txt'),
+                    'PDEPFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastpdep_fig_tpl.txt')
                     }
 
     # Define and load summary tables depending on number of subbasins
-    section_dict['SWE_SUMMARY_TPL'] = '{}swe_summary_{}sub.txt'.format(
-                                    self.figs_tpl_path,str(len(self.plotorder)))
+    section_dict['SWE_SUMMARY_TPL'] = os.path.join(self.figs_tpl_path,
+        'swe_summary_{}sub.txt'.format(str(len(self.plotorder))))
 
     # Remove if no flight
     if self.flt_flag is False or not self.flight_figs:
@@ -522,9 +522,9 @@ def report(self):
     # Save in reports and with figs
     rpath = os.path.join(self.figs_path, '' + self.report_name)
     pdf.save_to(rpath)
-    self._logger.info(' saving {}'.format(rpath))
+    self._logger.info(' Saved {}'.format(rpath))
 
     if self.rep_path is not None:
         rpath = os.path.join(self.rep_path, '' + self.report_name)
         pdf.save_to(rpath)
-        self._logger.info(' saving {}'.format(rpath))
+        self._logger.info(' Saved {}'.format(rpath))

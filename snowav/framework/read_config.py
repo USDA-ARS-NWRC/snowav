@@ -169,6 +169,12 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.point_values_heading = ucfg.cfg['validate']['point_values_heading']
     self.point_values_settings = ucfg.cfg['validate']['point_values_settings']
 
+    if self.val_stns is not None:
+        self.val_stns = [x.upper() for x in self.val_stns]
+
+    if self.val_lbls is not None:
+        self.val_stns = [x.title() for x in self.val_lbls]
+
     if len(self.point_values_settings) != 14:
         self.tmp_log.append(' Expected [validate] point_values_settings to '
                             'have 14 values, point_values being set to False')
@@ -354,6 +360,8 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.flight_figs = ucfg.cfg['report']['flight_figs']
     self.tables = ucfg.cfg['report']['tables']
 
+    self.rep_title = self.rep_title.upper()
+
     self.rep_swi_flag = ucfg.cfg['report']['swi']
     if not self.swi_flag:
         self.rep_swi_flag = False
@@ -388,20 +396,15 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
 
     # check paths to see if they need default snowav path
     if self.env_path is None:
-        self.env_path = os.path.join(self.snowav_path,
-                                     'snowav/report/template/section_text/')
+        self.env_path = os.path.abspath('./snowav/report/template/section_text')
     if self.templ_path is None:
-        self.templ_path = os.path.join(self.snowav_path,
-                                       'snowav/report/template/')
+        self.templ_path = os.path.abspath('./snowav/report/template')
     if self.summary_file is None:
-        self.summary_file = os.path.join(self.snowav_path,
-                      'snowav/report/template/section_text/report_summary.txt')
+        self.summary_file = os.path.abspath('./snowav/report/template/section_text/report_summary.txt')
     if self.tex_file is None:
-        self.tex_file = os.path.join(self.snowav_path,
-                                     'snowav/report/template/snowav_report.tex')
+        self.tex_file = os.path.abspath('./snowav/report/template/snowav_report.tex')
     if self.figs_tpl_path is None:
-        self.figs_tpl_path = os.path.join(self.snowav_path,
-                                          'snowav/report/figs/')
+        self.figs_tpl_path = os.path.abspath('./snowav/report/figs')
 
     ####################################################
     #           forecast                               #
