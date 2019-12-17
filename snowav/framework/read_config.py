@@ -47,14 +47,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.dempath = ucfg.cfg['snowav']['dempath']
     self.run_name = ucfg.cfg['snowav']['run_name']
     self.plotorder = ucfg.cfg['snowav']['masks']
-
-    if self.plotorder is not None:
-        self.plotorder = [x.title() for x in self.plotorder]
-
     self.plotlabels = ucfg.cfg['snowav']['plotlabels']
-
-    if self.plotlabels is not None:
-        self.plotorder = [x.title() for x in self.plotlabels]
 
     ####################################################
     #           run                                    #
@@ -169,12 +162,6 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.point_values_heading = ucfg.cfg['validate']['point_values_heading']
     self.point_values_settings = ucfg.cfg['validate']['point_values_settings']
 
-    if self.val_stns is not None:
-        self.val_stns = [x.upper() for x in self.val_stns]
-
-    if self.val_lbls is not None:
-        self.val_stns = [x.title() for x in self.val_lbls]
-
     if len(self.point_values_settings) != 14:
         self.tmp_log.append(' Expected [validate] point_values_settings to '
                             'have 14 values, point_values being set to False')
@@ -226,7 +213,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
                     self.tmp_log.append(' Config option [diagnostics] basin: {} '
                                         'does not match what was supplied in '
                                         '[snowav] masks: {}, diagnostics set '
-                                        'to False'.format(basin, plotorder))
+                                        'to False'.format(basin, self.plotorder))
                     self.diagnostics_flag = False
 
     self.inputs_flag = ucfg.cfg['diagnostics']['inputs_table']
@@ -234,9 +221,6 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.inputs_percentiles = ucfg.cfg['diagnostics']['inputs_percentiles']
     self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
     self.inputs_basins = ucfg.cfg['diagnostics']['inputs_basins']
-
-    if self.inputs_basins is not None:
-        self.inputs_basins = [x.title() for x in self.inputs_basins]
 
     # if self.inputs_flag:
     if self.inputs_basins is not None and self.plotorder is not None:
@@ -359,8 +343,6 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
     self.flight_figs = ucfg.cfg['report']['flight_figs']
     self.tables = ucfg.cfg['report']['tables']
-
-    self.rep_title = self.rep_title.upper()
 
     self.rep_swi_flag = ucfg.cfg['report']['swi']
     if not self.swi_flag:
