@@ -68,7 +68,8 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
             # Consider making this a warning, with an else: .remove(path)
             # to catch other files that are in these directories
             if not os.path.isfile(snowfile):
-                raise Exception('{} not a valid file'.format(snowfile))
+                log.append(' {} not a valid file'.format(snowfile))
+                return [], [], [], [], log
 
             ncf = nc.Dataset(snowfile)
             ta = nc.num2date(ncf.variables['time'][:],ncf.variables['time'].units)

@@ -126,6 +126,25 @@ def parse(self, external_logger=None):
                                               wy = self.wy,
                                               loglevel = self.loglevel)
 
+    # If there was an error parsing files catch and log it
+    if out == [] and all_dirs == [] and 'not a valid file' in log[-1]:
+
+        self.tmp_log.append(log[-1])
+        if self.start_date is not None and self.end_date is not None:
+            ext_shr = (self.directory +
+                      '_'  +
+                      self.start_date.date().strftime("%Y%m%d") +
+                      '_' +
+                      self.end_date.date().strftime("%Y%m%d") )
+            self.figs_path = os.path.join(self.save_path, '{}/'.format(ext_shr))
+
+            if external_logger == None:
+                createLog(self)
+            else:
+                self._logger = external_logger
+                
+        raise Exception(log[-1])
+
     for l in log:
         self.tmp_log.append(l)
 
