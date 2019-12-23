@@ -223,6 +223,8 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                 else:
                     df.loc[elev,bid] = e['value'].sum(skipna=False)
 
+    df = df[plotorder]
+
     return df
 
 def query(connector, start_date, end_date, run_name, basins, bid = None,

@@ -278,7 +278,7 @@ def report(self):
         swe_byelev.index.name = 'Elevation'
         variables['SWE_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                     %(self.depthlbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
-                                    spacecmd + swe_byelev[[*self.labels.values()]].to_latex(na_rep='-', column_format=colstr) +
+                                    spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
                                     r'} \\ \footnotesize{\textbf{Table %s:} SWE depth.}'%(str(mtables)))
         mtables += 1
         ptables += 1
@@ -299,7 +299,7 @@ def report(self):
         swe_byelev.index.name = 'Elevation'
         variables['SWEVOL_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
                                     %(self.vollbl,self.report_date.date().strftime("%Y-%-m-%-d")) +
-                                    spacecmd + swe_byelev[[*self.labels.values()]].to_latex(na_rep='-', column_format=colstr) +
+                                    spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
                                     r'} \\ \footnotesize{\textbf{Table %s:} SWE volume.}%s'%(str(mtables),clrpage))
         mtables += 1
 
@@ -325,7 +325,7 @@ def report(self):
         variables['DSWE_BYELEV'] = (r'  \normalsize \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
                                     %(self.depthlbl,self.report_start.date().strftime("%Y-%-m-%-d"),
                                       self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                      dswe_byelev[[*self.labels.values()]].to_latex(na_rep='-', column_format=colstr) +
+                                      dswe_byelev.to_latex(na_rep='-', column_format=colstr) +
                                       r'} \\ \footnotesize{\textbf{Table %s:} Change in SWE.} %s'%(str(mtables),clrpage))
         mtables += 1
 
@@ -348,7 +348,7 @@ def report(self):
 
         variables['SWEPER_BYELEV'] = (r'  \normalsize \textbf{SWE volume, percent of basin total, %s}\\ \vspace{0.1cm} \\'
                                     %(self.report_date.date().strftime("%Y-%-m-%-d"))+
-                                    spacecmd + sweper_byelev[[*self.labels.values()]].round(1).to_latex(na_rep='-', column_format=colstr) +
+                                    spacecmd + sweper_byelev.round(1).to_latex(na_rep='-', column_format=colstr) +
                                     r'}  \\ \footnotesize{\textbf{Table %s:} Percent of total SWE volume.}%s'%(str(mtables),clrpage))
         variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
 
@@ -364,7 +364,7 @@ def report(self):
         variables['ACCUM_BYELEV'] = (r' \normalsize \textbf{SWI [%s] by elevation, %s to %s}\\ \vspace{0.1cm} \\'
                                     %(self.vollbl,self.report_start.date().strftime("%Y-%-m-%-d"),
                                       self.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                      swi_byelev[[*self.labels.values()]].to_latex(na_rep='-', column_format=colstr) +
+                                      swi_byelev.to_latex(na_rep='-', column_format=colstr) +
                                       r'} \\ \footnotesize{\textbf{Table %s:} SWI volume. }'%(str(mtables)))
         mtables += 1
 
