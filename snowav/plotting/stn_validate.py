@@ -149,7 +149,7 @@ def stn_validate(args, logger):
                                 'outside of domain, exiting stn_validate() '
                                 'and not generating figure'.format(stn))
                     flag = False
-                    return
+                    return '', flag
 
                 for ix, (n,m) in enumerate(zip(px,py)):
                     land_stn = stn + '_{}'.format(str(ix))
