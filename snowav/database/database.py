@@ -691,8 +691,12 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
 
     # Initialize basins within the watershed
     for i,name in enumerate(plotorder):
+
+        # This logic doesn't work if trying to 'move' a subbasin from one watershed to another,
+        # i.e., 'Cherry Creek' going from part of the Extended Tuolumne to Tuolumne River
+        # Basin in wy2020
         if name in bs['basin_name'].values:
-            bid = int(bs[(bs['watershed_id'] == wid) & (bs['basin_name'] == name)]['basin_id'].values)
+            bid = int(bs[(bs['watershed_id'] == wid) & (bs['basin_name'] == name)]['basin_id'].values[0])
 
         else:
             logger.append(' {} not found as a basin in '.format(name) +

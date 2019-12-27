@@ -69,9 +69,16 @@ def plotlims(plotorder):
             legy2 = 0.88
             basin_name = 'lakes'
 
-        if 'Tuolumne' in basin:
+        if basin == 'Extended Tuolumne':
             legy = 0.75
             btx = 0.28
+            basin_name = 'tuolumne'
+
+        if basin == 'Tuolumne River Basin':
+            legy = 0.46
+            btx = 0.28
+            pbbx = 0.25
+            legy2 = 0.30
             basin_name = 'tuolumne'
 
         if 'Boise' in basin:
