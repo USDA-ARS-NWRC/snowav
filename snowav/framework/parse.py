@@ -27,7 +27,9 @@ def parse(self, external_logger=None):
                       'xkcd:blue green',
                       'xkcd:bluish purple',
                       'xkcd:lightish purple',
-                      'xkcd:deep magenta']
+                      'xkcd:deep magenta',
+                      'xkcd:burgundy',
+                      'red']
 
     # These are used in process() and database table VariableUnits
     self.vars = OrderedDict([('coldcont','cold content'),
@@ -142,7 +144,7 @@ def parse(self, external_logger=None):
                 createLog(self)
             else:
                 self._logger = external_logger
-                
+
         raise Exception(log[-1])
 
     for l in log:
