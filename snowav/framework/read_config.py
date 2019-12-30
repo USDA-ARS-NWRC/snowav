@@ -9,6 +9,7 @@ import os
 import pandas as pd
 from datetime import datetime
 import copy
+import calendar
 
 def read_config(self, external_logger = None, awsm = None, end_date = None):
     '''
@@ -343,6 +344,20 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.figs_tpl_path = ucfg.cfg['report']['figs_tpl_path']
     self.flight_figs = ucfg.cfg['report']['flight_figs']
     self.tables = ucfg.cfg['report']['tables']
+    self.report_diagnostics = ucfg.cfg['report']['diagnostics']
+    self.report_diagnostics_day = ucfg.cfg['report']['diagnostics_day']
+
+    if self.report_diagnostics and (not self.inputs_fig_flag or not self.diagnostics_flag):
+        self.tmp_log.append(" [report] diagnostics: True, but must also have "
+            "[plots] inputs: True and [diagnostics] diagnostics: True, "
+            "setting to False")
+
+    if self.report_diagnostics and self.report_diagnostics_day[0] != 'all':
+
+        if calendar.day_name[datetime.now().weekday()] not in self.report_diagnostics_day:
+            self.report_diagnostics = False
+            self.tmp_log.append(" Per [report] diagnostics_day: {}, "
+                "setting diagnostics: False".format(self.report_diagnostics_day))
 
     self.rep_swi_flag = ucfg.cfg['report']['swi']
     if not self.swi_flag:

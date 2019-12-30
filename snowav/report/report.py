@@ -232,7 +232,7 @@ def report(self):
         for name in self.flight_diff_fig_names:
             variables['DFLT_FIG'] = name
 
-    if self.forecast_flag is True:
+    if self.forecast_flag:
         variables['FORE_START_DATE'] = self.for_start_date.date().strftime("%B %-d")
         variables['FORE_DATE'] = self.for_end_date.date().strftime("%B %-d")
         variables['SWEFORECAST_FIG'] = 'swe_volume_{}.png'.format(self.directory + '_forecast')
@@ -240,6 +240,10 @@ def report(self):
         variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(self.directory + '_forecast')
         variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(self.directory + '_forecast')
         variables['PDEPFORECAST_FIG'] = 'precip_depth_{}.png'.format(self.directory + '_forecast')
+
+    if self.report_diagnostics:
+        variables['DIAGNOSTICS_FIG'] = 'diagnostics_{}'.format(self.directory)
+        variables['INPUTS_FIG'] = 'inputs_period_{}'.format(self.directory)
 
     if self.subs_fig is not None:
         variables['SUBBASINS_FIG'] = '{}'.format(self.subs_fig)
@@ -404,7 +408,8 @@ def report(self):
                     'SWIFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastswi_fig_tpl.txt'),
                     'CHANGESFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastchanges_fig_tpl.txt'),
                     'TOTALSFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecasttotals_fig_tpl.txt'),
-                    'PDEPFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastpdep_fig_tpl.txt')
+                    'PDEPFORECAST_FIG_TPL':os.path.join(self.figs_tpl_path, 'forecastpdep_fig_tpl.txt'),
+                    'DIAGNOSTICS_FIG_TPL':os.path.join(self.figs_tpl_path, 'diagnostics_fig_tpl.txt')
                     }
 
     # Define and load summary tables depending on number of subbasins
@@ -412,11 +417,15 @@ def report(self):
         'swe_summary_{}sub.txt'.format(str(len(self.plotorder))))
 
     # Remove if no flight
-    if self.flt_flag is False or not self.flight_figs:
+    if not self.flt_flag or not self.flight_figs:
         del section_dict['FLTCHANGES_FIG_TPL']
 
+    if not self.report_diagnostics:
+        del section_dict['DIAGNOSTICS_FIG_TPL']
+        variables['DIAGNOSTICS_FIG'] = ''
+
     # Remove if no forecast
-    if self.forecast_flag is False:
+    if not self.forecast_flag:
         del section_dict['SWEFORECAST_FIG_TPL']
         del section_dict['SWIFORECAST_FIG_TPL']
         del section_dict['CHANGESFORECAST_FIG_TPL']

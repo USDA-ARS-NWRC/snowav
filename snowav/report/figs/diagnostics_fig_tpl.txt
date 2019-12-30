@@ -1,0 +1,18 @@
+\clearpage
+\section*{{\color{blue} \textbf{Diagnostics Summary}}}
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHDIAGNOSTICS_FIG}
+	\caption{Model state diagnostics.}
+\end{centering}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[htbp]
+\begin{centering}
+	\includegraphics[width=0.8\textwidth]{FIG_PATHINPUTS_FIG}
+	\caption{Model inputs diagnostics.}
+\end{centering}
+\end{figure}
