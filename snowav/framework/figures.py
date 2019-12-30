@@ -337,7 +337,7 @@ def figures(self):
                 check_headings = [self.point_values_heading[idxp],'name',
                                   'latitude','longitude']
             else:
-                check_headings = ['name', 'latitude', 'longitude']                                  
+                check_headings = ['name', 'latitude', 'longitude']
 
             for head in check_headings:
                 if head not in df.columns.tolist():
@@ -415,6 +415,7 @@ def figures(self):
         else:
             args['inflow_summary'] = pd.read_csv(self.summary_csv,
                                                  parse_dates=[0], index_col = 0)
+
 
         args['inflow_headings'] = self.inflow_headings
         args['basin_headings'] = self.basin_headings

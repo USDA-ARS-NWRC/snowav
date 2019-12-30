@@ -29,6 +29,9 @@ def inflow(args, logger):
             for row in sheet.rows():
                 df.append([item.v for item in row])
 
+    manually assigning inflow from sheets, see sample at
+    /home/markrobertson/wkspace/projects/inflow/sanjoaquin.csv
+
     Args
     ----------
     args : dict
@@ -119,44 +122,52 @@ def excel_to_csv(args, logger):
     overwrite = args['overwrite']
     convert = args['convert']
 
-    # recipe depending on basin?
-    if True:
-        date_heading = '        HETCH HETCHY WATER AND POWER SYSTEM'
-
-    # if convert == float(0.0098):
-    #     ulbl = 'TAF'
-
-    if not os.path.isfile(csv_file):
+    if csv_file is None or not os.path.isfile(csv_file):
         if logger is not None:
             logger.info(' {} not a file, creating it...'.format(csv_file))
 
-        date_range = pd.date_range(datetime(wy,10,1),datetime(wy,10,1),freq='D')
+        date_range = pd.date_range(datetime(wy-1,10,1),datetime(wy,9,30),freq='D')
         csv = pd.DataFrame(index = date_range, columns = basin_headings)
 
     else:
         csv = pd.read_csv(csv_file, parse_dates=[0], index_col = 0)
 
-    # if no path is supplied we just read in existing csv
-    if path is not None:
-        files = os.listdir(path)
+    # Tuolumne
+    if inflow_headings[0] == 'HETCHY':
+        date_heading = '        HETCH HETCHY WATER AND POWER SYSTEM'
 
-        for file in files:
-            if file_base in file:
-                # get date from loading in full file
-                f = pd.read_excel(os.path.join(path,file),
-                                  sheet_name = sheet_name,
-                                  skiprows = 0)
-                inflow_date = pd.to_datetime(f[date_heading].values[date_idx])
-                data = pd.read_excel(os.path.join(path,file),
-                                     sheet_name=sheet_name,
-                                     skiprows=skiprows)
+        # if no path is supplied we just read in existing csv
+        if path is not None:
+            files = os.listdir(path)
 
-                if not inflow_date.date() in csv.index or overwrite:
-                    for basin,heading in zip(basin_headings,inflow_headings):
-                        if logger is not None:
-                            logger.info(' Assigning basin inflow in {}: {}, {} to '
-                                          '{}'.format(file, inflow_date, heading, basin))
-                        csv.loc[inflow_date,basin] = data[heading].values[11]*convert
+            for file in files:
+                if file_base in file:
+                    # get date from loading in full file
+                    f = pd.read_excel(os.path.join(path,file),
+                                      sheet_name = sheet_name,
+                                      skiprows = 0)
+                    inflow_date = pd.to_datetime(f[date_heading].values[date_idx])
+                    data = pd.read_excel(os.path.join(path,file),
+                                         sheet_name=sheet_name,
+                                         skiprows=skiprows)
 
-    csv.sort_index(inplace=True)
-    csv.to_csv(csv_file)
+                    if not inflow_date.date() in csv.index or overwrite:
+                        for basin,heading in zip(basin_headings,inflow_headings):
+                            if logger is not None:
+                                logger.debug(' Assigning basin inflow in {}: {}, {} to '
+                                              '{}'.format(file, inflow_date, heading, basin))
+                            csv.loc[inflow_date,basin] = data[heading].values[11]*convert
+
+        csv.sort_index(inplace=True)
+        csv.to_csv(csv_file)
+
+
+    # if inflow_headings[0] == 'Millerton':
+    #     inflow_headings[0] = 'Millerton Inflow'
+    #
+    #     date_heading = 'date'
+    #     files = os.listdir(path)
+    #     f = pd.read_csv(os.path.join(path,files[0]), index_col = 'date')
+    #     f = f['Millerton Inflow']*convert
+    #
+    #     f.to_csv(csv_file)
