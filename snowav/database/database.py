@@ -29,7 +29,7 @@ try:
     awsm_version = awsm.__version__
 
 except:
-    print('Could not import awsm, database smrf version will be "unknown"')
+    print('Could not import awsm, database awsm version will be "unknown"')
     awsm_version = 'unknown'
 
 def make_session(connector):

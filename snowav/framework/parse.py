@@ -75,7 +75,7 @@ def parse(self, external_logger=None):
         for basin in self.basins:
             self.tmp_log.append(' {}: {}'.format(basin, self.basins[basin]))
 
-        self.tmp_log.append(' Connection: {}'.format(self.connector))
+        # self.tmp_log.append(' Connection: {}'.format(self.connector))
 
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
