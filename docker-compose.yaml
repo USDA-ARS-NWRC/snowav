@@ -1,19 +1,26 @@
 
-database:
-  image: mysql_xtra
-  container_name: snowav_database
-  restart: always
-  volumes:
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'snowav'
+      MYSQL_USER: 'mark'
+      MYSQL_PASSWORD:
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+    ports:
+      - '8888:3306'
+    expose:
+      - '3306'
+    volumes:
       - /database/docker_snowav:/var/lib/mysql
       - /home/database/backup/snowav_database:/backup
       - /home/database/scripts/bgbackup_snowav.cnf:/home/bgbackup/bgbackup.cnf
-  ports:
-    - 8888:3306
-  environment:
-    MYSQL_DATABASE: snowav
-    MYSQL_USER:
-    MYSQL_PASSWORD:
-    MYSQL_ROOT_PASSWORD:
-    MYSQL_ROOT_HOST: 172.17.0.2
-    MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-    
+      # - db:/var/lib/mysql
+
+volumes:
+  db:
