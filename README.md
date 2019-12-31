@@ -3,26 +3,84 @@
 [![GitHub version](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav.svg)](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav)
 [![Build Status](https://travis-ci.org/USDA-ARS-NWRC/snowav.svg?branch=devel)](https://travis-ci.org/USDA-ARS-NWRC/snowav)
 
-SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho. It processes AWSM model outputs into formats and figures for water resource managers. See CoreConfig.ini for details on config options.
+SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho, and processes AWSM model outputs into formats and figures for use by water resource managers. See CoreConfig.ini for details on config options.
 
 ![image](https://raw.githubusercontent.com/USDA-ARS-NWRC/awsm/master/docs/_static/ModelSystemOverview_new.png)
+
+## Install
+The user can either clone this repository or pip install from PyPi.
 
 ## Requirements
 Currently snowav requires:
 - awsm model results in awsm_daily format, including output files in the paths ```.../runs/runYYYYMMDD/snow.nc``` and ```.../runs/runYYYYMMDD/em.nc```, and input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/```
 - topo.nc files that have been created by the basin_setup package
-- correct date information in all snow.nc files
+- correct date tags in all snow.nc files
+- input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/precip.nc``` and ```.../data/dataYYYYMMDD/smrfOutputs/percent_snow.nc```. If these do not exist, any precip figures will be set to False.
+- the ```lidar_depths_wyYYYY.nc``` file, specified in the config file in [plots] update_file, contains all relevant flights that have been flown. Flights in this file can be removed from processing using [plots] *update_numbers*, but they can't be added.
 
-snowav expects:
-
-- input files in the paths ```.../data/dataYYYYMMDD/smrfOutputs/precip.nc``` and ```.../data/dataYYYYMMDD/smrfOutputs/percent_snow.nc```. If these do not exist the precip figures will be turned off.
-- the lidar_depths_wy2019.nc file, specified in the config file in [plots] update_file, contains all relevant flights that have been flown. Flights in this file can be removed from processing using [plots] *update_numbers*, but they can't be added.
-
-## Usage
+## Standard Use
 The standard snowav model processing, database placement, and figures run is:
 ```
 $ snowav -f config.ini
 ```
+
+Below are notes for some of the config file fields, for additional information for all options see ```snowav/config/CoreConfig.ini```.
+
+#### [snowav]
+```save_path:``` Path to save results to.
+
+```directory:``` Name of folder that will be created under ```save_path```.
+
+```run_name:``` **This is important!** The ```run_name``` field is how results get stored on the database, so only one ```run_name``` field can exist per basin and date. Results will be overwritten if ```[database] overwrite: True```.
+
+```masks:``` This can be used to subset masks that appear in the ```topo.nc``` file in ```dempath```, but is not necessary. If used, the names must match what is found in ```topo.nc```.
+
+```plotlabels:```  This can be used to make different plot labels for the subbasins listed in ```topo.nc```. This must be used with a ```masks``` list.
+
+
+#### [run]
+```directory:``` Load everything from this directory, must end with ```.../runs```. Can subset a date range by using ```start_date``` and ```end_date``` if desired. Can also give a list of single directories that end with ```.../runs/runYYYYMMDD``` and set ```all_subdirs: False```.
+
+```start_date:``` Subsets ```directory```.
+
+```end_date:``` Subsets ```directory```. Can also include a command line call to overwrite this field, which is used in docker-airflow application
+
+```
+$ snowav -f config.ini -end_date "2019-12-30 23:00"
+```
+
+#### [database]
+
+```overwrite:``` If True, will overwrite database values with same basin and ```run_name```. Set to True if results need to be updated, otherwise leave False for processing speed up.
+
+```convert_ws:``` Converts watershed names to original snowav database version from wy2019, set to True for all but the Tuolumne basin.
+
+#### [diagnostics]
+```diagnostics:``` Creates a simple model state diagnostics figure.
+
+```inputs_table:``` Includes smrf field output summaries on the snowav database.
+
+#### [plots]
+Turn figures on and off. Some figures require additional fields to be set.
+
+```update_file:``` If a path to a  ```lidar_depths.nc``` is supplied, flight difference figures will be made.
+
+Currently the figures listed below are created by default in both the ```[plots]``` and ```[reports]``` sections. If any of them are set to *False* in ```[plots]``` they will be set to *False* in ```[reports]```. For additional figures to be added to a report they must be *True* in both ```[plots]``` and ```[reports]```.
+  - swi
+  - image_change
+  - cold_content  
+  - swe_volume
+  - basin_total
+  - precip_depth
+
+#### [report]
+Figures and tables that are included in the report can be turned on and off here, but they need to be created in ```[plots]``` if you want them in the report.
+
+#### [inflow]
+```inflow: True``` triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets. San Joaquin requires editing of the .xls sheets.
+
+
+## Additional Features
 
 To process a single snow.nc file and display simple SWE volume figure, without putting results on a database:
 
@@ -38,9 +96,7 @@ For a simple difference between two snow.nc files:
 $ snowav -t <topo.nc> -A <snow.nc> -B <snow.nc>
 ```
 
-For awsm >= 0.9.26, if awsm config field [awsm master] snowav_config is given a valid snowav config file, a full snowav run with that config will be run at the end of all awsm functionality.
-
-To query and output existing database records, either to the terminal or csv, see CoreConfig.ini [query] section and example below. If [query] *query: True* no other functionality other than the query will be run. This currently requires database login created from [database] section and *mysql: snowav*.
+To query and output existing database records, either to the terminal or csv, see CoreConfig.ini ```[query]``` section and example below. If ```[query] query: True``` no other functionality other than the query will be run. This currently requires database login created from ```[database]``` ```mysql: snowav```.
 ```
 [query]
 query:              True
@@ -57,30 +113,18 @@ database:           mysql+mysqlconnector://<user>:<pwd>@172.17.0.2/snowav
 ```
 
 ## Notes and Considerations
-- **Be deliberate with the [snowav] *run_name* field!** This is how processing runs are identified on the database, and existing records with the same *run_name*, basin, and date range will be deleted and replaced during re-runs of the same snow.nc files. The *run_name* field should, in most cases and normal use, be connected with a specific [run] *directory*. We suggest using fields such as *tuol_wy2019_ops* and re-running snowav with *tuol_wy2019_ops* over the proper directory if modifications are made mid-season.
-
-- Currently the figures listed below are created by default in both the [plots] and [reports] section. If any of them are set to *False* in [plots] they will be set to *False* in [reports] internally. For additional figures to be added to a report they must be *True* in both [plots] and [reports].
-  - swi
-  - image_change
-  - cold_content  
-  - swe_volume
-  - basin_total
-  - precip_depth
-
+- **Be deliberate with the [snowav] *run_name* field!** This is how processing runs are identified on the database, and existing records with the same ```run_name```, basin, and date range will be deleted and replaced during re-runs of the same snow.nc files. The ```run_name``` field should, in most cases and normal use, be connected with a specific ```[run]``` ```directory```. We suggest using fields such as *tuol_wy2019_ops* and re-running snowav with *tuol_wy2019_ops* over the proper directory if modifications are made mid-season.
 
 - If depth updates have been applied, year-to-date precipitation values in report Table 1 are no longer valid, although they will still appear. This table includes precipitation and rain derived from the HRRR inputs and does not account for mass that may be added or removed via snow depth updates.
 
-- To help debugging the pdf report if it fails rendering to latex, set config option [report] *print_latex: True*. This will print the full latex file to the screen immediately prior to rendering.
+- To help debugging the pdf report if it fails rendering to latex, set config option ```[report]``` ```print_latex: True```. This will print the full latex file to the screen immediately prior to rendering.
 
-- The SWE pillow validation figure [plots] *stn_validate* requires SWE fields on the existing weather database and [validate] fields to be filled in.
+- The SWE pillow validation figure ```[plots]``` ```stn_validate``` requires SWE fields on the existing weather database and ```[validate]``` fields to be filled in.
 
 - Topo.nc, masks, and plot labels <br/>
-Config field [snowav] *masks* can be left blank, and will default to the long_name fields in the topo.nc file. To subset the number of basins processed and plotted, use *masks* with a list: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/>
+```[snowav] masks:``` can be left blank, and will default to the long_name fields in the ```topo.nc``` file. To subset the number of basins processed and plotted, use ```masks:``` with a list: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/>
 To replace the plot labels, use the *plotlabels* field in combination with *masks*: <br/> *masks: San Joaquin River Basin, Main, South Fork* <br/> *plotlabels: San Joaquin, Mammoth, South Fork*
 
-- Setting config option [inflow] *inflow: True* triggers reading in operator-generated inflow and the inflow figure. Currently only configured to work with the Tuolumne, and 'FORM11' excel sheets.
-
-- Config option [diagnostics] *inputs_table: True* and associated fields will trigger summary processing of smrf input data (see CoreConfig.ini for more information). Use [plots] *inputs: True* to make figures for inputs data.
 
 ## SNOWAV Processing Utility
 The snowav processing utility snowav.utils.utilities.calculate can be used to make simple calculations on snow.nc and em.nc files. See scripts.sample_process.py for an example.
