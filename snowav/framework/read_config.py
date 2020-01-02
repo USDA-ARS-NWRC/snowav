@@ -352,7 +352,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
             "[plots] inputs: True and [diagnostics] diagnostics: True, "
             "setting to False")
 
-    if self.report_diagnostics and self.report_diagnostics_day[0] != 'all':
+    if self.report_diagnostics and self.report_diagnostics_day[0] != 'any':
 
         if calendar.day_name[datetime.now().weekday()] not in self.report_diagnostics_day:
             self.report_diagnostics = False
