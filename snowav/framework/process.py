@@ -14,6 +14,7 @@ from tablizer.defaults import Units
 from tablizer.tablizer import get_existing_records
 import time
 import warnings
+from sys import exit
 
 def process(args):
     '''
@@ -59,6 +60,12 @@ def process(args):
     dz = pd.DataFrame(np.nan, index = edges, columns = masks.keys())
     precip_total = np.zeros((args['nrows'],args['ncols']))
     rain_total = np.zeros((args['nrows'],args['ncols']))
+
+    # Check that topo and outputs are the same dimensions
+    if outputs['swe_z'][0].shape != dem.shape:
+        logging.error(" topo.nc dimensions: {} do not match output "
+            "dimensions: {}".format(dem.shape, outputs['swe_z'][0].shape))
+        exit()
 
     for iters, out_date in enumerate(outputs['dates']):
 
