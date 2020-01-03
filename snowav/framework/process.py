@@ -82,8 +82,15 @@ def process(args):
                         logging.debug(' Skipping outputs for {}, {}, '
                                      'database records exist...'.format(bid,
                                      out_date.strftime("%Y-%-m-%-d %H:00")))
+
+                    # If database records exist we can skip all outputs except
+                    # for density on the last day, if making the figure
                     pass_flag = True
-                    proc_list = ['density']
+                    flag = False
+                    if out_date == outputs['dates'][-1] and args['density_figure']:
+                        proc_list = ['density']
+                    else:
+                        proc_list = []
 
                 else:
                     out = delete(args['connector'], args['basins'], out_date,
@@ -116,17 +123,21 @@ def process(args):
             density[name] = {}
 
         # Get daily rain from hourly input data
-        flag, path, pre, rain = precip(rundirs_dict[outputs['time'][iters]],
-                                       precip_path)
+        # Only run this processing if database records don't exist, or if
+        # we are making the precip figure
+        if not pass_flag or args['precip_depth_figure']:
+            logging.debug(' Processing precip for {}'.format(
+                         out_date.strftime("%Y-%-m-%-d %H:00")))
+            flag, path, pre, rain = precip(rundirs_dict[outputs['time'][iters]],
+                                           precip_path)
 
-        if flag:
-            precip_total = precip_total + pre
-            rain_total = rain_total + rain
-
-        else:
-            logging.info(' WARNING! Expected to find {} but it is not a valid '
-                       'file, precip will not be calculated or put on the '
-                       'database, no precip figures will be made'.format(path))
+            if flag:
+                precip_total = precip_total + pre
+                rain_total = rain_total + rain
+            else:
+                logging.warning(' Expected to find {} but it is not a valid '
+                           'file, precip will not be calculated or put on the '
+                           'database, no precip figures will be made'.format(path))
 
         if args['inputs_flag']:
             mask_list = []

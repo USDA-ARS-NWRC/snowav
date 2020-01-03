@@ -329,6 +329,9 @@ def parse(self, external_logger=None):
     self.pargs['inputs_basins'] = self.inputs_basins
     self.pargs['inputs_variables'] = self.inputs_variables
     self.pargs['inputs_percentiles'] = self.inputs_percentiles
+    self.pargs['precip_depth_figure'] = self.precip_depth_flag
+    self.pargs['density_figure'] = self.density_flag
+
     if self.mysql is not None:
         self.pargs['dbs'] = 'sql'
     else:
