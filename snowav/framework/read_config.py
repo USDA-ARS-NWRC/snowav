@@ -346,6 +346,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.tables = ucfg.cfg['report']['tables']
     self.report_diagnostics = ucfg.cfg['report']['diagnostics']
     self.report_diagnostics_day = ucfg.cfg['report']['diagnostics_day']
+    self.rep_dplcs = ucfg.cfg['report']['decimals']
 
     if self.report_diagnostics and (not self.inputs_fig_flag or not self.diagnostics_flag):
         self.tmp_log.append(" [report] diagnostics: True, but must also have "

@@ -43,6 +43,7 @@ def report(self):
     edges = self.edges
     plotorder = self.plotorder
     dpts = int(self.dplcs)
+    ddpts = int(self.rep_dplcs)
     cnx = self.connector
 
     # variables to pass to latex file
@@ -66,12 +67,12 @@ def report(self):
 
     dbval = collect(cnx,plotorder[0],basins,start_date,end_date,'swe_z',
                     run_name,'total','end')
-    variables['TOTAL_PM'] = dbval.sum().values.round(decimals=dpts)[0]
+    variables['TOTAL_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
     if self.precip_flag:
         dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
                         run_name,'total','sum')
-        variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=dpts)[0]
+        variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
     else:
         variables['TOTALPRE_PM'] = 0
 
@@ -95,7 +96,7 @@ def report(self):
     if self.precip_flag:
         dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
                         run_name,'total','sum')
-        total_rain = dbval.sum().values.round(decimals=dpts)[0]
+        total_rain = dbval.sum().values.round(decimals=ddpts)[0]
     else:
         total_rain = 0.0
 
@@ -147,15 +148,15 @@ def report(self):
 
         dbval = collect(cnx,sub,basins,start_date,end_date,'swe_z',
                         run_name,'total','end')
-        variables[PM] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[PM] = dbval.sum().values.round(decimals=ddpts)[0]
 
         dbval = collect(cnx,sub,basins,wy_start,end_date,'precip_z',
                         run_name,'total','sum')
-        variables[PREPM] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[PREPM] = dbval.sum().values.round(decimals=ddpts)[0]
 
         dbval = collect(cnx,sub,basins,wy_start,end_date,'rain_z',
                         run_name,'total','sum')
-        variables[RAIN] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[RAIN] = dbval.sum().values.round(decimals=ddpts)[0]
 
         if (end_swe > 0) and (variables['TOTAL_SWE'] > 0):
             variables[PVOL] = end_swe/variables['TOTAL_SWE']*100

@@ -42,6 +42,8 @@ def process(args):
     log = []
     cclimit = -5*1000*1000
     t = 0
+    decimals = args['decimals']
+    units = args['units']
     dem = args['dem']
     outputs = args['outputs']
     rundirs_dict = args['rundirs_dict']
@@ -254,29 +256,29 @@ def process(args):
 
                     if k == 'swe_z':
                         daily_outputs['swe_unavail'].loc[b,name] = \
-                                    calculate(o, pixel, besu, 'sum','volume')
+                                    calculate(o, pixel, besu, 'sum','volume', units, decimals)
                         daily_outputs['swe_avail'].loc[b,name] = \
-                                    calculate(o, pixel, besa, 'sum','volume')
+                                    calculate(o, pixel, besa, 'sum','volume', units, decimals)
                         daily_outputs['swe_vol'].loc[b,name] = \
-                                    calculate(o, pixel, be, 'sum','volume')
+                                    calculate(o, pixel, be, 'sum','volume', units, decimals)
                         daily_outputs['swe_z'].loc[b,name] = \
-                                    calculate(o, pixel, be, 'mean','depth')
+                                    calculate(o, pixel, be, 'mean','depth', units, decimals)
 
                     if k == 'swi_z':
-                        daily_outputs[k].loc[b,name] = calculate(o,pixel,be,'mean','depth')
-                        daily_outputs['swi_vol'].loc[b,name] = calculate(o,pixel,be,'sum','volume')
+                        daily_outputs[k].loc[b,name] = calculate(o,pixel,be,'mean','depth', units, decimals)
+                        daily_outputs['swi_vol'].loc[b,name] = calculate(o,pixel,be,'sum','volume', units, decimals)
 
                     if k == 'depth':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'snow_depth')
+                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'snow_depth', units, decimals)
 
                     if k == 'evap_z':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'depth')
+                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'depth', units, decimals)
 
                     if k == 'coldcont':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean')
+                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean', None, units, decimals)
 
                     if k == 'density':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean')
+                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean', None, units, decimals)
 
                         if out_date == outputs['dates'][-1]:
                             od = copy.deepcopy(o)
@@ -289,44 +291,44 @@ def process(args):
                             density[name][edges[n]] = copy.deepcopy(od)
 
                     if k == 'precip_z' and flag:
-                        daily_outputs[k].loc[b,name] = calculate(pre, pixel, be, 'mean', 'depth')
-                        daily_outputs['precip_vol'].loc[b,name] = calculate(pre, pixel, be, 'sum', 'volume')
+                        daily_outputs[k].loc[b,name] = calculate(pre, pixel, be, 'mean', 'depth', units, decimals)
+                        daily_outputs['precip_vol'].loc[b,name] = calculate(pre, pixel, be, 'sum', 'volume', units, decimals)
 
                     if k == 'rain_z' and flag:
-                        daily_outputs[k].loc[b,name] = calculate(rain, pixel, be, 'mean', 'depth')
+                        daily_outputs[k].loc[b,name] = calculate(rain, pixel, be, 'mean', 'depth', units, decimals)
 
                 if k == 'evap_z':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', 'depth')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', 'depth', units, decimals)
 
                 if k == 'coldcont':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', None, units, decimals)
 
                 if k == 'swe_z':
-                    daily_outputs['swe_vol'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume')
-                    daily_outputs['swe_avail'].loc['total',name] = calculate(o, pixel, ba, 'sum','volume')
-                    daily_outputs['swe_unavail'].loc['total',name] = calculate(o, pixel, bu, 'sum','volume')
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean','depth')
+                    daily_outputs['swe_vol'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume', units, decimals)
+                    daily_outputs['swe_avail'].loc['total',name] = calculate(o, pixel, ba, 'sum','volume', units, decimals)
+                    daily_outputs['swe_unavail'].loc['total',name] = calculate(o, pixel, bu, 'sum','volume', units, decimals)
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean','depth', units, decimals)
                     daily_outputs['snow_line'].loc['total',name] = snow_line(o, dem, mask, args['snow_limit'])
 
                 if k == 'depth':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean', 'snow_depth')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean', 'snow_depth', units, decimals)
 
                 if k == 'density':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean')
+                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', None, units, decimals)
 
                 if k == 'swi_z':
-                    daily_outputs[k].loc['total',name] = calculate(o,pixel,mask,'mean','depth')
-                    daily_outputs['swi_vol'].loc['total',name] = calculate(o,pixel,mask,'sum','volume')
+                    daily_outputs[k].loc['total',name] = calculate(o,pixel,mask,'mean','depth', units, decimals)
+                    daily_outputs['swi_vol'].loc['total',name] = calculate(o,pixel,mask,'sum','volume', units, decimals)
 
                 if k == 'precip_z' and flag:
-                    daily_outputs[k].loc['total',name] = calculate(pre, pixel, mask, 'mean', 'depth')
-                    daily_outputs['precip_vol'].loc['total',name] = calculate(pre, pixel, mask, 'sum', 'volume')
+                    daily_outputs[k].loc['total',name] = calculate(pre, pixel, mask, 'mean', 'depth', units, decimals)
+                    daily_outputs['precip_vol'].loc['total',name] = calculate(pre, pixel, mask, 'sum', 'volume', units, decimals)
 
                 if k == 'rain_z' and flag:
-                    daily_outputs[k].loc['total',name] = calculate(rain, pixel, mask, 'mean', 'depth')
+                    daily_outputs[k].loc['total',name] = calculate(rain, pixel, mask, 'mean', 'depth', units, decimals)
 
             df = daily_outputs[k].copy()
-            df = df.round(decimals = 3)
+            df = df.round(decimals = decimals)
 
             if not pass_flag:
                 package(args['connector'], lbls, args['basins'], df, args['run_id'],

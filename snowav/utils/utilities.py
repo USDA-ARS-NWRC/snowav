@@ -87,13 +87,14 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
         if convert == 'depth':
             factor = 0.1
 
-        # snow depth remains m
+        # m to cm
         if convert == 'snow_depth':
-            factor = 1
+            factor = 100
 
         # mm/pixel to MM^3
         if convert == 'volume':
             factor = (pixel**2)*0.000000810713194*1233.48/1e9
+             # ((self.pixel**2)*0.000000810713194*0.001)
 
     if convert is None:
         factor = 1
