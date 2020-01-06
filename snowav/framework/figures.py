@@ -341,9 +341,10 @@ def figures(self):
 
             for head in check_headings:
                 if head not in df.columns.tolist():
-                    self._logger.warn(' {} not in headings {} in {}'.format(
-                                      head, df.columns.tolist(),
-                                      self.point_values_csv[idxp]))
+                    self._logger.warn(' Config option [validate] '
+                        'point_values_heading: {} not in headings {} in '
+                        '{}, setting point_values: False'.format(head,
+                        df.columns.tolist(), self.point_values_csv[idxp]))
                     pflag = False
 
             if not pflag:
@@ -352,8 +353,9 @@ def figures(self):
             if len(df.name.unique()) > nsubplots:
                 self._logger.warn(' Number of subplots that will be generated in '
                                   'point_values() may not fit well with settings '
-                                  'inpoint_values_settings, consider increasing '
-                                  'nrows and/or ncols')
+                                  'in point_values_settings, consider changing '
+                                  'nrows and/or ncols in [validate] '
+                                  'point_values_settings')
 
             fig_name = '{}model_pixel_{}_{}.csv'.format(self.figs_path,
                         value, self.end_date.date().strftime("%Y%m%d"))

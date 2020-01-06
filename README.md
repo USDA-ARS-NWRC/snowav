@@ -61,7 +61,7 @@ $ snowav -f config.ini -end_date "2019-12-30 23:00"
 ```inputs_table:``` Includes smrf field output summaries on the snowav database.
 
 #### [plots]
-Turn figures on and off. Some figures require additional fields to be set.
+Turn figures on and off. Some figures require additional fields in other sections to be set in order to work, including ```point_values```, ```inputs```, and ```stn_validate```.
 
 ```update_file:``` If a path to a  ```lidar_depths.nc``` is supplied, flight difference figures will be made.
 
