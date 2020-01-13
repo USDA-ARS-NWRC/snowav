@@ -265,6 +265,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
     self.compare_run_names = ucfg.cfg['plots']['compare_run_names']
     self.compare_run_labels = ucfg.cfg['plots']['compare_run_labels']
+    self.compare_run_wys = ucfg.cfg['plots']['compare_run_wys']
     self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
     self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
     self.update_file = ucfg.cfg['plots']['update_file']
@@ -287,10 +288,11 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
         self.update_numbers = None
 
     if (self.compare_runs_flag and ((self.compare_run_names is None) or
-        (self.compare_run_labels is None))):
+        (self.compare_run_labels is None) or self.compare_run_wys is None)):
         self.tmp_log.append(' Config option [plots] compare_runs set to True, '
-                            'but one of compare_run_names or compare_run_labels '
-                            'is empty, resetting compare_runs to False')
+                            'but one of compare_run_names, compare_run_labels, '
+                            'or compare_run_wys is empty, setting '
+                            'compare_runs to False')
         self.compare_runs_flag = False
 
     if (self.compare_runs_flag and

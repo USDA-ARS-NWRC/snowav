@@ -378,7 +378,6 @@ def figures(self):
 
     if self.compare_runs_flag:
         args['variables'] = ['swe_vol','swi_vol']
-        wy_start = datetime(self.wy-1,10,1)
 
         if self.flt_flag:
             args['flag'] = True
@@ -388,9 +387,15 @@ def figures(self):
         dict = {}
         for var in args['variables']:
             dict[var] = {}
-            for run in self.compare_run_names:
+            for wy, run in zip(self.compare_run_wys, self.compare_run_names):
+                wy_start = datetime(wy-1,10,1)
                 df = collect(connector, args['plotorder'][0], args['basins'],
                              wy_start,args['end_date'],var,run,'total','daily')
+
+                if wy != self.wy:
+                    adj = self.wy - wy
+                    df.index = df.index + timedelta(days = 365*adj)
+
                 if var == 'swi_vol':
                     df = df.cumsum()
 
