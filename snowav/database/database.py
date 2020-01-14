@@ -193,8 +193,15 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                     if e['value'].values[0] is None:
                         df.loc[elev,bid] = np.nan
                     else:
-                        df.loc[elev,bid] = e['value'].values
 
+                        # The database can occasionally get multiple values
+                        # for the same record if it doesn't exit cleanly
+                        if len(e['value'].values) == 1:
+                            df.loc[elev,bid] = e['value'].values
+                        else:
+                            raise Exception('Multiple database entries for a '
+                                'single field, consider running with '
+                                '[database] overwrite: True')
 
         if method == 'difference':
             for elev in edges:
