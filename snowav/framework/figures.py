@@ -433,7 +433,7 @@ def figures(self):
         args['connector'] = self.connector
         args['wy_start'] = datetime(self.wy-1,10,1)
 
-        write_properties(args, self.write_properties)
+        write_properties(args, self.write_properties, self._logger)
 
     if self.inputs_fig_flag:
 

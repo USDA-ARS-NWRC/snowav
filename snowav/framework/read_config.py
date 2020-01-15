@@ -354,6 +354,7 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
         self.tmp_log.append(" [report] diagnostics: True, but must also have "
             "[plots] inputs: True and [diagnostics] diagnostics: True, "
             "setting to False")
+        self.report_diagnostics = False
 
     if self.report_diagnostics and self.report_diagnostics_day[0] != 'any':
 
