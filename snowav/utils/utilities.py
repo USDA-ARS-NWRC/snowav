@@ -128,7 +128,7 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
     return value
 
-def snow_line(array, dem, masks = None, limit = 1):
+def snow_line(array, dem, masks = None, limit = 0.01):
     '''
     Calculate mean snow line in image.
 
@@ -161,10 +161,9 @@ def snow_line(array, dem, masks = None, limit = 1):
 
     ix = array > limit
 
-    if not np.isnan(np.nanmean(dem[ix])):
-        value = int(np.nanmean(dem[ix]))
-
-    else:
+    try:
+        value = int(np.nanpercentile(dem[ix].flatten(), [2,90])[0])
+    except:
         value = np.nan
 
     return value
