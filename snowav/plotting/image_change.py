@@ -136,7 +136,7 @@ def image_change(args, logger):
 
     ax1.set_ylabel('{}'.format(args['vollbl']))
     ax1.set_xlabel('elevation [{}]'.format(args['elevlbl']))
-    ax1.axes.set_title('Change in SWE Volume')
+    ax1.axes.set_title('Change in Volume')
     ax1.yaxis.set_label_position("right")
     ax1.yaxis.tick_right()
 

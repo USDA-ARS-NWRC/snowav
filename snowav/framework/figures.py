@@ -122,7 +122,7 @@ def figures(self):
 
         args['df'] = df
         args['image'] = image*self.depth_factor
-        args['title'] = 'Change in SWE Depth\n{} to {}'.format(
+        args['title'] = 'Change in SWE\n{} to {}'.format(
                         args['report_start'], args['report_date'])
 
         fig_names['image_change'] = image_change(args, self._logger)
