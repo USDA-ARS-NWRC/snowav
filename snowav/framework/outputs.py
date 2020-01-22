@@ -72,6 +72,15 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                 return [], [], [], [], log
 
             ncf = nc.Dataset(snowfile)
+
+            # Catch 'empty' snow.nc and em.nc file from certain awsm crash
+            # scenarios in awsm<=0.10.0
+            if 'specific_mass' not in ncf.variables:
+                log.append(' No "specific_mass" variable in {}, this may be the result '
+                    'of awsm crashing without writing variables to file, '
+                    'consider deleting and re-running awsm'.format(snowfile))
+                raise Exception(' No "specific_mass" variable in {}'.format(snowfile))
+
             ta = nc.num2date(ncf.variables['time'][:],ncf.variables['time'].units)
             ncf.close()
 
