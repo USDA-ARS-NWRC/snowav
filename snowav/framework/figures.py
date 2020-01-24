@@ -234,6 +234,12 @@ def figures(self):
         snow_line_per = collect(connector, args['plotorder'], args['basins'],
                          args['start_date'], args['end_date'], 'snow_line',
                          args['run_name'], args['edges'], 'daily')
+        evap_z = collect(connector, args['plotorder'], args['basins'],
+                         wy_start, args['end_date'], 'evap_z',
+                         args['run_name'], args['edges'], 'daily')
+        evap_z_per = collect(connector, args['plotorder'], args['basins'],
+                         args['start_date'], args['end_date'], 'evap_z',
+                         args['run_name'], args['edges'], 'daily')
 
         snow_line_per = snow_line_per.fillna(0)
         first_row = snow_line_per.iloc[[0]].values[0]
@@ -245,6 +251,11 @@ def figures(self):
         swe_per = swe_per.fillna(0)
         first_row = swe_per.iloc[[0]].values[0]
         swe_per = swe_per.apply(lambda row: row - first_row, axis=1)
+
+        evap_z = evap_z.fillna(0)
+        evap_z_per = evap_z_per.fillna(0)
+        first_row = evap_z_per.iloc[[0]].values[0]
+        evap_z_per = evap_z_per.apply(lambda row: row - first_row, axis=1)
 
         rho = rho.fillna(0)
         rho_per = rho_per.fillna(0)
@@ -267,6 +278,8 @@ def figures(self):
         args['precip_per'] = precip_per
         args['swe'] = swe
         args['swe_per'] = swe_per
+        args['evap_z'] = evap_z
+        args['evap_z_per'] = evap_z_per
         args['density'] = rho
         args['density_per'] = rho_per
         args['elevlbl'] = self.elevlbl

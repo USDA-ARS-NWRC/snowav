@@ -124,7 +124,8 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
 
     value_options = ['swe_z','swe_vol','density','precip_z','precip_vol',
                      'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
-                     'swi_z','swi_vol','depth','snow_line','mean_air_temp']
+                     'swi_z','swi_vol','depth','snow_line','mean_air_temp',
+                     'evap_z']
 
     method_options = ['sum','difference','daily','end']
 

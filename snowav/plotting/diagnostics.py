@@ -44,7 +44,7 @@ def diagnostics(args, logger):
 
     plt.close(0)
     f, a = plt.subplots(num = 0, figsize = (8,9), facecolor = 'white',
-                        dpi = args['dpi'], nrows = 4, ncols = 2,
+                        dpi = args['dpi'], nrows = 5, ncols = 2,
                         linewidth = 0.75)
 
     a = a.flatten()
@@ -75,7 +75,7 @@ def diagnostics(args, logger):
         # wy density
         a[4].plot(args['density'][name], label = name, color = clr, linewidth = 1)
         a[4].set_ylabel(r'density [$kg/m^3$]')
-        a[4].set_ylim((150,600))
+        a[4].set_ylim((100,600))
 
         # report period density
         a[5].plot(args['density_per'][name], label = name, color = clr, linewidth = 1)
@@ -89,6 +89,14 @@ def diagnostics(args, logger):
         a[7].plot(args['snow_line_per'][name], label = name, color = clr, linewidth = 1)
         a[7].set_ylabel('$\Delta$ snow line [{}]'.format(elevlbl))
 
+        # wy evap_z
+        a[8].plot(args['evap_z'][name].cumsum(), label = name, color = clr, linewidth = 1)
+        a[8].set_ylabel('evap_z [{}]'.format(depthlbl))
+
+        # report period evap_z
+        a[9].plot(args['evap_z_per'][name].cumsum(), label = name, color = clr, linewidth = 1)
+        a[9].set_ylabel('$\Delta$ evap_z [{}]'.format(depthlbl))
+
     for n in range(0,len(a)):
 
         if args['flt_flag']:
@@ -100,7 +108,7 @@ def diagnostics(args, logger):
 
                 a[n].axvline(x=d, linestyle=':', linewidth=0.75, color='r', label=lb)
 
-        if n in [1,3,5,7]:
+        if n in [1,3,5,7,9]:
             a[n].yaxis.tick_right()
             a[n].yaxis.set_label_position('right')
             a[n].set_xlim((args['start_date'], args['end_date']))
@@ -116,7 +124,7 @@ def diagnostics(args, logger):
             a[n].axvline(x=start_date, linestyle=':', linewidth=0.65, color='k',
                          label = lbl)
 
-        if n < 6:
+        if n < 8:
             a[n].set_xticklabels('')
 
         else:
