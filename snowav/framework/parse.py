@@ -138,12 +138,14 @@ def parse(self, external_logger=None):
     if self.loglevel == 'DEBUG' and self.log_to_file is not True:
         print('Reading files in {}...'.format(self.run_dirs[0].split('runs')[0]))
 
-    out, all_dirs, dirs, rdict, log = outputs(run_dirs = self.run_dirs,
-                                              start_date = self.start_date,
-                                              end_date = self.end_date,
-                                              filetype = self.filetype,
-                                              wy = self.wy,
-                                              loglevel = self.loglevel)
+    results = outputs(self.run_dirs, self.filetype, self.wy, self.properties,
+                self.start_date, self.end_date, None, self.loglevel)
+
+    out = results['outputs']
+    all_dirs = results['dirs']
+    dirs = results['run_dirs']
+    rdict = results['rdict']
+    log = results['log']
 
     # If there was an error parsing files catch and log it
     if out == [] and all_dirs == [] and 'not a valid file' in log[-1]:
@@ -220,18 +222,16 @@ def parse(self, external_logger=None):
     # get forecast outputs
     if self.forecast_flag:
 
-        out, alldirs, dirs, rdict, log = outputs(run_dirs = self.for_run_dirs,
-                                                 start_date = None,
-                                                 end_date = None,
-                                                 filetype = self.filetype,
-                                                 wy = self.wy,
-                                                 loglevel = self.loglevel)
-        self.for_outputs = out
-        self.for_run_dirs = dirs
-        self.for_rundirs_dict = rdict
+        results = outputs(self.for_run_dirs, self.filetype, self.wy,
+            self.properties, None, None, None, self.loglevel)
+
+        self.for_outputs = results['outputs']
+        self.for_run_dirs = results['run_dirs']
+        self.for_rundirs_dict = results['rdict']
         self.for_ixs = 0
         self.for_ixe = len(self.for_outputs['swe_z']) - 1
 
+    # Get outputs for flights
     if self.flt_flag:
 
         file = self.update_file
@@ -264,28 +264,19 @@ def parse(self, external_logger=None):
         if self.loglevel == 'DEBUG' and self.log_to_file is not True:
             print('Reading files in {} for flight updates...'.format(self.run_dirs[0].split('runs')[0]))
 
-        out, x, dirs, rdict, log = outputs(run_dirs = self.all_dirs_flt,
-                                           start_date = None,
-                                           end_date = None,
-                                           filetype = self.filetype,
-                                           wy = self.wy,
-                                           flight_dates = flight_dates,
-                                           loglevel = self.loglevel)
+        results = outputs(self.all_dirs_flt, self.filetype, self.wy,
+            self.properties, None, None, flight_dates, self.loglevel)
 
-        self.flight_outputs = out
-        self.run_dirs_flt = dirs
-        self.for_rundirs_dict = rdict
-        self.flight_diff_dates = out['dates']
+        self.flight_outputs = results['outputs']
+        self.run_dirs_flt = results['run_dirs']
+        self.flt_rundirs_dict = results['rdict']
+        self.flight_diff_dates = results['outputs']['dates']
+        self.pre_flight_outputs = results['outputs']
 
-        out, x, dirs, rdict, log = outputs(run_dirs = self.all_dirs_flt,
-                                           start_date = None,
-                                           end_date = None,
-                                           filetype = self.filetype,
-                                           wy = self.wy,
-                                           loglevel = self.loglevel,
-                                           flight_dates = pre_flight_dates)
+        results = outputs(self.all_dirs_flt, self.filetype, self.wy,
+            self.properties, None, None, pre_flight_dates, self.loglevel)
 
-        self.pre_flight_outputs = out
+        self.pre_flight_outputs = results['outputs']
 
         # If there are no flights in the period, set to false for the flight
         # difference figure and report

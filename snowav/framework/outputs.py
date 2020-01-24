@@ -1,5 +1,5 @@
 
-import copy
+from copy import deepcopy
 import os
 import numpy as np
 from datetime import datetime, timedelta
@@ -7,8 +7,8 @@ from snowav.utils.wyhr import calculate_wyhr_from_date
 from snowav.utils.OutputReader import iSnobalReader
 import netCDF4 as nc
 
-def outputs(run_dirs = None, start_date = None, end_date = None,
-            filetype = None, wy = None, flight_dates = None, loglevel = None):
+def outputs(run_dirs, filetype, wy, properties, start_date = None,
+            end_date = None, flight_dates = None, loglevel = None):
     '''
     This uses start_date and end_date to load the snow.nc and em.nc of interest
     within a report period to the outputs format that will be used in process().
@@ -49,12 +49,47 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
     log = []
     rdict = {}
-    dirs = copy.deepcopy(run_dirs)
-    outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],'depth':[],
-               'dates':[], 'time':[], 'density':[], 'coldcont':[] }
+    dirs = deepcopy(run_dirs)
+    snowbands = []
+    embands = []
+    outputs = {'dates': [], 'time': []}
+    # outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],'depth':[],
+    #            'dates':[], 'time':[], 'density':[], 'coldcont':[] }
 
-    start = copy.deepcopy(start_date)
-    end = copy.deepcopy(end_date)
+    # base_bands = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont']
+    #
+    # snow_bands = ['depth','density','swe_z']
+    # em_bands = ['evap_z','swi_z','coldcont','L_v_E']
+
+    bands_map = {'snow':{'depth': 0,
+                         'density': 1,
+                         'swe_z': 2,
+                         'lwc': 3,
+                         'temp_surface': 4,
+                         'temp_lower': 5,
+                         'temp_bulk': 6,
+                         'depth_lower_layer': 7,
+                         'h20_sat': 8},
+                 'em':{'R_n': 0,
+                       'H': 1,
+                       'L_v_E': 2,
+                       'G': 3,
+                       'M': 4,
+                       'delta_Q': 5,
+                       'evap_z': 6,
+                       'snowmelt': 7,
+                       'swi_z': 8,
+                       'coldcont': 9}}
+
+    for band in properties:
+        if band in [*bands_map['snow'].keys()]:
+            snowbands.append(bands_map['snow'][band])
+        if band in [*bands_map['em'].keys()]:
+            embands.append(bands_map['em'][band])
+        outputs[band] = []
+
+    start = deepcopy(start_date)
+    end = deepcopy(end_date)
 
     # Run this with standard processing, and forecast processing
     if flight_dates is None:
@@ -87,10 +122,10 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
             ta = np.sort(ta)
 
             if start_date is None:
-                start = copy.deepcopy(ta[0])
+                start = deepcopy(ta[0])
 
             if end_date is None:
-                end = copy.deepcopy(ta[-1])
+                end = deepcopy(ta[-1])
 
             for idx,t in enumerate(ta):
 
@@ -102,21 +137,23 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                     st_hr = calculate_wyhr_from_date(start)
                     en_hr = calculate_wyhr_from_date(end)
 
-                    output = iSnobalReader(path, filetype, snowbands = [0,1,2],
-                                           embands = [6,7,8,9], wy = wy,
+                    output = iSnobalReader(path, filetype, snowbands = snowbands,
+                                           embands = embands, wy = wy,
                                            time_start = st_hr, time_end = en_hr)
 
                     # Make a dict for wyhr-rundir lookup
                     for ot in output.time:
                         rdict[int(ot)] = path
 
-                    outputs['swi_z'].append(output.em_data[8][idx,:,:])
-                    outputs['snowmelt'].append(output.em_data[7][idx,:,:])
-                    outputs['evap_z'].append(output.em_data[6][idx,:,:])
-                    outputs['coldcont'].append(output.em_data[9][idx,:,:])
-                    outputs['swe_z'].append(output.snow_data[2][idx,:,:])
-                    outputs['depth'].append(output.snow_data[0][idx,:,:])
-                    outputs['density'].append(output.snow_data[1][idx,:,:])
+                    # Apply snow bands to outputs
+                    for band in properties:
+                        if band in [*bands_map['snow'].keys()]:
+                            s = bands_map['snow'][band]
+                            outputs[band].append(output.snow_data[s][idx,:,:])
+                        if band in [*bands_map['em'].keys()]:
+                            e = bands_map['em'][band]
+                            outputs[band].append(output.em_data[e][idx,:,:])
+
                     outputs['dates'].append(output.dates[idx])
                     outputs['time'].append(output.time[idx])
 
@@ -125,6 +162,7 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
 
     # Run this when flight updates are present to make custom outputs
     else:
+
         for path in dirs:
             snowfile = os.path.join(path, 'snow.nc')
 
@@ -150,4 +188,10 @@ def outputs(run_dirs = None, start_date = None, end_date = None,
                     outputs['dates'].append(output.dates[idx])
                     outputs['time'].append(output.time[idx])
 
-    return outputs, dirs, run_dirs, rdict, log
+    results = {'outputs': outputs,
+               'dirs': dirs,
+               'run_dirs': run_dirs,
+               'rdict': rdict,
+               'log': log}
+
+    return results

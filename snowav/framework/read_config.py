@@ -120,6 +120,22 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.db_convert = ucfg.cfg['database']['convert_ws']
     self.add_basins = ucfg.cfg['database']['add_basins']
     self.db_overwrite = ucfg.cfg['database']['overwrite']
+    self.properties = ucfg.cfg['database']['properties']
+
+    base_bands = ['swi_z','evap_z','snowmelt','swe_z','depth','density',
+        'coldcont']
+
+    f = False
+    for band in base_bands:
+        if band not in self.properties:
+            self.tmp_log.append(' WARNING! Config option [database] properties '
+                'does not contain {}'.format(band))
+            f = True
+
+    if f:
+        self.tmp_log.append(' WARNING! Suggest config option [database] '
+            'properties contain at least {} for most functionality to '
+            'run'.format(base_bands))
 
     if ((self.mysql is not None) and
         ((self.db_user is None) or
