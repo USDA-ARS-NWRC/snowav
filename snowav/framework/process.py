@@ -55,9 +55,13 @@ def process(args):
     lbls['depthlbl'] = args['depthlbl']
     lbls['vollbl'] = args['vollbl']
     lbls['elevlbl'] = args['elevlbl']
-    raw_out = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont']
     precip_path = '/smrfOutputs/precip.nc'
-    proc_list = copy.deepcopy([*args['vars'].keys()])
+
+    # This is a list of outputs, rather than things that will be calculated,
+    # such as *_vol and rain_z
+    raw_out = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont',
+        'lwc','temp_surface','temp_lower','temp_bulk','depth_lower_layer',
+        'h20_sat','R_n','H','L_v_E','G','M','delta_Q']
 
     dz = pd.DataFrame(np.nan, index = edges, columns = masks.keys())
     precip_total = np.zeros((args['nrows'],args['ncols']))
@@ -111,6 +115,9 @@ def process(args):
                             logging.debug(out[0])
 
         # Initialize output dataframes for every day
+
+        # Make this adaptive based on user inputs
+        variables = args['vars']
         daily_outputs = {'swe_vol':dz.copy(),
                          'swe_avail':dz.copy(),
                          'swe_unavail':dz.copy(),
@@ -255,32 +262,20 @@ def process(args):
                     besu = [mask, elev_mask, snow_mask, unavail_mask]
 
                     if k == 'swe_z':
-                        daily_outputs['swe_unavail'].loc[b,name] = \
-                                    calculate(o, pixel, besu, 'sum','volume', units, decimals)
-                        daily_outputs['swe_avail'].loc[b,name] = \
-                                    calculate(o, pixel, besa, 'sum','volume', units, decimals)
-                        daily_outputs['swe_vol'].loc[b,name] = \
-                                    calculate(o, pixel, be, 'sum','volume', units, decimals)
-                        daily_outputs['swe_z'].loc[b,name] = \
-                                    calculate(o, pixel, be, 'mean','depth', units, decimals)
+                        variables['swe_unavail']['df'].loc[b,name] = calculate(o, pixel, besu, 'sum','volume', units, decimals)
+                        variables['swe_avail']['df'].loc[b,name] = calculate(o, pixel, besa, 'sum','volume', units, decimals)
+                        variables['swe_vol']['df'].loc[b,name] = calculate(o, pixel, be, 'sum','volume', units, decimals)
+                        variables[k]['df'].loc[b,name] = calculate(o, pixel, be, 'mean','depth', units, decimals)
 
                     if k == 'swi_z':
-                        daily_outputs[k].loc[b,name] = calculate(o,pixel,be,'mean','depth', units, decimals)
-                        daily_outputs['swi_vol'].loc[b,name] = calculate(o,pixel,be,'sum','volume', units, decimals)
+                        variables[k]['df'].loc[b,name] = calculate(o,pixel,be,'mean','depth', units, decimals)
+                        variables['swi_vol']['df'].loc[b,name] = calculate(o,pixel,be,'sum','volume', units, decimals)
 
-                    if k == 'depth':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'snow_depth', units, decimals)
+                    if k in ['coldcont', 'density', 'depth', 'evap_z', 'L_v_E', 'lwc', 'temp_surface', 'temp_lower',
+                             'temp_bulk', 'depth_lower_layer', 'h20_sat', 'R_n', 'H', 'L_v_E', 'G', 'M', 'delta_Q']:
+                        variables[k]['df'].loc[b,name] = calculate(o, pixel, bes, variables[k]['calculate'],variables[k]['value'], units, decimals)
 
-                    if k == 'evap_z':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, be, 'mean', 'depth', units, decimals)
-
-                    if k == 'coldcont':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean', None, units, decimals)
-
-                    if k == 'density':
-                        daily_outputs[k].loc[b,name] = calculate(o, pixel, bes, 'mean', None, units, decimals)
-
-                        if out_date == outputs['dates'][-1]:
+                        if out_date == outputs['dates'][-1] and k == 'density':
                             od = copy.deepcopy(o)
                             ml = [mask, elev_mask, snow_mask]
                             for m in ml:
@@ -290,44 +285,32 @@ def process(args):
 
                             density[name][edges[n]] = copy.deepcopy(od)
 
-                    if k == 'precip_z' and flag:
-                        daily_outputs[k].loc[b,name] = calculate(pre, pixel, be, 'mean', 'depth', units, decimals)
-                        daily_outputs['precip_vol'].loc[b,name] = calculate(pre, pixel, be, 'sum', 'volume', units, decimals)
+                    if k in ['precip_z', 'rain_z'] and flag:
+                        variables[k]['df'].loc[b,name] = calculate(pre, pixel, be, variables[k]['calculate'],variables[k]['value'], units, decimals)
+                        if k == 'precip_z':
+                            variables['precip_vol']['df'].loc[b,name] = calculate(pre, pixel, be, 'sum', 'volume', units, decimals)
 
-                    if k == 'rain_z' and flag:
-                        daily_outputs[k].loc[b,name] = calculate(rain, pixel, be, 'mean', 'depth', units, decimals)
-
-                if k == 'evap_z':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', 'depth', units, decimals)
-
-                if k == 'coldcont':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', None, units, decimals)
+                if k in ['evap_z', 'depth', 'coldcont', 'density', 'L_v_E', 'lwc', 'temp_surface', 'temp_lower',
+                         'temp_bulk', 'depth_lower_layer', 'h20_sat', 'R_n', 'H', 'L_v_E', 'G', 'M', 'delta_Q']:
+                    variables[k]['df'].loc['total',name] = calculate(o, pixel, [mask, snow_mask], variables[k]['calculate'],variables[k]['value'], units, decimals)
 
                 if k == 'swe_z':
-                    daily_outputs['swe_vol'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume', units, decimals)
-                    daily_outputs['swe_avail'].loc['total',name] = calculate(o, pixel, ba, 'sum','volume', units, decimals)
-                    daily_outputs['swe_unavail'].loc['total',name] = calculate(o, pixel, bu, 'sum','volume', units, decimals)
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean','depth', units, decimals)
-                    daily_outputs['snow_line'].loc['total',name] = snow_line(o, dem, mask, args['snow_limit'])
-
-                if k == 'depth':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, mask, 'mean', 'snow_depth', units, decimals)
-
-                if k == 'density':
-                    daily_outputs[k].loc['total',name] = calculate(o, pixel, [mask, snow_mask], 'mean', None, units, decimals)
+                    variables['swe_vol']['df'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume', units, decimals)
+                    variables['swe_avail']['df'].loc['total',name] = calculate(o, pixel, ba, 'sum','volume', units, decimals)
+                    variables['swe_unavail']['df'].loc['total',name] = calculate(o, pixel, bu, 'sum','volume', units, decimals)
+                    variables[k]['df'].loc['total',name] = calculate(o, pixel, mask, 'mean','depth', units, decimals)
+                    variables['snow_line']['df'].loc['total',name] = snow_line(o, dem, mask, args['snow_limit'])
 
                 if k == 'swi_z':
-                    daily_outputs[k].loc['total',name] = calculate(o,pixel,mask,'mean','depth', units, decimals)
-                    daily_outputs['swi_vol'].loc['total',name] = calculate(o,pixel,mask,'sum','volume', units, decimals)
+                    variables[k]['df'].loc['total',name] = calculate(o,pixel,mask,'mean','depth', units, decimals)
+                    variables['swi_vol']['df'].loc['total',name] = calculate(o,pixel,mask,'sum','volume', units, decimals)
 
-                if k == 'precip_z' and flag:
-                    daily_outputs[k].loc['total',name] = calculate(pre, pixel, mask, 'mean', 'depth', units, decimals)
-                    daily_outputs['precip_vol'].loc['total',name] = calculate(pre, pixel, mask, 'sum', 'volume', units, decimals)
+                if k in ['precip_z', 'rain_z'] and flag:
+                    variables[k]['df'].loc['total',name] = calculate(pre, pixel, mask, 'mean', 'depth', units, decimals)
+                    if k == 'precip_z':
+                        variables['precip_vol']['df'].loc['total',name] = calculate(pre, pixel, mask, 'sum', 'volume', units, decimals)
 
-                if k == 'rain_z' and flag:
-                    daily_outputs[k].loc['total',name] = calculate(rain, pixel, mask, 'mean', 'depth', units, decimals)
-
-            df = daily_outputs[k].copy()
+            df = copy.deepcopy(variables[k]['df'])
             df = df.round(decimals = decimals)
 
             if not pass_flag:

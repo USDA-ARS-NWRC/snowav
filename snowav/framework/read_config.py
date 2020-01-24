@@ -122,8 +122,8 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.db_overwrite = ucfg.cfg['database']['overwrite']
     self.properties = ucfg.cfg['database']['properties']
 
-    base_bands = ['swi_z','evap_z','snowmelt','swe_z','depth','density',
-        'coldcont']
+    base_bands = ['swi_z','evap_z','swe_z','depth','density',
+        'coldcont', 'precip_z']
 
     f = False
     for band in base_bands:

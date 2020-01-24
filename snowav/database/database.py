@@ -125,7 +125,9 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
     value_options = ['swe_z','swe_vol','density','precip_z','precip_vol',
                      'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
                      'swi_z','swi_vol','depth','snow_line','mean_air_temp',
-                     'evap_z']
+                     'evap_z', 'L_v_E','melt','lwc','temp_surface',
+                     'temp_lower','temp_bulk','depth_lower_layer','h20_sat',
+                     'R_n','H','G','M','delta_Q']
 
     method_options = ['sum','difference','daily','end']
 
@@ -459,7 +461,8 @@ def run_metadata(self, run_name):
     insert(self.connector, 'RunMetadata', values)
 
     self.vid = {}
-    for v in self.vars.keys():
+    for v in [*self.vars.keys()]:
+        u = self.vars[v]['units']
         if (('vol' in v) or ('avail' in v)):
             u = self.units
         if (('z' in v) or (v == 'depth')):
@@ -472,7 +475,7 @@ def run_metadata(self, run_name):
         variables = {'run_id':self.run_id,
                      'variable':v,
                      'unit':u,
-                     'name':self.vars[v]}
+                     'name':self.vars[v]['description']}
 
         insert(self.connector,'VariableUnits',variables)
 

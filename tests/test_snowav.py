@@ -106,10 +106,11 @@ def check_gold_results():
 
     return result
 
-def compare_database_swe_vol():
-    ''' Compare 'gold' and 'test' swe_vol. '''
+def compare_database_swe_z():
+    ''' Compare 'gold' and 'test' swe_z. '''
 
-    value = 'swe_vol'
+    value = 'swe_z'
+    result = True
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
@@ -120,9 +121,78 @@ def compare_database_swe_vol():
 
     if test_result.sum().any() != 0:
         result = False
+        print('\nFailed swe_z\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
-    else:
-        result = True
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, 'total', 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, 'total', 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+        print('\nFailed swe_z total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
+
+    return result
+
+def compare_database_swe_vol():
+    ''' Compare 'gold' and 'test' swe_vol. '''
+
+    value = 'swe_vol'
+    result = True
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+        print('\nFailed swe_vol\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, 'total', 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, 'total', 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+        print('\nFailed swe_vol total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
+
+    return result
+
+def compare_database_depth():
+    ''' Compare 'gold' and 'test' depth. '''
+
+    value = 'depth'
+    result = True
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+        print('\nFailed depth\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, 'total', 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, 'total', 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+        print('\nFailed depth total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
     return result
 
@@ -130,6 +200,7 @@ def compare_database_swi_vol():
     ''' Compare 'gold' and 'test' swi_vol. '''
 
     value = 'swi_vol'
+    result = True
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'sum')
@@ -140,34 +211,6 @@ def compare_database_swi_vol():
 
     if test_result.sum().any() != 0:
         result = False
-    else:
-        result = True
-
-    return result
-
-def compare_database_density():
-    ''' Compare 'gold' and 'test' density. '''
-
-    value = 'density'
-
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
-                 run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
-                 run_name_test, edges, 'end')
-
-    test_result = gold - test
-
-    if test_result.sum().any() != 0:
-        result = False
-    else:
-        result = True
-
-    return result
-
-def compare_database_precip():
-    ''' Compare 'gold' and 'test' precip. '''
-
-    value = 'precip_z'
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'sum')
@@ -178,15 +221,14 @@ def compare_database_precip():
 
     if test_result.sum().any() != 0:
         result = False
-    else:
-        result = True
 
     return result
 
-def compare_database_unavail():
-    ''' Compare 'gold' and 'test' swe_unavail. '''
+def compare_database_density():
+    ''' Compare 'gold' and 'test' density. '''
 
-    value = 'swe_unavail'
+    value = 'density'
+    result = True
 
     gold = collect(connector, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
@@ -197,8 +239,52 @@ def compare_database_unavail():
 
     if test_result.sum().any() != 0:
         result = False
-    else:
-        result = True
+
+    return result
+
+def compare_database_precip():
+    ''' Compare 'gold' and 'test' precip. '''
+
+    value = 'precip_z'
+    result = True
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'sum')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'sum')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, 'total', 'sum')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, 'total', 'sum')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
+
+    return result
+
+def compare_database_unavail():
+    ''' Compare 'gold' and 'test' swe_unavail. '''
+
+    value = 'swe_unavail'
+    result = True
+
+    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_gold, edges, 'end')
+    test = collect(connector, plotorder, basins, start_date, end_date, value,
+                 run_name_test, edges, 'end')
+
+    test_result = gold - test
+
+    if test_result.sum().any() != 0:
+        result = False
 
     return result
 
@@ -357,10 +443,22 @@ class TestStandardLakes(unittest.TestCase):
     	a = check_gold_results()
     	assert(a)
 
+    def test_database_swe_z(self):
+    	''' Gold and current swe_z DataFrames '''
+
+    	a = compare_database_swe_z()
+    	assert(a)
+
     def test_database_swe_vol(self):
     	''' Gold and current swe_vol DataFrames '''
 
     	a = compare_database_swe_vol()
+    	assert(a)
+
+    def test_database_depth(self):
+    	''' Gold and current depth DataFrames '''
+
+    	a = compare_database_depth()
     	assert(a)
 
     def test_database_swi_vol(self):

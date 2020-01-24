@@ -36,30 +36,16 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
 
     Returns
     ------
-    outputs : dict
-        dictionary of snow.nc and em.nc outputs within time period
-    dirs : list
-        all dirs within run_dir
-    run_dirs : list
-        modified run_dirs, with paths outside of start_date, end_date removed
-    rdict : dict
-        process() lookup
+    results : dict
 
     '''
 
-    log = []
-    rdict = {}
     dirs = deepcopy(run_dirs)
     snowbands = []
     embands = []
+    log = []
+    rdict = {}
     outputs = {'dates': [], 'time': []}
-    # outputs = {'swi_z':[], 'evap_z':[], 'snowmelt':[], 'swe_z':[],'depth':[],
-    #            'dates':[], 'time':[], 'density':[], 'coldcont':[] }
-
-    # base_bands = ['swi_z','evap_z','snowmelt','swe_z','depth','density','coldcont']
-    #
-    # snow_bands = ['depth','density','swe_z']
-    # em_bands = ['evap_z','swi_z','coldcont','L_v_E']
 
     bands_map = {'snow':{'depth': 0,
                          'density': 1,
@@ -77,7 +63,7 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
                        'M': 4,
                        'delta_Q': 5,
                        'evap_z': 6,
-                       'snowmelt': 7,
+                       'melt': 7,
                        'swi_z': 8,
                        'coldcont': 9}}
 
@@ -104,7 +90,15 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
             # to catch other files that are in these directories
             if not os.path.isfile(snowfile):
                 log.append(' {} not a valid file'.format(snowfile))
-                return [], [], [], [], log
+                print(' {} not a valid file, snowav may '
+                    'error...'.format(snowfile))
+                run_dirs.remove(path)
+                results = {'outputs': outputs,
+                           'dirs': dirs,
+                           'run_dirs': run_dirs,
+                           'rdict': rdict,
+                           'log': log}
+                return results
 
             ncf = nc.Dataset(snowfile)
 
