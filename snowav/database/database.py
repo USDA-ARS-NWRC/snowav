@@ -606,9 +606,10 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
         except:
             dbs = [i[0] for i in dbs]
 
-        db_engine = 'mysql+mysqlconnector://{}:{}@{}/{}'.format(user,
+        db_engine = 'mysql+mysqlconnector://{}:{}@{}:{}/{}'.format(user,
                                                                 password,
                                                                 host,
+                                                                port,
                                                                 sql)
 
         # If the database doesn't exist, create it, otherwise connect
