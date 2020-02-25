@@ -41,7 +41,6 @@ def process(nc_path, topo_path, value, log):
     depthlbl = 'in'
     vollbl = 'TAF'
     elevlbl = 'ft'
-    filetype = 'netcdf'
     snowbands = [0,1,2]
     embands = [6,7,8,9]
     cclimit = -5*1000*1000
@@ -55,7 +54,7 @@ def process(nc_path, topo_path, value, log):
     else:
         nc_path = nc_path
 
-    topo = ts.get_topo_stats(topo_path, filetype = 'netcdf')
+    topo = ts.get_topo_stats(topo_path)
     pixel = int(topo['dv'])
     conversion_factor = ((pixel**2) * 0.000000810713194*0.001)
 
@@ -80,8 +79,8 @@ def process(nc_path, topo_path, value, log):
         log.info('Loading {}...'.format(ncp))
 
         path = ncp.split('snow.nc')[0]
-        output = iSnobalReader(path, filetype, snowbands = snowbands,
-                               embands = embands, wy = wy)
+        output = iSnobalReader(path, snowbands = snowbands, embands = embands,
+            wy = wy)
 
         for n in range(0,len(output.em_data[8])):
             outputs['swi_z'].append(output.em_data[8][n,:,:])

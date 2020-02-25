@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import os
 from copy import deepcopy
-import snowav.utils.get_topo_stats as ts
+from snowav.utils.get_topo_stats import get_topo_stats
 from snowav.utils.utilities import masks
 from snowav.framework.outputs import outputs
 import coloredlogs
@@ -67,7 +67,7 @@ def parse(self, external_logger=None):
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
 
     if os.path.isfile(sfile):
-        topo = ts.get_topo_stats(sfile, filetype = self.filetype)
+        topo = get_topo_stats(sfile)
         self.snow_x = topo['x']
         self.snow_y = topo['y']
         self.pixel = int(topo['dv'])
@@ -178,7 +178,7 @@ def parse(self, external_logger=None):
     if self.loglevel == 'DEBUG' and self.log_to_file is not True:
         print('Reading files in {}...'.format(self.run_dirs[0].split('runs')[0]))
 
-    results = outputs(self.run_dirs, self.filetype, self.wy, self.properties,
+    results = outputs(self.run_dirs, self.wy, self.properties,
                 self.start_date, self.end_date, None, self.loglevel)
 
     out = results['outputs']
@@ -262,8 +262,8 @@ def parse(self, external_logger=None):
     # get forecast outputs
     if self.forecast_flag:
 
-        results = outputs(self.for_run_dirs, self.filetype, self.wy,
-            self.properties, None, None, None, self.loglevel)
+        results = outputs(self.for_run_dirs, self.wy, self.properties,
+            None, None, None, self.loglevel)
 
         self.for_outputs = results['outputs']
         self.for_run_dirs = results['run_dirs']
@@ -304,8 +304,8 @@ def parse(self, external_logger=None):
         if self.loglevel == 'DEBUG' and self.log_to_file is not True:
             print('Reading files in {} for flight updates...'.format(self.run_dirs[0].split('runs')[0]))
 
-        results = outputs(self.all_dirs_flt, self.filetype, self.wy,
-            self.properties, None, None, flight_dates, self.loglevel)
+        results = outputs(self.all_dirs_flt, self.wy, self.properties,
+            None, None, flight_dates, self.loglevel)
 
         self.flight_outputs = results['outputs']
         self.run_dirs_flt = results['run_dirs']
@@ -313,8 +313,8 @@ def parse(self, external_logger=None):
         self.flight_diff_dates = results['outputs']['dates']
         self.pre_flight_outputs = results['outputs']
 
-        results = outputs(self.all_dirs_flt, self.filetype, self.wy,
-            self.properties, None, None, pre_flight_dates, self.loglevel)
+        results = outputs(self.all_dirs_flt, self.wy, self.properties,
+            None, None, pre_flight_dates, self.loglevel)
 
         self.pre_flight_outputs = results['outputs']
 

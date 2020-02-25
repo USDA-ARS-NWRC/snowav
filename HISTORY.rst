@@ -20,3 +20,4 @@ History
 * Catch multiple database entries for a single field with exception when writing to the database doesn't exit cleanly
 * Make output properties file names in write_properties more explicit by including date
 * Change snow line calculation to percentile of dem with minimum snow amount
+* Remove spatialnc and IPW file processing

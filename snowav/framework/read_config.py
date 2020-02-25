@@ -42,7 +42,6 @@ def read_config(self, external_logger = None, awsm = None, end_date = None):
     self.log_to_file = ucfg.cfg['snowav']['log_to_file']
     self.save_path = ucfg.cfg['snowav']['save_path']
     self.units = ucfg.cfg['snowav']['units']
-    self.filetype = ucfg.cfg['snowav']['filetype']
     self.elev_bins = ucfg.cfg['snowav']['elev_bins']
     self.directory = ucfg.cfg['snowav']['directory']
     self.dempath = ucfg.cfg['snowav']['dempath']

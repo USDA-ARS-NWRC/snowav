@@ -67,13 +67,12 @@ def check_utils_calculate():
     result = True
     path = os.path.abspath('./tests/lakes/gold/runs/run20190402/')
     dem = os.path.abspath(topo_path)
-    filetype = 'netcdf'
     wy = 2019
     pixel = 50
     out = masks(dem, False)
     mask = out['masks']['Lakes Basin']['mask']
 
-    output = iSnobalReader(path, filetype, snowbands = [0,1,2],
+    output = iSnobalReader(path, snowbands = [0,1,2],
                            embands = [6,7,8,9], wy = wy)
 
     array = output.snow_data[0][0,:,:]

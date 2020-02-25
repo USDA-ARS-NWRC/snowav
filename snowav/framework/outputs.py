@@ -7,7 +7,7 @@ from snowav.utils.wyhr import calculate_wyhr_from_date
 from snowav.utils.OutputReader import iSnobalReader
 import netCDF4 as nc
 
-def outputs(run_dirs, filetype, wy, properties, start_date = None,
+def outputs(run_dirs, wy, properties, start_date = None,
             end_date = None, flight_dates = None, loglevel = None):
     '''
     This uses start_date and end_date to load the snow.nc and em.nc of interest
@@ -27,8 +27,6 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
         report period start date (optional)
     end_date : datetime
         report period end date (optional)
-    filetype : str
-        currently only supporting 'netcdf'
     wy : int
         water year
     flight_dates : array
@@ -131,7 +129,7 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
                     st_hr = calculate_wyhr_from_date(start)
                     en_hr = calculate_wyhr_from_date(end)
 
-                    output = iSnobalReader(path, filetype, snowbands = snowbands,
+                    output = iSnobalReader(path, snowbands = snowbands,
                                            embands = embands, wy = wy,
                                            time_start = st_hr, time_end = en_hr)
 
@@ -171,7 +169,7 @@ def outputs(run_dirs, filetype, wy, properties, start_date = None,
             for idx,t in enumerate(ta):
                 if (t.date() in [x.date() for x in flight_dates]):
 
-                    output = iSnobalReader(path, filetype, snowbands=[0,1,2], wy=wy)
+                    output = iSnobalReader(path, snowbands=[0,1,2], wy=wy)
 
                     for ot in output.time:
                         rdict[int(ot)] = path

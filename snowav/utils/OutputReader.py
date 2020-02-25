@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-from spatialnc import ipw
 from snowav.utils.wyhr import calculate_wyhr_from_date
 import os
 import glob
@@ -10,13 +9,12 @@ import netCDF4 as nc
 import warnings
 
 class iSnobalReader():
-    def __init__(self, outputdir, filetype='netcdf', timesteps=None, embands=None,
+    def __init__(self, outputdir, timesteps=None, embands=None,
                 snowbands=None, mask=None, time_start=None, time_end=None,
                 wy=None):
         """
         Inputs:
         outputdir - abosulte path to location of outputs
-        filetype - either ipw or netcdf
         timestep - list of time steps to return, default all
         embands - list of bands numbers to grab, default all
         snowbands - list of bands numbers to grab, default all
@@ -27,7 +25,6 @@ class iSnobalReader():
 
         # parse innputs
         self.outputdir = outputdir
-        self.filetype = filetype
         self.timesteps = timesteps
         self.mask = mask
         self.time_start = time_start
@@ -79,114 +76,12 @@ class iSnobalReader():
         # check for errors in time inputs
         if self.timesteps is not None and (self.time_start is not None or self.time_end is not None):
             print('timesteps: {}, time_start: {}, time_end: {}'.format(self.timesteps, self.time_start, self.time_end))
-            raise ValueError('Incorrect combination of time inputs for reading IPW files')
+            raise ValueError('Incorrect combination of time inputs for reading files')
         if (self.time_start is None and self.time_end is not None) or (self.time_start is None and self.time_end is not None):
             print('time_start: {}, time_end: {}'.format(self.time_start, self.time_end))
-            raise ValueError('Incorrect combination of time inputs for reading IPW files')
+            raise ValueError('Incorrect combination of time inputs for reading files')
 
-        # if we're dealing with ipw outputs
-        if self.filetype == 'ipw':
-            if self.wy is None:
-                raise IOError('WY not included in iSnobalReader call with type ipw')
-            # set start date for wyhrs from ipw files to allow datetime conversion
-            self.start_ipw = pd.to_datetime('10-01-{} 00:00'.format(self.wy-1))
-            # get the data
-            snow_data, em_data = self.read_isnobal_ipw()
-
-        # if we're dealing with netcdf output files
-        elif self.filetype == 'netcdf':
-            snow_data, em_data = self.read_isnobal_netcdf()
-
-        # if not a valid option
-        else:
-            raise ValueError('specified filetype incorrect for readings iSnobal outputs')
-
-        return snow_data, em_data
-
-    def read_isnobal_ipw(self):
-        """
-        Read in specific timesteps and bands from ipw files output from isnobal.
-
-        Input:
-        self
-
-        Returns:
-        snow_data - dictionary of time series spatial data np arrays as well as a
-                    time series array
-        em_date - dictionary of time series spatial data np arrays as well as a
-                    time series array
-        """
-        # path to snow and em files
-        pathsnow = os.path.join(self.outputdir, "snow.*".format(self.outputdir))
-        pathem = os.path.join(self.outputdir, "em.*".format(self.outputdir))
-
-        # get list of isnobal outputs and sort by time step
-        snowfiles = sorted(glob.glob(pathsnow), key=os.path.getmtime)
-        snowfiles.sort(key=lambda f: os.path.basename(f).split('snow.')[1])
-
-        emfiles = sorted(glob.glob(pathem), key=os.path.getmtime)
-        emfiles.sort(key=lambda f: os.path.basename(f).split('em.')[1])
-
-        # create list of timesteps if none given
-        if self.timesteps is None and self.time_start is None and self.time_end is None:
-            timesteps = []
-            for nm in snowfiles:
-                ts = os.path.basename(nm).split('snow.')[1]
-                ts = int(ts)
-                timesteps.append(ts)
-
-        # if we are grabbing files between 2 times
-        if self.time_start is not None and self.time_end is not None and self.timesteps is None:
-            timesteps = []
-            for nm in snowfiles:
-                ts = os.path.basename(nm).split('snow.')[1]
-                ts = int(ts)
-                if ts >= self.time_start and ts <= self.time_end:
-                    timesteps.append(ts)
-
-        # empty dictionaries to store numpy arrays of each variable
-        snow_data = {}
-        em_data = {}
-        # read in one file to get size
-        size_var = ipw.IPW(emfiles[0]).bands[0].data.shape
-        if self.mask is None:
-            mask = np.ones(size_var)
-        else:
-            mask = self.mask
-
-        # initilize numpy arrays
-        for ebd in self.embands:
-            em_data[ebd] = np.zeros((len(timesteps), size_var[0], size_var[1]))
-        for sbd in self.snowbands:
-            snow_data[sbd] = np.zeros((len(timesteps), size_var[0], size_var[1]))
-
-        # assign numpy array of timesteps
-        self.time = np.array(timesteps)
-        # get dates for wyhr from ipw files
-        ipw_dates = [self.start_ipw + pd.to_timedelta(dts, unit='h') for dts in self.time]
-        self.dates = np.array(ipw_dates)
-
-        for idt, ts in enumerate(timesteps):
-            # get correct file
-            fps = os.path.join(self.outputdir, 'snow.%04i'%(ts))
-            fpe = os.path.join(self.outputdir, 'em.%04i'%(ts))
-            # read in ipw
-            i_snow = ipw.IPW(fps)
-            i_em = ipw.IPW(fpe)
-
-            # assign each correct band
-            for sbd in self.snowbands:
-                tmp_snow_data = i_snow.bands[sbd].data
-                if sbd in [4, 5, 6]:
-                    tmp_snow_data[tmp_snow_data == -75.0] = np.nan
-                #tmp_snow_data[np.isnan(tmp_snow_data)] = 0.0
-                snow_data[sbd][idt,:] = tmp_snow_data*mask
-
-            for ebd in self.embands:
-                tmp_em_data = i_em.bands[ebd].data
-                #tmp_em_data[np.isnan(tmp_em_data)] = 0.0
-                em_data[ebd][idt,:] = tmp_em_data*mask
-
+        snow_data, em_data = self.read_isnobal_netcdf()
 
         return snow_data, em_data
 
