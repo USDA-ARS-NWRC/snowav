@@ -1,7 +1,8 @@
-from setuptools import setup, find_packages
+
 from codecs import open
 from os import path
 import os
+from setuptools import setup, find_packages
 from subprocess import check_output
 
 gitVersion = ''
@@ -60,10 +61,9 @@ setup(
     version='0.11.4',
     description="Snow and Water Model Analysis and Visualization ",
     author="Mark Robertson",
-    author_email='mark.robertson@ars.usda.gov',
+    author_email='mark.robertson@usda.gov',
     url='https://github.com/USDA-ARS-NWRC/snowav',
     packages=['snowav',
-			  'scripts',
 			  'snowav.framework',
 			  'snowav.database',
               'snowav.plotting',
@@ -74,7 +74,7 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
-    scripts=['./scripts/snow.py'],
+    scripts=['./cli.py'],
     install_requires=required,
     license="CC0 1.0",
     zip_safe=False,
@@ -90,7 +90,7 @@ setup(
     ],
     setup_requires=setup_requirements,
 
-    entry_points={'console_scripts': ['snowav = scripts.snow:run']},
+    entry_points={'console_scripts': ['snowav = cli:run']},
 	test_suite='tests'
 
 )

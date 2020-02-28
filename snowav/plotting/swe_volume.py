@@ -15,7 +15,7 @@ def swe_volume(args, logger = None):
     '''
     Current SWE depth and volume.
 
-    Note: scripts/sample_figure.py and command line tool in snow.py call this
+    Note: scripts/sample_figure.py and command line tool call this
     function. If changes are made here update those calls as necessary.
 
     Args

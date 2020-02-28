@@ -21,7 +21,7 @@ import shutil
 import os
 from snowav.database.database import collect
 from snowav.utils.utilities import calculate, masks
-from scripts.snow import can_i_snowav
+from snowav.cli import can_i_snowav
 from datetime import datetime
 from snowav.utils.OutputReader import iSnobalReader
 import subprocess
