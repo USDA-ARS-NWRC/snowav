@@ -408,7 +408,7 @@ def create_tables(database, plotorder):
     return logger
 
 
-def run_metadata(self, Variables, run_name):
+def run_metadata(cfg):
     '''
     Create database RunMetadata for each snowav run.
 
@@ -419,81 +419,81 @@ def run_metadata(self, Variables, run_name):
 
     '''
 
-    watershed_id = int(self.basins[self.plotorder[0]]['watershed_id'])
+    watershed_id = int(cfg.basins[cfg.plotorder[0]]['watershed_id'])
 
-    session = make_session(self.connector)
+    session = make_session(cfg.connector)
     qry = session.query(RunMetadata)
     df = pd.read_sql(qry.statement, qry.session.connection())
     session.close()
 
     # Increase each runid by 1
     if not df.run_id.values.size:
-        self.run_id = 1
+        cfg.run_id = 1
     else:
         r = df['run_id'].values
-        self.run_id = next(filterfalse(set(r).__contains__, count(1)))
+        cfg.run_id = next(filterfalse(set(r).__contains__, count(1)))
 
     # in most cases it's not practical to save all run_dirs
-    trdir = ','.join(self.run_dirs)
+    trdir = ','.join(cfg.run_dirs)
     if len(trdir) > 1200:
-        trdir = self.run_dirs[0]
+        trdir = cfg.run_dirs[0]
 
-    values = {'run_id': int(self.run_id),
-              'run_name': run_name,
+    values = {'run_id': int(cfg.run_id),
+              'run_name': cfg.run_name,
               'watershed_id': int(watershed_id),
-              'pixel': int(self.pixel),
+              'pixel': int(cfg.pixel),
               'description': '',
               'smrf_version': 'smrf'+ smrf_version,
               'awsm_version': 'aswm'+ awsm_version,
-              'snowav_version': 'snowav'+ self.snowav_version,
+              'snowav_version': 'snowav'+ cfg.snowav_version,
               'data_type': '',
               'data_location': trdir,
               'file_type': '',
-              'config_file': self.config_file,
+              'config_file': cfg.config_file,
               'proc_time': datetime.now() }
 
-    insert(self.connector, 'RunMetadata', values)
+    insert(cfg.connector, 'RunMetadata', values)
 
-    self.vid = {}
-    for v in [*Variables.variables.keys()]:
-        u = Variables.variables[v]['units']
+    cfg.vid = {}
+    for v in [*cfg.variables.variables.keys()]:
+        u = cfg.variables.variables[v]['units']
         if (('vol' in v) or ('avail' in v)):
-            u = self.units
+            u = cfg.units
         if (('z' in v) or (v == 'depth')):
-            u = self.depthlbl
+            u = cfg.depthlbl
         if v == 'density':
             u = 'kg m^-3'
         if v == 'coldcont':
             u = 'MJ'
 
-        variables = {'run_id': self.run_id,
+        variables = {'run_id': cfg.run_id,
                      'variable': v,
                      'unit': u,
-                     'name': Variables.variables[v]['description']}
+                     'name': cfg.variables.variables[v]['description']}
 
-        insert(self.connector,'VariableUnits',variables)
+        insert(cfg.connector,'VariableUnits',variables)
 
         # After inserting into VariableUnits, get the existing id
-        session = make_session(self.connector)
+        session = make_session(cfg.connector)
         qry = session.query(VariableUnits).filter(
-                                        VariableUnits.run_id == self.run_id)
+                                        VariableUnits.run_id == cfg.run_id)
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
-        self.vid[v] = df[df['variable'] == v]['id'].values[0]
+        cfg.vid[v] = df[df['variable'] == v]['id'].values[0]
 
     # snow_line
-    variables = {'run_id': self.run_id,
+    variables = {'run_id': cfg.run_id,
                  'variable': 'snow_line',
-                 'unit': self.elevlbl,
+                 'unit': cfg.elevlbl,
                  'name': 'snow_line'}
 
-    insert(self.connector, 'VariableUnits', variables)
-    session = make_session(self.connector)
+    insert(cfg.connector, 'VariableUnits', variables)
+    session = make_session(cfg.connector)
     qry = session.query(VariableUnits).filter(
-                                        VariableUnits.run_id == self.run_id)
+                                        VariableUnits.run_id == cfg.run_id)
     session.close()
     df = pd.read_sql(qry.statement, qry.session.connection())
-    self.vid['snow_line'] = df['id'].values[0]
+    cfg.vid['snow_line'] = df['id'].values[0]
 
 
 def connect(sqlite = None, sql = None, plotorder = None, user = None,

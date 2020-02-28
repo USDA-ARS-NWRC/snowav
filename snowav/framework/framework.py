@@ -36,7 +36,7 @@ class Snowav(object):
             query(cfg)
 
         # put run metadata on database
-        run_metadata(cfg, cfg.variables, cfg.run_name)
+        run_metadata(cfg)
 
         # process results
         cfg.pargs['run_id'] = cfg.run_id
