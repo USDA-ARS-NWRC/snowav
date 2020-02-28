@@ -273,7 +273,14 @@ def process(args):
 
                     if k in ['coldcont', 'density', 'depth', 'evap_z', 'L_v_E', 'lwc', 'temp_surface', 'temp_lower',
                              'temp_bulk', 'depth_lower_layer', 'h20_sat', 'R_n', 'H', 'L_v_E', 'G', 'M', 'delta_Q']:
-                        variables[k]['df'].loc[b,name] = calculate(o, pixel, bes, variables[k]['calculate'],variables[k]['value'], units, decimals)
+
+                        # iSnobal depth units are m
+                        if k == 'depth':
+                            type = 'snow_depth'
+                        else:
+                            type = variables[k]['unit_type']
+
+                        variables[k]['df'].loc[b,name] = calculate(o, pixel, bes, variables[k]['calculate'], type, units, decimals)
 
                         if out_date == outputs['dates'][-1] and k == 'density':
                             od = copy.deepcopy(o)
@@ -286,13 +293,18 @@ def process(args):
                             density[name][edges[n]] = copy.deepcopy(od)
 
                     if k in ['precip_z', 'rain_z'] and flag:
-                        variables[k]['df'].loc[b,name] = calculate(pre, pixel, be, variables[k]['calculate'],variables[k]['value'], units, decimals)
+                        variables[k]['df'].loc[b,name] = calculate(pre, pixel, be, variables[k]['calculate'],variables[k]['unit_type'], units, decimals)
                         if k == 'precip_z':
                             variables['precip_vol']['df'].loc[b,name] = calculate(pre, pixel, be, 'sum', 'volume', units, decimals)
 
                 if k in ['evap_z', 'depth', 'coldcont', 'density', 'L_v_E', 'lwc', 'temp_surface', 'temp_lower',
                          'temp_bulk', 'depth_lower_layer', 'h20_sat', 'R_n', 'H', 'L_v_E', 'G', 'M', 'delta_Q']:
-                    variables[k]['df'].loc['total',name] = calculate(o, pixel, [mask, snow_mask], variables[k]['calculate'],variables[k]['value'], units, decimals)
+
+                    if k == 'depth':
+                        type = 'snow_depth'
+                    else:
+                        type = variables[k]['unit_type']
+                    variables[k]['df'].loc['total',name] = calculate(o, pixel, [mask, snow_mask], variables[k]['calculate'],type, units, decimals)
 
                 if k == 'swe_z':
                     variables['swe_vol']['df'].loc['total',name] = calculate(o, pixel, mask, 'sum','volume', units, decimals)

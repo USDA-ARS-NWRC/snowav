@@ -1,25 +1,25 @@
 
-import os
 from datetime import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, create_engine, and_
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import backref, sessionmaker
-from snowav.database.tables import Base, RunMetadata, Watershed, Basin, Results, VariableUnits
-import pandas as pd
-import snowav
-import numpy as np
-import copy
-import urllib.parse
+from itertools import count, filterfalse
 import mysql.connector
+import numpy as np
+import os
+import pandas as pd
+from sqlalchemy import create_engine, and_
+from sqlalchemy.orm import sessionmaker
+import urllib.parse
 from sys import exit
 import warnings
+
+import snowav
+from snowav.database.tables import Base, RunMetadata, Watershed, Basin, \
+    Results, VariableUnits
 
 # Fix these two by pulling smrf and awsm versions from netcdf
 try:
     import smrf
     smrf_version = smrf.__version__
 except:
-    print('Could not import smrf, database smrf version will be "unknown"')
     smrf_version = 'unknown'
 
 try:
@@ -27,9 +27,7 @@ try:
     import awsm
     warnings.filterwarnings("default")
     awsm_version = awsm.__version__
-
 except:
-    print('Could not import awsm, database awsm version will be "unknown"')
     awsm_version = 'unknown'
 
 def make_session(connector):
@@ -409,19 +407,15 @@ def create_tables(database, plotorder):
 
     return logger
 
-def basins_dict():
-    '''
-    Make the basins lookup dictionary.
 
-    '''
-
-def run_metadata(self, run_name):
+def run_metadata(self, Variables, run_name):
     '''
     Create database RunMetadata for each snowav run.
 
     Args
     ------
-    run_name : str
+        Variables: class, from snowav/database/models.py
+        run_name : str
 
     '''
 
@@ -435,34 +429,34 @@ def run_metadata(self, run_name):
     # Increase each runid by 1
     if not df.run_id.values.size:
         self.run_id = 1
-
     else:
-        self.run_id = int(df['run_id'].max() + 1)
+        r = df['run_id'].values
+        self.run_id = next(filterfalse(set(r).__contains__, count(1)))
 
     # in most cases it's not practical to save all run_dirs
     trdir = ','.join(self.run_dirs)
     if len(trdir) > 1200:
         trdir = self.run_dirs[0]
 
-    values = {'run_id':int(self.run_id),
-              'run_name':run_name,
-              'watershed_id':int(watershed_id),
-              'pixel':int(self.pixel),
-              'description':'',
-              'smrf_version':'smrf'+ smrf_version,
-              'awsm_version':'aswm'+ awsm_version,
-              'snowav_version':'snowav'+ snowav.__version__,
-              'data_type':'',
-              'data_location':trdir,
-              'file_type':'',
-              'config_file':self.config_file,
-              'proc_time':datetime.now() }
+    values = {'run_id': int(self.run_id),
+              'run_name': run_name,
+              'watershed_id': int(watershed_id),
+              'pixel': int(self.pixel),
+              'description': '',
+              'smrf_version': 'smrf'+ smrf_version,
+              'awsm_version': 'aswm'+ awsm_version,
+              'snowav_version': 'snowav'+ self.snowav_version,
+              'data_type': '',
+              'data_location': trdir,
+              'file_type': '',
+              'config_file': self.config_file,
+              'proc_time': datetime.now() }
 
     insert(self.connector, 'RunMetadata', values)
 
     self.vid = {}
-    for v in [*self.vars.keys()]:
-        u = self.vars[v]['units']
+    for v in [*Variables.variables.keys()]:
+        u = Variables.variables[v]['units']
         if (('vol' in v) or ('avail' in v)):
             u = self.units
         if (('z' in v) or (v == 'depth')):
@@ -472,57 +466,34 @@ def run_metadata(self, run_name):
         if v == 'coldcont':
             u = 'MJ'
 
-        variables = {'run_id':self.run_id,
-                     'variable':v,
-                     'unit':u,
-                     'name':self.vars[v]['description']}
+        variables = {'run_id': self.run_id,
+                     'variable': v,
+                     'unit': u,
+                     'name': Variables.variables[v]['description']}
 
         insert(self.connector,'VariableUnits',variables)
 
         # After inserting into VariableUnits, get the existing id
         session = make_session(self.connector)
-        qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
+        qry = session.query(VariableUnits).filter(
+                                        VariableUnits.run_id == self.run_id)
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
         self.vid[v] = df[df['variable'] == v]['id'].values[0]
 
     # snow_line
-    variables = {'run_id':self.run_id,
-                 'variable':'snow_line',
-                 'unit':self.elevlbl,
-                 'name':'snow_line'}
+    variables = {'run_id': self.run_id,
+                 'variable': 'snow_line',
+                 'unit': self.elevlbl,
+                 'name': 'snow_line'}
 
-    insert(self.connector,'VariableUnits',variables)
+    insert(self.connector, 'VariableUnits', variables)
     session = make_session(self.connector)
-    qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
+    qry = session.query(VariableUnits).filter(
+                                        VariableUnits.run_id == self.run_id)
     session.close()
     df = pd.read_sql(qry.statement, qry.session.connection())
     self.vid['snow_line'] = df['id'].values[0]
-
-    # Add post-processing values
-    sum_vals = {'swi_vol_wy':'surface water input volume, water year total',
-                'swi_z_wy':'surface water input depth, water year total',
-                'evap_z_wy':'evaporation depth, water year total'}
-
-    for v in sum_vals.keys():
-        if ('vol' in v):
-            u = self.units
-        if ('z' in v) :
-            u = self.depthlbl
-
-        variables = {'run_id':self.run_id,
-                     'variable':v,
-                     'unit':u,
-                     'name':sum_vals[v]}
-
-        insert(self.connector,'VariableUnits',variables)
-
-        session = make_session(self.connector)
-        qry = session.query(VariableUnits).filter(VariableUnits.run_id == self.run_id)
-        session.close()
-        df = pd.read_sql(qry.statement, qry.session.connection())
-
-        self.vid[v] = df[df['variable'] == v]['id'].values[0]
 
 
 def connect(sqlite = None, sql = None, plotorder = None, user = None,

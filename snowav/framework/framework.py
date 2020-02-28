@@ -47,10 +47,10 @@ class snowav(object):
             query(self)
 
         # parse config options
-        parse(self)
+        Variables = parse(self)
 
         # put run metadata on database
-        run_metadata(self, self.run_name)
+        run_metadata(self, Variables, self.run_name)
 
         # process results
         self.pargs['run_id'] = self.run_id

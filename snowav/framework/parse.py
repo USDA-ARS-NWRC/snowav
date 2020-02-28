@@ -4,22 +4,30 @@ import numpy as np
 import pandas as pd
 import os
 from copy import deepcopy
-from snowav.utils.get_topo_stats import get_topo_stats
-from snowav.utils.utilities import masks
-from snowav.framework.outputs import outputs
 import coloredlogs
 import netCDF4 as nc
 from collections import OrderedDict
-from snowav.database.database import connect
 from datetime import timedelta, datetime
+
 from inicheck.output import print_config_report, generate_config
+import snowav
+from snowav.utils.get_topo_stats import get_topo_stats
+from snowav.utils.utilities import masks
+from snowav.framework.outputs import outputs
+from snowav.database.database import connect
+from snowav.database.models import AwsmInputsOutputs
 from snowav.utils.wyhr import handle_year_stradling, calculate_date_from_wyhr
 
 def parse(self, external_logger=None):
-    '''
-    Parse options from config file after read_config().
+    """ Parse config options.
 
-    '''
+    Returns
+    ------
+    Variables: AwsmInputsOutputs class
+
+    """
+
+    self.snowav_version = snowav.__version__
 
     self.barcolors = ['xkcd:cobalt',
                       'xkcd:mustard green',
@@ -61,8 +69,6 @@ def parse(self, external_logger=None):
         for basin in self.basins:
             self.tmp_log.append(' {}: {}'.format(basin, self.basins[basin]))
 
-        # self.tmp_log.append(' Connection: {}'.format(self.connector))
-
     # Check snow.nc file location, get topo stats and water year
     sfile = os.path.join(self.run_dirs[0],'snow.nc')
 
@@ -78,7 +84,7 @@ def parse(self, external_logger=None):
         self.wy = handle_year_stradling(t) + 1
 
     else:
-        print('\nGiven config options, expecting to find:\n   {}\nto load topo '
+        print('\nGiven config options, expecting to find:\n {}\nto load topo '
               'stats but is not a valid file\nCheck config [run] options, see '
               'CoreConfig.ini for details\n'.format(sfile))
         raise Exception('{} not a valid file'.format(sfile))
@@ -93,59 +99,9 @@ def parse(self, external_logger=None):
                            self.elev_bins[1],
                            self.elev_bins[2])
 
-    # These are used in process() and database table VariableUnits
-    dz = pd.DataFrame(np.nan, index = self.edges, columns = self.masks.keys())
-
-    self.vars = OrderedDict()
-    for v in self.properties:
-        if v == 'coldcont':
-            self.vars[v] = {'df':deepcopy(dz),'description':'cold content','calculate':'mean','value':None,'units':'unassigned'}
-        if v == 'evap_z':
-            self.vars[v] = {'df':deepcopy(dz),'description':'evaporation depth','calculate':'mean','value':'depth','units':'unassigned'}
-        if v == 'density':
-            self.vars[v] = {'df':deepcopy(dz),'description':'density','calculate':'mean','value':None,'units':'unassigned'}
-        if v == 'depth':
-            self.vars[v] = {'df':deepcopy(dz),'description':'depth','calculate':'mean','value':'snow_depth','units':'unassigned'}
-        if v == 'precip_z':
-            self.vars[v] = {'df':deepcopy(dz),'description':'precipitation depth','calculate':'mean','value':'depth','units':'unassigned'}
-            self.vars['precip_vol'] = {'df':deepcopy(dz),'description':'precipitation volume','calculate':'sum','value':'volume','units':'unassigned'}
-            self.vars['rain_z'] = {'df':deepcopy(dz),'description':'rain depth','calculate':'mean','value':'depth','units':'unassigned'}
-        if v == 'swi_z':
-            self.vars[v] = {'df':deepcopy(dz),'description':'surface water input depth','calculate':'mean','value':'depth','units':'unassigned'}
-            self.vars['swi_vol'] = {'df':deepcopy(dz),'description':'surface water input volume','calculate':'sum','value':'volume','units':'unassigned'}
-        if v == 'swe_z':
-            self.vars[v] = {'df':deepcopy(dz),'description':'snow water equivalent depth','calculate':'mean','value':'depth','units':'unassigned'}
-            self.vars['swe_vol'] = {'df':deepcopy(dz),'description':'snow water equivalent volume','calculate':'sum','value':'volume','units':'unassigned'}
-            self.vars['swe_avail'] = {'df':deepcopy(dz),'description':'snow water equivalent volume available for melt','calculate':'sum','value':'volume','units':'unassigned'}
-            self.vars['swe_unavail'] = {'df':deepcopy(dz),'description':'snow water equivalent volume unavailable for melt','calculate':'sum','value':'volume','units':'unassigned'}
-        if v == 'lwc':
-            self.vars[v] = {'df':deepcopy(dz),'description':'liquid water content','calculate':'mean','value':'depth','units':'unassigned'}
-        if v == 'temp_surface':
-            self.vars[v] = {'df':deepcopy(dz),'description':'surface layer temperature','calculate':'mean','value':None,'units':'C'}
-        if v == 'temp_lower':
-            self.vars[v] = {'df':deepcopy(dz),'description':'lower layer temperature','calculate':'mean','value':None,'units':'C'}
-        if v == 'temp_bulk':
-            self.vars[v] = {'df':deepcopy(dz),'description':'bulk temperature','calculate':'mean','value':None,'units':'C'}
-        if v == 'depth_lower_layer':
-            self.vars[v] = {'df':deepcopy(dz),'description':'lower layer depth','calculate':'mean','value':'depth','units':'unassigned'}
-        if v == 'h20_sat':
-            self.vars[v] = {'df':deepcopy(dz),'description':'water saturation','calculate':'mean','value':None,'units':'percent'}
-        if v == 'R_n':
-            self.vars[v] = {'df':deepcopy(dz),'description':'net all-wave radiation','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'H':
-            self.vars[v] = {'df':deepcopy(dz),'description':'sensible heat tranfer','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'L_v_E':
-            self.vars[v] = {'df':deepcopy(dz),'description':'latent heat exchange','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'G':
-            self.vars[v] = {'df':deepcopy(dz),'description':'snow/soil heat exchange','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'M':
-            self.vars[v] = {'df':deepcopy(dz),'description':'advected heat from precip','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'delta_Q':
-            self.vars[v] = {'df':deepcopy(dz),'description':'sum of e.b. terms','calculate':'mean','value':None,'units':'W/m^2'}
-        if v == 'melt':
-            self.vars[v] = {'df':deepcopy(dz),'description':'snowpack melt','calculate':'mean','value':'depth','units':'unassigned'}
-        if v == 'snow_line':
-            self.vars[v] = {'df':deepcopy(dz),'description':'snow line above threshold','calculate':'mean','value':None,'units':'unassigned'}
+    # get variables that will be used in processing
+    Variables = AwsmInputsOutputs()
+    Variables.make_variables(self.properties, self.edges, self.masks.keys())
 
     if self.units == 'TAF':
         self.conversion_factor = ((self.pixel**2)*0.000000810713194*0.001)
@@ -362,7 +318,7 @@ def parse(self, external_logger=None):
     self.pargs['run_name'] = self.run_name
     self.pargs['db_overwrite'] = self.db_overwrite
     self.pargs['wy'] = self.wy
-    self.pargs['vars'] = self.vars
+    self.pargs['vars'] = Variables.variables
     self.pargs['ixd'] = self.ixd
     self.pargs['vollbl'] = self.vollbl
     self.pargs['depthlbl'] = self.depthlbl
@@ -385,6 +341,9 @@ def parse(self, external_logger=None):
         self.pargs['dbs'] = 'sql'
     else:
         self.pargs['dbs'] = 'sqlite'
+
+    return Variables
+
 
 def createLog(self):
     '''
