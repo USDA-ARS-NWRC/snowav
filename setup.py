@@ -64,6 +64,7 @@ setup(
     author_email='mark.robertson@usda.gov',
     url='https://github.com/USDA-ARS-NWRC/snowav',
     packages=['snowav',
+			  'snowav.config',
 			  'snowav.framework',
 			  'snowav.database',
               'snowav.plotting',
@@ -74,7 +75,7 @@ setup(
 
     include_package_data=True,
     package_data={'snowav':['./config/CoreConfig.ini', './config/recipes.ini']},
-    scripts=['./cli.py'],
+    scripts=['./snowav/cli.py'],
     install_requires=required,
     license="CC0 1.0",
     zip_safe=False,

@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 
 class AwsmInputsOutputs(object):
-    def __init__(self):
         """ smrf input and iSnobal output variable definitions for processing,
-        including bands, units, database table, and derivatives.
-        """
+        including bands, units, database table, and derivatives. """
+           
+    def __init__(self):
 
         self.vars = {'depth':
                             {'band': 0,
@@ -346,11 +346,16 @@ class AwsmInputsOutputs(object):
                               'table': 'Results'}
                           }
 
+        # snow.nc and em.nc variables
+        self.awsm_variables = []
+
         # all named snowav variables
         self.snowav_named_variables = []
 
         for v in self.vars.keys():
             self.snowav_named_variables.append(v)
+            if self.vars[v]['band'] is not None:
+                self.awsm_variables.append(v)
 
         # Results table values
         self.snowav_results_variables = []
@@ -372,6 +377,12 @@ class AwsmInputsOutputs(object):
 
         self.cumulative_sum_variables = ['swi_vol', 'precip_vol', 'precip_z',
                                          'swi_z']
+
+        self.process_depth_units = ['coldcont', 'density', 'depth', 'evap_z',
+                                    'L_v_E', 'lwc', 'temp_surface',
+                                    'temp_lower', 'temp_bulk',
+                                    'depth_lower_layer', 'h20_sat', 'R_n', 'H',
+                                    'L_v_E', 'G', 'M', 'delta_Q']
 
 
     def make_variables(self, properties, edges, columns):
@@ -399,8 +410,14 @@ class AwsmInputsOutputs(object):
                                  'properties'.format(p))
 
             self.variables[p] = deepcopy(self.vars[p])
+
+            if p == 'snow_line':
+                index = ['total']
+            else:
+                index = edges
+
             self.variables[p]['df'] = pd.DataFrame(np.nan,
-                                                   index = edges,
+                                                   index = index,
                                                    columns = columns)
 
             # add derivates as well

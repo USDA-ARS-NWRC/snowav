@@ -29,8 +29,9 @@ class UserConfig(object):
 
     Args
     ------
-    external_logger: object, logger from awsm (not currently in use)
-    awsm: object
+    config_file: file path
+    external_logger: logger from awsm
+    awsm: awsm object
     end_date: string
     """
 
@@ -138,6 +139,7 @@ class UserConfig(object):
         self.add_basins = ucfg.cfg['database']['add_basins']
         self.db_overwrite = ucfg.cfg['database']['overwrite']
         self.properties = ucfg.cfg['database']['properties']
+        self.sqlite = ucfg.cfg['database']['sqlite']
 
         base_bands = ['swi_z','evap_z','swe_z','depth','density',
             'coldcont', 'precip_z']
@@ -145,8 +147,8 @@ class UserConfig(object):
         f = False
         for band in base_bands:
             if band not in self.properties:
-                self.tmp_log.append(' WARNING! Config option [database] properties '
-                    'does not contain {}'.format(band))
+                self.tmp_log.append(' WARNING! Config option [database] '
+                    'properties does not contain {}'.format(band))
                 f = True
 
         if f:
@@ -159,23 +161,18 @@ class UserConfig(object):
              (self.db_password is None) or
              (self.db_host is None) or
              (self.db_port is None)) ):
-            raise Exception('If using config option [database] mysql, must also '
-                            'supply user, password, host, and port')
+            raise Exception('If using config option [database] mysql, must '
+                            'also supply user, password, host, and port')
 
-        sqlite = ucfg.cfg['database']['sqlite']
+        if self.sqlite is not None:
+            if not os.path.isdir(os.path.dirname(self.sqlite)):
+                raise Exception('{} does not contain a valid base '
+                                'path'.format(self.sqlite))
+            self.sqlite = 'sqlite:///' + self.sqlite
 
-        if (sqlite is not None) and os.path.isdir(os.path.dirname(sqlite)):
-            self.sqlite = 'sqlite:///' + sqlite
-        elif sqlite is None:
-            self.sqlite = None
-
-        if (sqlite is not None) and not os.path.isdir(os.path.dirname(sqlite)):
-            raise Exception('Config option [database] sqlite: {} '.format(sqlite) +
-                            'contains an invalid base path for the sqlite database')
-
-        if self.mysql is not None and sqlite is not None:
-            raise Exception('Config option [database] section contains both mysql '
-                            'and sqlite entries, pick one...')
+            if self.mysql is not None:
+                raise Exception('Config option [database] section contains '
+                'both "mysql" and "sqlite" entries, pick one.')
 
         ####################################################
         #           validate                               #
@@ -243,10 +240,10 @@ class UserConfig(object):
             if self.diag_basins is not None:
                 for basin in self.diag_basins:
                     if basin not in self.plotorder:
-                        self.tmp_log.append(' Config option [diagnostics] basin: {} '
-                                            'does not match what was supplied in '
-                                            '[snowav] masks: {}, diagnostics set '
-                                            'to False'.format(basin, self.plotorder))
+                        self.tmp_log.append(' Config option [diagnostics] basin: '
+                                    '{} does not match what was supplied in '
+                                    '[snowav] masks: {}, diagnostics set '
+                                    'to False'.format(basin, self.plotorder))
                         self.diagnostics_flag = False
 
         self.inputs_flag = ucfg.cfg['diagnostics']['inputs_table']
@@ -268,10 +265,12 @@ class UserConfig(object):
 
         if self.inputs_flag:
             s = [x + ', ' for x in self.inputs_variables]
-            self.tmp_log.append(' Using variables {} for inputs summary'.format(''.join(s)))
+            self.tmp_log.append(' Using variables {} for inputs '
+                                'summary'.format(''.join(s)))
 
             s = [x + ', ' for x in self.inputs_methods]
-            self.tmp_log.append(' Using methods {} for inputs summary'.format(''.join(s)))
+            self.tmp_log.append(' Using methods {} for inputs '
+                                'summary'.format(''.join(s)))
 
         ####################################################
         #          plots                                   #
@@ -306,7 +305,9 @@ class UserConfig(object):
                         ucfg.cfg['plots']['fig_height'])
         self.write_properties = ucfg.cfg['plots']['write_properties']
         self.point_values_flag = ucfg.cfg['plots']['point_values']
-        if self.write_properties is not None and type(self.write_properties) != list:
+
+        if (self.write_properties is not None and
+        type(self.write_properties) != list):
             self.write_properties = [self.write_properties]
 
         numbers = ucfg.cfg['plots']['update_numbers']
@@ -315,7 +316,6 @@ class UserConfig(object):
             if type(numbers) != list:
                 numbers = [numbers]
             self.update_numbers = [x - 1 for x in numbers]
-
         else:
             self.update_numbers = None
 
@@ -336,7 +336,6 @@ class UserConfig(object):
 
         if self.update_file is not None:
             self.flt_flag = True
-
         else:
             self.flt_flag = False
 
@@ -497,6 +496,7 @@ class UserConfig(object):
         """ Parse config options. """
 
         self.snowav_version = snowav.__version__
+        self.cclimit = -5*1000*1000
 
         self.barcolors = ['xkcd:cobalt',
                           'xkcd:mustard green',
@@ -568,9 +568,15 @@ class UserConfig(object):
                                self.elev_bins[1],
                                self.elev_bins[2])
 
+        v = self.properties
+        if self.inputs_flag:
+            v += self.inputs_variables
+
         # get variables that will be used in processing
         self.variables = AwsmInputsOutputs()
-        self.variables.make_variables(self.properties, self.edges, self.masks.keys())
+        self.variables.make_variables(v,
+                                      self.edges,
+                                      self.masks.keys())
 
         if self.units == 'TAF':
             self.conversion_factor = ((self.pixel**2)*0.000000810713194*0.001)
@@ -771,46 +777,6 @@ class UserConfig(object):
 
         if self.inputs_basins is None:
             self.inputs_basins = [self.plotorder[0]]
-
-        # set up process() inputs for standard run
-        self.pargs = {}
-        self.pargs['outputs'] = self.outputs
-        self.pargs['ixs'] = self.ixs
-        self.pargs['ixe'] = self.ixe
-        self.pargs['rundirs_dict'] = self.rundirs_dict
-        self.pargs['edges'] = self.edges
-        self.pargs['masks'] = self.masks
-        self.pargs['nrows'] = self.nrows
-        self.pargs['ncols'] = self.ncols
-        self.pargs['plotorder'] = self.plotorder
-        self.pargs['connector'] = self.connector
-        self.pargs['basins'] = self.basins
-        self.pargs['run_name'] = self.run_name
-        self.pargs['db_overwrite'] = self.db_overwrite
-        self.pargs['wy'] = self.wy
-        self.pargs['vars'] = self.variables.variables
-        self.pargs['ixd'] = self.ixd
-        self.pargs['vollbl'] = self.vollbl
-        self.pargs['depthlbl'] = self.depthlbl
-        self.pargs['elevlbl'] = self.elevlbl
-        self.pargs['pixel'] = self.pixel
-        self.pargs['dem'] = self.dem
-        self.pargs['snow_limit'] = self.diag_limit
-        self.pargs['inputs_flag'] = self.inputs_flag
-        self.pargs['inputs_methods'] = self.inputs_methods
-        self.pargs['inputs_basins'] = self.inputs_basins
-        self.pargs['inputs_variables'] = self.inputs_variables
-        self.pargs['inputs_percentiles'] = self.inputs_percentiles
-        self.pargs['precip_depth_figure'] = self.precip_depth_flag
-        self.pargs['density_figure'] = self.density_flag
-        self.pargs['units'] = self.units
-        self.pargs['decimals'] = self.dplcs
-        self.pargs['properties'] = self.properties
-
-        if self.mysql is not None:
-            self.pargs['dbs'] = 'sql'
-        else:
-            self.pargs['dbs'] = 'sqlite'
 
 
 def createLog(self):

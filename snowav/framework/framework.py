@@ -3,8 +3,8 @@ from datetime import datetime
 import os
 
 from snowav.framework.query import query
-from snowav.framework.config import UserConfig
-from snowav.framework.process import process
+from snowav.config.config import UserConfig
+from snowav.framework.process import Process
 from snowav.framework.figures import figures
 from snowav.report.report import report
 from snowav.database.database import run_metadata
@@ -38,19 +38,8 @@ class Snowav(object):
         # put run metadata on database
         run_metadata(cfg)
 
-        # process results
-        cfg.pargs['run_id'] = cfg.run_id
-        cfg.pargs['vid'] = cfg.vid
-        cfg.precip_flag, out, pre, rain, density = process(cfg.pargs)
-
-        # assign
-        cfg.density = density
-        cfg.rain_total = rain
-        cfg.precip_total = pre
-
-        if not cfg.precip_flag:
-            cfg.precip_depth_flag = False
-            cfg.precip_validate_flag = False
+        # cfg.precip_flag, out, pre, rain, density = Process(cfg.pargs)
+        process = Process(cfg)
 
         if cfg.inflow_flag and cfg.inflow_data is not None:
             args = {}
@@ -68,7 +57,7 @@ class Snowav(object):
 
             excel_to_csv(args, cfg._logger)
 
-        figures(cfg)
+        figures(cfg, process)
 
         # Do additional processing and figures if forecast is supplied. Some
         # field will be overwritten during forecast processing
@@ -92,8 +81,9 @@ class Snowav(object):
             figures(cfg)
 
         if cfg.report_flag:
-            report(cfg)
+            report(cfg, process)
 
         elapsed = str(datetime.now() - cfg.proc_time_start)
 
-        cfg._logger.info(' Completed snowav processing, elapsed time: {}'.format(elapsed))
+        cfg._logger.info(' Completed snowav processing, '
+                         'elapsed time: {}'.format(elapsed))
