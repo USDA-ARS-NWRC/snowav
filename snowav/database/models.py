@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 
 class AwsmInputsOutputs(object):
-        """ smrf input and iSnobal output variable definitions for processing,
-        including bands, units, database table, and derivatives. """
-           
+    """ smrf input and iSnobal output variable definitions for processing,
+    including bands, units, database table, and derivatives. """
+
     def __init__(self):
 
         self.vars = {'depth':

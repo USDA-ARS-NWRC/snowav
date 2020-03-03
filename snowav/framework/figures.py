@@ -106,8 +106,8 @@ def figures(cfg, process):
         args['df'] = df
         args['image'] = image
         args['title'] = 'Accumulated SWI\n{} to {}'.format(
-                        cfg.start_date.date().strftime("%Y-%-m-%-d"),
-                        cfg.end_date.date().strftime("%Y-%-m-%-d"))
+                        args['report_start'],
+                        args['report_date'])
 
         fig_names['swi'] = swi(args, cfg._logger)
 
