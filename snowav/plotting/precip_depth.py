@@ -50,7 +50,7 @@ def precip_depth(args, logger = None):
     else:
         qMin,z = np.nanpercentile(precip,mm)
 
-    clims = (qMin,qMax)
+    clims = (0,qMax)
 
     # Get bar plot ylims
     if np.nanmax(accum_byelev.values) > np.nanmax(precip_byelev.values):
@@ -64,8 +64,15 @@ def precip_depth(args, logger = None):
         else:
             yMax = np.nanmax(precip_byelev.values) + np.nanmax(precip_byelev.values)*0.6
 
-    cmap = cmocean.cm.dense
-    cmap1 = plt.cm.nipy_spectral_r
+    colors1 = cmocean.cm.dense(np.linspace(0, 1, 255))
+    colors2 = plt.cm.Set1_r(np.linspace(0, 1, 1))
+    colors = np.vstack((colors2, colors1))
+    cmap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+
+    colors1 = plt.cm.nipy_spectral_r(np.linspace(0, 1, 255))
+    colors2 = plt.cm.Set1_r(np.linspace(0, 1, 1))
+    colors = np.vstack((colors2, colors1))
+    cmap1 = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -77,7 +84,6 @@ def precip_depth(args, logger = None):
     ################################################
     #           SWI                                #
     ################################################
-
     mymap = copy.deepcopy(cmap)
     pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
@@ -85,11 +91,10 @@ def precip_depth(args, logger = None):
     mymap.set_bad('white',1.)
 
     r = ~np.isnan(accum)
-    r[r] &= accum[r] < 0.05
-    accum[r] = -1
-    mymap.set_under('grey',1.)
+    r[r] &= accum[r] < 0.001
+    accum[r] = 0
 
-    h = ax[0,0].imshow(accum, clim = clims, cmap = mymap)
+    h = ax[0,0].imshow(accum,  cmap = mymap, clim=clims)
 
     for name in masks:
         ax[0,0].contour(masks[name]['mask'],cmap = 'Greys',linewidths = 1)
@@ -106,10 +111,6 @@ def precip_depth(args, logger = None):
         sumorder = plotorder
         swid = 0.4
         wid = [-0.1, 0.1]
-        # xl = list(xlims)
-        # xl[0] = xl[0] + 0.25
-        # xl[1] = xl[1] + 0.25
-        # xlims = tuple(xl)
     elif len(plotorder) <= 4:
         sumorder = plotorder[1::]
         swid = 0.25
@@ -169,9 +170,8 @@ def precip_depth(args, logger = None):
     precip[ixo] = np.nan
     mymap1.set_bad('white',1.)
     r = ~np.isnan(precip)
-    r[r] &= precip[r] < 0.05
-    precip[r] = -1
-    mymap1.set_under('grey',1.)
+    r[r] &= precip[r] < 0.001
+    precip[r] = 0
 
     h2 = ax[1,0].imshow(precip, interpolation='none', cmap = mymap1, clim = clims)
 
@@ -235,9 +235,8 @@ def precip_depth(args, logger = None):
     rain[ixo] = np.nan
     mymap.set_bad('white',1.)
     r = ~np.isnan(rain)
-    r[r] &= rain[r] < 0.05
-    rain[r] = -1
-    mymap.set_under('grey',1.)
+    r[r] &= rain[r] < 0.001
+    rain[r] = 0
 
     h2 = ax[2,0].imshow(rain, interpolation='none', cmap = mymap, clim = clims)
 

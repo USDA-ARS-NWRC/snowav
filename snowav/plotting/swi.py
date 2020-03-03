@@ -73,7 +73,7 @@ def swi(args, logger=None):
     qMin,qMax = np.nanpercentile(accum,[0,args['percent_max']])
     clims = (0,qMax)
     colors1 = cmocean.cm.dense(np.linspace(0, 1, 255))
-    colors2 = plt.cm.binary(np.linspace(0, 1, 1))
+    colors2 = plt.cm.Set1_r(np.linspace(0, 1, 1))
     colors = np.vstack((colors2, colors1))
     mymap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
 
@@ -83,10 +83,9 @@ def swi(args, logger=None):
     mymap.set_bad('white',1.)
 
     # Now set SWI-free to some color
-    zs = ~np.isnan(accum)
-    zs[zs] &= accum[zs] < args['depth_clip']
-    accum[zs] = -1
-    mymap.set_under('grey',1.)
+    r = ~np.isnan(accum)
+    r[r] &= accum[r] < 0.001
+    accum[r] = 0
 
     sns.set_style('darkgrid')
     sns.set_context("notebook")
@@ -98,7 +97,7 @@ def swi(args, logger=None):
                                 nrows=1,
                                 ncols=2)
 
-    h = ax.imshow(accum, clim=clims, cmap=mymap)
+    h = ax.imshow(accum, cmap=mymap, clim=clims)
 
     for name in masks:
         ax.contour(masks[name]['mask'], cmap='Greys',linewidths=1)
@@ -110,14 +109,6 @@ def swi(args, logger=None):
     cbar = plt.colorbar(h, cax = cax)
     cbar.set_label('[{}]'.format(args['depthlbl']))
     h.axes.set_title(args['title'])
-
-    if df[plotorder[0]].sum() < 9.9:
-        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
-                             str(int(df[plotorder[0]].sum())),
-                             args['vollbl'])
-    else:
-        tlbl = '{}: {} {}'.format(labels[plotorder[0]],
-               str(np.round(df[plotorder[0]].sum(),args['dplcs'])),args['vollbl'])
 
     # Plot the bars
     for iters,name in enumerate(lims.sumorder):
@@ -163,7 +154,7 @@ def swi(args, logger=None):
     fig.subplots_adjust(top=0.88)
 
     # If there is meaningful snow-free area, include patch and label
-    if sum(sum(zs)) > 1000:
+    if sum(sum(r)) > 1000:
         patches = [mpatches.Patch(color='grey', label='no SWI')]
         ax.legend(handles=patches, bbox_to_anchor=(lims.pbbx, 0.05),
                   loc=2, borderaxespad=0. )
@@ -172,10 +163,7 @@ def swi(args, logger=None):
 
     # fix so that legend isn't obscured
     if len(plotorder) > 1:
-        ax1.legend(loc=(lims.legx,lims.legy),markerscale = 0.5)
-
-    ax1.text(lims.btx,lims.bty,tlbl,horizontalalignment='center',
-             transform=ax1.transAxes,fontsize = 10)
+        ax1.legend(loc=2,markerscale = 0.5)
 
     fig_name_short = 'swi_'
     fig_name = '{}{}{}.png'.format(args['figs_path'],fig_name_short,args['directory'])

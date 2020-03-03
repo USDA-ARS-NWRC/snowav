@@ -93,7 +93,7 @@ def figures(self):
 
     if self.swi_flag:
         image = np.zeros_like(self.outputs['swi_z'][0])
-        for n in range(self.ixs,self.ixe):
+        for n in range(self.ixs,self.ixe+1):
             image = image + self.outputs['swi_z'][n]*self.depth_factor
 
         df = collect(connector, args['plotorder'], args['basins'],
@@ -103,8 +103,8 @@ def figures(self):
         args['df'] = df
         args['image'] = image
         args['title'] = 'Accumulated SWI\n{} to {}'.format(
-                        self.start_date.date().strftime("%Y-%-m-%-d"),
-                        self.end_date.date().strftime("%Y-%-m-%-d"))
+                        args['report_start'],
+                        args['report_date'])
 
         fig_names['swi'] = swi(args, self._logger)
 
@@ -184,7 +184,7 @@ def figures(self):
 
     if self.precip_depth_flag:
         swi_image = np.zeros_like(self.outputs['swi_z'][0])
-        for n in range(self.ixs,self.ixe):
+        for n in range(self.ixs,self.ixe+1):
             swi_image = swi_image + self.outputs['swi_z'][n]*self.depth_factor
 
         swi_df = collect(connector, args['plotorder'], args['basins'],
