@@ -142,7 +142,7 @@ class UserConfig(object):
         self.sqlite = ucfg.cfg['database']['sqlite']
 
         base_bands = ['swi_z','evap_z','swe_z','depth','density',
-            'coldcont', 'precip_z']
+            'coldcont', 'precip']
 
         f = False
         for band in base_bands:

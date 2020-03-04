@@ -219,11 +219,11 @@ class AwsmInputsOutputs(object):
                              'calculate': 'mean',
                              'table': 'Inputs',
                              'file': 'storm_days.nc'},
-                     'precip_z':
+                     'precip':
                              {'band': None,
                              'derivatives': {'requires': ['percent_snow'],
                                              'products': ['precip_vol',
-                                                          'rain_z']},
+                                                          'rain']},
                              'unit_type': 'depth',
                              'description': 'precipitation',
                              'units': 'mm',
@@ -234,8 +234,8 @@ class AwsmInputsOutputs(object):
                              {'band': None,
                              'derivatives': {'requires': [],
                                              'products': ['precip_vol',
-                                                          'precip_z',
-                                                          'rain_z']},
+                                                          'precip',
+                                                          'rain']},
                              'unit_type': 'percent',
                              'description': 'percent of precipitation that is snow',
                              'units': 'mm',
@@ -318,16 +318,16 @@ class AwsmInputsOutputs(object):
                               'table': 'Results'},
                      'precip_vol':
                              {'band': None,
-                              'derivatives': {'requires': ['precip_z'],
+                              'derivatives': {'requires': ['precip'],
                                               'products': []},
                               'unit_type': 'volume',
                               'description': 'precipitation volume',
                               'units': 'm^3',
                               'calculate': 'sum',
                               'table': 'Results'},
-                     'rain_z':
+                     'rain':
                              {'band': None,
-                              'derivatives': {'requires': ['precip_z',
+                              'derivatives': {'requires': ['precip',
                                                            'percent_snow'],
                                               'products': []},
                               'unit_type': 'depth',
@@ -375,7 +375,7 @@ class AwsmInputsOutputs(object):
                     for d in self.vars[v]['derivatives']['products']:
                         self.snowav_inputs_variables.append(d)
 
-        self.cumulative_sum_variables = ['swi_vol', 'precip_vol', 'precip_z',
+        self.cumulative_sum_variables = ['swi_vol', 'precip_vol', 'precip',
                                          'swi_z']
 
         self.process_depth_units = ['coldcont', 'density', 'depth', 'evap_z',

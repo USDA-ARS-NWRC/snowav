@@ -183,7 +183,7 @@ def figures(cfg, process):
 
         fig_names['basin_total'] = basin_total(args, cfg._logger)
 
-    if cfg.precip_depth_flag and process.precip_flag:
+    if cfg.precip_depth_flag:
         swi_image = np.zeros_like(cfg.outputs['swi_z'][0])
         for n in range(cfg.ixs,cfg.ixe):
             swi_image = swi_image + cfg.outputs['swi_z'][n]*cfg.depth_factor
@@ -192,10 +192,10 @@ def figures(cfg, process):
                          args['start_date'], args['end_date'], 'swi_z',
                          args['run_name'], args['edges'], 'sum')
         precip_df = collect(connector, args['plotorder'], args['basins'],
-                            args['start_date'], args['end_date'], 'precip_z',
+                            args['start_date'], args['end_date'], 'precip',
                             args['run_name'], args['edges'], 'sum')
         rain_df = collect(connector, args['plotorder'], args['basins'],
-                          args['start_date'], args['end_date'], 'rain_z',
+                          args['start_date'], args['end_date'], 'rain',
                           args['run_name'], args['edges'], 'sum')
 
         args['swi_image'] = swi_image
@@ -212,10 +212,10 @@ def figures(cfg, process):
     if cfg.diagnostics_flag:
         wy_start = datetime(cfg.wy-1,10,1)
         precip = collect(connector, args['plotorder'], args['basins'],
-                         wy_start, args['end_date'], 'precip_z',
+                         wy_start, args['end_date'], 'precip',
                          args['run_name'], args['edges'], 'daily')
         precip_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'precip_z',
+                         args['start_date'], args['end_date'], 'precip',
                          args['run_name'], args['edges'], 'daily')
         swe = collect(connector, args['plotorder'], args['basins'],
                          wy_start, args['end_date'], 'swe_z',

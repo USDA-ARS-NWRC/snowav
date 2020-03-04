@@ -12,7 +12,8 @@ import warnings
 
 from snowav.database.package_results import package
 from snowav.database.database import delete, query
-from snowav.utils.utilities import calculate, precip, snow_line, input_summary
+from snowav.utils.utilities import calculate, sum_precip, snow_line, \
+    input_summary
 from tablizer.defaults import Units
 from tablizer.tablizer import get_existing_records
 
@@ -36,6 +37,11 @@ class Process(object):
         lbls = {'depthlbl': cfg.depthlbl,
                 'vollbl': cfg.vollbl,
                 'elevlbl': cfg.elevlbl}
+
+        if os.path.splitext(cfg.connector)[1] == '.db':
+            db = 'sqlite'
+        else:
+            db = 'sql'
 
         # images for figures
         precip_total = np.zeros((cfg.nrows,cfg.ncols))
@@ -99,32 +105,27 @@ class Process(object):
             # Get daily rain from hourly input data
             # Only run this processing if database records don't exist, or if
             # we are making the precip figure
-            if not pass_flag or process.precip_depth_flag:
-                logging.debug(' Processing precip for {}'.format(
-                             out_date.strftime("%Y-%-m-%-d %H:00")))
-                flag, path, pre, rain = precip(cfg.rundirs_dict[wy_hour],
-                                               precip_path)
+            # if not pass_flag or process.precip_depth_flag:
+            #     logging.debug(' Processing precip for {}'.format(
+            #                  out_date.strftime("%Y-%-m-%-d %H:00")))
+            #     flag, path, pre, rain = precip(cfg.rundirs_dict[wy_hour],
+            #                                    precip_path)
+            #
+            #     if flag:
+            #         precip_total = precip_total + pre
+            #         rain_total = rain_total + rain
+            #     else:
+            #         logging.warning(' Expected to find {} but it is not a valid '
+            #                    'file, precip will not be calculated or put on '
+            #                    'the database, no precip figures will be '
+            #                    'made'.format(path))
 
-                if flag:
-                    precip_total = precip_total + pre
-                    rain_total = rain_total + rain
-                else:
-                    logging.warning(' Expected to find {} but it is not a valid '
-                               'file, precip will not be calculated or put on '
-                               'the database, no precip figures will be '
-                               'made'.format(path))
+
 
             if cfg.inputs_flag:
                 mask_list = []
                 for name in cfg.masks:
                     mask_list.append(copy.deepcopy(cfg.masks[name]['mask']))
-
-                # variable = 'air_temp'
-
-                if os.path.splitext(cfg.connector)[1] == '.db':
-                    db = 'sqlite'
-                else:
-                    db = 'sql'
 
                 sf = cfg.rundirs_dict[wy_hour].replace('runs','data')
                 sf = sf.replace('run','data') + '/smrfOutputs/'
@@ -134,7 +135,7 @@ class Process(object):
                 df = df.set_index('date_time')
                 df.sort_index(inplace=True)
 
-                for input in inputs:
+                for i, input in enumerate(inputs):
                     input_path = os.path.join(sf,input)
                     variable = os.path.splitext(input)[0]
 
@@ -150,14 +151,12 @@ class Process(object):
 
                             if (not idx.contains(out_date)
                             or (idx.contains(out_date) and cfg.db_overwrite)):
-                                if ((basin == cfg.inputs_basins[0]) and
-                                    (variable == cfg.inputs_variables[0])):
-                                    logging.info(' Processing inputs for {}, '
-                                         '{}, {} '.format(variable,
-                                         basin,
+                                if basin == cfg.inputs_basins[0] and i == 0:
+                                    logging.info(' Processing {} inputs, '
+                                                 '{} '.format(basin,
                                          out_date.strftime("%Y-%-m-%-d %H:00")))
                                 else:
-                                    logging.debug(' Processing inputs for {}, '
+                                    logging.debug(' Processing {}, '
                                          '{}, {} '.format(variable, basin,
                                          out_date.strftime("%Y-%-m-%-d %H:00")))
 
@@ -171,6 +170,16 @@ class Process(object):
                                               basin_id,
                                               cfg.run_id,
                                               cfg.masks[basin]['mask'])
+
+                                # handle precip different because we need
+                                # summed images for figures
+                                if variable == 'precip':
+                                    ps_path = input_path.replace('precip.nc',
+                                                            'percent_snow.nc')
+                                    sum_precip(input_path,
+                                               ps_path,
+                                               precip_total,
+                                               rain_total)
 
                             if idx.contains(out_date) and not cfg.db_overwrite:
                                 if ((basin == cfg.inputs_basins[0]) and
@@ -193,11 +202,11 @@ class Process(object):
 
                 # Mask by subbasin
                 for name in cfg.masks:
-                    if name == cfg.plotorder[0]:
-                        logging.info(' Processing {}, {}, {} '.format(k, name,
+                    if name == cfg.plotorder[0] and k == list(proc_list.keys())[0]:
+                        logging.info(' Processing {}, {}'.format(name,
                                      cfg.rundirs_dict[wy_hour].split('/')[-1]))
                     else:
-                        logging.debug(' Processing {}, {}, {} '.format(k, name,
+                        logging.debug(' Processing {}, {}, {}'.format(k, name,
                                      cfg.rundirs_dict[wy_hour].split('/')[-1]))
 
                     mask = copy.deepcopy(cfg.masks[name]['mask'])
@@ -253,9 +262,9 @@ class Process(object):
 
                                 density[name][cfg.edges[n]] = copy.deepcopy(od)
 
-                        if k in ['precip_z', 'rain_z'] and flag:
+                        if k in ['precip', 'rain'] :
                             variables[k]['df'].loc[b,name] = calculate(pre, cfg.pixel, be, variables[k]['calculate'],variables[k]['unit_type'], cfg.units, cfg.dplcs)
-                            if k == 'precip_z':
+                            if k == 'precip':
                                 variables['precip_vol']['df'].loc[b,name] = calculate(pre, cfg.pixel, be, 'sum', 'volume', cfg.units, cfg.dplcs)
 
                     if k in cfg.variables.process_depth_units:
@@ -277,9 +286,9 @@ class Process(object):
                         variables[k]['df'].loc['total',name] = calculate(o,cfg.pixel,mask,'mean','depth', cfg.units, cfg.dplcs)
                         variables['swi_vol']['df'].loc['total',name] = calculate(o,cfg.pixel,mask,'sum','volume', cfg.units, cfg.dplcs)
 
-                    if k in ['precip_z', 'rain_z'] and flag:
+                    if k in ['precip', 'rain']:
                         variables[k]['df'].loc['total',name] = calculate(pre, cfg.pixel, mask, 'mean', 'depth', cfg.units, cfg.dplcs)
-                        if k == 'precip_z':
+                        if k == 'precip':
                             variables['precip_vol']['df'].loc['total',name] = calculate(pre, cfg.pixel, mask, 'sum', 'volume', cfg.units, cfg.dplcs)
 
                 df = copy.deepcopy(variables[k]['df'])
