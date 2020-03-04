@@ -69,12 +69,9 @@ def report(cfg, process):
                     run_name,'total','end')
     variables['TOTAL_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
-    if process.precip_flag:
-        dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
-                        run_name,'total','sum')
-        variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
-    else:
-        variables['TOTALPRE_PM'] = 0
+    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
+                    run_name,'total','sum')
+    variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
     s = collect(cnx,plotorder[0],basins,start_date,start_date,'swe_vol',
                     run_name,'total','end')
@@ -93,12 +90,9 @@ def report(cfg, process):
     if float(end_swe) - float(start_swe) < 0.0:
         variables['SIGN'] = r'-'
 
-    if process.precip_flag:
-        dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
-                        run_name,'total','sum')
-        total_rain = dbval.sum().values.round(decimals=ddpts)[0]
-    else:
-        total_rain = 0.0
+    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
+                    run_name,'total','sum')
+    total_rain = dbval.sum().values.round(decimals=ddpts)[0]
 
     if variables['TOTALPRE_PM'] != 0:
         variables['TOTAL_RAT'] = str(int((total_rain/variables['TOTALPRE_PM'])*100))

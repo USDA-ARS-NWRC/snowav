@@ -286,66 +286,50 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
 
     return out
 
-def precip(rundirs_dict, path):
-    '''
-    Get daily total precip and percent rain from hourly smrf outputs in
-    expected awsm_daily format.
-
-    Needs testing for non-daily format!
+def sum_precip(precip_path, percent_snow_path):
+    """ Sum in place for precip and rain images.
 
     Args
-    -----
-    rundirs_dict : strt
-    path : str
+    ------
+    precip_path: path to precip.nc
+    percent_snow_path: path to percent_snow.nc
+    precip_total: array of total precip for the run
+    rain_total: array of total rain for the run
 
     Returns
-    -------
-    flag : bool
-    path : str
-    rain : array
-    precip : array
+    ------
+    precip: array, daily total precip
+    rain: array, daily total rain
+    """
 
-    '''
-    flag = True
+    ppt = nc.Dataset(precip_path, 'r')
+    percent_snow = nc.Dataset(percent_snow_path, 'r')
 
-    sf = rundirs_dict.replace('runs','data')
-    sf = sf.replace('run','data')
-    ppt_path = sf + path
-    percent_snow_path = ppt_path.replace('precip','percent_snow')
-
-    if os.path.isfile(ppt_path):
-        ppt = nc.Dataset(ppt_path, 'r')
-        percent_snow = nc.Dataset(percent_snow_path, 'r')
-
-        # For the wy2019 daily runs, precip.nc always has an extra hour, but
-        # in some WRF forecast runs there are fewer than 24...
-        if len(ppt.variables['precip'][:]) > 24:
-            nb = 24
-
-        else:
-            nb = len(ppt.variables['precip'][:])
-
-        for nb in range(0,nb):
-            pre = ppt['precip'][nb]
-            ps = percent_snow['percent_snow'][nb]
-
-            if nb == 0:
-                rain = np.multiply(pre,(1-ps))
-                precip = copy.deepcopy(pre)
-
-            else:
-                rain = rain + np.multiply(pre,(1-ps))
-                precip = precip + copy.deepcopy(pre)
-
-        ppt.close()
-        percent_snow.close()
-
+    # For the wy2019 daily runs, precip.nc always has an extra hour, but
+    # in some WRF forecast runs there are fewer than 24...
+    if len(ppt.variables['precip'][:]) > 24:
+        nb = 24
     else:
-        flag = False
-        rain = None
-        precip = None
+        nb = len(ppt.variables['precip'][:])
 
-    return flag, ppt_path, precip, rain
+    for nb in range(0,nb):
+        pre = ppt['precip'][nb]
+        ps = percent_snow['percent_snow'][nb]
+
+        if nb == 0:
+            rain = np.multiply(pre,(1-ps))
+            precip = copy.deepcopy(pre)
+        else:
+            rain = rain + np.multiply(pre,(1-ps))
+            precip = precip + copy.deepcopy(pre)
+
+    # rain_total = rain_total + rain
+    # precip_total = precip_total + precip
+
+    ppt.close()
+    percent_snow.close()
+
+    return precip, rain
 
 
 def input_summary(path, variable, methods, percentiles, database, location,

@@ -152,7 +152,7 @@ password = ''
 host = '172.17.0.2'
 port  = '3306'
 
-value_options = ['swe_vol','swe_z','swi_vol','swi_z','precip_vol','precip_z',
+value_options = ['swe_vol','swe_z','swi_vol','swi_z','precip_vol','precip',
                  'density','coldcont','depth','evap_z']
 
 if value not in value_options:

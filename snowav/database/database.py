@@ -120,7 +120,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
 
     '''
 
-    value_options = ['swe_z','swe_vol','density','precip_z','precip_vol',
+    value_options = ['swe_z','swe_vol','density','precip','precip_z','precip_vol',
                      'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
                      'swi_z','swi_vol','depth','snow_line','mean_air_temp',
                      'evap_z', 'L_v_E','melt','lwc','temp_surface',
@@ -153,21 +153,25 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
         results = query(connector, start_date, end_date, run_name, basins, bid, value)
 
         if results.empty:
-            raise Exception('Empty results for database query in '
-                            'database.collect(), check config file '
-                            'start_date, end_date, and that the run_name={} '
-                            'has results for {} to {}'. format(run_name,
-                            start_date, end_date))
+            raise Exception('No results on database for '
+                            'run_name: {}, '
+                            'start_date: {}, '
+                            'end_date: {}, '
+                            'value: {} '.format(run_name, start_date,
+                            end_date, value))
 
         if method == 'daily':
             e = results[(results['elevation'] == 'total')
                         & (results['date_time'] >= start_date)
                         & (results['date_time'] <= end_date)]
             if e.empty:
-                raise Exception('Empty results for database query in '
-                                'database.collect(), for run_name={}, '
-                                'elev={}, {} to {}'. format(run_name, elev,
-                                start_date, end_date))
+                raise Exception('No results on database for '
+                                'run_name: {} ',
+                                'start_date: {} ,'
+                                'end_date: {}, '
+                                'value: {} ,'
+                                'elevation: {}'.format(run_name, start_date,
+                                end_date, value, elev))
             else:
                 e = e.set_index('date_time')
                 e.sort_index(inplace=True)

@@ -183,7 +183,7 @@ def figures(cfg, process):
 
         fig_names['basin_total'] = basin_total(args, cfg._logger)
 
-    if cfg.precip_depth_flag and process.precip_flag:
+    if cfg.precip_depth_flag:
         swi_image = np.zeros_like(cfg.outputs['swi_z'][0])
         for n in range(cfg.ixs,cfg.ixe):
             swi_image = swi_image + cfg.outputs['swi_z'][n]*cfg.depth_factor
