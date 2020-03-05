@@ -399,10 +399,22 @@ class AwsmInputsOutputs(object):
         """
 
         self.variables = OrderedDict()
+        self.snowav_inputs_variables = []
+        self.snowav_results_variables = []
 
         # make a variable for each desired from the master list, and add
         # an empty dataframe for results
         for p in properties:
+
+            # make lists for each table
+            # 'precip' exists on both lists
+            # inputs are processed first, but precip gets placed on Results
+            # table
+            if self.vars[p]['table'] == 'Inputs' or p == 'precip':
+                self.snowav_inputs_variables.append(p)
+
+            if self.vars[p]['table'] == 'Results':
+                self.snowav_results_variables.append(p)
 
             # catch invalid properties
             if p not in list(self.vars.keys()):

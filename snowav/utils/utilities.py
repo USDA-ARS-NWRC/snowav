@@ -295,28 +295,41 @@ def sum_precip(precip_path, percent_snow_path, precip_total, rain_total):
     percent_snow_path: path to percent_snow.nc
     precip_total: array of total precip for the run
     rain_total: array of total rain for the run
+
+    Returns
+    ------
+    precip: array, daily total precip
+    rain: array, daily total rain
     """
 
-    if os.path.isfile(precip_path) and os.path.isfile(percent_snow_path):
-        ppt = nc.Dataset(precip_path, 'r')
-        percent_snow = nc.Dataset(percent_snow_path, 'r')
+    ppt = nc.Dataset(precip_path, 'r')
+    percent_snow = nc.Dataset(percent_snow_path, 'r')
 
-        # For the wy2019 daily runs, precip.nc always has an extra hour, but
-        # in some WRF forecast runs there are fewer than 24...
-        if len(ppt.variables['precip'][:]) > 24:
-            nb = 24
+    # For the wy2019 daily runs, precip.nc always has an extra hour, but
+    # in some WRF forecast runs there are fewer than 24...
+    if len(ppt.variables['precip'][:]) > 24:
+        nb = 24
+    else:
+        nb = len(ppt.variables['precip'][:])
+
+    for nb in range(0,nb):
+        pre = ppt['precip'][nb]
+        ps = percent_snow['percent_snow'][nb]
+
+        if nb == 0:
+            rain = np.multiply(pre,(1-ps))
+            precip = copy.deepcopy(pre)
         else:
-            nb = len(ppt.variables['precip'][:])
+            rain = rain + np.multiply(pre,(1-ps))
+            precip = precip + copy.deepcopy(pre)
 
-        for nb in range(0,nb):
-            pre = ppt['precip'][nb]
-            ps = percent_snow['percent_snow'][nb]
+        rain_total = rain_total + np.multiply(pre,(1-ps))
+        precip_total = precip_total + copy.deepcopy(pre)
 
-            rain_total = rain_total + np.multiply(pre,(1-ps))
-            precip_total = precip_total + copy.deepcopy(pre)
+    ppt.close()
+    percent_snow.close()
 
-        ppt.close()
-        percent_snow.close()
+    return np.array(precip), np.array(rain)
 
 
 def input_summary(path, variable, methods, percentiles, database, location,
