@@ -87,8 +87,8 @@ class UserConfig(object):
                                 self.end_date, self.start_date))
 
         if self.start_date is not None and self.end_date is not None:
-            self.start_date = self.start_date.to_pydatetime()
-            self.end_date = self.end_date.to_pydatetime()
+            self.start_date = self.start_date
+            self.end_date = self.end_date
 
             if self.start_date >= self.end_date:
                 self.tmp_log.append(' Error: [run] start_date >= [run] end_date')
@@ -443,8 +443,8 @@ class UserConfig(object):
         self.forecast_flag = ucfg.cfg['forecast']['report']
 
         if self.forecast_flag:
-            self.for_start_date = ucfg.cfg['forecast']['start_date'].to_pydatetime()
-            self.for_end_date = ucfg.cfg['forecast']['end_date'].to_pydatetime()
+            self.for_start_date = ucfg.cfg['forecast']['start_date']
+            self.for_end_date = ucfg.cfg['forecast']['end_date']
             self.for_run_name = ucfg.cfg['forecast']['run_name']
 
             if self.for_start_date >= self.for_end_date:
