@@ -101,6 +101,31 @@ class Process(object):
             for name in cfg.masks:
                 density[name] = {}
 
+            # if database records don't exist, or we are making the
+            # precip_depth figure we need to process precip
+            if not pass_flag or cfg.precip_depth_flag:
+                logging.info(' Processing precip {}'.format(
+                             cfg.rundirs_dict[wy_hour].split('/')[-1]))
+                run_dir = cfg.rundirs_dict[cfg.outputs['time'][iters]]
+                precip_path = os.path.join(
+                                        run_dir.replace('/runs/run',
+                                                        '/data/data'),
+                                        'smrfOutputs/precip.nc')
+
+                percent_snow_path = precip_path.replace('precip.nc',
+                                                    'percent_snow.nc')
+
+                if (os.path.isfile(precip_path) and
+                os.path.isfile(percent_snow_path)):
+                    precip, rain = sum_precip(precip_path,
+                                              percent_snow_path)
+                    precip_total = precip_total + precip
+                    rain_total = rain_total + rain
+                else:
+                    logging.warning(' One or both of '
+                        'precip.nc, percent_snow.nc does '
+                        'not exist')
+
             if cfg.inputs_flag:
                 mask_list = []
                 for name in cfg.masks:
@@ -185,29 +210,6 @@ class Process(object):
 
                     if k in cfg.variables.awsm_variables:
                         o = deepcopy(cfg.outputs[k][iters])
-
-                    if k == 'precip_z':
-                        run_dir = cfg.rundirs_dict[cfg.outputs['time'][iters]]
-                        precip_path = os.path.join(
-                                                run_dir.replace('/runs/run',
-                                                                '/data/data'),
-                                                'smrfOutputs/precip.nc')
-
-                        percent_snow_path = precip_path.replace('precip.nc',
-                                                            'percent_snow.nc')
-
-                        if (os.path.isfile(precip_path) and
-                        os.path.isfile(percent_snow_path)):
-                            precip, rain = sum_precip(precip_path,
-                                                      percent_snow_path)
-
-                            precip_total += precip
-                            rain_total += rain
-
-                        else:
-                            logging.warning(' One or both of '
-                                'precip.nc, percent_snow.nc does '
-                                'not exist')
 
                     # elevation band
                     for n in np.arange(0,len(cfg.edges)):
