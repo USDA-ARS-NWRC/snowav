@@ -1,6 +1,23 @@
 
+from datetime import datetime
+import matplotlib
+import os
+import shutil
+import subprocess
+import unittest
+
+from snowav.database.database import collect
+from snowav.utils.utilities import calculate, masks
+from snowav.cli import can_i_snowav
+from snowav.utils.OutputReader import iSnobalReader
+
 """
-Initial unittest for snowav processing, using wy2019 results in the Lakes Basin.
+This uses wy2019 results in the Lakes Basin, as of 2020-3-6 found at:
+/data/blizzard/lakes/devel/wy2019/lakes_veg_fix/
+
+"gold" results are on the tests/lakes/gold.db database
+"test" results are on the tests/lakes/test.db, which is removed after each
+test
 
 Tests:
 - end-to-end snowav run
@@ -16,32 +33,26 @@ snow.nc files.
 
 """
 
-import unittest
-import shutil
-import os
-from snowav.database.database import collect
-from snowav.utils.utilities import calculate, masks
-from snowav.cli import can_i_snowav
-from datetime import datetime
-from snowav.utils.OutputReader import iSnobalReader
-import subprocess
-import matplotlib
 matplotlib.use('agg')
 
 topo_path = './tests/lakes/topo/topo.nc'
-db_path = './tests/lakes/results/gold.db'
+gold_db_path = './tests/lakes/results/gold.db'
+test_db_path = './tests/lakes/results/test.db'
 tbl_path = './tests/lakes/gold/lakes_report_table.txt'
 run_name_gold = 'lakes_wy2019_gold'
 run_name_test = 'test'
 start_date = datetime(2019,4,1,23,0,0)
 end_date = datetime(2019,4,2,23,0,0)
 plotorder = ['Lakes']
-connector = 'sqlite:///'+os.path.abspath(db_path)
+plotorder_test = ['Lakes Basin']
+gold_cnx = 'sqlite:///'+os.path.abspath(gold_db_path)
+test_cnx = 'sqlite:///'+os.path.abspath(test_db_path)
 edges = [8000,9000,10000,11000]
 
 # This basins dictionary matches the current snowav database.
 # Note: this will differ from new sqlite databases created in >v0.10.0
 basins = {'Lakes': {'watershed_id': 4, 'basin_id': 16}}
+basins_test = {'Lakes Basin': {'watershed_id': 2, 'basin_id': 2}}
 
 def check_utils_masks():
     ''' Test mask creation from topo.nc file. '''
@@ -95,7 +106,7 @@ def check_gold_results():
     value = 'swe_vol'
     gold_values = [3.075, 13.63, 9.543, 0.494]
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
 
     result = True
@@ -111,9 +122,9 @@ def compare_database_swe_z():
     value = 'swe_z'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
     test_result = gold - test
@@ -122,9 +133,9 @@ def compare_database_swe_z():
         result = False
         print('\nFailed swe_z\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
     test_result = gold - test
@@ -141,9 +152,9 @@ def compare_database_swe_vol():
     value = 'swe_vol'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
     test_result = gold - test
@@ -152,9 +163,9 @@ def compare_database_swe_vol():
         result = False
         print('\nFailed swe_vol\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
     test_result = gold - test
@@ -171,9 +182,9 @@ def compare_database_depth():
     value = 'depth'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
     test_result = gold - test
@@ -182,9 +193,9 @@ def compare_database_depth():
         result = False
         print('\nFailed depth\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
     test_result = gold - test
@@ -201,9 +212,9 @@ def compare_database_swi_vol():
     value = 'swi_vol'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'sum')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'sum')
 
     test_result = gold - test
@@ -211,9 +222,9 @@ def compare_database_swi_vol():
     if test_result.sum().any() != 0:
         result = False
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'sum')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'sum')
 
     test_result = gold - test
@@ -229,9 +240,10 @@ def compare_database_density():
     value = 'density'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
     test_result = gold - test
@@ -247,9 +259,9 @@ def compare_database_precip():
     value = 'precip_z'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'sum')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'sum')
 
     test_result = gold - test
@@ -257,9 +269,9 @@ def compare_database_precip():
     if test_result.sum().any() != 0:
         result = False
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, 'total', 'sum')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'sum')
 
     test_result = gold - test
@@ -275,9 +287,9 @@ def compare_database_unavail():
     value = 'swe_unavail'
     result = True
 
-    gold = collect(connector, plotorder, basins, start_date, end_date, value,
+    gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
                  run_name_gold, edges, 'end')
-    test = collect(connector, plotorder, basins, start_date, end_date, value,
+    test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
     test_result = gold - test
@@ -543,7 +555,6 @@ class TestStandardLakes(unittest.TestCase):
         """ Remove figures and report """
 
         base = './tests/lakes/results/lakes_test_20190401_20190402/'
-
         figs = ['basin_total_lakes_test.png',
                 'swe_change_lakes_test.png',
                 'swe_volume_lakes_test.png',
@@ -568,6 +579,8 @@ class TestStandardLakes(unittest.TestCase):
         for fig in figs:
             if os.path.isfile(os.path.abspath('{}{}'.format(base,fig))):
                 os.remove(os.path.abspath('{}{}'.format(base,fig)))
+
+        os.remove(os.path.abspath(os.path.join(base, '..', 'test.db')))
 
 if __name__ == '__main__':
     unittest.main()
