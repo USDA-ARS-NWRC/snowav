@@ -59,9 +59,6 @@ class Process(object):
 
             # assume to start that we are processing everything
             proc_list = deepcopy(cfg.variables.snowav_results_variables)
-            if 'precip' in cfg.variables.snowav_inputs_variables:
-                proc_list.append('precip')
-
             pass_flag = False
 
             # delete anything on the database with the same run_name and date
@@ -117,7 +114,7 @@ class Process(object):
                 df.sort_index(inplace=True)
 
                 for i, input in enumerate(cfg.variables.snowav_inputs_variables):
-    
+
                     input_path = os.path.join(sf, input + '.nc')
 
                     for basin in cfg.inputs_basins:
@@ -151,33 +148,17 @@ class Process(object):
                                           cfg.run_id,
                                           cfg.masks[basin]['mask'])
 
-                            # handle precip different because we need
-                            # summed images for figures
-                            if input == 'precip':
-                                percent_snow_path = input_path.replace('precip.nc', 'percent_snow.nc')
-                                if os.path.isfile(input_path) and os.path.isfile(percent_snow_path):
-                                    ps_path = input_path.replace('precip.nc',
-                                                            'percent_snow.nc')
-                                    precip, rain = sum_precip(input_path,
-                                                              ps_path,
-                                                              precip_total,
-                                                              rain_total)
-                                else:
-                                    logging.warning(' One or both of '
-                                        'precip.nc, percent_snow.nc does '
-                                        'not exist')
-
                         if idx.contains(out_date) and not cfg.db_overwrite:
                             if ((basin == cfg.inputs_basins[0]) and
-                                (inputs == cfg.inputs_variables[0])):
+                                (input == cfg.inputs_variables[0])):
                                 logging.info(' Skipping inputs for {}, {}, '
                                      '{}, database records exist...'
-                                     ''.format(inputs, basin,
+                                     ''.format(input, basin,
                                      out_date.strftime("%Y-%-m-%-d %H:00")))
                             else:
                                 logging.debug(' Skipping inputs for {}, {}, '
                                      '{}, database records exist...'
-                                     ''.format(inputs, basin,
+                                     ''.format(input, basin,
                                      out_date.strftime("%Y-%-m-%-d %H:00")))
 
             swe = deepcopy(cfg.outputs['swe_z'][iters])
@@ -204,6 +185,29 @@ class Process(object):
 
                     if k in cfg.variables.awsm_variables:
                         o = deepcopy(cfg.outputs[k][iters])
+
+                    if k == 'precip_z':
+                        run_dir = cfg.rundirs_dict[cfg.outputs['time'][iters]]
+                        precip_path = os.path.join(
+                                                run_dir.replace('/runs/run',
+                                                                '/data/data'),
+                                                'smrfOutputs/precip.nc')
+
+                        percent_snow_path = precip_path.replace('precip.nc',
+                                                            'percent_snow.nc')
+
+                        if (os.path.isfile(precip_path) and
+                        os.path.isfile(percent_snow_path)):
+                            precip, rain = sum_precip(precip_path,
+                                                      percent_snow_path)
+
+                            precip_total += precip
+                            rain_total += rain
+
+                        else:
+                            logging.warning(' One or both of '
+                                'precip.nc, percent_snow.nc does '
+                                'not exist')
 
                     # elevation band
                     for n in np.arange(0,len(cfg.edges)):
@@ -248,9 +252,9 @@ class Process(object):
 
                                 density[name][cfg.edges[n]] = deepcopy(od)
 
-                        if k == 'precip':
-                            variables['precip']['df'].loc[b,name] = calculate(precip, cfg.pixel, be, variables[k]['calculate'],variables[k]['unit_type'], cfg.units, cfg.dplcs)
-                            variables['rain']['df'].loc[b,name] = calculate(rain, cfg.pixel, be, variables[k]['calculate'] ,variables[k]['unit_type'], cfg.units, cfg.dplcs)
+                        if k == 'precip_z':
+                            variables['precip_z']['df'].loc[b,name] = calculate(precip, cfg.pixel, be, variables[k]['calculate'],variables[k]['unit_type'], cfg.units, cfg.dplcs)
+                            variables['rain_z']['df'].loc[b,name] = calculate(rain, cfg.pixel, be, variables[k]['calculate'] ,variables[k]['unit_type'], cfg.units, cfg.dplcs)
                             variables['precip_vol']['df'].loc[b,name] = calculate(precip, cfg.pixel, be, 'sum', 'volume', cfg.units, cfg.dplcs)
 
                     if k in cfg.variables.process_depth_units:
@@ -272,10 +276,10 @@ class Process(object):
                         variables[k]['df'].loc['total',name] = calculate(o,cfg.pixel,mask,'mean','depth', cfg.units, cfg.dplcs)
                         variables['swi_vol']['df'].loc['total',name] = calculate(o,cfg.pixel,mask,'sum','volume', cfg.units, cfg.dplcs)
 
-                    if k == 'precip':
-                        variables['precip']['df'].loc['total',name] = calculate(precip, cfg.pixel, mask, 'mean', 'depth', cfg.units, cfg.dplcs)
+                    if k == 'precip_z':
+                        variables['precip_z']['df'].loc['total',name] = calculate(precip, cfg.pixel, mask, 'mean', 'depth', cfg.units, cfg.dplcs)
                         variables['precip_vol']['df'].loc['total',name] = calculate(precip, cfg.pixel, mask, 'sum', 'volume', cfg.units, cfg.dplcs)
-                        variables['rain']['df'].loc['total',name] = calculate(rain, cfg.pixel, mask, 'mean', 'depth', cfg.units, cfg.dplcs)
+                        variables['rain_z']['df'].loc['total',name] = calculate(rain, cfg.pixel, mask, 'mean', 'depth', cfg.units, cfg.dplcs)
 
                 df = deepcopy(variables[k]['df'])
                 df = df.round(decimals = cfg.dplcs)

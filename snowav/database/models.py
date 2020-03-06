@@ -219,22 +219,35 @@ class AwsmInputsOutputs(object):
                              'calculate': 'mean',
                              'table': 'Inputs',
                              'file': 'storm_days.nc'},
-                     'precip':
+                     'precip_z':
                              {'band': None,
                              'derivatives': {'requires': ['percent_snow'],
                                              'products': ['precip_vol',
-                                                          'rain']},
+                                                          'rain_z']},
                              'unit_type': 'depth',
                              'description': 'precipitation',
                              'units': 'mm',
                              'calculate': 'mean',
                              'table': 'Results',
                              'file': 'precip.nc'},
+                      # currently we have 'precip' that goes to Inputs table
+                      # and 'precip_z' on Results
+                     'precip':
+                             {'band': None,
+                             'derivatives': {'requires': [],
+                                             'products': []},
+                             'unit_type': 'depth',
+                             'description': 'precipitation',
+                             'units': 'mm',
+                             'calculate': 'mean',
+                             'table': 'Inputs',
+                             'file': 'precip.nc'},
+
                      'percent_snow':
                              {'band': None,
                              'derivatives': {'requires': [],
                                              'products': ['precip_vol',
-                                                          'precip',
+                                                          'precip_z',
                                                           'rain']},
                              'unit_type': 'percent',
                              'description': 'percent of precipitation that is snow',
@@ -318,16 +331,16 @@ class AwsmInputsOutputs(object):
                               'table': 'Results'},
                      'precip_vol':
                              {'band': None,
-                              'derivatives': {'requires': ['precip'],
+                              'derivatives': {'requires': ['precip_z'],
                                               'products': []},
                               'unit_type': 'volume',
                               'description': 'precipitation volume',
                               'units': 'm^3',
                               'calculate': 'sum',
                               'table': 'Results'},
-                     'rain':
+                     'rain_z':
                              {'band': None,
-                              'derivatives': {'requires': ['precip',
+                              'derivatives': {'requires': ['precip_z',
                                                            'percent_snow'],
                                               'products': []},
                               'unit_type': 'depth',
@@ -375,7 +388,7 @@ class AwsmInputsOutputs(object):
                     for d in self.vars[v]['derivatives']['products']:
                         self.snowav_inputs_variables.append(d)
 
-        self.cumulative_sum_variables = ['swi_vol', 'precip_vol', 'precip',
+        self.cumulative_sum_variables = ['swi_vol', 'precip_vol', 'precip_z',
                                          'swi_z']
 
         self.process_depth_units = ['coldcont', 'density', 'depth', 'evap_z',
@@ -407,14 +420,17 @@ class AwsmInputsOutputs(object):
         for p in properties:
 
             # make lists for each table
-            # 'precip' exists on both lists
             # inputs are processed first, but precip gets placed on Results
             # table
-            if self.vars[p]['table'] == 'Inputs' or p == 'precip':
+            if self.vars[p]['table'] == 'Inputs':
                 self.snowav_inputs_variables.append(p)
+                for d in self.vars[p]['derivatives']['products']:
+                    self.snowav_inputs_variables.append(d)
 
             if self.vars[p]['table'] == 'Results':
                 self.snowav_results_variables.append(p)
+                for d in self.vars[p]['derivatives']['products']:
+                    self.snowav_results_variables.append(d)
 
             # catch invalid properties
             if p not in list(self.vars.keys()):

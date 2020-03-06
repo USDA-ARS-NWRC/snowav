@@ -69,7 +69,7 @@ def report(cfg, process):
                     run_name,'total','end')
     variables['TOTAL_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip',
+    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
                     run_name,'total','sum')
     variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
@@ -90,7 +90,7 @@ def report(cfg, process):
     if float(end_swe) - float(start_swe) < 0.0:
         variables['SIGN'] = r'-'
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain',
+    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
                     run_name,'total','sum')
     total_rain = dbval.sum().values.round(decimals=ddpts)[0]
 
@@ -144,11 +144,11 @@ def report(cfg, process):
                         run_name,'total','end')
         variables[PM] = dbval.sum().values.round(decimals=ddpts)[0]
 
-        dbval = collect(cnx,sub,basins,wy_start,end_date,'precip',
+        dbval = collect(cnx,sub,basins,wy_start,end_date,'precip_z',
                         run_name,'total','sum')
         variables[PREPM] = dbval.sum().values.round(decimals=ddpts)[0]
 
-        dbval = collect(cnx,sub,basins,wy_start,end_date,'rain',
+        dbval = collect(cnx,sub,basins,wy_start,end_date,'rain_z',
                         run_name,'total','sum')
         variables[RAIN] = dbval.sum().values.round(decimals=ddpts)[0]
 

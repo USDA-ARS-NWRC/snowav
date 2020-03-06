@@ -286,7 +286,7 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
 
     return out
 
-def sum_precip(precip_path, percent_snow_path, precip_total, rain_total):
+def sum_precip(precip_path, percent_snow_path):
     """ Sum in place for precip and rain images.
 
     Args
@@ -323,13 +323,13 @@ def sum_precip(precip_path, percent_snow_path, precip_total, rain_total):
             rain = rain + np.multiply(pre,(1-ps))
             precip = precip + copy.deepcopy(pre)
 
-        rain_total = rain_total + np.multiply(pre,(1-ps))
-        precip_total = precip_total + copy.deepcopy(pre)
+    # rain_total = rain_total + rain
+    # precip_total = precip_total + precip
 
     ppt.close()
     percent_snow.close()
 
-    return np.array(precip), np.array(rain)
+    return precip, rain
 
 
 def input_summary(path, variable, methods, percentiles, database, location,
