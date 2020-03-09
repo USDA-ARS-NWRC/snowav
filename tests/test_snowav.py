@@ -1,6 +1,7 @@
 
 from datetime import datetime
 import matplotlib
+import numpy as np
 import os
 import shutil
 import subprocess
@@ -127,9 +128,9 @@ def compare_database_swe_z():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0.0:
         result = False
         print('\nFailed swe_z\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -138,9 +139,9 @@ def compare_database_swe_z():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
         print('\nFailed swe_z total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -157,9 +158,9 @@ def compare_database_swe_vol():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
         print('\nFailed swe_vol\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -168,9 +169,9 @@ def compare_database_swe_vol():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
         print('\nFailed swe_vol total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -187,9 +188,9 @@ def compare_database_depth():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
         print('\nFailed depth\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -198,9 +199,9 @@ def compare_database_depth():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
         print('\nFailed depth total\ngold:\n{}\ntest:\n{}\n'.format(gold,test))
 
@@ -217,9 +218,9 @@ def compare_database_swi_vol():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'sum')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
@@ -227,9 +228,9 @@ def compare_database_swi_vol():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'sum')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     return result
@@ -246,12 +247,50 @@ def compare_database_density():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     return result
+
+# def compare_database_l_v_e():
+#     ''' Compare 'gold' and 'test' L_v_E. '''
+#
+#     value = 'L_v_E'
+#     result = True
+#
+#     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
+#                  run_name_gold, edges, 'end')
+#
+#     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
+#                  run_name_test, edges, 'end')
+#
+#     test_result = gold[plotorder].values - test[plotorder_test].values
+#
+#     if np.sum(test_result) != 0:
+#         result = False
+#
+#     return result
+
+# def compare_database_air_temp():
+#     ''' Compare 'gold' and 'test'air_temp. '''
+#
+#     value = 'air_temp'
+#     result = True
+#
+#     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
+#                  run_name_gold, edges, 'end')
+#
+#     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
+#                  run_name_test, edges, 'end')
+#
+#     test_result = gold[plotorder].values - test[plotorder_test].values
+#
+#     if np.sum(test_result) != 0:
+#         result = False
+#
+#     return result
 
 def compare_database_precip():
     ''' Compare 'gold' and 'test' precip. '''
@@ -264,9 +303,9 @@ def compare_database_precip():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'sum')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
@@ -274,9 +313,9 @@ def compare_database_precip():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, 'total', 'sum')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     return result
@@ -292,9 +331,9 @@ def compare_database_unavail():
     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
                  run_name_test, edges, 'end')
 
-    test_result = gold - test
+    test_result = gold[plotorder].values - test[plotorder_test].values
 
-    if test_result.sum().any() != 0:
+    if np.sum(test_result) != 0:
         result = False
 
     return result
@@ -484,6 +523,18 @@ class TestStandardLakes(unittest.TestCase):
     	a = compare_database_density()
     	assert(a)
 
+    # def test_database_l_v_e(self):
+    # 	""" Gold and current L_v_E DataFrames """
+    #
+    # 	a = compare_database_l_v_e()
+    # 	assert(a)
+
+    # def test_database_air_temp(self):
+    # 	""" Gold and current air_temp DataFrames """
+    #
+    # 	a = compare_database_air_temp()
+    # 	assert(a)
+
     def test_database_precip(self):
     	""" Gold and current precip DataFrames """
 
@@ -580,6 +631,7 @@ class TestStandardLakes(unittest.TestCase):
             if os.path.isfile(os.path.abspath('{}{}'.format(base,fig))):
                 os.remove(os.path.abspath('{}{}'.format(base,fig)))
 
+        # Remove test db
         os.remove(os.path.abspath(os.path.join(base, '..', 'test.db')))
 
 if __name__ == '__main__':
