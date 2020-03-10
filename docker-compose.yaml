@@ -2,16 +2,15 @@
 version: '3.3'
 
 services:
-  db:
+  snowav:
     image: mysql:5.7
     restart: always
     environment:
       MYSQL_DATABASE: 'snowav'
-      MYSQL_USER: 'mark'
+      MYSQL_USER:
       MYSQL_PASSWORD:
       MYSQL_ROOT_PASSWORD:
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-
     ports:
       - '8888:3306'
     expose:
@@ -20,7 +19,6 @@ services:
       - /database/docker_snowav:/var/lib/mysql
       - /home/database/backup/snowav_database:/backup
       - /home/database/scripts/bgbackup_snowav.cnf:/home/bgbackup/bgbackup.cnf
-      # - db:/var/lib/mysql
 
 volumes:
   db:

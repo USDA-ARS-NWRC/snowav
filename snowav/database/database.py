@@ -48,11 +48,13 @@ def make_session(connector):
 
     try:
         engine = create_engine(connector)
-        Base.metadata.create_all(engine)
-
     except:
         raise Exception('Failed to make database connection with '
                         '{}'.format(connector))
+    try:
+        Base.metadata.create_all(engine)
+    except:
+        raise Exception('Failed establishing Base for sqlalchemy')
 
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
@@ -569,6 +571,7 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
                   '{}:{}@{}/{}\nCheck config options in [database] '
                   'section'.format(user,password,host,port))
             exit()
+
         cursor = cnx.cursor()
 
         # Check if database exists, create if necessary
@@ -590,15 +593,18 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
         # If the database doesn't exist, create it, otherwise connect
         if (sql not in dbs):
             logger.append(' Specified mysql database {} '.format(sql) +
-                  ' does not exist, it is being created...')
+                  'does not exist, it is being created...')
             query = ("CREATE DATABASE {};".format(sql))
             cursor.execute(query)
             log = create_tables(db_engine, plotorder)
 
+            engine = create_engine(db_engine)
+            Base.metadata.create_all(engine)
+            DBSession = sessionmaker(bind=engine)
+            session = DBSession()
+
             for out in log:
                 logger.append(out)
-
-            logger.append(log)
 
         else:
             query = ("SHOW DATABASES")
@@ -617,8 +623,8 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
                 logger.append(log)
 
             try:
-                logger.append(' Using database connection {}@{}/{} for '
-                              'results'.format(user, host, sql))
+                logger.append(' Using database connection {}@{}:{} "{}" for '
+                              'results'.format(user, host, port, sql))
                 engine = create_engine(db_engine)
                 Base.metadata.create_all(engine)
                 DBSession = sessionmaker(bind=engine)
