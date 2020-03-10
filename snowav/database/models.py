@@ -290,7 +290,7 @@ class AwsmInputsOutputs(object):
                              'units': 'm/s',
                              'calculate': 'mean',
                              'table': 'Inputs',
-                             'file': 'smrf'},
+                             'file': 'wind_speed.nc'},
 
                      # these are the derivative products
                      'swi_vol':
@@ -301,7 +301,8 @@ class AwsmInputsOutputs(object):
                               'description': 'surface water input volume',
                               'units': 'm^3',
                               'calculate': 'sum',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'swe_avail':
                              {'band': None,
                               'derivatives': {'requires': ['swe_z, coldcont'],
@@ -310,7 +311,8 @@ class AwsmInputsOutputs(object):
                               'description': 'snow water equivalent available for melt',
                               'units': 'm^3',
                               'calculate': 'sum',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'swe_unavail':
                              {'band': None,
                               'derivatives': {'requires': ['swe_z, coldcont'],
@@ -319,7 +321,8 @@ class AwsmInputsOutputs(object):
                               'description': 'snow water equivalent unavailable for melt',
                               'units': 'm^3',
                               'calculate': 'sum',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'swe_vol':
                              {'band': None,
                               'derivatives': {'requires': ['swe_z'],
@@ -328,7 +331,8 @@ class AwsmInputsOutputs(object):
                               'description': 'snow water equivalent volume',
                               'units': 'm^3',
                               'calculate': 'sum',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'precip_vol':
                              {'band': None,
                               'derivatives': {'requires': ['precip_z'],
@@ -337,7 +341,8 @@ class AwsmInputsOutputs(object):
                               'description': 'precipitation volume',
                               'units': 'm^3',
                               'calculate': 'sum',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'rain_z':
                              {'band': None,
                               'derivatives': {'requires': ['precip_z',
@@ -347,7 +352,8 @@ class AwsmInputsOutputs(object):
                               'description': 'rain depth',
                               'units': 'mm',
                               'calculate': 'mean',
-                              'table': 'Results'},
+                              'table': 'Results',
+                              'file': None},
                      'snow_line':
                              {'band': None,
                               'derivatives': {'requires': ['swe_z'],
@@ -356,11 +362,15 @@ class AwsmInputsOutputs(object):
                               'description': 'snow line',
                               'units': 'm',
                               'calculate': 'mean',
-                              'table': 'Results'}
+                              'table': 'Results',
+                              'file': None}
                           }
 
         # snow.nc and em.nc variables
         self.awsm_variables = []
+
+        # smrf variables
+        self.smrf_variables = []
 
         # all named snowav variables
         self.snowav_named_variables = []
@@ -369,6 +379,10 @@ class AwsmInputsOutputs(object):
             self.snowav_named_variables.append(v)
             if self.vars[v]['band'] is not None:
                 self.awsm_variables.append(v)
+
+            if (self.vars[v]['file'] is not None and
+            self.vars[v]['file'] not in ['em.nc','snow.nc']):
+                self.smrf_variables.append(v)
 
         # Results table values
         self.snowav_results_variables = []
