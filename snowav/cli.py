@@ -5,7 +5,7 @@ import os
 import coloredlogs
 import logging
 import pandas as pd
-from snowav.framework.framework import snowav
+from snowav.framework.framework import Snowav
 from snowav.framework import framework
 from snowav.framework.process_day import process
 from snowav.plotting.swe_volume import swe_volume
@@ -81,7 +81,7 @@ def run():
         else:
             end_date = None
 
-        snowav(config_file = args.config_file, end_date = end_date)
+        Snowav(config_file = args.config_file, end_date = end_date)
         exit()
 
     ###########################################################################
@@ -191,7 +191,7 @@ def can_i_snowav(config_file):
     '''
 
     try:
-        snowav(config_file = config_file)
+        Snowav(config_file = config_file)
         return True
 
     except Exception as e:

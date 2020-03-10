@@ -122,6 +122,11 @@ def stn_validate(args, logger):
             set_x_on = 3
         if len(stns) == 8:
             set_x_on = 5
+    if len(stns) == 10:
+        fig.delaxes(axs[10])
+        fig.delaxes(axs[11])
+    if len(stns) == 11:
+        fig.delaxes(axs[11])
 
     if len(stns) == 10:
         fig.delaxes(axs[10])

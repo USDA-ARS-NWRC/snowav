@@ -17,7 +17,7 @@ def image_change(args, logger):
     Makes change in SWE figure, with spatial depth on the left and
     bar volume on right.
 
-    Note: command line tool in snow.py calls this function. If changes are made
+    Note: command line tool calls this function. If changes are made
     here update that calls as necessary.
 
     Args
