@@ -450,7 +450,7 @@ def check_cli_process():
     ''' Check command line snow.nc processing '''
 
     result = True
-    cmd = 'snowav -t {} -d ./tests/lakes/gold/runs/run20190402/snow.nc -v swe_vol -no-s'.format(topo_path)
+    cmd = 'snowav -t {} -d ./tests/lakes/gold/runs/run20190402/snow.nc -v swe_vol'.format(topo_path)
     process = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     output, error = process.communicate()
 

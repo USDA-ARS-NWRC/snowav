@@ -5,10 +5,11 @@ import mysql.connector
 import numpy as np
 import os
 import pandas as pd
+import sqlalchemy as sa
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
-import urllib.parse
 from sys import exit
+import urllib.parse
 import warnings
 
 import snowav
@@ -29,6 +30,206 @@ try:
     awsm_version = awsm.__version__
 except:
     awsm_version = 'unknown'
+
+
+class Database(object):
+    """ Database class for snowav.
+
+    Args
+    ------
+    db_type {string}: database type
+    db_name {string}: mysql database name
+    user {string}: database user, if using db_type='sql'
+    password {string}: database password, if using db_type='sql'
+    host {string}: database host, if using db_type='sql'
+    port {string}: database port, if using db_type='sql'
+
+    """
+
+    def __init__(self, db_type='sql', db_name='snowav', user=None,
+                 password=None, host=None, port=None):
+
+        db_type_options = ['sql', 'sqlite']
+        if db_type not in db_type_options:
+            raise ValueError('Database input "db_type" must be one of '
+                             '{}'.format(db_type_options))
+
+        if db_type == 'sql':
+            input_list = [user, password, host, port]
+            if sum([x is not None for x in input_list]) != len(input_list):
+                raise Exception('Database input db_type "sql" requires '
+                                '"user", "password", "host", and "port"')
+
+        self.db_type = db_type
+        self.user = user
+        self.password = password
+        self.host = host
+        self.port = port
+        self.db_name = db_name
+
+    def assign_vars(self, kwargs):
+        """ Assign Database attributes.
+
+        Args
+        ------
+        kwargs {dict}: {item, value}
+        """
+
+        if not isinstance(kwargs, dict):
+            raise TypeError("kwargs must be dict")
+
+        for item, v in kwargs.items():
+            setattr(self, item, v)
+
+    def make_connection(self, logger=None):
+        """ Make and check database connection.
+
+        Assigns self.engine
+
+        Currently only for db_type='sql'.
+
+        Args
+        ------
+        logger {class}: logger
+        """
+
+        if self.db_type == 'sql':
+            connector = '{}{}:{}@{}:{}/{}'.format('mysql+mysqlconnector://',
+                                                  self.user,
+                                                  self.password,
+                                                  self.host,
+                                                  self.port,
+                                                  self.db_name)
+
+            try:
+                self.assign_vars({'engine': create_engine(connector)})
+            except Exception as e:
+                print(e)
+                if logger is not None:
+                    logger.error(" Failed making database connection "
+                                 "{}@{}:{}".format(self.user, self.host,
+                                                   self.port))
+
+            if logger is not None:
+                logger.info(" Using database connection "
+                            "{}@{}:{}".format(self.user, self.host, self.port))
+
+    def check_tables(self, logger=None):
+        """ Make database tables.
+
+        Args
+        ------
+        logger {class}: logger
+        """
+
+        if not hasattr(self, 'engine'):
+            if logger is not None:
+                logger.error(" Database connector required...")
+            else:
+                print('Database connector required')
+
+        Base.metadata.create_all(self.engine)
+
+    def insert(self, dbtable, kwargs, logger=None):
+        """ Put data on database.
+
+        Args
+        ------
+        dbtable {string}: string format of database table name (i.e., 'Pixels')
+        kwargs {dict}: data to put on the database {field: value}
+        logger {class}: logger
+        """
+
+        if type(kwargs) != dict:
+            raise TypeError("kwargs must be a dict")
+
+        # get database table
+        try:
+            tbl = getattr(snowav.database.tables, dbtable)
+        except AttributeError as e:
+            print(e)
+            if logger is not None:
+                logger.error(" snowav.database.tables has no attribute "
+                             "{}".format(dbtable))
+            else:
+                print("Error! snowav.database.tables has no attribute "
+                      "{}".format(dbtable))
+
+        # table columns
+        fields = [p for p in dir(tbl) if not p.startswith('_')]
+
+        for key in kwargs:
+            if key not in fields:
+                if logger is not None:
+                    logger.warning(" kwargs field {} not in table columns"
+                                   "{}".format(key, list(fields)))
+
+        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+
+        with self.engine.connect() as dbcon:
+            dbcon.execute(tbl.insert(), kwargs)
+
+    def query(self, dbtable, kwargs, logger=None):
+        """ Query database values.
+
+        Args
+        ------
+        dbtable {string}: string format of database table name (i.e., 'Pixels')
+        kwargs {dict}: items for query {field: value}
+        logger {class}: logger
+
+        Returns
+        ------
+        results {DataFrame}: query results
+        """
+
+        if not isinstance(kwargs, dict):
+            raise TypeError("kwargs must be dict")
+
+        # make database connection
+        try:
+            dbsession = sessionmaker(bind=self.engine)
+        except Exception as e:
+            print(e)
+            if logger is not None:
+                logger.error("Failed connecting to database")
+            else:
+                print("Error! Failed connecting to database")
+
+        # make session
+        session = dbsession()
+
+        # get table
+        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+
+        # query database
+        qry = session.query(tbl).filter_by(**kwargs)
+        results = pd.read_sql(qry.statement, qry.session.connection())
+        session.close()
+
+        return results
+
+    def delete(self, dbtable, kwargs, logger=None):
+        """ Delete database records.
+
+        Args
+        ------
+        dbtable {string}: string format of database table name (i.e., 'Pixels')
+        kwargs {dict}: items for deletion {field: value}
+        logger {class}: logger
+        """
+
+        if not isinstance(kwargs, dict):
+            raise TypeError("kwargs must be dict")
+
+        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+
+        with self.engine.connect() as dbcon:
+            dbcon.execute(tbl.delete(), **kwargs)
+
+        if logger is not None:
+            logger.debug(" Deleted existing database records")
+
 
 def make_session(connector):
     '''

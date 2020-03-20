@@ -1,6 +1,9 @@
 
 include LICENSE.md
 include README.md
+include snowav/config/CoreConfig.ini
+include snowav/config/PointValuesCoreConfig.ini
+include snowav/config/recipes.ini
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
