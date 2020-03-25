@@ -12,6 +12,7 @@ from sys import exit
 import urllib.parse
 import warnings
 
+from snowav.database import tables as ta
 import snowav
 from snowav.database.tables import Base, RunMetadata, Watershed, Basin, \
     Results, VariableUnits
@@ -43,7 +44,6 @@ class Database(object):
     password {string}: database password, if using db_type='sql'
     host {string}: database host, if using db_type='sql'
     port {string}: database port, if using db_type='sql'
-
     """
 
     def __init__(self, db_type='sql', db_name='snowav', user=None,
@@ -93,6 +93,7 @@ class Database(object):
         logger {class}: logger
         """
 
+        # TODO expand to sqlite
         if self.db_type == 'sql':
             connector = '{}{}:{}@{}:{}/{}'.format('mysql+mysqlconnector://',
                                                   self.user,
@@ -144,38 +145,65 @@ class Database(object):
             raise TypeError("kwargs must be a dict")
 
         # get database table
-        try:
-            tbl = getattr(snowav.database.tables, dbtable)
-        except AttributeError as e:
-            print(e)
-            if logger is not None:
-                logger.error(" snowav.database.tables has no attribute "
-                             "{}".format(dbtable))
-            else:
-                print("Error! snowav.database.tables has no attribute "
-                      "{}".format(dbtable))
+        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
 
         # table columns
-        fields = [p for p in dir(tbl) if not p.startswith('_')]
+        fields = list(tbl.columns.keys())
 
         for key in kwargs:
             if key not in fields:
                 if logger is not None:
-                    logger.warning(" kwargs field {} not in table columns"
-                                   "{}".format(key, list(fields)))
-
-        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+                    logger.warning(" kwargs field '{}' not in table columns "
+                                   "{}".format(key, fields))
+                else:
+                    print("query() kwargs field '{}' not in table columns "
+                          "{}".format(key, fields))
 
         with self.engine.connect() as dbcon:
             dbcon.execute(tbl.insert(), kwargs)
 
-    def query(self, dbtable, kwargs, logger=None):
+    def operators(self, operator):
+        """ Translate sqlalchemy query operators for readability.
+
+            eq for ==
+            lt for <
+            ge for >=
+            in for in_
+            like for like
+
+        """
+
+        if not isinstance(operator, str):
+            raise TypeError("operators must be a str")
+
+        omap = {'==': 'eq',
+                '<': 'lt',
+                '>': 'gt',
+                '>=': 'ge',
+                '<=': 'le',
+                'in_': 'in',
+                'like': 'like'}
+
+        if operator not in list(omap.keys()):
+            raise ValueError("operator must be in "
+                             "'{}'".format(list(omap.keys())))
+
+        return omap[operator]
+
+    def query(self, params, columns=[], index=[], logger=None):
         """ Query database values.
+
+        Columns and index are used to filter results after query. Columns
+        is applied before index, so if you want index='index', 'index' must
+        also appear in columns=['index'].
 
         Args
         ------
-        dbtable {string}: string format of database table name (i.e., 'Pixels')
-        kwargs {dict}: items for query {field: value}
+        params {dict}: query parameters, in the format
+                        {table: (column, operator, value)}
+        columns {list}: list of database table columns to filter results
+        index {list}: name of database table column to set as returned
+            DataFrame index
         logger {class}: logger
 
         Returns
@@ -183,8 +211,20 @@ class Database(object):
         results {DataFrame}: query results
         """
 
-        if not isinstance(kwargs, dict):
-            raise TypeError("kwargs must be dict")
+        if not isinstance(params, dict):
+            raise TypeError("params must be a dict")
+
+        unique_tables = set(params.keys())
+        ntables = len(unique_tables)
+
+        if ntables < 1 or ntables > 2:
+            raise ValueError("params can have no more than 2 unique tables")
+
+        if not isinstance(columns, list):
+            raise TypeError("columns must be a list")
+
+        if not isinstance(index, list):
+            raise TypeError("index must be a list")
 
         # make database connection
         try:
@@ -192,20 +232,70 @@ class Database(object):
         except Exception as e:
             print(e)
             if logger is not None:
-                logger.error("Failed connecting to database")
+                logger.error(" Failed connecting to database")
             else:
-                print("Error! Failed connecting to database")
+                print("Failed connecting to database")
 
         # make session
         session = dbsession()
 
-        # get table
-        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+        for n, table in enumerate(params.keys()):
 
-        # query database
-        qry = session.query(tbl).filter_by(**kwargs)
-        results = pd.read_sql(qry.statement, qry.session.connection())
+            # store the first if there are two unique tables being queried
+            if ntables > 1 and n == 0:
+                tbl_o = getattr(ta, table)
+
+            tbl = getattr(ta, table)
+
+            try:
+                col, op, value = params[table]
+            except ValueError:
+                raise Exception('Invalid filter: {}'.format(table))
+
+            if col not in list(vars(tbl)):
+                raise Exception("Invalid column: {}".format(col))
+
+            # TODO: add filter options to query
+            # translate operator
+            # op = self.operators(op)
+            # field = getattr(tbl, col)
+
+        if ntables == 1:
+            __query = session.query(tbl)
+        else:
+            __query = session.query(tbl, tbl_o).join(tbl)
+
+        results = pd.read_sql(__query.statement, __query.session.connection())
         session.close()
+
+        # apply columns
+        applied_columns = []
+        for c in columns:
+            if c in results.columns:
+                applied_columns.append(c)
+
+            else:
+                if logger is not None:
+                    logger.warning(" columns='{}' not in {}, will not "
+                                   "apply".format(c, list(results.columns)))
+                else:
+                    print("columns='{}' not in {}, will not "
+                          "apply".format(c, list(results.columns)))
+
+        if len(applied_columns) > 0:
+            results = results[applied_columns]
+
+        # apply index
+        if index[0] not in list(results.columns):
+            if logger is not None:
+                logger.warning(" index='{}' not in columns={}, will not "
+                               "apply".format(index[0], list(results.columns)))
+            else:
+                print("index='{}' not in columns={}, will not "
+                      "apply".format(index[0], list(results.columns)))
+        else:
+            results.set_index(index, inplace=True)
+            results.sort_index(inplace=True)
 
         return results
 
@@ -228,7 +318,7 @@ class Database(object):
             dbcon.execute(tbl.delete(), **kwargs)
 
         if logger is not None:
-            logger.debug(" Deleted existing database records")
+            logger.debug(" Deleted database records")
 
 
 def make_session(connector):
@@ -262,6 +352,7 @@ def make_session(connector):
 
     return session
 
+
 def insert(connector, table, values):
     '''
     Inserts standard run results to the database.
@@ -280,13 +371,14 @@ def insert(connector, table, values):
     dbtable = getattr(snowav.database.tables, table)
     my_dbtable = dbtable()
 
-    for k,v in values.items():
+    for k, v in values.items():
         setattr(my_dbtable, k, v)
 
     session = make_session(connector)
     session.add(my_dbtable)
     session.commit()
     session.close()
+
 
 def collect(connector, plotorder, basins, start_date, end_date, value,
             run_name, edges, method):
@@ -323,14 +415,14 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
 
     '''
 
-    value_options = ['swe_z','swe_vol','density','precip','precip_z','precip_vol',
-                     'rain_z','rain_vol','swe_avail','swe_unavail','coldcont',
-                     'swi_z','swi_vol','depth','snow_line','mean_air_temp',
-                     'evap_z', 'L_v_E','melt','lwc','temp_surface',
-                     'temp_lower','temp_bulk','depth_lower_layer','h20_sat',
-                     'R_n','H','G','M','delta_Q']
+    value_options = ['swe_z', 'swe_vol', 'density', 'precip', 'precip_z', 'precip_vol',
+                     'rain_z', 'rain_vol', 'swe_avail', 'swe_unavail', 'coldcont',
+                     'swi_z', 'swi_vol', 'depth', 'snow_line', 'mean_air_temp',
+                     'evap_z', 'L_v_E', 'melt', 'lwc', 'temp_surface',
+                     'temp_lower', 'temp_bulk', 'depth_lower_layer', 'h20_sat',
+                     'R_n', 'H', 'G', 'M', 'delta_Q']
 
-    method_options = ['sum','difference','daily','end']
+    method_options = ['sum', 'difference', 'daily', 'end']
 
     if value not in value_options:
         raise Exception('value={} call to database.collect() '.format(value) +
@@ -347,7 +439,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
         edges = ['total']
 
     if method == 'daily':
-        df = pd.DataFrame(index = ['date_time'], columns=plotorder)
+        df = pd.DataFrame(index=['date_time'], columns=plotorder)
 
     else:
         df = pd.DataFrame(np.nan, index=edges, columns=plotorder)
@@ -361,7 +453,7 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                             'start_date: {}, '
                             'end_date: {}, '
                             'value: {} '.format(run_name, start_date,
-                            end_date, value))
+                                                end_date, value))
 
         if method == 'daily':
             e = results[(results['elevation'] == 'total')
@@ -374,14 +466,14 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                                 'end_date: {}, '
                                 'value: {} ,'
                                 'elevation: {}'.format(run_name, start_date,
-                                end_date, value, elev))
+                                                       end_date, value, elev))
             else:
                 e = e.set_index('date_time')
                 e.sort_index(inplace=True)
 
                 if bid == plotorder[0]:
                     df = e[['value']].copy()
-                    df = df.rename(columns={'value':bid})
+                    df = df.rename(columns={'value': bid})
 
                 else:
                     df[bid] = e['value']
@@ -395,21 +487,21 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                 if e.empty:
                     raise Exception('Empty results for database query in '
                                     'database.collect(), for run_name={}, '
-                                    'elev={}, {} to {}'. format(run_name, elev,
-                                    start_date, end_date))
+                                    'elev={}, {} to {}'.format(run_name, elev,
+                                                               start_date, end_date))
                 else:
                     if e['value'].values[0] is None:
-                        df.loc[elev,bid] = np.nan
+                        df.loc[elev, bid] = np.nan
                     else:
 
                         # The database can occasionally get multiple values
                         # for the same record if it doesn't exit cleanly
                         if len(e['value'].values) == 1:
-                            df.loc[elev,bid] = e['value'].values
+                            df.loc[elev, bid] = e['value'].values
                         else:
                             raise Exception('Multiple database entries for a '
-                                'single field, consider running with '
-                                '[database] overwrite: True')
+                                            'single field, consider running with '
+                                            '[database] overwrite: True')
 
         if method == 'difference':
             for elev in edges:
@@ -419,11 +511,11 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                             & (results['date_time'] == end_date)]
                 if e.empty or s.empty:
                     raise Exception('Empty results for database query in '
-                                  'database.collect(), for run_name={}, '
-                                  'elev={}, {} to {}'. format(run_name, elev,
-                                  start_date, end_date))
+                                    'database.collect(), for run_name={}, '
+                                    'elev={}, {} to {}'.format(run_name, elev,
+                                                               start_date, end_date))
                 else:
-                    df.loc[elev,bid] = np.nansum(e['value'].values-s['value'].values)
+                    df.loc[elev, bid] = np.nansum(e['value'].values - s['value'].values)
 
         if method == 'sum':
             for elev in edges:
@@ -433,17 +525,18 @@ def collect(connector, plotorder, basins, start_date, end_date, value,
                 if e.empty:
                     raise Exception('Empty results for database query in '
                                     'database.collect(), for run_name={}, '
-                                    'elev={}, {} to {}'. format(run_name, elev,
-                                    start_date, end_date))
+                                    'elev={}, {} to {}'.format(run_name, elev,
+                                                               start_date, end_date))
                 else:
-                    df.loc[elev,bid] = e['value'].sum(skipna=False)
+                    df.loc[elev, bid] = e['value'].sum(skipna=False)
 
     df = df[plotorder]
 
     return df
 
-def query(connector, start_date, end_date, run_name, basins, bid = None,
-          value = None, rid = None):
+
+def query(connector, start_date, end_date, run_name, basins, bid=None,
+          value=None, rid=None):
     '''
     Retrieve results from snowav database.
 
@@ -471,31 +564,32 @@ def query(connector, start_date, end_date, run_name, basins, bid = None,
 
     if (value != None) and (bid != None):
         qry = session.query(Results).join(RunMetadata).filter(and_(
-                        (Results.date_time >= start_date),
-                        (Results.date_time <= end_date),
-                        (RunMetadata.run_name == run_name),
-                        (Results.variable == value),
-                        (Results.basin_id == basin_id)))
+            (Results.date_time >= start_date),
+            (Results.date_time <= end_date),
+            (RunMetadata.run_name == run_name),
+            (Results.variable == value),
+            (Results.basin_id == basin_id)))
 
     elif (value == None) and (bid != None) and rid != None:
         qry = session.query(Results).join(RunMetadata).filter(and_(
-                                            (Results.date_time >= start_date),
-                                            (Results.date_time <= end_date),
-                                            (Results.run_id == int(rid)),
-                                            (RunMetadata.run_name == run_name),
-                                            (Results.basin_id.in_(bids))))
+            (Results.date_time >= start_date),
+            (Results.date_time <= end_date),
+            (Results.run_id == int(rid)),
+            (RunMetadata.run_name == run_name),
+            (Results.basin_id.in_(bids))))
 
     else:
         qry = session.query(Results).join(RunMetadata).filter(and_(
-                                            (Results.date_time >= start_date),
-                                            (Results.date_time <= end_date),
-                                            (RunMetadata.run_name == run_name)))
+            (Results.date_time >= start_date),
+            (Results.date_time <= end_date),
+            (RunMetadata.run_name == run_name)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
 
     session.close()
 
     return df
+
 
 def delete(connector, basins, start_date, end_date, bid, run_name):
     '''
@@ -526,14 +620,14 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
     session = make_session(connector)
 
     logger.append(' Deleting existing records for {}, {}, {} '.format(
-                  bid, run_name, start_date.date()))
+        bid, run_name, start_date.date()))
 
     # Get the run_id
     qry = session.query(Results).join(RunMetadata).filter(and_(
-                                        (Results.date_time >= start_date),
-                                        (Results.date_time <= end_date),
-                                        (RunMetadata.run_name == run_name),
-                                        (Results.basin_id == basin_id)))
+        (Results.date_time >= start_date),
+        (Results.date_time <= end_date),
+        (RunMetadata.run_name == run_name),
+        (Results.basin_id == basin_id)))
 
     df = pd.read_sql(qry.statement, qry.session.connection())
     unique_runs = df.run_id.unique()
@@ -541,9 +635,9 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
     if not df.empty:
         for r in unique_runs:
             session.query(Results).filter(and_((Results.date_time >= start_date),
-                                    (Results.date_time <= end_date),
-                                    (Results.run_id == int(r)),
-                                    (Results.basin_id == basin_id))).delete()
+                                               (Results.date_time <= end_date),
+                                               (Results.run_id == int(r)),
+                                               (Results.basin_id == basin_id))).delete()
 
             session.commit()
 
@@ -555,7 +649,7 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
         if dfm.empty:
             logger.append(' Deleting RunMetadata run_name={}, run_id={}, from {} '
                           'to {}'.format(run_name, str(r), start_date.date(),
-                          end_date.date()))
+                                         end_date.date()))
 
             session.query(VariableUnits).filter(VariableUnits.run_id == int(r)).delete()
             session.query(RunMetadata).filter(RunMetadata.run_id == int(r)).delete()
@@ -564,6 +658,7 @@ def delete(connector, basins, start_date, end_date, bid, run_name):
     session.close()
 
     return logger
+
 
 def create_tables(database, plotorder):
     '''
@@ -593,17 +688,17 @@ def create_tables(database, plotorder):
     logger.append(' Adding watershed {} to database'.format(plotorder[0]))
 
     # Initialize watershed
-    wval = Watershed(watershed_id = 1, watershed_name = plotorder[0])
+    wval = Watershed(watershed_id=1, watershed_name=plotorder[0])
     session.add(wval)
     session.commit()
 
     # Initialize basins within the watershed
-    for i,name in enumerate(plotorder):
+    for i, name in enumerate(plotorder):
         logger.append(' Adding basin {} to database'.format(name))
 
-        bval = Basin(watershed_id = 1,
-                     basin_id = i + 1,
-                     basin_name = name)
+        bval = Basin(watershed_id=1,
+                     basin_id=i + 1,
+                     basin_name=name)
 
         session.add(bval)
 
@@ -650,14 +745,14 @@ def run_metadata(cfg):
               'watershed_id': int(watershed_id),
               'pixel': int(cfg.pixel),
               'description': '',
-              'smrf_version': 'smrf'+ smrf_version,
-              'awsm_version': 'aswm'+ awsm_version,
-              'snowav_version': 'snowav'+ cfg.snowav_version,
+              'smrf_version': 'smrf' + smrf_version,
+              'awsm_version': 'aswm' + awsm_version,
+              'snowav_version': 'snowav' + cfg.snowav_version,
               'data_type': '',
               'data_location': trdir,
               'file_type': '',
               'config_file': cfg.config_file,
-              'proc_time': datetime.now() }
+              'proc_time': datetime.now()}
 
     insert(cfg.connector, 'RunMetadata', values)
 
@@ -678,12 +773,12 @@ def run_metadata(cfg):
                      'unit': u,
                      'name': cfg.variables.variables[v]['description']}
 
-        insert(cfg.connector,'VariableUnits',variables)
+        insert(cfg.connector, 'VariableUnits', variables)
 
         # After inserting into VariableUnits, get the existing id
         session = make_session(cfg.connector)
         qry = session.query(VariableUnits).filter(
-                                        VariableUnits.run_id == cfg.run_id)
+            VariableUnits.run_id == cfg.run_id)
         session.close()
         df = pd.read_sql(qry.statement, qry.session.connection())
         cfg.vid[v] = df[df['variable'] == v]['id'].values[0]
@@ -697,15 +792,15 @@ def run_metadata(cfg):
     insert(cfg.connector, 'VariableUnits', variables)
     session = make_session(cfg.connector)
     qry = session.query(VariableUnits).filter(
-                                        VariableUnits.run_id == cfg.run_id)
+        VariableUnits.run_id == cfg.run_id)
     session.close()
     df = pd.read_sql(qry.statement, qry.session.connection())
     cfg.vid['snow_line'] = df['id'].values[0]
 
 
-def connect(sqlite = None, sql = None, plotorder = None, user = None,
-            password = None, host = None, port = None, convert = False,
-            add = False):
+def connect(sqlite=None, sql=None, plotorder=None, user=None,
+            password=None, host=None, port=None, convert=False,
+            add=False):
     '''
     This establishes a connection with a database for results. If the specified
     sqlite database doesn't exist, it will be created.
@@ -770,7 +865,7 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
         except:
             print('Failed attempting to make database connection with '
                   '{}:{}@{}/{}\nCheck config options in [database] '
-                  'section'.format(user,password,host,port))
+                  'section'.format(user, password, host, port))
             exit()
 
         cursor = cnx.cursor()
@@ -786,15 +881,15 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
             dbs = [i[0] for i in dbs]
 
         db_engine = 'mysql+mysqlconnector://{}:{}@{}:{}/{}'.format(user,
-                                                                password,
-                                                                host,
-                                                                port,
-                                                                sql)
+                                                                   password,
+                                                                   host,
+                                                                   port,
+                                                                   sql)
 
         # If the database doesn't exist, create it, otherwise connect
         if (sql not in dbs):
             logger.append(' Specified mysql database {} '.format(sql) +
-                  'does not exist, it is being created...')
+                          'does not exist, it is being created...')
             query = ("CREATE DATABASE {};".format(sql))
             cursor.execute(query)
             log = create_tables(db_engine, plotorder)
@@ -833,7 +928,7 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
 
             except:
                 logger.append(' Failed trying to make database connection '
-                      'to {}'.format(sql))
+                              'to {}'.format(sql))
 
         cursor.close()
         cnx.close()
@@ -862,8 +957,8 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
         else:
             wid = 1
 
-        wval = Watershed(watershed_id = int(wid),
-                         watershed_name = plotorder[0])
+        wval = Watershed(watershed_id=int(wid),
+                         watershed_name=plotorder[0])
         if add:
             session.add(wval)
 
@@ -880,11 +975,11 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
         session.commit()
 
     basins = {}
-    watersheds = {plotorder[0]:{'watershed_id':wid, 'watershed_name':'',
-                                'basins': '', 'shapefile':''}}
+    watersheds = {plotorder[0]: {'watershed_id': wid, 'watershed_name': '',
+                                 'basins': '', 'shapefile': ''}}
 
     # Initialize basins within the watershed
-    for i,name in enumerate(plotorder):
+    for i, name in enumerate(plotorder):
 
         # This logic doesn't work if trying to 'move' a subbasin from one watershed to another,
         # i.e., 'Cherry Creek' going from part of the Extended Tuolumne to Tuolumne River
@@ -901,9 +996,9 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
             else:
                 bid = 1
 
-            bval = Basin(watershed_id = int(wid),
-                         basin_id = int(bid + i),
-                         basin_name = name)
+            bval = Basin(watershed_id=int(wid),
+                         basin_id=int(bid + i),
+                         basin_name=name)
 
             if add:
                 session.add(bval)
@@ -918,20 +1013,21 @@ def connect(sqlite = None, sql = None, plotorder = None, user = None,
                       'changing [database] add_basins: True if you know what '
                       'you are doing.'.format(name))
 
-        basins[name] = {'watershed_id':wid, 'basin_id':bid}
+        basins[name] = {'watershed_id': wid, 'basin_id': bid}
 
     session.commit()
     session.close()
 
     return basins, connector, logger
 
+
 def convert_watershed_names(name):
     '''
     Convert watershed from topo.nc mask to existing snowav database version.
 
     '''
-    convert_list = ['Boise River Basin','Lakes Basin','Merced River Basin',
-                    'Kaweah River Basin','Kings River Basin']
+    convert_list = ['Boise River Basin', 'Lakes Basin', 'Merced River Basin',
+                    'Kaweah River Basin', 'Kings River Basin']
 
     if name in convert_list:
         watershed = name.split(' ')[0]

@@ -114,7 +114,7 @@ class Inputs(Base):
 class Pixels(Base):
     __tablename__ = 'Pixels'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True, unique=True)
     location = Column(String(250), nullable=False)
     model_row = Column(Integer, nullable=False)
     model_col = Column(Integer, nullable=False)
@@ -128,10 +128,10 @@ class Pixels(Base):
 class PixelsData(Base):
     __tablename__ = 'PixelsData'
 
-    id = Column(Integer, primary_key=True)
+    pid = Column(Integer, primary_key=True)
     pixel_id = Column(Integer, ForeignKey('Pixels.id'), nullable=False)
     date_time = Column(DateTime, nullable=False, index=True)
-    pixels = relationship('Pixels', cascade="all,delete", backref="Pixels")
+    pixels = relationship(Pixels, foreign_keys=[pixel_id])
 
     # smrf
     air_temp = Column(Float, nullable=True)

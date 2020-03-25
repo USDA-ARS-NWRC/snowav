@@ -21,3 +21,4 @@ History
 * Make output properties file names in write_properties more explicit by including date
 * Change snow line calculation to percentile of dem with minimum snow amount
 * Remove spatialnc and IPW file processing
+* Single point values processing and independent database tables for time-series, single pixel input/output data

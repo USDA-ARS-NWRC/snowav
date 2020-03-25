@@ -544,6 +544,9 @@ def put_on_database(db, pv):
     """
 
     # for each location
+    # cols = [x[0] + x[0] for x in list(pv.var_dict.keys())]
+    # rows = [x[1] + x[1] for x in list(pv.var_dict.keys())]
+
     for pt in pv.var_dict:
 
         # collect metadata
@@ -558,16 +561,27 @@ def put_on_database(db, pv):
                     }
 
         # first, see if records already exist with the same metadata values
-        results = db.query('Pixels', metadata, logger=pv.logger)
+        params = {
+                  'Pixels': ('model_row', '==', int(pt[0])),
+                  'Pixels': ('model_col', '==', int(pt[1])),
+                  'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
+                  'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
+                  'Pixels': ('description', '==', str(pv.var_dict[pt]['description']))
+        }
+
+        results = db.query(params, logger=pv.logger)
 
         # if no existing records, put on database
         if results.empty:
 
             # insert metadata
             db.insert('Pixels', metadata, logger=pv.logger)
+            pv.logger.info(" Metadata to database for "
+                           "({},{})".format(metadata['model_row'],
+                                            metadata['model_col']))
 
             # get associated Pixels.id metadata for PixelsData
-            results = db.query('Pixels', metadata, logger=pv.logger)
+            results = db.query(params, logger=pv.logger)
 
             if len(results['id'].values) > 1:
                 pv.logger.warning(" Multiple database records exist for "
@@ -587,6 +601,11 @@ def put_on_database(db, pv):
                 # insert data
                 db.insert('PixelsData', pixeldata, logger=pv.logger)
 
+            # log just one
+            pv.logger.info(" Data to database for "
+                           "({},{})".format(metadata['model_row'],
+                                            metadata['model_col']))
+
         # if there are existing record, check overwrite
         else:
             if pv.overwrite:
@@ -599,9 +618,13 @@ def put_on_database(db, pv):
 
                 # insert metadata
                 db.insert('Pixels', metadata, logger=pv.logger)
+                pv.logger.info(" Metadata to database for "
+                               "({},{})".format(metadata['model_row'],
+                                                metadata['model_col']))
 
-                # get associated Pixels.id metadata for PixelsData
-                results = db.query('Pixels', metadata, logger=pv.logger)
+                # get associated Pixels.id metadata for PixelsData with the
+                # same query params
+                results = db.query(params, logger=pv.logger)
 
                 if len(results['id'].values) > 1:
                     pv.logger.warning(" Multiple database records exist for "
@@ -620,6 +643,11 @@ def put_on_database(db, pv):
 
                     # insert data
                     db.insert('PixelsData', pixeldata, logger=pv.logger)
+
+                # log just one
+                pv.logger.info(" Data to database for "
+                               "({},{})".format(metadata['model_row'],
+                                                metadata['model_col']))
 
             else:
                 pv.logger.info(" Database records exist for {}, ({},{}) "
