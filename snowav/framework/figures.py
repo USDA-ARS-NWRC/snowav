@@ -1,8 +1,9 @@
-import os
-import numpy as np
-import pandas as pd
 import copy
 from datetime import datetime, timedelta
+import numpy as np
+import os
+import pandas as pd
+
 from tablizer.tablizer import get_existing_records
 from snowav.plotting.swi import swi
 from snowav.plotting.basin_total import basin_total
@@ -18,7 +19,6 @@ from snowav.plotting.swe_volume import swe_volume
 from snowav.plotting.inputs import inputs
 from snowav.inflow.inflow import inflow
 from snowav.plotting.diagnostics import diagnostics
-from snowav.plotting.plotlims import plotlims
 from snowav.plotting.point_values import point_values
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
@@ -311,6 +311,10 @@ def figures(cfg, process):
         if not flag:
             cfg.stn_validate_flag = False
 
+    else:
+        # assign fig name to cfg for use in report.py
+        cfg.assign_vars({'stn_validate_fig_name': ''})
+
     if cfg.point_values_flag and cfg.point_values:
 
         # check that cfg.point_values_date falls within options
@@ -440,11 +444,12 @@ def figures(cfg, process):
 
         inflow(args, cfg._logger)
 
-    # if cfg.write_properties is not None:
-    #     args['connector'] = cfg.connector
-    #     args['wy_start'] = datetime(cfg.wy - 1, 10, 1)
-
-        write_properties(args, cfg.write_properties, cfg._logger)
+    if cfg.write_properties is not None:
+        write_properties(args['end_date'], cfg.connector, args['plotorder'],
+                         args['basins'], datetime(cfg.wy-1, 10, 1),
+                         args['run_name'], args['figs_path'],
+                         cfg.write_properties, vollbl=args['vollbl'],
+                         logger=cfg._logger)
 
     if cfg.inputs_fig_flag:
 
