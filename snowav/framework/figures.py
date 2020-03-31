@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import pandas as pd
@@ -25,8 +24,9 @@ from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
 import matplotlib as mpl
 
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     mpl.use('Agg')
+
 
 def figures(cfg, process):
     """ Set up and call snowav figures. See CoreConfig.ini and README.md for
@@ -42,34 +42,34 @@ def figures(cfg, process):
 
     """
 
-    args = {'report_start':cfg.report_start.date().strftime("%Y-%-m-%-d"),
-            'report_date':cfg.report_date.date().strftime("%Y-%-m-%-d"),
-            'print':cfg.print_args_dict,
-            'run_name':cfg.run_name,
-            'start_date':cfg.start_date,
-            'end_date':cfg.end_date,
-            'directory':cfg.directory,
-            'figs_path':cfg.figs_path,
-            'edges':cfg.edges,
-            'plotorder':cfg.plotorder,
-            'labels':cfg.labels,
-            'lims':plotlims(cfg.plotorder),
-            'masks':cfg.masks,
-            'figsize':cfg.figsize,
-            'dpi':cfg.dpi,
-            'depthlbl':cfg.depthlbl,
-            'vollbl':cfg.vollbl,
-            'elevlbl':cfg.elevlbl,
-            'dplcs':cfg.dplcs,
-            'barcolors':cfg.barcolors,
-            'xlims':cfg.xlims,
-            'depth_clip':cfg.depth_clip,
-            'percent_min':cfg.percent_min,
-            'percent_max':cfg.percent_max,
-            'basins':cfg.basins,
-            'wy':cfg.wy,
-            'flag':False,
-            'flt_flag':cfg.flt_flag}
+    args = {'report_start': cfg.report_start.date().strftime("%Y-%-m-%-d"),
+            'report_date': cfg.report_date.date().strftime("%Y-%-m-%-d"),
+            'print': cfg.print_args_dict,
+            'run_name': cfg.run_name,
+            'start_date': cfg.start_date,
+            'end_date': cfg.end_date,
+            'directory': cfg.directory,
+            'figs_path': cfg.figs_path,
+            'edges': cfg.edges,
+            'plotorder': cfg.plotorder,
+            'labels': cfg.labels,
+            'lims': plotlims(cfg.plotorder),
+            'masks': cfg.masks,
+            'figsize': cfg.figsize,
+            'dpi': cfg.dpi,
+            'depthlbl': cfg.depthlbl,
+            'vollbl': cfg.vollbl,
+            'elevlbl': cfg.elevlbl,
+            'dplcs': cfg.dplcs,
+            'barcolors': cfg.barcolors,
+            'xlims': cfg.xlims,
+            'depth_clip': cfg.depth_clip,
+            'percent_min': cfg.percent_min,
+            'percent_max': cfg.percent_max,
+            'basins': cfg.basins,
+            'wy': cfg.wy,
+            'flag': False,
+            'flt_flag': cfg.flt_flag}
 
     if cfg.flt_flag:
         args['flight_dates'] = cfg.flight_diff_dates
@@ -96,8 +96,8 @@ def figures(cfg, process):
 
     if cfg.swi_flag:
         image = np.zeros_like(cfg.outputs['swi_z'][0])
-        for n in range(cfg.ixs,cfg.ixe):
-            image = image + cfg.outputs['swi_z'][n]*cfg.depth_factor
+        for n in range(cfg.ixs, cfg.ixe):
+            image = image + cfg.outputs['swi_z'][n] * cfg.depth_factor
 
         df = collect(connector, args['plotorder'], args['basins'],
                      args['start_date'], args['end_date'], 'swi_vol',
@@ -106,8 +106,8 @@ def figures(cfg, process):
         args['df'] = df
         args['image'] = image
         args['title'] = 'Accumulated SWI\n{} to {}'.format(
-                        args['report_start'],
-                        args['report_date'])
+            args['report_start'],
+            args['report_date'])
 
         fig_names['swi'] = swi(args, cfg._logger)
 
@@ -115,27 +115,27 @@ def figures(cfg, process):
         image = cfg.outputs['swe_z'][cfg.ixe] - cfg.outputs['swe_z'][cfg.ixs]
 
         start = collect(connector, args['plotorder'], args['basins'],
-                        args['start_date'], args['start_date'],'swe_vol',
-                        args['run_name'], args['edges'],'end')
+                        args['start_date'], args['start_date'], 'swe_vol',
+                        args['run_name'], args['edges'], 'end')
         end = collect(connector, args['plotorder'], args['basins'],
                       args['start_date'], args['end_date'], 'swe_vol',
-                      args['run_name'], args['edges'],'end')
+                      args['run_name'], args['edges'], 'end')
 
         df = end - start
 
         args['df'] = df
-        args['image'] = image*cfg.depth_factor
+        args['image'] = image * cfg.depth_factor
         args['title'] = 'Change in SWE\n{} to {}'.format(
-                        args['report_start'], args['report_date'])
+            args['report_start'], args['report_date'])
 
         fig_names['image_change'] = image_change(args, cfg._logger)
 
     if cfg.swe_volume_flag:
         df = collect(connector, args['plotorder'], args['basins'],
-                     args['start_date'], args['end_date'],'swe_vol',
-                     args['run_name'], args['edges'],'end')
+                     args['start_date'], args['end_date'], 'swe_vol',
+                     args['run_name'], args['edges'], 'end')
 
-        image = cfg.outputs['swe_z'][cfg.ixe]*cfg.depth_factor
+        image = cfg.outputs['swe_z'][cfg.ixe] * cfg.depth_factor
 
         args['df'] = df
         args['image'] = image
@@ -146,10 +146,10 @@ def figures(cfg, process):
     if cfg.cold_content_flag:
         df = collect(connector, args['plotorder'], args['basins'],
                      args['start_date'], args['end_date'], 'swe_unavail',
-                     args['run_name'], args['edges'],'end')
+                     args['run_name'], args['edges'], 'end')
 
         swe = cfg.outputs['swe_z'][cfg.ixe]
-        image = cfg.outputs['coldcont'][cfg.ixe]*0.000001
+        image = cfg.outputs['coldcont'][cfg.ixe] * 0.000001
 
         args['df'] = df
         args['swe'] = swe
@@ -167,13 +167,13 @@ def figures(cfg, process):
         fig_names['density'] = density(args, cfg._logger)
 
     if cfg.basin_total_flag:
-        wy_start = datetime(cfg.wy-1,10,1)
+        wy_start = datetime(cfg.wy - 1, 10, 1)
         swi_summary = collect(connector, args['plotorder'], args['basins'],
-                              wy_start,args['end_date'],'swi_vol',
-                              args['run_name'],'total','daily')
+                              wy_start, args['end_date'], 'swi_vol',
+                              args['run_name'], 'total', 'daily')
         df_swe = collect(connector, args['plotorder'], args['basins'],
-                              wy_start,args['end_date'],'swe_vol',
-                              args['run_name'],'total','daily')
+                         wy_start, args['end_date'], 'swe_vol',
+                         args['run_name'], 'total', 'daily')
         df_swi = swi_summary.cumsum()
 
         args['swi_summary'] = df_swi
@@ -185,8 +185,8 @@ def figures(cfg, process):
 
     if cfg.precip_depth_flag:
         swi_image = np.zeros_like(cfg.outputs['swi_z'][0])
-        for n in range(cfg.ixs,cfg.ixe):
-            swi_image = swi_image + cfg.outputs['swi_z'][n]*cfg.depth_factor
+        for n in range(cfg.ixs, cfg.ixe):
+            swi_image = swi_image + cfg.outputs['swi_z'][n] * cfg.depth_factor
 
         swi_df = collect(connector, args['plotorder'], args['basins'],
                          args['start_date'], args['end_date'], 'swi_z',
@@ -199,48 +199,48 @@ def figures(cfg, process):
                           args['run_name'], args['edges'], 'sum')
 
         args['swi_image'] = swi_image
-        args['precip_image'] = process.precip_total*cfg.depth_factor
-        args['rain_image'] = process.rain_total*cfg.depth_factor
+        args['precip_image'] = process.precip_total * cfg.depth_factor
+        args['rain_image'] = process.rain_total * cfg.depth_factor
         args['swi_df'] = swi_df
         args['precip_df'] = precip_df
         args['rain_df'] = rain_df
         args['title'] = 'Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
-                        args['report_start'],args['report_date'])
+            args['report_start'], args['report_date'])
 
         fig_names['precip_depth'] = precip_depth(args, cfg._logger)
 
     if cfg.diagnostics_flag:
-        wy_start = datetime(cfg.wy-1,10,1)
+        wy_start = datetime(cfg.wy - 1, 10, 1)
         precip = collect(connector, args['plotorder'], args['basins'],
                          wy_start, args['end_date'], 'precip_z',
                          args['run_name'], args['edges'], 'daily')
         precip_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'precip_z',
-                         args['run_name'], args['edges'], 'daily')
+                             args['start_date'], args['end_date'], 'precip_z',
+                             args['run_name'], args['edges'], 'daily')
         swe = collect(connector, args['plotorder'], args['basins'],
-                         wy_start, args['end_date'], 'swe_z',
-                         args['run_name'], args['edges'], 'daily')
+                      wy_start, args['end_date'], 'swe_z',
+                      args['run_name'], args['edges'], 'daily')
         swe_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'swe_z',
-                         args['run_name'], args['edges'], 'daily')
+                          args['start_date'], args['end_date'], 'swe_z',
+                          args['run_name'], args['edges'], 'daily')
         rho = collect(connector, args['plotorder'], args['basins'],
-                         wy_start, args['end_date'], 'density',
-                         args['run_name'], args['edges'], 'daily')
+                      wy_start, args['end_date'], 'density',
+                      args['run_name'], args['edges'], 'daily')
         rho_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'density',
-                         args['run_name'], args['edges'], 'daily')
+                          args['start_date'], args['end_date'], 'density',
+                          args['run_name'], args['edges'], 'daily')
         snow_line = collect(connector, args['plotorder'], args['basins'],
-                         wy_start, args['end_date'], 'snow_line',
-                         args['run_name'], args['edges'], 'daily')
+                            wy_start, args['end_date'], 'snow_line',
+                            args['run_name'], args['edges'], 'daily')
         snow_line_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'snow_line',
-                         args['run_name'], args['edges'], 'daily')
+                                args['start_date'], args['end_date'], 'snow_line',
+                                args['run_name'], args['edges'], 'daily')
         evap_z = collect(connector, args['plotorder'], args['basins'],
                          wy_start, args['end_date'], 'evap_z',
                          args['run_name'], args['edges'], 'daily')
         evap_z_per = collect(connector, args['plotorder'], args['basins'],
-                         args['start_date'], args['end_date'], 'evap_z',
-                         args['run_name'], args['edges'], 'daily')
+                             args['start_date'], args['end_date'], 'evap_z',
+                             args['run_name'], args['edges'], 'daily')
 
         snow_line_per = snow_line_per.fillna(0)
         first_row = snow_line_per.iloc[[0]].values[0]
@@ -288,28 +288,25 @@ def figures(cfg, process):
         diagnostics(args, cfg._logger)
 
     if cfg.stn_validate_flag:
-        args['dirs'] = cfg.all_dirs
-        args['stns'] = cfg.val_stns
-        args['lbls'] = cfg.val_lbls
-        args['client'] = cfg.val_client
-        args['factor'] = 25.4
-        args['user'] = cfg.wxdb_user
-        args['password'] = cfg.wxdb_password
-        args['host'] = cfg.wxdb_host
-        args['port'] = cfg.wxdb_port
-        args['snow_x'] = cfg.snow_x
-        args['snow_y'] = cfg.snow_y
-        args['stns'] = cfg.val_stns
-        args['nash_sut_flag'] = cfg.nash_sut_flag
+        px = (1, 1, 1, 0, 0, 0, -1, -1, -1)
+        py = (1, 0, -1, 1, 0, -1, 1, 0, -1)
+        et = args['end_date'].date().strftime("%Y%-m%-d")
+        basin = cfg.plotorder[0].lower().split(" ")[0]
+        name = '{}_validation_{}.png'.format(basin, et)
+        login = {'user': cfg.wxdb_user,
+                 'password': cfg.wxdb_password,
+                 'host': cfg.wxdb_host,
+                 'port': cfg.wxdb_port}
 
-        # could change these for precip, px = 0, 'em.nc'
-        args['tbl'] = 'tbl_level1'
-        args['var'] = 'snow_water_equiv'
-        args['px'] = (1,1,1,0,0,0,-1,-1,-1)
-        args['py'] = (1,0,-1,1,0,-1,1,0,-1)
-        args['ncfile'] = 'snow.nc'
+        # assign fig name to cfg for use in report.py
+        cfg.assign_vars({'stn_validate_fig_name': name})
 
-        fig_names['valid'], flag = stn_validate(args, cfg._logger)
+        flag = stn_validate(cfg.all_dirs, cfg.val_lbls, cfg.val_client,
+                            args['end_date'], args['wy'], cfg.snow_x,
+                            cfg.snow_y, cfg.val_stns, px, py, login,
+                            args['figs_path'], name, cfg.dem,
+                            logger=cfg._logger, elevlbl=args['elevlbl'],
+                            nash_sut_flag=cfg.nash_sut_flag)
 
         if not flag:
             cfg.stn_validate_flag = False
@@ -321,15 +318,15 @@ def figures(cfg, process):
 
         if pv_date is None:
             cfg._logger.info(' Value in [validate] point_values_date being '
-                              'assigned to {}'.format(
-                              cfg.end_date.date().strftime("%Y-%m-%d")))
+                             'assigned to {}'.format(
+                cfg.end_date.date().strftime("%Y-%m-%d")))
             pv_date = cfg.end_date
 
         if pv_date < cfg.start_date or pv_date > cfg.end_date:
             cfg._logger.info(' Value in [validate] point_values_date outside '
-                              'of range in [run] start_date - end_date, '
-                              'point_values_date being assigned to {}'.format(
-                              cfg.end_date.date().strftime("%Y-%m-%d")))
+                             'of range in [run] start_date - end_date, '
+                             'point_values_date being assigned to {}'.format(
+                cfg.end_date.date().strftime("%Y-%m-%d")))
             pv_date = cfg.end_date
             idx = -1
 
@@ -341,24 +338,25 @@ def figures(cfg, process):
         model_date = cfg.outputs['dates'][idx]
         model_date = model_date.date().strftime('%Y-%m-%d')
         course_date = cfg.point_values_date.date().strftime('%Y-%m-%d')
-        nsubplots = (cfg.point_values_settings[3]*cfg.point_values_settings[4]-1)-1
+        nsubplots = (cfg.point_values_settings[3] * cfg.point_values_settings[4] - 1) - 1
 
         for idxp, value in enumerate(cfg.point_values_properties):
             pflag = True
             df = pd.read_csv(cfg.point_values_csv[idxp])
 
             if cfg.point_values_heading[idxp] is not None:
-                check_headings = [cfg.point_values_heading[idxp],'name',
-                                  'latitude','longitude']
+                check_headings = [cfg.point_values_heading[idxp], 'name',
+                                  'latitude', 'longitude']
             else:
                 check_headings = ['name', 'latitude', 'longitude']
 
             for head in check_headings:
                 if head not in df.columns.tolist():
                     cfg._logger.warn(' Config option [validate] '
-                        'point_values_heading: {} not in headings {} in '
-                        '{}, setting point_values: False'.format(head,
-                        df.columns.tolist(), cfg.point_values_csv[idxp]))
+                                     'point_values_heading: {} not in headings {} in '
+                                     '{}, setting point_values: False'.format(head,
+                                                                              df.columns.tolist(),
+                                                                              cfg.point_values_csv[idxp]))
                     pflag = False
 
             if not pflag:
@@ -366,13 +364,13 @@ def figures(cfg, process):
 
             if len(df.name.unique()) > nsubplots:
                 cfg._logger.warn(' Number of subplots that will be generated in '
-                                  'point_values() may not fit well with settings '
-                                  'in point_values_settings, consider changing '
-                                  'nrows and/or ncols in [validate] '
-                                  'point_values_settings')
+                                 'point_values() may not fit well with settings '
+                                 'in point_values_settings, consider changing '
+                                 'nrows and/or ncols in [validate] '
+                                 'point_values_settings')
 
             fig_name = '{}model_pixel_{}_{}.csv'.format(cfg.figs_path,
-                        value, cfg.end_date.date().strftime("%Y%m%d"))
+                                                        value, cfg.end_date.date().strftime("%Y%m%d"))
 
             if value == 'swe_z':
                 factor = cfg.depth_factor
@@ -383,7 +381,7 @@ def figures(cfg, process):
             if value == 'depth':
                 factor = 39.37
 
-            array = cfg.outputs[value][idx]*factor
+            array = cfg.outputs[value][idx] * factor
 
             point_values(array, value, df, (cfg.snow_x, cfg.snow_y), fig_name,
                          cfg.dem, cfg.figs_path, cfg.veg_type,
@@ -391,7 +389,7 @@ def figures(cfg, process):
                          cfg.point_values_settings, cfg.pixel, cfg._logger)
 
     if cfg.compare_runs_flag:
-        args['variables'] = ['swe_vol','swi_vol']
+        args['variables'] = ['swe_vol', 'swi_vol']
 
         if cfg.flt_flag:
             args['flag'] = True
@@ -402,13 +400,13 @@ def figures(cfg, process):
         for var in args['variables']:
             dict[var] = {}
             for wy, run in zip(cfg.compare_run_wys, cfg.compare_run_names):
-                wy_start = datetime(wy-1,10,1)
+                wy_start = datetime(wy - 1, 10, 1)
                 df = collect(connector, args['plotorder'][0], args['basins'],
-                             wy_start,args['end_date'],var,run,'total','daily')
+                             wy_start, args['end_date'], var, run, 'total', 'daily')
 
                 if wy != cfg.wy:
                     adj = cfg.wy - wy
-                    df.index = df.index + timedelta(days = 365*adj)
+                    df.index = df.index + timedelta(days=365 * adj)
 
                 if var == 'swi_vol':
                     df = df.cumsum()
@@ -420,32 +418,31 @@ def figures(cfg, process):
         compare_runs(args, cfg._logger)
 
     if cfg.inflow_flag:
-        wy_start = datetime(cfg.wy-1,10,1)
+        wy_start = datetime(cfg.wy - 1, 10, 1)
         swi_summary = collect(connector, args['plotorder'], args['basins'],
-                              wy_start,args['end_date'],'swi_vol',
-                              args['run_name'],'total','daily')
+                              wy_start, args['end_date'], 'swi_vol',
+                              args['run_name'], 'total', 'daily')
         df_swi = swi_summary.cumsum()
 
         args['swi_summary'] = df_swi
 
         if cfg.inflow_data is None:
-            raw = pd.read_csv(cfg.summary_csv, skiprows = 1,
-                              parse_dates=[0], index_col = 0)
+            raw = pd.read_csv(cfg.summary_csv, skiprows=1,
+                              parse_dates=[0], index_col=0)
             args['inflow_summary'] = raw[cfg.basin_headings]
 
         else:
             args['inflow_summary'] = pd.read_csv(cfg.summary_csv,
-                                                 parse_dates=[0], index_col = 0)
-
+                                                 parse_dates=[0], index_col=0)
 
         args['inflow_headings'] = cfg.inflow_headings
         args['basin_headings'] = cfg.basin_headings
 
         inflow(args, cfg._logger)
 
-    if cfg.write_properties is not None:
-        args['connector'] = cfg.connector
-        args['wy_start'] = datetime(cfg.wy-1,10,1)
+    # if cfg.write_properties is not None:
+    #     args['connector'] = cfg.connector
+    #     args['wy_start'] = datetime(cfg.wy - 1, 10, 1)
 
         write_properties(args, cfg.write_properties, cfg._logger)
 
@@ -473,35 +470,35 @@ def figures(cfg, process):
                 for func in cfg.inputs_methods:
 
                     if 'percentile' in func:
-                        nfunc = '{}_{}'.format(func,str(cfg.inputs_percentiles[0]))
+                        nfunc = '{}_{}'.format(func, str(cfg.inputs_percentiles[0]))
 
                         if ((var == cfg.plots_inputs_variables[0]) and
-                             (basin == cfg.inputs_basins[0])):
+                                (basin == cfg.inputs_basins[0])):
                             p.append(nfunc)
 
-                        ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
-                                       (df['variable'] == var) &
-                                       (df['basin_id'] == int(bid)) &
-                                       (df['run_name'] == args['run_name'])]
+                        ivalue[var][basin][nfunc] = df[(df['function'] == nfunc) &
+                                                       (df['variable'] == var) &
+                                                       (df['basin_id'] == int(bid)) &
+                                                       (df['run_name'] == args['run_name'])]
 
-                        nfunc = '{}_{}'.format(func,str(cfg.inputs_percentiles[1]))
+                        nfunc = '{}_{}'.format(func, str(cfg.inputs_percentiles[1]))
 
                         if ((var == cfg.plots_inputs_variables[0]) and
-                             (basin == cfg.inputs_basins[0])):
+                                (basin == cfg.inputs_basins[0])):
                             p.append(nfunc)
 
-                        ivalue[var][basin][nfunc] =  df[(df['function'] == nfunc) &
-                                       (df['variable'] == var) &
-                                       (df['basin_id'] == int(bid)) &
-                                       (df['run_name'] == args['run_name'])]
+                        ivalue[var][basin][nfunc] = df[(df['function'] == nfunc) &
+                                                       (df['variable'] == var) &
+                                                       (df['basin_id'] == int(bid)) &
+                                                       (df['run_name'] == args['run_name'])]
                     else:
-                        ivalue[var][basin][func] =  df[(df['function'] == func) &
-                                       (df['variable'] == var) &
-                                       (df['basin_id'] == int(bid)) &
-                                       (df['run_name'] == args['run_name'])]
+                        ivalue[var][basin][func] = df[(df['function'] == func) &
+                                                      (df['variable'] == var) &
+                                                      (df['basin_id'] == int(bid)) &
+                                                      (df['run_name'] == args['run_name'])]
 
                         if ((var == cfg.plots_inputs_variables[0]) and
-                             (basin == cfg.inputs_basins[0])):
+                                (basin == cfg.inputs_basins[0])):
                             p.append(func)
 
         args['inputs'] = ivalue

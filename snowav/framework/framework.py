@@ -12,19 +12,15 @@ from snowav.inflow.inflow import excel_to_csv
 
 class Snowav(object):
 
-    def __init__(self, config_file=None, external_logger=None, awsm=None,
-                 end_date=None):
-        """ Read config file, parse config options, process results, put results
-        on database, make figures, and make pdf report.
+    def __init__(self, config_file=None, awsm=None, end_date=None):
+        """ Read config file, parse config options, process results, put
+        results on database, make figures, and make pdf report.
 
         Args
         -----
-        config_file : str
-            snowav config file
-        external_logger : object
-            awsm logger
-        awsm : class
-            awsm class if being run in awsm
+        config_file {str}: config file
+        awsm {class}: awsm class
+        end_date {str}: overwrite of config end_date
         """
 
         if end_date is not None:

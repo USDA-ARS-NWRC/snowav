@@ -218,7 +218,7 @@ def report(cfg, process):
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(cfg.directory)
     variables['DENSITY_FIG'] = 'density_{}.png'.format(cfg.directory)
     variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(cfg.directory)
-    variables['VALID_FIG'] = 'validation_{}.png'.format(cfg.directory)
+    variables['VALID_FIG'] = cfg.stn_validate_fig_name
     variables['COLD_FIG'] = 'cold_content_{}.png'.format(cfg.directory)
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(cfg.directory)
     variables['VERSION'] = snowav.__version__

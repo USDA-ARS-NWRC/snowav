@@ -491,6 +491,19 @@ class UserConfig(object):
 
         self.ucfg = ucfg
 
+    def assign_vars(self, kwargs):
+        """ Assign attributes.
+
+        Args
+        ------
+        kwargs {dict}: {item, value}
+        """
+
+        if not isinstance(kwargs, dict):
+            raise TypeError("kwargs must be dict")
+
+        for item, v in kwargs.items():
+            setattr(self, item, v)
 
     def parse(self, external_logger=None):
         """ Parse config options. """
