@@ -329,9 +329,9 @@ def figures(cfg, process):
         if pv_date < cfg.start_date or pv_date > cfg.end_date:
             cfg._logger.info(' Value in [validate] point_values_date outside '
                              'of range in [run] start_date - end_date, '
-                             'point_values_date being assigned to {}'.format(
-                cfg.end_date.date().strftime("%Y-%m-%d")))
-            pv_date = cfg.end_date
+                             'point_values_date being assigned to '
+                             '{}'.format(cfg.end_date.date().strftime("%Y-%m-%d")))
+            # pv_date = cfg.end_date
             idx = -1
 
         else:
@@ -357,10 +357,11 @@ def figures(cfg, process):
             for head in check_headings:
                 if head not in df.columns.tolist():
                     cfg._logger.warn(' Config option [validate] '
-                                     'point_values_heading: {} not in headings {} in '
-                                     '{}, setting point_values: False'.format(head,
-                                                                              df.columns.tolist(),
-                                                                              cfg.point_values_csv[idxp]))
+                                     'point_values_heading: "{}" not in '
+                                     'headings in {}, setting '
+                                     'point_values: '
+                                     'False'.format(head,
+                                                    cfg.point_values_csv[idxp]))
                     pflag = False
 
             if not pflag:
@@ -373,17 +374,14 @@ def figures(cfg, process):
                                  'nrows and/or ncols in [validate] '
                                  'point_values_settings')
 
-            fig_name = '{}model_pixel_{}_{}.csv'.format(cfg.figs_path,
-                                                        value, cfg.end_date.date().strftime("%Y%m%d"))
+            fig_name = '{}model_pixel_{}_{}.csv'.format(
+                cfg.figs_path, value, cfg.end_date.date().strftime("%Y%m%d"))
 
             if value == 'swe_z':
                 factor = cfg.depth_factor
-
-            if value == 'density':
-                factor = 1
-
-            if value == 'depth':
-                factor = 39.37
+            else:
+                cfg._logger.warning(" point_values is currently only "
+                                    "configured for values=swe_z")
 
             array = cfg.outputs[value][idx] * factor
 
@@ -446,7 +444,7 @@ def figures(cfg, process):
 
     if cfg.write_properties is not None:
         write_properties(args['end_date'], cfg.connector, args['plotorder'],
-                         args['basins'], datetime(cfg.wy-1, 10, 1),
+                         args['basins'], datetime(cfg.wy - 1, 10, 1),
                          args['run_name'], args['figs_path'],
                          cfg.write_properties, vollbl=args['vollbl'],
                          logger=cfg._logger)
