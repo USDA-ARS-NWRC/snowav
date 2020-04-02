@@ -641,7 +641,7 @@ class TestStandardLakes(unittest.TestCase):
                 'validation_locations.png',
                 'swe_vol_timeseries_20190402_taf.csv',
                 'swi_vol_timeseries_20190402_taf.csv',
-                'model_pixel_swe_z_20190402.csv',
+                'lakes_pixel_swe_z_2019-04-02.csv',
                 'inputs_lakes_test.png',
                 'inputs_period_lakes_test.png',
                 'SnowpackSummary20190403.pdf',

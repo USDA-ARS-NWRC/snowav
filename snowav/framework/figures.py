@@ -19,7 +19,7 @@ from snowav.plotting.swe_volume import swe_volume
 from snowav.plotting.inputs import inputs
 from snowav.inflow.inflow import inflow
 from snowav.plotting.diagnostics import diagnostics
-from snowav.plotting.point_values import point_values
+from snowav.plotting.point_values import point_values_csv, point_values_figures
 from snowav.database.database import collect
 from snowav.plotting.plotlims import plotlims as plotlims
 import matplotlib as mpl
@@ -315,80 +315,94 @@ def figures(cfg, process):
         # assign fig name to cfg for use in report.py
         cfg.assign_vars({'stn_validate_fig_name': ''})
 
-    if cfg.point_values_flag and cfg.point_values:
+    if cfg.point_values:
+        cfg._logger.debug(" Beginning point values processing for "
+                          "{}".format(cfg.point_values_csv))
 
-        # check that cfg.point_values_date falls within options
-        pv_date = cfg.point_values_date
-
-        if pv_date is None:
-            cfg._logger.info(' Value in [validate] point_values_date being '
-                             'assigned to {}'.format(
-                cfg.end_date.date().strftime("%Y-%m-%d")))
-            pv_date = cfg.end_date
-
-        if pv_date < cfg.start_date or pv_date > cfg.end_date:
-            cfg._logger.info(' Value in [validate] point_values_date outside '
-                             'of range in [run] start_date - end_date, '
-                             'point_values_date being assigned to '
-                             '{}'.format(cfg.end_date.date().strftime("%Y-%m-%d")))
-            # pv_date = cfg.end_date
-            idx = -1
-
-        else:
-            # get index for cfg.outputs for that date
-            x = np.abs([date - pv_date for date in cfg.outputs['dates']])
-            idx = x.argmin(0)
-
-        model_date = cfg.outputs['dates'][idx]
-        model_date = model_date.date().strftime('%Y-%m-%d')
+        flag = True
+        xy = (cfg.snow_x, cfg.snow_y)
+        headings = ['name', 'latitude', 'longitude', cfg.point_values_heading]
+        end_date_str = cfg.end_date.date().strftime("%Y-%m-%d")
         course_date = cfg.point_values_date.date().strftime('%Y-%m-%d')
-        nsubplots = (cfg.point_values_settings[3] * cfg.point_values_settings[4] - 1) - 1
+        basin_name = cfg.plotorder[0].split(" ")[0].lower()
+        pv_date = cfg.point_values_date
+        nsubplots = (cfg.point_values_settings[3] *
+                     cfg.point_values_settings[4] - 1) - 1
 
-        for idxp, value in enumerate(cfg.point_values_properties):
-            pflag = True
-            df = pd.read_csv(cfg.point_values_csv[idxp])
+        while flag:
+            df = pd.read_csv(cfg.point_values_csv)
 
-            if cfg.point_values_heading[idxp] is not None:
-                check_headings = [cfg.point_values_heading[idxp], 'name',
-                                  'latitude', 'longitude']
-            else:
-                check_headings = ['name', 'latitude', 'longitude']
-
-            for head in check_headings:
+            for head in headings:
                 if head not in df.columns.tolist():
-                    cfg._logger.warn(' Config option [validate] '
-                                     'point_values_heading: "{}" not in '
-                                     'headings in {}, setting '
-                                     'point_values: '
-                                     'False'.format(head,
-                                                    cfg.point_values_csv[idxp]))
-                    pflag = False
+                    cfg._logger.warn(' Required csv column "{}" not found, '
+                                     'exiting point values'.format(head))
+                    if head == cfg.point_values_heading:
+                        cfg._logger.warning(' User specified [validate] '
+                                            'point_values_heading: {} not '
+                                            'found'.format(head))
+                    flag = False
 
-            if not pflag:
-                continue
+            if pv_date is None:
+                cfg._logger.info(' Value in [validate] point_values_date '
+                                 'being assigned to {}'.format(end_date_str))
+                pv_date = cfg.end_date
 
-            if len(df.name.unique()) > nsubplots:
-                cfg._logger.warn(' Number of subplots that will be generated in '
-                                 'point_values() may not fit well with settings '
-                                 'in point_values_settings, consider changing '
-                                 'nrows and/or ncols in [validate] '
-                                 'point_values_settings')
-
-            fig_name = '{}model_pixel_{}_{}.csv'.format(
-                cfg.figs_path, value, cfg.end_date.date().strftime("%Y%m%d"))
-
-            if value == 'swe_z':
-                factor = cfg.depth_factor
+            if pv_date < cfg.start_date or pv_date > cfg.end_date:
+                cfg._logger.info(' Value in [validate] point_values_date '
+                                 'outside of range in [run] start_date - '
+                                 'end_date, point_values_date being assigned '
+                                 'to: {}'.format(end_date_str))
+                idx = -1
             else:
-                cfg._logger.warning(" point_values is currently only "
-                                    "configured for values=swe_z")
+                x = np.abs([date - pv_date for date in cfg.outputs['dates']])
+                idx = x.argmin(0)
 
-            array = cfg.outputs[value][idx] * factor
+            model_date = cfg.outputs['dates'][idx].date().strftime('%Y-%m-%d')
 
-            point_values(array, value, df, (cfg.snow_x, cfg.snow_y), fig_name,
-                         cfg.dem, cfg.figs_path, cfg.veg_type,
-                         cfg.point_values_heading[idxp], model_date, course_date,
-                         cfg.point_values_settings, cfg.pixel, cfg._logger)
+            for value in cfg.point_values_properties:
+                filename = '{}_pixel_{}_{}.csv'.format(basin_name, value,
+                                                       end_date_str)
+                csv_name = os.path.abspath(os.path.join(cfg.figs_path,
+                                                        filename))
+
+                if len(df.name.unique()) > nsubplots:
+                    cfg._logger.warn(' Number of subplots in '
+                                     'point_values() may not fit well with '
+                                     'given settings, consider changing '
+                                     'nrows and/or ncols in [validate] '
+                                     'point_values_settings')
+                    flag = False
+
+                if value == 'swe_z':
+                    factor = cfg.depth_factor
+                elif value == 'depth':
+                    factor = 39.37
+                else:
+                    factor = 1
+
+                array = cfg.outputs[value][idx] * factor
+
+                df_res = point_values_csv(array, value, df, xy, csv_name,
+                                          model_date, cfg.plotorder[0],
+                                          cfg.point_values_heading,
+                                          cfg._logger)
+
+                if cfg.point_values_flag:
+                    head = cfg.point_values_heading
+                    if head in df.columns.tolist():
+                        point_values_figures(array, value, df_res, cfg.dem,
+                                             cfg.figs_path, cfg.veg_type,
+                                             model_date, course_date,
+                                             cfg.point_values_settings,
+                                             cfg.pixel, head, cfg._logger)
+                    else:
+                        cfg._logger.warn(' [validate] point_values_heading: '
+                                         '{} not in csv, skipping figures '
+                                         ''.format(cfg.point_values_heading))
+                        cfg.point_values_flag = False
+
+            # if everything is successful, set to False at the end
+            flag = False
 
     if cfg.compare_runs_flag:
         args['variables'] = ['swe_vol', 'swi_vol']

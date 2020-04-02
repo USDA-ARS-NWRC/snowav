@@ -1,4 +1,3 @@
-
 import calendar
 import coloredlogs
 from datetime import datetime
@@ -35,13 +34,13 @@ class UserConfig(object):
     end_date: string
     """
 
-    def __init__(self, config_file, external_logger = None, awsm = None,
-                 end_date = None):
+    def __init__(self, config_file, external_logger=None, awsm=None,
+                 end_date=None):
 
         print('Reading {} and loading files...'.format(config_file))
 
         self.config_file = config_file
-        snowav_mcfg = MasterConfig(modules = 'snowav')
+        snowav_mcfg = MasterConfig(modules='snowav')
         ucfg = get_user_config(self.config_file, mcfg=snowav_mcfg)
         ucfg.apply_recipes()
         ucfg = cast_all_variables(ucfg, ucfg.mcfg)
@@ -84,7 +83,7 @@ class UserConfig(object):
 
             if self.end_date <= self.start_date:
                 raise Exception('end_date {} earlier than start_date {}'.format(
-                                self.end_date, self.start_date))
+                    self.end_date, self.start_date))
 
         if self.start_date is not None and self.end_date is not None:
             self.start_date = self.start_date
@@ -104,8 +103,8 @@ class UserConfig(object):
         if (ucfg.cfg['run']['directory'] is None) and (awsm is not None):
             if self.all_subdirs is True:
                 self.run_dirs = ([awsm.pathr + s for s in
-                                os.listdir(awsm.pathr)
-                                if (os.path.isdir(awsm.pathr + s)) ])
+                                  os.listdir(awsm.pathr)
+                                  if (os.path.isdir(awsm.pathr + s))])
             else:
                 self.run_dirs = awsm.pathr
                 if type(self.run_dirs) != list:
@@ -119,7 +118,7 @@ class UserConfig(object):
 
             if self.all_subdirs is True:
                 self.run_dirs = ([directory + s for s in os.listdir(directory)
-                                if (os.path.isdir(directory + s))])
+                                  if (os.path.isdir(directory + s))])
             else:
                 self.run_dirs = ucfg.cfg['run']['directory']
                 if type(self.run_dirs) != list:
@@ -141,26 +140,26 @@ class UserConfig(object):
         self.properties = ucfg.cfg['database']['properties']
         self.sqlite = ucfg.cfg['database']['sqlite']
 
-        base_bands = ['swi_z','evap_z','swe_z','depth','density',
-            'coldcont', 'precip_z']
+        base_bands = ['swi_z', 'evap_z', 'swe_z', 'depth', 'density',
+                      'coldcont', 'precip_z']
 
         f = False
         for band in base_bands:
             if band not in self.properties:
                 self.tmp_log.append(' WARNING! Config option [database] '
-                    'properties does not contain {}'.format(band))
+                                    'properties does not contain {}'.format(band))
                 f = True
 
         if f:
             self.tmp_log.append(' WARNING! Suggest config option [database] '
-                'properties contain at least {} for most functionality to '
-                'run'.format(base_bands))
+                                'properties contain at least {} for most functionality to '
+                                'run'.format(base_bands))
 
         if ((self.mysql is not None) and
-            ((self.db_user is None) or
-             (self.db_password is None) or
-             (self.db_host is None) or
-             (self.db_port is None)) ):
+                ((self.db_user is None) or
+                 (self.db_password is None) or
+                 (self.db_host is None) or
+                 (self.db_port is None))):
             raise Exception('If using config option [database] mysql, must '
                             'also supply user, password, host, and port')
 
@@ -172,7 +171,7 @@ class UserConfig(object):
 
             if self.mysql is not None:
                 raise Exception('Config option [database] section contains '
-                'both "mysql" and "sqlite" entries, pick one.')
+                                'both "mysql" and "sqlite" entries, pick one.')
 
         ####################################################
         #           validate                               #
@@ -193,22 +192,8 @@ class UserConfig(object):
         self.point_values_heading = ucfg.cfg['validate']['point_values_heading']
         self.point_values_settings = ucfg.cfg['validate']['point_values_settings']
 
-        if len(self.point_values_settings) != 14:
-            self.tmp_log.append(' Expected [validate] point_values_settings to '
-                                'have 14 values, point_values being set to False')
-            self.point_values = False
-
-        for n in range(0,10):
+        for n in range(0, 10):
             self.point_values_settings[n] = int(self.point_values_settings[n])
-
-        if type(self.point_values_properties) != list:
-            self.point_values_properties = [self.point_values_properties]
-
-        if type(self.point_values_heading) != list:
-            self.point_values_heading = [self.point_values_heading]
-
-        if type(self.point_values_csv) != list:
-            self.point_values_csv = [self.point_values_csv]
 
         if self.point_values and self.point_values_csv is None:
             self.point_values = False
@@ -222,13 +207,6 @@ class UserConfig(object):
                                 'was not supplied, point_values being set '
                                 'to False')
 
-        if not (len(self.point_values_csv) == len(self.point_values_properties) ==
-                len(self.point_values_heading)):
-            self.tmp_log.append(' Must supply the same number of [validate] '
-                                'point_values_csv, point_values_properties, '
-                                'and point_values_heading values, point_values '
-                                'being set to False')
-
         ####################################################
         #           diagnostics                            #
         ####################################################
@@ -241,9 +219,9 @@ class UserConfig(object):
                 for basin in self.diag_basins:
                     if basin not in self.plotorder:
                         self.tmp_log.append(' Config option [diagnostics] basin: '
-                                    '{} does not match what was supplied in '
-                                    '[snowav] masks: {}, diagnostics set '
-                                    'to False'.format(basin, self.plotorder))
+                                            '{} does not match what was supplied in '
+                                            '[snowav] masks: {}, diagnostics set '
+                                            'to False'.format(basin, self.plotorder))
                         self.diagnostics_flag = False
 
         self.inputs_flag = ucfg.cfg['diagnostics']['inputs_table']
@@ -307,7 +285,7 @@ class UserConfig(object):
         self.point_values_flag = ucfg.cfg['plots']['point_values']
 
         if (self.write_properties is not None and
-        type(self.write_properties) != list):
+                type(self.write_properties) != list):
             self.write_properties = [self.write_properties]
 
         numbers = ucfg.cfg['plots']['update_numbers']
@@ -328,7 +306,7 @@ class UserConfig(object):
             self.compare_runs_flag = False
 
         if (self.compare_runs_flag and
-            (len(self.compare_run_names) != len(self.compare_run_labels))):
+                (len(self.compare_run_names) != len(self.compare_run_labels))):
             self.tmp_log.append(' Config option [plots] compare_runs set to True, '
                                 'must supply equal length compare_run_names and  '
                                 'compare_run_labels, resetting compare_runs to False')
@@ -340,19 +318,24 @@ class UserConfig(object):
             self.flt_flag = False
 
         if (self.precip_validate_flag and ((self.val_client is None) or
-           (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
+            (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
             self.tmp_log.append(' Config option [plots] precip_validate is being '
                                 'set to False')
 
             self.precip_validate_flag = False
 
         if (self.stn_validate_flag and (self.val_client is None) or
-           (self.val_stns is None) or (self.val_lbls is None) or
-           (self.wxdb_user is None) or (self.wxdb_password is None) ):
+                (self.val_stns is None) or (self.val_lbls is None) or
+                (self.wxdb_user is None) or (self.wxdb_password is None)):
             self.tmp_log.append(' Config option [plots] stn_validate is being '
                                 'set to False')
 
             self.stn_validate_flag = False
+
+        if len(self.point_values_settings) != 14:
+            self.tmp_log.append(' Expected [validate] point_values_settings '
+                                'to have 14 values, point_values set to False')
+            self.point_values_flag = False
 
         for var in self.plots_inputs_variables:
             if var not in self.inputs_variables:
@@ -382,8 +365,8 @@ class UserConfig(object):
 
         if self.report_diagnostics and (not self.inputs_fig_flag or not self.diagnostics_flag):
             self.tmp_log.append(" [report] diagnostics: True, but must also have "
-                "[plots] inputs: True and [diagnostics] diagnostics: True, "
-                "setting to False")
+                                "[plots] inputs: True and [diagnostics] diagnostics: True, "
+                                "setting to False")
             self.report_diagnostics = False
 
         if self.report_diagnostics and self.report_diagnostics_day[0] != 'any':
@@ -391,7 +374,7 @@ class UserConfig(object):
             if calendar.day_name[datetime.now().weekday()] not in self.report_diagnostics_day:
                 self.report_diagnostics = False
                 self.tmp_log.append(" Per [report] diagnostics_day: {}, "
-                    "setting diagnostics: False".format(self.report_diagnostics_day))
+                                    "setting diagnostics: False".format(self.report_diagnostics_day))
 
         self.rep_swi_flag = ucfg.cfg['report']['swi']
         if not self.swi_flag:
@@ -454,8 +437,8 @@ class UserConfig(object):
                                 'than end_date')
 
             self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
-                            os.listdir(ucfg.cfg['forecast']['run_dir'])
-                            if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s)) ])
+                                 os.listdir(ucfg.cfg['forecast']['run_dir'])
+                                 if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s))])
 
             self.for_run_dir.sort()
 
@@ -509,7 +492,7 @@ class UserConfig(object):
         """ Parse config options. """
 
         self.snowav_version = snowav.__version__
-        self.cclimit = -5*1000*1000
+        self.cclimit = -5 * 1000 * 1000
 
         self.barcolors = ['xkcd:cobalt',
                           'xkcd:mustard green',
@@ -522,8 +505,8 @@ class UserConfig(object):
                           'xkcd:burgundy',
                           'red']
 
-        out = masks(self.dempath, self.db_convert, plotorder = self.plotorder,
-                    plotlabels = self.plotlabels)
+        out = masks(self.dempath, self.db_convert, plotorder=self.plotorder,
+                    plotlabels=self.plotlabels)
 
         self.dem = out['dem']
         self.veg_type = out['veg_type']
@@ -537,11 +520,11 @@ class UserConfig(object):
             self.tmp_log.append(log)
 
         # Establish database connection
-        self.basins, cnx, out = connect(sqlite = self.sqlite, sql = self.mysql,
-                                   plotorder = self.plotorder, user = self.db_user,
-                                   password = self.db_password, host = self.db_host,
-                                   port = self.db_port, convert = self.db_convert,
-                                   add = self.add_basins)
+        self.basins, cnx, out = connect(sqlite=self.sqlite, sql=self.mysql,
+                                        plotorder=self.plotorder, user=self.db_user,
+                                        password=self.db_password, host=self.db_host,
+                                        port=self.db_port, convert=self.db_convert,
+                                        add=self.add_basins)
         self.connector = cnx
 
         for log in out:
@@ -552,7 +535,7 @@ class UserConfig(object):
                 self.tmp_log.append(' {}: {}'.format(basin, self.basins[basin]))
 
         # Check snow.nc file location, get topo stats and water year
-        sfile = os.path.join(self.run_dirs[0],'snow.nc')
+        sfile = os.path.join(self.run_dirs[0], 'snow.nc')
 
         if os.path.isfile(sfile):
             topo = get_topo_stats(sfile)
@@ -561,7 +544,7 @@ class UserConfig(object):
             self.pixel = int(topo['dv'])
 
             ncf = nc.Dataset(sfile)
-            t = nc.num2date(ncf.variables['time'][0],ncf.variables['time'].units)
+            t = nc.num2date(ncf.variables['time'][0], ncf.variables['time'].units)
             ncf.close()
             self.wy = handle_year_stradling(t) + 1
 
@@ -573,11 +556,11 @@ class UserConfig(object):
 
         # make the bins
         edges = np.arange(self.elev_bins[0],
-                          self.elev_bins[1]+self.elev_bins[2],
+                          self.elev_bins[1] + self.elev_bins[2],
                           self.elev_bins[2])
 
         # use for definition
-        self.edges = np.arange(self.elev_bins[0]-self.elev_bins[2],
+        self.edges = np.arange(self.elev_bins[0] - self.elev_bins[2],
                                self.elev_bins[1],
                                self.elev_bins[2])
 
@@ -592,7 +575,7 @@ class UserConfig(object):
                                       self.masks.keys())
 
         if self.units == 'TAF':
-            self.conversion_factor = ((self.pixel**2)*0.000000810713194*0.001)
+            self.conversion_factor = ((self.pixel ** 2) * 0.000000810713194 * 0.001)
             self.depth_factor = 0.03937
             self.dem = self.dem * 3.28
             self.depthlbl = 'in'
@@ -601,11 +584,11 @@ class UserConfig(object):
 
             if max(self.edges) < 5000:
                 self.tmp_log.append(" WARNING! Config options [snowav] units: TAF "
-                    "and elev_bins: {} may not match! Consider changing elev_bins "
-                    "values".format(self.elev_bins))
+                                    "and elev_bins: {} may not match! Consider changing elev_bins "
+                                    "values".format(self.elev_bins))
 
         if self.units == "SI":
-            self.conversion_factor = ((self.pixel**2)*0.000000810713194)*1233.48/1e9
+            self.conversion_factor = ((self.pixel ** 2) * 0.000000810713194) * 1233.48 / 1e9
             self.depth_factor = 0.01
             self.depthlbl = 'cm'
             self.vollbl = 'M$M^3$'
@@ -613,17 +596,17 @@ class UserConfig(object):
 
             if max(self.edges) > 5000:
                 self.tmp_log.append(" WARNING! Config options [snowav] units: SI "
-                    "and elev_bins: {} may not match! Consider changing elev_bins "
-                    "values".format(self.elev_bins))
+                                    "and elev_bins: {} may not match! Consider changing elev_bins "
+                                    "values".format(self.elev_bins))
 
-        self.ixd = np.digitize(self.dem,edges)
-        self.xlims = (0,len(edges))
+        self.ixd = np.digitize(self.dem, edges)
+        self.xlims = (0, len(edges))
 
         if self.loglevel == 'DEBUG' and self.log_to_file is not True:
             print('Reading files in {}...'.format(self.run_dirs[0].split('runs')[0]))
 
         results = outputs(self.run_dirs, self.wy, self.properties,
-                    self.start_date, self.end_date, None, self.loglevel)
+                          self.start_date, self.end_date, None, self.loglevel)
 
         out = results['outputs']
         all_dirs = results['dirs']
@@ -637,10 +620,10 @@ class UserConfig(object):
             self.tmp_log.append(log[-1])
             if self.start_date is not None and self.end_date is not None:
                 ext_shr = (self.directory +
-                          '_'  +
-                          self.start_date.date().strftime("%Y%m%d") +
-                          '_' +
-                          self.end_date.date().strftime("%Y%m%d") )
+                           '_' +
+                           self.start_date.date().strftime("%Y%m%d") +
+                           '_' +
+                           self.end_date.date().strftime("%Y%m%d"))
                 self.figs_path = os.path.join(self.save_path, '{}/'.format(ext_shr))
 
                 if external_logger == None:
@@ -655,7 +638,7 @@ class UserConfig(object):
 
         if out['dates'] == []:
             raise Exception('Supplied [run] directory, start_date, and end_date '
-                  'give no valid snow files')
+                            'give no valid snow files')
 
         self.outputs = out
         self.run_dirs = dirs
@@ -667,7 +650,7 @@ class UserConfig(object):
             self.end_date = self.outputs['dates'][-1]
             self.tmp_log.append(' Config options [run] end_date '
                                 'not specified, assigning '
-                                '{} and {}'.format(self.start_date,self.end_date))
+                                '{} and {}'.format(self.start_date, self.end_date))
 
             self.ixs = 0
             self.ixe = len(self.outputs['dates']) - 1
@@ -680,13 +663,13 @@ class UserConfig(object):
             self.ixe = len(self.outputs['dates']) - 1
 
         if ((self.start_date.date() < self.outputs['dates'][0].date())
-            or (self.end_date.date() > self.outputs['dates'][-1].date())):
+                or (self.end_date.date() > self.outputs['dates'][-1].date())):
             raise Exception('ERROR! Config option [run] start_date or end_date '
                             'outside of date range found in [run] directory')
 
         # Since model outputs at 23:00, step the figure and report dates to
         # show 00:00 the next day (unless start of water year)
-        if self.start_date == datetime(self.wy-1,10,1,23,0,0):
+        if self.start_date == datetime(self.wy - 1, 10, 1, 23, 0, 0):
             self.report_start = self.start_date
 
         else:
@@ -697,17 +680,16 @@ class UserConfig(object):
         # have start_date, end_date
         extf = os.path.splitext(os.path.split(self.config_file)[1])
         ext_shr = (self.directory +
-                  '_'  +
-                  self.start_date.date().strftime("%Y%m%d") +
-                  '_' +
-                  self.end_date.date().strftime("%Y%m%d") )
+                   '_' +
+                   self.start_date.date().strftime("%Y%m%d") +
+                   '_' +
+                   self.end_date.date().strftime("%Y%m%d"))
         self.figs_path = os.path.join(self.save_path, '{}/'.format(ext_shr))
 
         # get forecast outputs
         if self.forecast_flag:
-
             results = outputs(self.for_run_dirs, self.wy, self.properties,
-                None, None, None, self.loglevel)
+                              None, None, None, self.loglevel)
 
             self.for_outputs = results['outputs']
             self.for_run_dirs = results['run_dirs']
@@ -741,16 +723,16 @@ class UserConfig(object):
 
             for time in times:
                 wydate = calculate_date_from_wyhr(int(time), self.wy)
-                pre_wydate = calculate_date_from_wyhr(int(time-24), self.wy)
-                flight_dates = np.append(flight_dates,wydate)
-                pre_flight_dates = np.append(pre_flight_dates,pre_wydate)
+                pre_wydate = calculate_date_from_wyhr(int(time - 24), self.wy)
+                flight_dates = np.append(flight_dates, wydate)
+                pre_flight_dates = np.append(pre_flight_dates, pre_wydate)
 
             if self.loglevel == 'DEBUG' and self.log_to_file is not True:
                 print('Reading files in {} for flight updates'
                       '...'.format(self.run_dirs[0].split('runs')[0]))
 
             results = outputs(self.all_dirs_flt, self.wy, self.properties,
-                None, None, flight_dates, self.loglevel)
+                              None, None, flight_dates, self.loglevel)
 
             self.flight_outputs = results['outputs']
             self.run_dirs_flt = results['run_dirs']
@@ -759,7 +741,7 @@ class UserConfig(object):
             self.pre_flight_outputs = results['outputs']
 
             results = outputs(self.all_dirs_flt, self.wy, self.properties,
-                None, None, pre_flight_dates, self.loglevel)
+                              None, None, pre_flight_dates, self.loglevel)
 
             self.pre_flight_outputs = results['outputs']
 
@@ -775,7 +757,7 @@ class UserConfig(object):
         self.report_date = self.end_date + timedelta(hours=1)
         parts = self.report_name.split('.')
         self.report_name = (parts[0] + self.report_date.date().strftime("%Y%m%d") +
-                           '.' + parts[1])
+                            '.' + parts[1])
 
         if not os.path.exists(self.figs_path):
             os.makedirs(self.figs_path)
@@ -807,11 +789,11 @@ def createLog(self):
                     'debug': {'color': 'green'},
                     'warning': {'color': 'yellow'}}
 
-    field_styles =  {'hostname': {'color': 'magenta'},
-                     'programname': {'color': 'cyan'},
-                     'name': {'color': 'white'},
-                     'levelname': {'color': 'white', 'bold': True},
-                     'asctime': {'color': 'green'}}
+    field_styles = {'hostname': {'color': 'magenta'},
+                    'programname': {'color': 'cyan'},
+                    'name': {'color': 'white'},
+                    'levelname': {'color': 'white', 'bold': True},
+                    'asctime': {'color': 'green'}}
 
     # start logging
     loglevel = self.loglevel
