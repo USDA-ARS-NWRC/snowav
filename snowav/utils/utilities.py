@@ -1,16 +1,16 @@
+import copy
 from .gitinfo import __gitVersion__, __gitPath__
-from snowav import __version__
 import os
 import netCDF4 as nc
 import numpy as np
-import copy
-from collections import OrderedDict
-from snowav.database.database import convert_watershed_names
-from tablizer.tablizer import summarize, store, get_existing_records
-from tablizer.inputs import Inputs
 
-def calculate(array, pixel, masks = None, method = 'sum', convert = None,
-              units = 'TAF', decimals = 3):
+from snowav.database.database import convert_watershed_names
+from snowav import __version__
+from tablizer.tablizer import summarize, store
+
+
+def calculate(array, pixel, masks=None, method='sum', convert=None,
+              units='TAF', decimals=3):
     '''
     Calculate values from iSnobal output snow.nc and em.nc files
     and convert to desired units:
@@ -54,8 +54,8 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
     '''
 
-    method_options = ['sum','mean']
-    unit_options = ['TAF','SI']
+    method_options = ['sum', 'mean']
+    unit_options = ['TAF', 'SI']
 
     if method not in method_options:
         raise Exception('method options are {}'.format(method_options))
@@ -75,7 +75,7 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
         # mm/pixel to TAF
         elif convert == 'volume':
-            factor = (pixel**2)*0.000000810713194*0.001
+            factor = (pixel ** 2) * 0.000000810713194 * 0.001
 
         else:
             factor = 1
@@ -92,7 +92,7 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
         # mm/pixel to MM^3
         elif convert == 'volume':
-            factor = (pixel**2)*0.000000810713194*1233.48/1e9
+            factor = (pixel ** 2) * 0.000000810713194 * 1233.48 / 1e9
 
         else:
             factor = 1
@@ -104,10 +104,10 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
         if type(masks) != list:
             masks = [masks]
 
-        for i,mask in enumerate(masks):
+        for i, mask in enumerate(masks):
             if mask.shape != array.shape:
                 raise Exception('mask {}, {} and array {} do not '
-                                'match'.format(i,mask.shape,array.shape))
+                                'match'.format(i, mask.shape, array.shape))
 
             # use nan because output zero values have meaning
             mask = mask.astype('float')
@@ -129,7 +129,8 @@ def calculate(array, pixel, masks = None, method = 'sum', convert = None,
 
     return value
 
-def snow_line(array, dem, masks = None, limit = 0.01):
+
+def snow_line(array, dem, masks=None, limit=0.01):
     '''
     Calculate mean snow line in image.
 
@@ -150,10 +151,10 @@ def snow_line(array, dem, masks = None, limit = 0.01):
         if type(masks) != list:
             masks = [masks]
 
-        for i,mask in enumerate(masks):
+        for i, mask in enumerate(masks):
             if mask.shape != array.shape:
                 raise Exception('mask {}, {} and array {} do not '
-                                'match'.format(i,mask.shape,array.shape))
+                                'match'.format(i, mask.shape, array.shape))
 
             # use nan because output zero values have meaning
             mask = mask.astype('float')
@@ -163,13 +164,14 @@ def snow_line(array, dem, masks = None, limit = 0.01):
     ix = array > limit
 
     try:
-        value = int(np.nanpercentile(dem[ix].flatten(), [2,90])[0])
+        value = int(np.nanpercentile(dem[ix].flatten(), [2, 90])[0])
     except:
         value = np.nan
 
     return value
 
-def masks(dempath, convert, plotorder = None, plotlabels = None):
+
+def masks(dempath, convert, plotorder=None, plotlabels=None):
     '''
     Load dem, build snowav masks dictionary from topo.nc file. See
     CoreConfig.ini for more information on some config options and behavior.
@@ -218,7 +220,7 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
 
     if plotorder is None:
         plotorder = mask_names
-        plotorder =  ['Cherry Creek' if x=='Cherry' else x for x in plotorder]
+        plotorder = ['Cherry Creek' if x == 'Cherry' else x for x in plotorder]
 
     else:
         if len(plotorder) > len(mask_names):
@@ -248,12 +250,12 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
 
         else:
             for i, name in enumerate(plotorder):
-                logger.append(' Assigning plot label {} '.format(plotlabels[i])+
+                logger.append(' Assigning plot label {} '.format(plotlabels[i]) +
                               'for topo.nc long_name field {}'.format(name))
                 labels[name] = plotlabels[i]
 
-    nrows = len(dem[:,0])
-    ncols = len(dem[0,:])
+    nrows = len(dem[:, 0])
+    ncols = len(dem[0, :])
 
     for lbl in plotorder:
 
@@ -263,9 +265,9 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
             nclbl = lbl
 
         if lbl != mask_names_total:
-            masks[lbl] = {'mask':ncf[nclbl + ' mask'][:], 'label':lbl}
+            masks[lbl] = {'mask': ncf[nclbl + ' mask'][:], 'label': lbl}
         else:
-            masks[lbl] = {'mask':ncf['mask'][:], 'label':nclbl}
+            masks[lbl] = {'mask': ncf['mask'][:], 'label': nclbl}
 
     ncf.close()
 
@@ -285,6 +287,7 @@ def masks(dempath, convert, plotorder = None, plotlabels = None):
     out['logger'] = logger
 
     return out
+
 
 def sum_precip(precip_path, percent_snow_path):
     """ Sum in place for precip and rain images.
@@ -312,15 +315,15 @@ def sum_precip(precip_path, percent_snow_path):
     else:
         nb = len(ppt.variables['precip'][:])
 
-    for nb in range(0,nb):
+    for nb in range(0, nb):
         pre = ppt['precip'][nb]
         ps = percent_snow['percent_snow'][nb]
 
         if nb == 0:
-            rain = np.multiply(pre,(1-ps))
+            rain = np.multiply(pre, (1 - ps))
             precip = copy.deepcopy(pre)
         else:
-            rain = rain + np.multiply(pre,(1-ps))
+            rain = rain + np.multiply(pre, (1 - ps))
             precip = precip + copy.deepcopy(pre)
 
     # rain_total = rain_total + rain
@@ -334,23 +337,24 @@ def sum_precip(precip_path, percent_snow_path):
 
 def input_summary(path, variable, methods, percentiles, database, location,
                   run_name, basin_id, run_id, masks):
-    '''
-    Summarize smrf outputs with tablizer.
+    """ Summarize smrf outputs with tablizer.
 
     Args
     ------
-    path : str
-    variable : str
-    methods : list
-    percentiles : list
-    database : str
-    location : str
-    run_name : str
-    basin_id : int
-    run_id : int
-    masks : list
+    path {str}: nc path
+    variable {str}: snowav variable
+    methods {list}: list of summary methods
+    percentiles {arr}: if using percentiles
+    database {str}: connector string
+    location {str}: database location
+    run_name {str}: snowav run name
+    basin_id {dict}: snowav basin id
+    run_id {int}: snowav run_id
+    masks {list}: masks to filter with
+    """
 
-    '''
+    if not os.path.isfile(path):
+        raise OSError('invalid file -> {}'.format(path))
 
     ncf = nc.Dataset(path, 'r')
     array = ncf.variables[variable][:]
@@ -363,12 +367,24 @@ def input_summary(path, variable, methods, percentiles, database, location,
     else:
         nb = len(array[:])
 
-    for nb in range(0,nb):
-        date = nc.num2date(dates[nb],date_units)
-        slice = array[nb,:,:]
-        results = summarize(slice, date, methods, [percentiles[0], percentiles[1]], 3, masks)
+    if variable in ['snow_density', 'precip_temp']:
+        mask_zero_values = True
+    else:
+        mask_zero_values = False
+
+    for nb in range(0, nb):
+        date = nc.num2date(dates[nb], date_units)
+        img = array[nb, :, :]
+        results = summarize(img,
+                            date,
+                            methods,
+                            percentiles=[percentiles[0], percentiles[1]],
+                            decimals=3,
+                            masks=masks,
+                            mask_zero_values=mask_zero_values)
         store(results, variable, database, location, run_name, basin_id,
               run_id, date)
+
 
 def getgitinfo():
     """gitignored file that contains specific SNOWAV version and path
@@ -384,8 +400,9 @@ def getgitinfo():
 
     # return overarching version if not in git tracked SMRF
     else:
-        version = 'v'+__version__
+        version = 'v' + __version__
         return version
+
 
 def get_config_header():
     """
@@ -395,6 +412,7 @@ def get_config_header():
 
     return hdr
 
+
 def get_snowav_path():
     """gitignored file that contains specific SNOWAV version and path
 
@@ -403,7 +421,7 @@ def get_snowav_path():
     Output:
         - path to base SNOWAV directory
     """
-    #find the absolute path and return
+    # find the absolute path and return
     snowav_path = os.path.abspath(__gitPath__)
 
     return snowav_path
