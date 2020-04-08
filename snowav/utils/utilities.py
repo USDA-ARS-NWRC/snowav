@@ -131,21 +131,19 @@ def calculate(array, pixel, masks=None, method='sum', convert=None,
 
 
 def snow_line(array, dem, masks=None, limit=0.01):
-    '''
-    Calculate mean snow line in image.
+    """ Calculate mean snow line in image.
 
     Args
     ------
-    array : np.array
-        iSnobal model outputs from snow.nc or em.nc file
-    masks : list
-        list of np.array or bool masks, optional
+    array {arr}: snow.nc swe_z
+    dem {arr}: dem
+    masks {list}: list of masks to apply
+    limit {float}: limit for swe_z line
 
     Returns
     ------
-    value : int
-        mean value of dem where array > limit
-    '''
+    value {int}: snow line
+    """
 
     if masks is not None:
         if type(masks) != list:
@@ -162,11 +160,7 @@ def snow_line(array, dem, masks=None, limit=0.01):
             array = array * mask
 
     ix = array > limit
-
-    try:
-        value = int(np.nanpercentile(dem[ix].flatten(), [2, 90])[0])
-    except:
-        value = np.nan
+    value = int(np.nanpercentile(dem[ix].flatten(), [2, 90])[0])
 
     return value
 

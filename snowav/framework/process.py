@@ -7,8 +7,7 @@ import os
 from sys import exit
 import warnings
 
-from snowav.database.package_results import package
-from snowav.database.database import delete, query
+from snowav.database.database import delete, query, package
 from snowav.utils.utilities import calculate, sum_precip, snow_line, \
     input_summary
 from tablizer.tablizer import get_existing_records
@@ -29,9 +28,9 @@ class Process(object):
 
         elapsed_hours = 0
         variables = cfg.variables.variables
-        lbls = {'depthlbl': cfg.depthlbl,
-                'vollbl': cfg.vollbl,
-                'elevlbl': cfg.elevlbl}
+        # lbls = {'depthlbl': cfg.depthlbl,
+        #         'vollbl': cfg.vollbl,
+        #         'elevlbl': cfg.elevlbl}
 
         if os.path.splitext(cfg.connector)[1] == '.db':
             db = 'sqlite'
@@ -333,15 +332,12 @@ class Process(object):
                 df = deepcopy(variables[k]['df'])
                 df = df.round(decimals=cfg.dplcs)
 
-                if not pass_flag:
-                    package(cfg.connector, lbls, cfg.basins, df, cfg.run_id,
-                            cfg.vid, k, out_date, cfg.run_name)
+                if k == 'snow_line':
+                    df = df[df.index == 'total']
 
-                    # snow line
-                    if k == 'swe_z':
-                        package(cfg.connector, lbls, cfg.basins, df,
-                                cfg.run_id, cfg.vid, 'snow_line', out_date,
-                                cfg.run_name)
+                if not pass_flag:
+                    package(cfg.connector, cfg.basins, df, cfg.run_id, cfg.vid,
+                            k, out_date)
 
             stamp = datetime.now().strftime("%Y-%-m-%-d %H:%M:%S")
             if not pass_flag:

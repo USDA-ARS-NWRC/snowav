@@ -1039,3 +1039,36 @@ def convert_watershed_names(name):
         watershed = name
 
     return watershed
+
+
+def package(connector, basins, df, run_id, vid, output, dtime):
+    """ Put process() results on the database.
+
+    Args
+    ------
+    connector {str}: database connector
+    basins {dict}: snowav basins identifier
+    run_id {int}: run_id for database
+    vid {int}: variable id
+    df {DataFrame}: results dataframe
+    output {str}: output variable (i.e. 'swe_z')
+    dtime {datetime}: datetime
+    """
+
+    for basin in df:
+
+        for iters, val in enumerate(df[basin].values):
+            if np.isnan(val):
+                val = None
+            else:
+                val = float(val)
+
+            values = {'basin_id': int(basins[basin]['basin_id']),
+                      'run_id': int(run_id),
+                      'date_time': dtime,
+                      'variable': output,
+                      'variable_id': int(vid[output]),
+                      'value': val,
+                      'elevation': str(df[basin].index[iters])}
+
+            insert(connector, 'Results', values)

@@ -232,6 +232,7 @@ def figures(cfg, process):
         snow_line = collect(connector, args['plotorder'], args['basins'],
                             wy_start, args['end_date'], 'snow_line',
                             args['run_name'], args['edges'], 'daily')
+
         snow_line_per = collect(connector, args['plotorder'], args['basins'],
                                 args['start_date'], args['end_date'], 'snow_line',
                                 args['run_name'], args['edges'], 'daily')
