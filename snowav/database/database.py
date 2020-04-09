@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from itertools import count, filterfalse
 import mysql.connector
@@ -39,15 +38,16 @@ class Database(object):
     Args
     ------
     db_type {string}: database type
-    db_name {string}: mysql database name
+    db_name {string}: mysql database name, if using db_type='sql'
     user {string}: database user, if using db_type='sql'
     password {string}: database password, if using db_type='sql'
     host {string}: database host, if using db_type='sql'
     port {string}: database port, if using db_type='sql'
+    database {string}: sqlite database file path, if using db_type='sqlite'
     """
 
     def __init__(self, db_type='sql', db_name='snowav', user=None,
-                 password=None, host=None, port=None):
+                 password=None, host=None, port=None, database=None):
 
         db_type_options = ['sql', 'sqlite']
         if db_type not in db_type_options:
@@ -60,12 +60,16 @@ class Database(object):
                 raise Exception('Database input db_type "sql" requires '
                                 '"user", "password", "host", and "port"')
 
+        if db_type == 'sqlite' and database is None:
+            raise Exception('must supply "database" with db_type=sqlite')
+
         self.db_type = db_type
         self.user = user
         self.password = password
         self.host = host
         self.port = port
         self.db_name = db_name
+        self.database = database
 
     def assign_vars(self, kwargs):
         """ Assign Database attributes.
@@ -86,14 +90,11 @@ class Database(object):
 
         Assigns self.engine
 
-        Currently only for db_type='sql'.
-
         Args
         ------
         logger {class}: logger
         """
 
-        # TODO expand to sqlite
         if self.db_type == 'sql':
             connector = '{}{}:{}@{}:{}/{}'.format('mysql+mysqlconnector://',
                                                   self.user,
@@ -101,19 +102,21 @@ class Database(object):
                                                   self.host,
                                                   self.port,
                                                   self.db_name)
-
-            try:
-                self.assign_vars({'engine': create_engine(connector)})
-            except Exception as e:
-                print(e)
-                if logger is not None:
-                    logger.error(" Failed making database connection "
-                                 "{}@{}:{}".format(self.user, self.host,
-                                                   self.port))
-
             if logger is not None:
                 logger.info(" Using database connection "
                             "{}@{}:{}".format(self.user, self.host, self.port))
+
+        if self.db_type == 'sqlite':
+            connector = 'sqlite:///' + self.database
+            if logger is not None:
+                logger.info(" Using database connector: {}".format(connector))
+
+        try:
+            engine = create_engine(connector)
+        except Exception as e:
+            print(e)
+
+        self.assign_vars({'engine': engine})
 
     def check_tables(self, logger=None):
         """ Make database tables.
@@ -190,7 +193,7 @@ class Database(object):
 
         return omap[operator]
 
-    def query(self, params, columns=[], index=[], logger=None):
+    def query(self, params, columns=None, index=None, logger=None):
         """ Query database values.
 
         Columns and index are used to filter results after query. Columns
@@ -211,6 +214,10 @@ class Database(object):
         results {DataFrame}: query results
         """
 
+        if index is None:
+            index = []
+        if columns is None:
+            columns = []
         if not isinstance(params, dict):
             raise TypeError("params must be a dict")
 
@@ -286,16 +293,18 @@ class Database(object):
             results = results[applied_columns]
 
         # apply index
-        if index[0] not in list(results.columns):
-            if logger is not None:
-                logger.warning(" index='{}' not in columns={}, will not "
-                               "apply".format(index[0], list(results.columns)))
+        if len(index) > 0:
+            if index[0] not in list(results.columns):
+                if logger is not None:
+                    logger.warning(" index='{}' not in columns={}, will not "
+                                   "apply".format(index[0],
+                                                  list(results.columns)))
+                else:
+                    print("index='{}' not in columns={}, will not "
+                          "apply".format(index[0], list(results.columns)))
             else:
-                print("index='{}' not in columns={}, will not "
-                      "apply".format(index[0], list(results.columns)))
-        else:
-            results.set_index(index, inplace=True)
-            results.sort_index(inplace=True)
+                results.set_index(index, inplace=True)
+                results.sort_index(inplace=True)
 
         return results
 

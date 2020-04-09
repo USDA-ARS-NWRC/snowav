@@ -70,23 +70,35 @@ class PointValues(object):
             self.create_log()
             self.logger.info(' Starting point values processing...')
 
-            # checks
+            # additional checks for user config options below...
+
+            # check sqlite base path and file extension
+            if self.database is not None:
+                if not os.path.exists(os.path.dirname(self.database)):
+                    self.logger.error(" [point_values] database: '{}' base "
+                                      "path not valid".format(self.database))
+                    raise OSError("invalid path -> {}".format(self.database))
+
+                if os.path.splitext(self.database)[1] != '.db':
+                    self.logger.error(" [point_values] database: '{}' "
+                                      "must be '.db' "
+                                      "file".format(self.database))
+                    raise OSError("file type must be '.db'")
+                self.db_type = 'sqlite'
+
+            # if sql database, make sure all credentials exist
+            if self.database is None and not self.csv_output:
+                input_list = [self.user, self.password, self.host, self.port]
+                if sum([x is not None for x in input_list]) != 4:
+                    self.logger.warning(" User has not supplied all database "
+                                        "credentials in [point_values]")
+                self.db_type = 'sql'
+
             # csv saving requires directory
             if self.csv_output and self.csv_output_dir is None:
                 self.logger.error(" [point_values] csv_output: True, must "
                                   "supply csv_output_dir field")
                 exit()
-
-            # if only function will be sql database, make sure all
-            # credentials exist
-            if self.database is None and not self.csv_output:
-                input_list = [self.user,
-                              self.password,
-                              self.host,
-                              self.port]
-                if sum([x is not None for x in input_list]) != 4:
-                    self.logger.warning(" User has not supplied all database "
-                                        "credentials in [point_values]")
 
             self.start_date_str = self.start_date.date().strftime("%Y%m%d")
             self.end_date_str = self.end_date.date().strftime("%Y%m%d")
@@ -384,18 +396,17 @@ def get_locations(pv):
             pv.logger.warning(" {} may contain empty "
                               "fields".format(pv.location_columns))
         else:
-            data = data[pv.index_columns + [pv.name_col] + [pv.description_col]]
             check = False
             pv.logger.debug(" Using data in "
                             "{}".format(pv.location_columns))
 
         # convert to indices and assign
         for i, (index, row) in enumerate(data.iterrows()):
-            ll = utm.from_latlon(row[0], row[1])
-            xind = np.where(abs(pv.basin_lat - ll[0]) ==
-                            min(abs(pv.basin_lat - ll[0])))[0]
-            yind = np.where(abs(pv.basin_lon - ll[1]) ==
-                            min(abs(pv.basin_lon - ll[1])))[0]
+            ll = utm.from_latlon(row['latitude'], row['longitude'])
+            xind = np.where(abs(pv.utm_x - ll[0]) ==
+                            min(abs(pv.utm_x - ll[0])))[0]
+            yind = np.where(abs(pv.utm_y - ll[1]) ==
+                            min(abs(pv.utm_y - ll[1])))[0]
 
             if xind == 0 or xind == pv.basin_x - 1:
                 pv.logger.warning(" For {} xind = {}, "
@@ -544,31 +555,29 @@ def put_on_database(db, pv):
     """
 
     # for each location
-    # cols = [x[0] + x[0] for x in list(pv.var_dict.keys())]
-    # rows = [x[1] + x[1] for x in list(pv.var_dict.keys())]
-
     for pt in pv.var_dict:
 
         # collect metadata
-        metadata = {'location': str(pv.var_dict[pt]['location']),
-                    'model_row': int(pt[0]),
-                    'model_col': int(pt[1]),
-                    'description': str(pv.var_dict[pt]['description']),
-                    'name': str(pv.var_dict[pt]['name']),
-                    'utm_x': float(pv.utm_x[pt[0]]),
-                    'utm_y': float(pv.utm_y[pt[1]]),
-                    'elevation': float(pv.dem[pt[1], pt[0]])
-                    }
-
-        # first, see if records already exist with the same metadata values
-        params = {
-                  'Pixels': ('model_row', '==', int(pt[0])),
-                  'Pixels': ('model_col', '==', int(pt[1])),
-                  'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
-                  'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
-                  'Pixels': ('description', '==', str(pv.var_dict[pt]['description']))
+        metadata = {
+            'location': str(pv.var_dict[pt]['location']),
+            'model_row': int(pt[0]),
+            'model_col': int(pt[1]),
+            'description': str(pv.var_dict[pt]['description']),
+            'name': str(pv.var_dict[pt]['name']),
+            'utm_x': float(pv.utm_x[pt[0]]),
+            'utm_y': float(pv.utm_y[pt[1]]),
+            'elevation': float(pv.dem[pt[1], pt[0]])
         }
 
+        params = {
+            'Pixels': ('model_row', '==', int(pt[0])),
+            'Pixels': ('model_col', '==', int(pt[1])),
+            'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
+            'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
+            'Pixels': ('description', '==', str(pv.var_dict[pt]['description']))
+        }
+
+        # first, see if records already exist with the same metadata values
         results = db.query(params, logger=pv.logger)
 
         # if no existing records, put on database
@@ -690,7 +699,7 @@ def run_point_values(point_values_config, master_config, blank):
 
         # initialize Database class
         db = Database(user=pv.user, password=pv.password, host=pv.host,
-                      port=pv.port)
+                      port=pv.port, db_type=pv.db_type, database=pv.database)
 
         # make and check database connection
         db.make_connection(logger=pv.logger)
@@ -723,7 +732,6 @@ def run_point_values(point_values_config, master_config, blank):
 
     # make a blank locations_csv file
     if blank:
-
         pv = PointValues()
         blank = pd.DataFrame(columns=pv.csv_cols)
         blank.to_csv('basin_locations.csv', index=False)
