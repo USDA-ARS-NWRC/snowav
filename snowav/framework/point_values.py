@@ -87,7 +87,7 @@ class PointValues(object):
                 self.db_type = 'sqlite'
 
             # if sql database, make sure all credentials exist
-            if self.database is None and not self.csv_output:
+            if self.database is None:
                 input_list = [self.user, self.password, self.host, self.port]
                 if sum([x is not None for x in input_list]) != 4:
                     self.logger.warning(" User has not supplied all database "
