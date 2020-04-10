@@ -160,7 +160,10 @@ def snow_line(array, dem, masks=None, limit=0.01):
             array = array * mask
 
     ix = array > limit
-    value = int(np.nanpercentile(dem[ix].flatten(), [2, 90])[0])
+    if np.sum(ix) > 0:
+        value = int(np.nanpercentile(dem[ix].flatten(), [2, 90])[0])
+    else:
+        value = np.nan
 
     return value
 
