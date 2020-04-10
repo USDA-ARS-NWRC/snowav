@@ -178,7 +178,7 @@ class PixelsData(Base):
 
     # snow.nc
     thickness = Column(Float, nullable=True)
-    snow_density = Column(Float, nullable=True)
+    density = Column(Float, nullable=True)
     specific_mass = Column(Float, nullable=True)
     liquid_water = Column(Float, nullable=True)
     temp_surf = Column(Float, nullable=True)
