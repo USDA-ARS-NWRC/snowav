@@ -321,10 +321,15 @@ class Database(object):
         if not isinstance(kwargs, dict):
             raise TypeError("kwargs must be dict")
 
-        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+        dbsession = sessionmaker(bind=self.engine)
+        session = dbsession()
 
-        with self.engine.connect() as dbcon:
-            dbcon.execute(tbl.delete(), **kwargs)
+        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
+        results = session.query(tbl).filter_by(**kwargs)
+        results.delete(synchronize_session=False)
+
+        session.commit()
+        session.close()
 
         if logger is not None:
             logger.debug(" Deleted database records")
