@@ -218,7 +218,7 @@ class AwsmInputsOutputs(object):
                           'derivatives': {'requires': [], 'products': []},
                           'unit_type': 'dimensionless',
                           'description': 'cloud factor',
-                          'units': 'dimensionless',
+                          'units': 'unitless',
                           'calculate': 'mean',
                           'table': 'Inputs',
                           'file': 'cloud_factor.nc'},

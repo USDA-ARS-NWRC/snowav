@@ -143,15 +143,28 @@ class PointValues(object):
                     self.properties_lookup[file]['variables'] = []
                     self.properties_lookup[file]['bands'] = {}
 
+            self.unit_map = {}
             for f in self.properties_lookup.keys():
                 for v in self.properties:
+                    variable = self.bandsmap[v]
+
+                    self.unit_map[variable] = \
+                        snowav_properties.vars[v]['units']
+
                     if f == snowav_properties.vars[v]['file']:
                         self.properties_lookup[f]['variables'].append(v)
                         band = snowav_properties.vars[v]['band']
                         self.properties_lookup[f]['bands'][v] = band
 
                         # make list for the data dfs - these are the headings
-                        var_list.append(self.bandsmap[v])
+
+                        # The variable names snow.nc and snow_density.nc are
+                        # both 'snow_density', this is an issue!
+                        # This is also addressed in load_data() and save_csv()
+                        if v == 'density':
+                            var_list.append('density')
+                        else:
+                            var_list.append(variable)
 
             self.logger.debug(" Variables: {}".format(var_list))
 
@@ -436,15 +449,46 @@ def save_csv(pv):
     pv {class} PointValues class
     """
 
+    now_str = datetime.now().date().strftime("%Y-%m-%d")
+    date_col = 'Date generated: {}'.format(now_str)
+
+    header = ['USDA Agicultural Research Service AWSM Model Data',
+              'Data provided are SMRF inputs (hourly) and iSnobal outputs (daily)',
+              date_col,
+              'Contact: Scott Havens <scott.havens@usda.gov>\n']
+
     for loc in pv.var_dict.keys():
-        loc_str = "{}_{}".format(str(int(loc[0])), str(int(loc[1])))
+        df = pv.var_dict[loc]['data']
+        df.sort_index(inplace=True)
+        df.index.name = 'date_time'
+
+        # add units to the headings
+        columns = list(df.columns)
+
+        for c in columns:
+            # prevent renaming to snow_density
+            if c == 'density':
+                rdict = {c: "density [kg/m^3]"}
+            else:
+                rdict = {c: "{} [{}]".format(c, pv.unit_map[c])}
+            df = df.rename(columns=rdict)
+
+        loc_str = "x{}_y{}".format(str(int(loc[1])), str(int(loc[0])))
         name = "{}_{}_{}_variables_{}.csv".format(pv.basin_name,
                                                   pv.start_date_str,
                                                   pv.end_date_str,
                                                   loc_str)
+
+        # df = df.sort_index(inplace=True)
+
         filename = os.path.join(pv.csv_output_dir, name)
-        pv.var_dict[loc]['data'].to_csv(filename)
-        pv.logger.info(' Saved {}'.format(filename))
+
+        with open(filename, mode='w', encoding='utf-8') as f:
+            f.write('\n'.join(header))
+
+        df.to_csv(filename, encoding='utf-8', mode='a')
+
+        pv.logger.info(' Saved: {}'.format(filename))
 
 
 def load_data(pv):
@@ -491,7 +535,6 @@ def load_data(pv):
                                             data.variables['time'].units)
                 except Exception as e:
                     print(e)
-                    pv.logger.error(" Failed opening {}".format(filepath))
 
                 pv.logger.debug(" Opened {}".format(file))
 
@@ -518,9 +561,7 @@ def load_data(pv):
                             # the only fix is fill_value when creating.
                             img = data.variables[v][:]
                         except KeyError as e:
-                            print('{} not a variable in {}'.format(e,
-                                                                   file))
-                            pv.logger.error(' Failed on {}'.format(v))
+                            print('{} not a variable in {}'.format(e, file))
 
                         # check dimensions of the first image opened
                         if n == 0 and (pv.basin_y, pv.basin_x) != img[0].shape:
@@ -531,9 +572,14 @@ def load_data(pv):
                                                               pv.basin_x))
 
                         for ih in range(0, len(date_time)):
+                            if v == 'snow_density' and file == 'snow.nc':
+                                vt = 'density'
+                            else:
+                                vt = v
+
                             if ih < 24:
                                 dth = date_time[ih]
-                                pv.var_dict[loc]['data'].loc[dth, v] = \
+                                pv.var_dict[loc]['data'].loc[dth, vt] = \
                                     img[ih, loc[1], loc[0]]
 
                                 pv.logger.debug(" Write to df: {}, {}, "
@@ -574,34 +620,57 @@ def put_on_database(db, pv):
             'Pixels': ('model_col', '==', int(pt[1])),
             'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
             'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
-            'Pixels': ('description', '==', str(pv.var_dict[pt]['description']))
+            'Pixels': ('description', '==', str(pv.var_dict[pt]['description'])),
+
+            # not being filtered inside query() at the moment
+            'PixelsData': ('date_time', '==', datetime(2020, 3, 3, 23, 0))
         }
 
-        # first, see if records already exist with the same metadata values
+        pixelsparams = {
+            'Pixels': ('model_row', '==', int(pt[0])),
+            'Pixels': ('model_col', '==', int(pt[1])),
+            'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
+            'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
+            'Pixels': ('description', '==', str(pv.var_dict[pt]['description'])),
+        }
+
+        # first, see if records already exist with the same values
         results = db.query(params, logger=pv.logger)
+
+        # filter outside of query for now
+        results = results[(results.model_row == pt[0]) &
+                          (results.model_col == pt[1]) &
+                          (results.name == str(pv.var_dict[pt]['name'])) &
+                          (results.date_time >= pv.start_date) &
+                          (results.date_time <= pv.end_date)]
+        existing_record_id = pd.unique(results['id'])
 
         # if no existing records, put on database
         if results.empty:
 
             # insert metadata
             db.insert('Pixels', metadata, logger=pv.logger)
-            pv.logger.info(" Metadata to database for "
-                           "({},{})".format(metadata['model_row'],
-                                            metadata['model_col']))
+            pv.logger.debug(" Metadata to database for point: "
+                            "({},{})".format(metadata['model_row'],
+                                             metadata['model_col']))
 
             # get associated Pixels.id metadata for PixelsData
-            results = db.query(params, logger=pv.logger)
+            results = db.query(pixelsparams, logger=pv.logger)
 
-            if len(results['id'].values) > 1:
-                pv.logger.warning(" Multiple database records exist for "
-                                  "Pixels.id")
+            # for this case we can't filter by 'date_time', because there
+            # aren't any records yet
+            results = results[(results.model_row == pt[0]) &
+                              (results.model_col == pt[1]) &
+                              (results.name == str(pv.var_dict[pt]['name']))]
+
+            max_record_id = int(max(pd.unique(results['id'])))
 
             # prepare data to put on database
             df = pv.var_dict[pt]['data']
 
             for idx, row in df.iterrows():
                 row = row.astype('float')
-                p = {'pixel_id': int(results['id'].values),
+                p = {'pixel_id': max_record_id,
                      'date_time': idx}
                 res = row.to_dict()
                 res = {k: res[k] for k in res if not np.isnan(res[k])}
@@ -611,40 +680,58 @@ def put_on_database(db, pv):
                 db.insert('PixelsData', pixeldata, logger=pv.logger)
 
             # log just one
-            pv.logger.info(" Data to database for "
-                           "({},{})".format(metadata['model_row'],
-                                            metadata['model_col']))
+            pv.logger.debug(" Data to database for point: "
+                            "({},{})".format(metadata['model_row'],
+                                             metadata['model_col']))
 
         # if there are existing record, check overwrite
         else:
             if pv.overwrite:
                 # first, delete the existing metadata and records based on the
                 # existing Pixels.id
-                for rec in results['id']:
-                    deletedata = {'id': rec}
-                    db.delete('PixelsData', deletedata, logger=pv.logger)
-                    db.delete('Pixels', deletedata, logger=pv.logger)
+                for rec in existing_record_id:
+                    # deletedata = {'id': int(rec)}
+
+                    # first, delete the data
+                    db.delete('PixelsData',
+                              {'pixel_id': int(rec)},
+                              logger=pv.logger)
+
+                    results = db.query(params, logger=pv.logger)
+                    results = results[(results.model_row == pt[0]) &
+                                      (results.model_col == pt[1]) &
+                                      (results.name == str(pv.var_dict[pt]['name'])) &
+                                      (results.date_time >= pv.start_date) &
+                                      (results.date_time <= pv.end_date)]
+
+                    # if that removed everything, also delete the metadata
+                    if results.empty:
+                        db.delete('Pixels',
+                                  {'id': int(rec)},
+                                  logger=pv.logger)
 
                 # insert metadata
                 db.insert('Pixels', metadata, logger=pv.logger)
-                pv.logger.info(" Metadata to database for "
-                               "({},{})".format(metadata['model_row'],
-                                                metadata['model_col']))
+                pv.logger.debug(" Metadata to database for point: "
+                                "({},{})".format(metadata['model_row'],
+                                                 metadata['model_col']))
 
                 # get associated Pixels.id metadata for PixelsData with the
                 # same query params
-                results = db.query(params, logger=pv.logger)
+                results = db.query(pixelsparams, logger=pv.logger)
 
-                if len(results['id'].values) > 1:
-                    pv.logger.warning(" Multiple database records exist for "
-                                      "Pixels.id")
+                # filter outside of query for now
+                results = results[(results.model_row == pt[0]) &
+                                  (results.model_col == pt[1]) &
+                                  (results.name == str(pv.var_dict[pt]['name']))]
+                record_id = int(max(pd.unique(results['id'])))
 
                 # prepare data to put on database
                 df = pv.var_dict[pt]['data']
 
                 for idx, row in df.iterrows():
                     row = row.astype('float')
-                    p = {'pixel_id': int(results['id'].values),
+                    p = {'pixel_id': int(record_id),
                          'date_time': idx}
                     res = row.to_dict()
                     res = {k: res[k] for k in res if not np.isnan(res[k])}
@@ -654,9 +741,9 @@ def put_on_database(db, pv):
                     db.insert('PixelsData', pixeldata, logger=pv.logger)
 
                 # log just one
-                pv.logger.info(" Data to database for "
-                               "({},{})".format(metadata['model_row'],
-                                                metadata['model_col']))
+                pv.logger.debug(" Data to database for point: "
+                                "({},{})".format(metadata['model_row'],
+                                                 metadata['model_col']))
 
             else:
                 pv.logger.info(" Database records exist for {}, ({},{}) "
