@@ -4,6 +4,8 @@ include README.md
 include snowav/config/CoreConfig.ini
 include snowav/config/PointValuesCoreConfig.ini
 include snowav/config/recipes.ini
+recursive-include snowav/report/figs *
+recursive-include snowav/report/template *
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

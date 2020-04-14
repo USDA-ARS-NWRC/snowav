@@ -410,17 +410,24 @@ class UserConfig(object):
         # check paths to see if they need default snowav path
         if self.env_path is None:
             self.env_path = os.path.abspath(
-                './snowav/report/template/section_text')
+                os.path.join(snowav.__path__[0],
+                             "report/template/section_text"))
         if self.templ_path is None:
-            self.templ_path = os.path.abspath('./snowav/report/template')
+            self.templ_path = os.path.abspath(
+                os.path.join(snowav.__path__[0],
+                             "report/template"))
         if self.summary_file is None:
             self.summary_file = os.path.abspath(
-                './snowav/report/template/section_text/report_summary.txt')
+                os.path.join(snowav.__path__[0],
+                             "report/template/section_text/report_summary.txt"))
         if self.tex_file is None:
             self.tex_file = os.path.abspath(
-                './snowav/report/template/snowav_report.tex')
+                os.path.join(snowav.__path__[0],
+                             "report/template/snowav_report.text"))
         if self.figs_tpl_path is None:
-            self.figs_tpl_path = os.path.abspath('./snowav/report/figs')
+            self.figs_tpl_path = os.path.abspath(
+                os.path.join(snowav.__path__[0],
+                             "report/figs"))
 
         ####################################################
         #           forecast                               #
