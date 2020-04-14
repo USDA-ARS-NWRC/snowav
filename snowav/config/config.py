@@ -1,15 +1,11 @@
 import calendar
 import coloredlogs
-from datetime import datetime
+from copy import deepcopy
+from datetime import timedelta, datetime
 import logging
 import numpy as np
-import pandas as pd
 import os
-from copy import deepcopy
-import coloredlogs
 import netCDF4 as nc
-from collections import OrderedDict
-from datetime import timedelta, datetime
 
 from inicheck.tools import get_user_config, check_config, cast_all_variables
 from inicheck.output import generate_config, print_config_report
@@ -29,13 +25,11 @@ class UserConfig(object):
     Args
     ------
     config_file: file path
-    external_logger: logger from awsm
     awsm: awsm object
     end_date: string
     """
 
-    def __init__(self, config_file, external_logger=None, awsm=None,
-                 end_date=None):
+    def __init__(self, config_file, awsm=None, end_date=None):
 
         print('Reading {} and loading files...'.format(config_file))
 
@@ -90,8 +84,8 @@ class UserConfig(object):
             self.end_date = self.end_date
 
             if self.start_date >= self.end_date:
-                self.tmp_log.append(' Error: [run] start_date >= [run] end_date')
-                raise Exception('Error: [run] start_date >= [run] end_date')
+                self.tmp_log.append(' Error: [run] start_date >= end_date')
+                raise Exception('[run] start_date >= [run] end_date')
 
         else:
             self.tmp_log.append(' [run] start_date and/or end_date was not '
@@ -143,17 +137,11 @@ class UserConfig(object):
         base_bands = ['swi_z', 'evap_z', 'swe_z', 'depth', 'density',
                       'coldcont', 'precip_z']
 
-        f = False
         for band in base_bands:
             if band not in self.properties:
                 self.tmp_log.append(' WARNING! Config option [database] '
-                                    'properties does not contain {}'.format(band))
-                f = True
-
-        if f:
-            self.tmp_log.append(' WARNING! Suggest config option [database] '
-                                'properties contain at least {} for most functionality to '
-                                'run'.format(base_bands))
+                                    'properties does not contain '
+                                    '{}'.format(band))
 
         if ((self.mysql is not None) and
                 ((self.db_user is None) or
@@ -218,11 +206,18 @@ class UserConfig(object):
             if self.diag_basins is not None:
                 for basin in self.diag_basins:
                     if basin not in self.plotorder:
-                        self.tmp_log.append(' Config option [diagnostics] basin: '
-                                            '{} does not match what was supplied in '
-                                            '[snowav] masks: {}, diagnostics set '
-                                            'to False'.format(basin, self.plotorder))
+                        self.tmp_log.append(' Config [diagnostics] basin: "{}"'
+                                            ' does not match [snowav] masks: '
+                                            '"{}", diagnostics set to '
+                                            'False'.format(basin,
+                                                           self.plotorder))
                         self.diagnostics_flag = False
+
+        if 'snow_line' not in self.properties and self.diagnostics_flag:
+            self.diagnostics_flag = False
+            self.tmp_log.append(' Required properties in [database] properties'
+                                ' for [diagnostics] does not exist, setting '
+                                'diagnostics: False')
 
         self.inputs_flag = ucfg.cfg['diagnostics']['inputs_table']
         self.inputs_variables = ucfg.cfg['diagnostics']['inputs_variables']
@@ -230,7 +225,6 @@ class UserConfig(object):
         self.inputs_methods = ucfg.cfg['diagnostics']['inputs_methods']
         self.inputs_basins = ucfg.cfg['diagnostics']['inputs_basins']
 
-        # if self.inputs_flag:
         if self.inputs_basins is not None and self.plotorder is not None:
             for basin in self.inputs_basins:
                 if basin not in self.plotorder:
@@ -238,7 +232,7 @@ class UserConfig(object):
                                         'inputs_basins: {} does not match what '
                                         'was supplied in [snowav] masks: {}, '
                                         'inputs set to '
-                                        'False'.format(basin, plotorder))
+                                        'False'.format(basin, self.plotorder))
                     self.inputs_flag = False
 
         if self.inputs_flag:
@@ -299,17 +293,18 @@ class UserConfig(object):
 
         if (self.compare_runs_flag and ((self.compare_run_names is None) or
             (self.compare_run_labels is None) or self.compare_run_wys is None)):
-            self.tmp_log.append(' Config option [plots] compare_runs set to True, '
-                                'but one of compare_run_names, compare_run_labels, '
-                                'or compare_run_wys is empty, setting '
-                                'compare_runs to False')
+            self.tmp_log.append(' Config option [plots] compare_runs set to '
+                                'True, but one of compare_run_names, '
+                                'compare_run_labels, or compare_run_wys is '
+                                'empty, setting compare_runs to False')
             self.compare_runs_flag = False
 
         if (self.compare_runs_flag and
                 (len(self.compare_run_names) != len(self.compare_run_labels))):
-            self.tmp_log.append(' Config option [plots] compare_runs set to True, '
-                                'must supply equal length compare_run_names and  '
-                                'compare_run_labels, resetting compare_runs to False')
+            self.tmp_log.append(' Config option [plots] compare_runs set to '
+                                'True, must supply equal length '
+                                'compare_run_names and compare_run_labels, '
+                                'resetting compare_runs to False')
             self.compare_runs_flag = False
 
         if self.update_file is not None:
@@ -319,8 +314,8 @@ class UserConfig(object):
 
         if (self.precip_validate_flag and ((self.val_client is None) or
             (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
-            self.tmp_log.append(' Config option [plots] precip_validate is being '
-                                'set to False')
+            self.tmp_log.append(' Config option [plots] precip_validate is '
+                                'being set to False')
 
             self.precip_validate_flag = False
 
@@ -342,7 +337,8 @@ class UserConfig(object):
                 self.plots_inputs_variables.remove(var)
                 self.tmp_log.append(' Config option [plots] inputs_variables '
                                     'value {} not present in [diagnostics] '
-                                    'inputs_variables, being removed'.format(var))
+                                    'inputs_variables, being '
+                                    'removed'.format(var))
 
         ####################################################
         #          report                                  #
@@ -363,18 +359,21 @@ class UserConfig(object):
         self.report_diagnostics_day = ucfg.cfg['report']['diagnostics_day']
         self.rep_dplcs = ucfg.cfg['report']['decimals']
 
-        if self.report_diagnostics and (not self.inputs_fig_flag or not self.diagnostics_flag):
-            self.tmp_log.append(" [report] diagnostics: True, but must also have "
-                                "[plots] inputs: True and [diagnostics] diagnostics: True, "
-                                "setting to False")
+        if (self.report_diagnostics and
+                (not self.inputs_fig_flag or not self.diagnostics_flag)):
+            self.tmp_log.append(" [report] diagnostics: True, but must also "
+                                "have [plots] inputs: True and [diagnostics] "
+                                "diagnostics: True, setting to False")
             self.report_diagnostics = False
 
         if self.report_diagnostics and self.report_diagnostics_day[0] != 'any':
 
-            if calendar.day_name[datetime.now().weekday()] not in self.report_diagnostics_day:
+            if (calendar.day_name[datetime.now().weekday()] not in
+                    self.report_diagnostics_day):
                 self.report_diagnostics = False
                 self.tmp_log.append(" Per [report] diagnostics_day: {}, "
-                                    "setting diagnostics: False".format(self.report_diagnostics_day))
+                                    "setting diagnostics: "
+                                    "False".format(self.report_diagnostics_day))
 
         self.rep_swi_flag = ucfg.cfg['report']['swi']
         if not self.swi_flag:
@@ -410,13 +409,16 @@ class UserConfig(object):
 
         # check paths to see if they need default snowav path
         if self.env_path is None:
-            self.env_path = os.path.abspath('./snowav/report/template/section_text')
+            self.env_path = os.path.abspath(
+                './snowav/report/template/section_text')
         if self.templ_path is None:
             self.templ_path = os.path.abspath('./snowav/report/template')
         if self.summary_file is None:
-            self.summary_file = os.path.abspath('./snowav/report/template/section_text/report_summary.txt')
+            self.summary_file = os.path.abspath(
+                './snowav/report/template/section_text/report_summary.txt')
         if self.tex_file is None:
-            self.tex_file = os.path.abspath('./snowav/report/template/snowav_report.tex')
+            self.tex_file = os.path.abspath(
+                './snowav/report/template/snowav_report.tex')
         if self.figs_tpl_path is None:
             self.figs_tpl_path = os.path.abspath('./snowav/report/figs')
 
@@ -431,10 +433,10 @@ class UserConfig(object):
             self.for_run_name = ucfg.cfg['forecast']['run_name']
 
             if self.for_start_date >= self.for_end_date:
-                self.tmp_log.append(' Error: config option [forecast] start_date > '
-                                    'end_date')
-                raise Exception('Config option [forecast] start_date is greater '
-                                'than end_date')
+                self.tmp_log.append(' Error: config option [forecast] '
+                                    'start_date > end_date')
+                raise Exception('Config option [forecast] start_date >'
+                                'end_date')
 
             self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
                                  os.listdir(ucfg.cfg['forecast']['run_dir'])
