@@ -28,9 +28,6 @@ class Process(object):
 
         elapsed_hours = 0
         variables = cfg.variables.variables
-        # lbls = {'depthlbl': cfg.depthlbl,
-        #         'vollbl': cfg.vollbl,
-        #         'elevlbl': cfg.elevlbl}
 
         if os.path.splitext(cfg.connector)[1] == '.db':
             db = 'sqlite'
@@ -307,8 +304,11 @@ class Process(object):
                         variables[k]['df'].loc['total', name] = \
                             calculate(o, cfg.pixel, mask, 'mean', 'depth',
                                       cfg.units, cfg.dplcs)
-                        variables['snow_line']['df'].loc['total', name] = \
-                            snow_line(o, cfg.dem, mask, cfg.diagnostics_flag)
+
+                        if 'snow_line' in proc_list:
+                            variables['snow_line']['df'].loc['total', name] = \
+                                snow_line(o, cfg.dem, mask,
+                                          cfg.diagnostics_flag)
 
                     if k == 'swi_z':
                         variables[k]['df'].loc['total', name] = \
