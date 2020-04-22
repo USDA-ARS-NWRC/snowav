@@ -19,6 +19,7 @@ from snowav.database.tables import Base, RunMetadata, Watershed, Basin, \
 # Fix these two by pulling smrf and awsm versions from netcdf
 try:
     import smrf
+
     smrf_version = smrf.__version__
 except:
     smrf_version = 'unknown'
@@ -26,6 +27,7 @@ except:
 try:
     warnings.filterwarnings("ignore")
     import awsm
+
     warnings.filterwarnings("default")
     awsm_version = awsm.__version__
 except:
@@ -233,46 +235,17 @@ class Database(object):
         if not isinstance(index, list):
             raise TypeError("index must be a list")
 
-        # make database connection
-        try:
-            dbsession = sessionmaker(bind=self.engine)
-        except Exception as e:
-            print(e)
-            if logger is not None:
-                logger.error(" Failed connecting to database")
-            else:
-                print("Failed connecting to database")
-
-        # make session
+        dbsession = sessionmaker(bind=self.engine)
         session = dbsession()
-
-        for n, table in enumerate(params.keys()):
-
-            # store the first if there are two unique tables being queried
-            if ntables > 1 and n == 0:
-                tbl_o = getattr(ta, table)
-
-            tbl = getattr(ta, table)
-
-            try:
-                col, op, value = params[table]
-            except ValueError:
-                raise Exception('Invalid filter: {}'.format(table))
-
-            if col not in list(vars(tbl)):
-                raise Exception("Invalid column: {}".format(col))
-
-            # TODO: add filter options to query
-            # translate operator
-            # op = self.operators(op)
-            # field = getattr(tbl, col)
+        tables = list(params.keys())
+        ntables = len(tables)
 
         if ntables == 1:
-            __query = session.query(tbl)
+            qry = session.query(tables[0]).filter_by(**params[tables[0]])
         else:
-            __query = session.query(tbl, tbl_o).join(tbl)
+            qry = session.query(tables[0], tables[1])
 
-        results = pd.read_sql(__query.statement, __query.session.connection())
+        results = pd.read_sql(qry.statement, qry.session.connection())
         session.close()
 
         # apply columns

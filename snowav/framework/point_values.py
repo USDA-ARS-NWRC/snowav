@@ -14,6 +14,7 @@ from inicheck.tools import get_user_config, check_config, cast_all_variables
 import snowav
 from snowav.database.models import AwsmInputsOutputs
 from snowav.database.database import Database
+from snowav.database.tables import Pixels, PixelsData
 
 
 class PointValues(object):
@@ -603,7 +604,10 @@ def put_on_database(db, pv):
     # for each location
     for pt in pv.var_dict:
 
-        # collect metadata
+        df = pv.var_dict[pt]['data']
+        start_date = min(df.index)
+        # end_date = max(df.index)
+
         metadata = {
             'location': str(pv.var_dict[pt]['location']),
             'model_row': int(pt[0]),
@@ -615,24 +619,22 @@ def put_on_database(db, pv):
             'elevation': float(pv.dem[pt[1], pt[0]])
         }
 
-        params = {
-            'Pixels': ('model_row', '==', int(pt[0])),
-            'Pixels': ('model_col', '==', int(pt[1])),
-            'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
-            'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
-            'Pixels': ('description', '==', str(pv.var_dict[pt]['description'])),
-
-            # not being filtered inside query() at the moment
-            'PixelsData': ('date_time', '==', datetime(2020, 3, 3, 23, 0))
-        }
-
-        pixelsparams = {
-            'Pixels': ('model_row', '==', int(pt[0])),
-            'Pixels': ('model_col', '==', int(pt[1])),
-            'Pixels': ('name', '==', str(pv.var_dict[pt]['name'])),
-            'Pixels': ('location', '==', str(pv.var_dict[pt]['location'])),
-            'Pixels': ('description', '==', str(pv.var_dict[pt]['description'])),
-        }
+        # currently query() is only grabbing keys from params and pixelsparams
+        params = {Pixels: {'model_row': int(pt[0]),
+                           'model_col': int(pt[1]),
+                           'name': str(pv.var_dict[pt]['name']),
+                           'location': str(pv.var_dict[pt]['location']),
+                           'description': str(pv.var_dict[pt]['description'])
+                           },
+                  PixelsData: {'date_time': start_date}
+                  }
+        pixelsparams = {Pixels: {'model_row': int(pt[0]),
+                                 'model_col': int(pt[1]),
+                                 'name': str(pv.var_dict[pt]['name']),
+                                 'location': str(pv.var_dict[pt]['location']),
+                                 'description': str(pv.var_dict[pt]['description'])
+                                 }
+                        }
 
         # first, see if records already exist with the same values
         results = db.query(params, logger=pv.logger)
@@ -643,7 +645,6 @@ def put_on_database(db, pv):
                           (results.name == str(pv.var_dict[pt]['name'])) &
                           (results.date_time >= pv.start_date) &
                           (results.date_time <= pv.end_date)]
-        existing_record_id = pd.unique(results['id'])
 
         # if no existing records, put on database
         if results.empty:
@@ -665,9 +666,6 @@ def put_on_database(db, pv):
 
             max_record_id = int(max(pd.unique(results['id'])))
 
-            # prepare data to put on database
-            df = pv.var_dict[pt]['data']
-
             for idx, row in df.iterrows():
                 row = row.astype('float')
                 p = {'pixel_id': max_record_id,
@@ -686,11 +684,12 @@ def put_on_database(db, pv):
 
         # if there are existing record, check overwrite
         else:
+            existing_record_id = pd.unique(results['id'])
+
             if pv.overwrite:
                 # first, delete the existing metadata and records based on the
                 # existing Pixels.id
                 for rec in existing_record_id:
-                    # deletedata = {'id': int(rec)}
 
                     # first, delete the data
                     db.delete('PixelsData',
