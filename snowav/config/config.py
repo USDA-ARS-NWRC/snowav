@@ -256,6 +256,7 @@ class UserConfig(object):
         self.swi_flag = ucfg.cfg['plots']['swi']
         self.current_image_flag = ucfg.cfg['plots']['current_image']
         self.image_change_flag = ucfg.cfg['plots']['image_change']
+        self.flt_image_change_clims = ucfg.cfg['plots']['flt_image_change_clims']
         self.cold_content_flag = ucfg.cfg['plots']['cold_content']
         self.swe_volume_flag = ucfg.cfg['plots']['swe_volume']
         self.basin_total_flag = ucfg.cfg['plots']['basin_total']
@@ -277,6 +278,11 @@ class UserConfig(object):
                         ucfg.cfg['plots']['fig_height'])
         self.write_properties = ucfg.cfg['plots']['write_properties']
         self.point_values_flag = ucfg.cfg['plots']['point_values']
+
+        if self.flt_image_change_clims[0] < 0:
+            self.flt_image_change_clims[0] = 0
+        if self.flt_image_change_clims[1] > 100:
+            self.flt_image_change_clims[1] = 100
 
         if (self.write_properties is not None and
                 type(self.write_properties) != list):

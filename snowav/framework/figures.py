@@ -82,17 +82,22 @@ def figures(cfg, process):
     #       DataFrame, and set any figure-specific args inputs               #
     ##########################################################################
     if cfg.flt_flag:
-        args['depth_factor'] = cfg.depth_factor
-        args['update_file'] = cfg.update_file
-        args['update_numbers'] = cfg.update_numbers
-        args['flight_outputs'] = cfg.flight_outputs
-        args['pre_flight_outputs'] = cfg.pre_flight_outputs
-        args['connector'] = connector
+        names, df = flt_image_change(cfg.update_file, cfg.update_numbers,
+                                     cfg.end_date, cfg.flight_outputs,
+                                     cfg.pre_flight_outputs, cfg.masks,
+                                     cfg.flt_image_change_clims, cfg.barcolors,
+                                     cfg.edges, cfg.connector, cfg.plotorder,
+                                     cfg.wy, cfg.depth_factor, cfg.basins,
+                                     cfg.run_name, cfg.figsize, cfg.depthlbl,
+                                     cfg.elevlbl, cfg.vollbl, cfg.dplcs,
+                                     cfg.figs_path, dpi=cfg.dpi,
+                                     logger=cfg._logger)
 
-        cfg.flight_diff_fig_names, cfg.flight_delta_vol_df = flt_image_change(args, cfg._logger)
-
-        if cfg.flight_diff_fig_names == []:
+        if len(names) == 0:
             cfg.flt_flag = False
+        else:
+            cfg.assign_vars({'flight_diff_fig_names': names})
+            cfg.assign_vars({'flight_delta_vol_df': df})
 
     if cfg.swi_flag:
         image = np.zeros_like(cfg.outputs['swi_z'][0])

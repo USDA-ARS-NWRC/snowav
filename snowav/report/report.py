@@ -1,4 +1,3 @@
-
 from jinja2 import FileSystemLoader
 from latex.jinja2 import make_env
 from latex import build_pdf
@@ -9,6 +8,7 @@ import copy
 import os
 import snowav
 from snowav.database.database import collect
+
 
 def report(cfg, process):
     '''
@@ -36,7 +36,7 @@ def report(cfg, process):
 
     bid = cfg.basins[cfg.plotorder[0]]['basin_id']
     basins = cfg.basins
-    wy_start = datetime(cfg.wy-1,10,1)
+    wy_start = datetime(cfg.wy - 1, 10, 1)
     start_date = cfg.start_date
     end_date = cfg.end_date
     run_name = cfg.run_name
@@ -49,34 +49,34 @@ def report(cfg, process):
     # variables to pass to latex file
     variables = {}
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'swi_vol',
-                    run_name,'total','sum')
+    dbval = collect(cnx, plotorder[0], basins, wy_start, end_date, 'swi_vol',
+                    run_name, 'total', 'sum')
     variables['TOTAL_SWI'] = dbval.sum().values.round(decimals=dpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,start_date,end_date,'swi_vol',
-                    run_name,'total','sum')
+    dbval = collect(cnx, plotorder[0], basins, start_date, end_date, 'swi_vol',
+                    run_name, 'total', 'sum')
     variables['PER_SWI'] = dbval.sum().values.round(decimals=dpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,start_date,end_date,'swe_vol',
-                    run_name,'total','end')
+    dbval = collect(cnx, plotorder[0], basins, start_date, end_date, 'swe_vol',
+                    run_name, 'total', 'end')
     variables['TOTAL_SWE'] = dbval.sum().values.round(decimals=dpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,start_date,end_date,'swe_avail',
-                    run_name,'total','end')
+    dbval = collect(cnx, plotorder[0], basins, start_date, end_date, 'swe_avail',
+                    run_name, 'total', 'end')
     variables['TOTAL_SAV'] = dbval.sum().values.round(decimals=dpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,start_date,end_date,'swe_z',
-                    run_name,'total','end')
+    dbval = collect(cnx, plotorder[0], basins, start_date, end_date, 'swe_z',
+                    run_name, 'total', 'end')
     variables['TOTAL_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'precip_z',
-                    run_name,'total','sum')
+    dbval = collect(cnx, plotorder[0], basins, wy_start, end_date, 'precip_z',
+                    run_name, 'total', 'sum')
     variables['TOTALPRE_PM'] = dbval.sum().values.round(decimals=ddpts)[0]
 
-    s = collect(cnx,plotorder[0],basins,start_date,start_date,'swe_vol',
-                    run_name,'total','end')
-    e = collect(cnx,plotorder[0],basins,start_date,end_date,'swe_vol',
-                    run_name,'total','end')
+    s = collect(cnx, plotorder[0], basins, start_date, start_date, 'swe_vol',
+                run_name, 'total', 'end')
+    e = collect(cnx, plotorder[0], basins, start_date, end_date, 'swe_vol',
+                run_name, 'total', 'end')
     start_swe = s.sum().values.round(decimals=dpts)[0]
     end_swe = e.sum().values.round(decimals=dpts)[0]
     diff = end_swe - start_swe
@@ -90,21 +90,21 @@ def report(cfg, process):
     if float(end_swe) - float(start_swe) < 0.0:
         variables['SIGN'] = r'-'
 
-    dbval = collect(cnx,plotorder[0],basins,wy_start,end_date,'rain_z',
-                    run_name,'total','sum')
+    dbval = collect(cnx, plotorder[0], basins, wy_start, end_date, 'rain_z',
+                    run_name, 'total', 'sum')
     total_rain = dbval.sum().values.round(decimals=ddpts)[0]
 
     if variables['TOTALPRE_PM'] != 0:
-        variables['TOTAL_RAT'] = str(int((total_rain/variables['TOTALPRE_PM'])*100))
+        variables['TOTAL_RAT'] = str(int((total_rain / variables['TOTALPRE_PM']) * 100))
     else:
         variables['TOTAL_RAT'] = '-'
         variables['TOTALPRE_PM'] = '-'
 
     report_time = datetime.now().strftime("%Y-%-m-%-d %H:%M")
 
-    numsubs = range(1,len(cfg.plotorder))
+    numsubs = range(1, len(cfg.plotorder))
 
-    for n,sub in zip(numsubs,cfg.plotorder[1:]):
+    for n, sub in zip(numsubs, cfg.plotorder[1:]):
         SWIIND = 'SUB' + str(n) + '_SWI'
         PERSWIIND = 'SUB' + str(n) + '_PERSWI'
         SWEIND = 'SUB' + str(n) + '_SWE'
@@ -116,49 +116,49 @@ def report(cfg, process):
         RATIO = 'SUB' + str(n) + '_RAT'
         PVOL = 'SUB' + str(n) + '_PVOL'
 
-        dbval = collect(cnx,sub,basins,wy_start,end_date,'swi_vol',
-                        run_name,'total','sum')
+        dbval = collect(cnx, sub, basins, wy_start, end_date, 'swi_vol',
+                        run_name, 'total', 'sum')
         variables[SWIIND] = dbval.sum().values.round(decimals=dpts)[0]
 
-        dbval = collect(cnx,sub,basins,start_date,end_date,'swi_vol',
-                        run_name,'total','sum')
+        dbval = collect(cnx, sub, basins, start_date, end_date, 'swi_vol',
+                        run_name, 'total', 'sum')
         variables[PERSWIIND] = dbval.sum().values.round(decimals=dpts)[0]
 
-        dbval = collect(cnx,sub,basins,start_date,end_date,'swe_vol',
-                        run_name,'total','end')
+        dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_vol',
+                        run_name, 'total', 'end')
         variables[SWEIND] = dbval.sum().values.round(decimals=dpts)[0]
 
-        dbval = collect(cnx,sub,basins,start_date,end_date,'swe_avail',
-                        run_name,'total','end')
+        dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_avail',
+                        run_name, 'total', 'end')
         variables[AVSWEIND] = dbval.sum().values.round(decimals=dpts)[0]
 
-        dbval = collect(cnx,sub,basins,start_date,start_date,'swe_vol',
-                        run_name,'total','end')
+        dbval = collect(cnx, sub, basins, start_date, start_date, 'swe_vol',
+                        run_name, 'total', 'end')
         start_swe = dbval.sum().values.round(decimals=dpts)[0]
-        dbval = collect(cnx,sub,basins,start_date,end_date,'swe_vol',
-                        run_name,'total','end')
+        dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_vol',
+                        run_name, 'total', 'end')
         end_swe = dbval.sum().values.round(decimals=dpts)[0]
         variables[SWEDEL] = end_swe - start_swe
 
-        dbval = collect(cnx,sub,basins,start_date,end_date,'swe_z',
-                        run_name,'total','end')
+        dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_z',
+                        run_name, 'total', 'end')
         variables[PM] = dbval.sum().values.round(decimals=ddpts)[0]
 
-        dbval = collect(cnx,sub,basins,wy_start,end_date,'precip_z',
-                        run_name,'total','sum')
+        dbval = collect(cnx, sub, basins, wy_start, end_date, 'precip_z',
+                        run_name, 'total', 'sum')
         variables[PREPM] = dbval.sum().values.round(decimals=ddpts)[0]
 
-        dbval = collect(cnx,sub,basins,wy_start,end_date,'rain_z',
-                        run_name,'total','sum')
+        dbval = collect(cnx, sub, basins, wy_start, end_date, 'rain_z',
+                        run_name, 'total', 'sum')
         variables[RAIN] = dbval.sum().values.round(decimals=ddpts)[0]
 
         if (end_swe > 0) and (variables['TOTAL_SWE'] > 0):
-            variables[PVOL] = end_swe/variables['TOTAL_SWE']*100
+            variables[PVOL] = end_swe / variables['TOTAL_SWE'] * 100
         else:
             variables[PVOL] = '-'
 
         if variables[PREPM] != 0.0:
-            variables[RATIO] = str(int((variables[RAIN]/variables[PREPM])*100))
+            variables[RATIO] = str(int((variables[RAIN] / variables[PREPM]) * 100))
         else:
             variables[RATIO] = '0'
 
@@ -174,33 +174,36 @@ def report(cfg, process):
 
     else:
         if cfg.flt_flag and cfg.flight_figs:
-            variables['REPORT_TITLE'] = cfg.rep_title + r' \\ ASO Updates'
             fst = ' Model snow depths were updated with ASO snow depths on '
-            for i,d in enumerate(cfg.flight_diff_dates):
+            tst = ''
+            for i, d in enumerate(cfg.flight_diff_dates):
                 if d <= cfg.end_date:
                     dn = d.date().strftime("%m/%d")
                     if len(cfg.flight_diff_dates) == 1:
                         fst = fst + dn + '.'
+                        tst += dn
 
                     if ((len(cfg.flight_diff_dates) > 1) and
-                        (i < len(cfg.flight_diff_dates) - 1)):
+                            (i < len(cfg.flight_diff_dates) - 1)):
                         fst = fst + dn + ', '
+                        tst += dn + ', '
 
                     if ((len(cfg.flight_diff_dates) > 1) and
-                        (i == len(cfg.flight_diff_dates) - 1)):
+                            (i == len(cfg.flight_diff_dates) - 1)):
                         fst = fst + 'and ' + dn + '.'
+                        tst += dn
 
                 else:
                     fst = fst.split(dn)[0] + 'and ' + dn + '.'
                     break
 
+            variables['REPORT_TITLE'] = (cfg.rep_title +
+                                         r' \\ ASO Updates {}'.format(tst))
             variables['FLTSENT'] = fst
 
         else:
             variables['REPORT_TITLE'] = cfg.rep_title
-            # variables['FLTSENT'] = (' Model snow depths will be updated with '
-            #                         'ASO snow depths as they become available.')
-            variables['FLTSENT'] = ('')
+            variables['FLTSENT'] = ''
 
     variables['REPORT_TIME'] = report_time
     variables['WATERYEAR'] = str(cfg.wy)
@@ -257,7 +260,7 @@ def report(cfg, process):
 
     dfind = [str(i) for i in cfg.edges]
     dfindt = [str(i) for i in cfg.edges] + ['total']
-    colstr = 'l' + 'r'*len(cfg.plotorder)
+    colstr = 'l' + 'r' * len(cfg.plotorder)
 
     if len(cfg.plotorder) > 5:
         spacecmd = r'\resizebox{\textwidth}{!}{'
@@ -270,15 +273,15 @@ def report(cfg, process):
 
     if 'swe_depth' in cfg.tables:
 
-        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
+        dbval = collect(cnx, plotorder, basins, start_date, end_date, 'swe_z', run_name, dfindt, 'end')
         dbval = dbval.rename(columns=cfg.labels)
         swe_byelev = dbval.round(decimals=dpts)
-        swe_byelev.rename(index={'total':'mean'},inplace=True)
+        swe_byelev.rename(index={'total': 'mean'}, inplace=True)
         swe_byelev.index.name = 'Elevation'
         variables['SWE_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                    %(cfg.depthlbl,cfg.report_date.date().strftime("%Y-%-m-%-d")) +
-                                    spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
-                                    r'} \\ \footnotesize{\textbf{Table %s:} SWE depth.}'%(str(mtables)))
+                                   % (cfg.depthlbl, cfg.report_date.date().strftime("%Y-%-m-%-d")) +
+                                   spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
+                                   r'} \\ \footnotesize{\textbf{Table %s:} SWE depth.}' % (str(mtables)))
         mtables += 1
         ptables += 1
 
@@ -292,14 +295,14 @@ def report(cfg, process):
             clrpage = r'\clearpage'
         else:
             clrpage = ''
-        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfindt,'end')
+        dbval = collect(cnx, plotorder, basins, start_date, end_date, 'swe_vol', run_name, dfindt, 'end')
         dbval = dbval.rename(columns=cfg.labels)
         swe_byelev = dbval.round(decimals=dpts)
         swe_byelev.index.name = 'Elevation'
         variables['SWEVOL_BYELEV'] = (r' \normalsize \textbf{SWE [%s], %s}\\ \vspace{0.1cm} \\'
-                                    %(cfg.vollbl,cfg.report_date.date().strftime("%Y-%-m-%-d")) +
-                                    spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
-                                    r'} \\ \footnotesize{\textbf{Table %s:} SWE volume.}%s'%(str(mtables),clrpage))
+                                      % (cfg.vollbl, cfg.report_date.date().strftime("%Y-%-m-%-d")) +
+                                      spacecmd + swe_byelev.to_latex(na_rep='-', column_format=colstr) +
+                                      r'} \\ \footnotesize{\textbf{Table %s:} SWE volume.}%s' % (str(mtables), clrpage))
         mtables += 1
 
     else:
@@ -312,20 +315,21 @@ def report(cfg, process):
             clrpage = r'\clearpage'
         else:
             clrpage = ''
-        dbval = collect(cnx,plotorder,basins,start_date,start_date,'swe_z',run_name,dfindt,'end')
+        dbval = collect(cnx, plotorder, basins, start_date, start_date, 'swe_z', run_name, dfindt, 'end')
         dbval = dbval.rename(columns=cfg.labels)
         start_swe = dbval.round(decimals=dpts)
-        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_z',run_name,dfindt,'end')
+        dbval = collect(cnx, plotorder, basins, start_date, end_date, 'swe_z', run_name, dfindt, 'end')
         dbval = dbval.rename(columns=cfg.labels)
         end_swe = dbval.round(decimals=dpts)
         dswe_byelev = end_swe - start_swe
-        dswe_byelev.rename(index={'total':'mean'},inplace=True)
+        dswe_byelev.rename(index={'total': 'mean'}, inplace=True)
         dswe_byelev.index.name = 'Elevation'
         variables['DSWE_BYELEV'] = (r'  \normalsize \textbf{Change in SWE [%s], %s to %s}\\ \vspace{0.1cm} \\'
-                                    %(cfg.depthlbl,cfg.report_start.date().strftime("%Y-%-m-%-d"),
-                                      cfg.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                      dswe_byelev.to_latex(na_rep='-', column_format=colstr) +
-                                      r'} \\ \footnotesize{\textbf{Table %s:} Change in SWE.} %s'%(str(mtables),clrpage))
+                                    % (cfg.depthlbl, cfg.report_start.date().strftime("%Y-%-m-%-d"),
+                                       cfg.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                    dswe_byelev.to_latex(na_rep='-', column_format=colstr) +
+                                    r'} \\ \footnotesize{\textbf{Table %s:} Change in SWE.} %s' % (
+                                    str(mtables), clrpage))
         mtables += 1
 
     else:
@@ -338,18 +342,19 @@ def report(cfg, process):
         else:
             clrpage = ''
 
-        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swe_vol',run_name,dfind,'end')
+        dbval = collect(cnx, plotorder, basins, start_date, end_date, 'swe_vol', run_name, dfind, 'end')
         dbval = dbval.rename(columns=cfg.labels)
         swe_byelev = dbval.round(decimals=dpts)
         value = swe_byelev.iloc[:-1].sum()
-        sweper_byelev = (swe_byelev/value*100).round(decimals = dpts)
+        sweper_byelev = (swe_byelev / value * 100).round(decimals=dpts)
         sweper_byelev.index.name = 'Elevation'
 
-        variables['SWEPER_BYELEV'] = (r'  \normalsize \textbf{SWE volume, percent of basin total, %s}\\ \vspace{0.1cm} \\'
-                                    %(cfg.report_date.date().strftime("%Y-%-m-%-d"))+
-                                    spacecmd + sweper_byelev.round(1).to_latex(na_rep='-', column_format=colstr) +
-                                    r'}  \\ \footnotesize{\textbf{Table %s:} Percent of total SWE volume.}%s'%(str(mtables),clrpage))
-        variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf','-')
+        variables['SWEPER_BYELEV'] = (
+                    r'  \normalsize \textbf{SWE volume, percent of basin total, %s}\\ \vspace{0.1cm} \\'
+                    % (cfg.report_date.date().strftime("%Y-%-m-%-d")) +
+                    spacecmd + sweper_byelev.round(1).to_latex(na_rep='-', column_format=colstr) +
+                    r'}  \\ \footnotesize{\textbf{Table %s:} Percent of total SWE volume.}%s' % (str(mtables), clrpage))
+        variables['SWEPER_BYELEV'] = variables['SWEPER_BYELEV'].replace('inf', '-')
 
         mtables += 1
 
@@ -357,14 +362,14 @@ def report(cfg, process):
         variables['SWEPER_BYELEV'] = ''
 
     if 'swi_vol' in cfg.tables:
-        dbval = collect(cnx,plotorder,basins,start_date,end_date,'swi_vol',run_name,dfindt,'sum')
+        dbval = collect(cnx, plotorder, basins, start_date, end_date, 'swi_vol', run_name, dfindt, 'sum')
         dbval = dbval.rename(columns=cfg.labels)
         swi_byelev = dbval.round(decimals=dpts)
         variables['ACCUM_BYELEV'] = (r' \normalsize \textbf{SWI [%s] by elevation, %s to %s}\\ \vspace{0.1cm} \\'
-                                    %(cfg.vollbl,cfg.report_start.date().strftime("%Y-%-m-%-d"),
-                                      cfg.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
-                                      swi_byelev.to_latex(na_rep='-', column_format=colstr) +
-                                      r'} \\ \footnotesize{\textbf{Table %s:} SWI volume. }'%(str(mtables)))
+                                     % (cfg.vollbl, cfg.report_start.date().strftime("%Y-%-m-%-d"),
+                                        cfg.report_date.date().strftime("%Y-%-m-%-d")) + spacecmd +
+                                     swi_byelev.to_latex(na_rep='-', column_format=colstr) +
+                                     r'} \\ \footnotesize{\textbf{Table %s:} SWI volume. }' % (str(mtables)))
         mtables += 1
 
     else:
@@ -373,7 +378,7 @@ def report(cfg, process):
     variables['TOT_LBL'] = cfg.plotorder[0]
 
     # for n in range(1,len(cfg.plotorder)):
-    for n in range(1,len(cfg.labels)):
+    for n in range(1, len(cfg.labels)):
         s = 'SUB' + str(n) + '_LBL'
         variables[s] = cfg.labels[cfg.plotorder[n]]
 
@@ -383,33 +388,33 @@ def report(cfg, process):
             if cfg.dplcs == 0:
                 tmp = str(int(variables[name]))
             else:
-                tmp = str(round(variables[name],cfg.dplcs))
+                tmp = str(round(variables[name], cfg.dplcs))
             variables[name] = tmp
 
     # Summary sections and fig template have variable strings
     # (e.g. CHANGES_FIG) that need to be replaced
-    section_dict = {'SUMMARY':cfg.summary_file,
-                    'CHANGES_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'changes_fig_tpl.txt'),
-                    'SWI_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'swi_fig_tpl.txt'),
-                    'TOTALS_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'totals_fig_tpl.txt'),
-                    'MULTITOTSWE_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'multitotswe_fig_tpl.txt'),
-                    'VALID_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'valid_fig_tpl.txt'),
-                    'FLTCHANGES_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'flt_fig_tpl.txt'),
-                    'PDEP_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'pdep_fig_tpl.txt'),
-                    'COLD_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'cold_fig_tpl.txt'),
-                    'SWE_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'swe_fig_tpl.txt'),
-                    'SUBBASINS_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'subbasins_fig_tpl.txt'),
-                    'SWEFORECAST_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'forecastswe_fig_tpl.txt'),
-                    'SWIFORECAST_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'forecastswi_fig_tpl.txt'),
-                    'CHANGESFORECAST_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'forecastchanges_fig_tpl.txt'),
-                    'TOTALSFORECAST_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'forecasttotals_fig_tpl.txt'),
-                    'PDEPFORECAST_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'forecastpdep_fig_tpl.txt'),
-                    'DIAGNOSTICS_FIG_TPL':os.path.join(cfg.figs_tpl_path, 'diagnostics_fig_tpl.txt')
+    section_dict = {'SUMMARY': cfg.summary_file,
+                    'CHANGES_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'changes_fig_tpl.txt'),
+                    'SWI_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'swi_fig_tpl.txt'),
+                    'TOTALS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'totals_fig_tpl.txt'),
+                    'MULTITOTSWE_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'multitotswe_fig_tpl.txt'),
+                    'VALID_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'valid_fig_tpl.txt'),
+                    'FLTCHANGES_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'flt_fig_tpl.txt'),
+                    'PDEP_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'pdep_fig_tpl.txt'),
+                    'COLD_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'cold_fig_tpl.txt'),
+                    'SWE_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'swe_fig_tpl.txt'),
+                    'SUBBASINS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'subbasins_fig_tpl.txt'),
+                    'SWEFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastswe_fig_tpl.txt'),
+                    'SWIFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastswi_fig_tpl.txt'),
+                    'CHANGESFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastchanges_fig_tpl.txt'),
+                    'TOTALSFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecasttotals_fig_tpl.txt'),
+                    'PDEPFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastpdep_fig_tpl.txt'),
+                    'DIAGNOSTICS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'diagnostics_fig_tpl.txt')
                     }
 
     # Define and load summary tables depending on number of subbasins
     section_dict['SWE_SUMMARY_TPL'] = os.path.join(cfg.figs_tpl_path,
-        'swe_summary_{}sub.txt'.format(str(len(cfg.plotorder))))
+                                                   'swe_summary_{}sub.txt'.format(str(len(cfg.plotorder))))
 
     # Remove if no flight
     if not cfg.flt_flag or not cfg.flight_figs:
@@ -441,46 +446,46 @@ def report(cfg, process):
 
     else:
         variables['FORE_TITLE'] = 'with WRF forecast, {} to {}'.format(cfg.for_start_date.date().strftime("%b %-d"),
-                    cfg.for_end_date.date().strftime("%b %-d"))
+                                                                       cfg.for_end_date.date().strftime("%b %-d"))
 
     for rep in section_dict.keys():
 
         # for variable numbers of fligth figures
         if rep == 'FLTCHANGES_FIG_TPL':
-            fid = open(section_dict[rep],'r')
+            fid = open(section_dict[rep], 'r')
             var = fid.read()
             fid.close()
 
             for name in sorted(variables):
                 if name == 'DFLT_FIG':
-                    for i,fltname in enumerate(cfg.flight_diff_fig_names):
+                    for i, fltname in enumerate(cfg.flight_diff_fig_names):
                         flt_date = cfg.flight_outputs['dates'][i].date().strftime("%Y%m%d")
                         flt_num = cfg.flight_delta_vol_df[flt_date].round(1).to_latex(na_rep='-', column_format=colstr)
-                        table = (r'{ \vspace{0.5cm} \textbf{Change in SWE [%s] by elevation, '%(cfg.vollbl) +
-                                 r'from %s update} \\ \vspace{0.1cm} \\'%(flt_date) +
-                                 r' %s %s }'%(spacecmd,flt_num))
+                        table = (r'{ \vspace{0.5cm} \textbf{Change in SWE [%s] by elevation, ' % (cfg.vollbl) +
+                                 r'from %s update} \\ \vspace{0.1cm} \\' % (flt_date) +
+                                 r' %s %s }' % (spacecmd, flt_num))
 
                         if i == 0:
-                            tmp = var.replace(name,fltname)
+                            tmp = var.replace(name, fltname)
                         else:
-                            tmp += var.replace(name,fltname)
+                            tmp += var.replace(name, fltname)
 
                         tmp += table
 
-                    var = tmp.replace(name,variables[name])
+                    var = tmp.replace(name, variables[name])
 
                 else:
-                    var = var.replace(name,variables[name])
+                    var = var.replace(name, variables[name])
 
             variables[rep] = var
 
         else:
-            fid = open(section_dict[rep],'r')
+            fid = open(section_dict[rep], 'r')
             var = fid.read()
             fid.close()
 
             for name in sorted(variables):
-                var = var.replace(name,variables[name])
+                var = var.replace(name, variables[name])
             variables[rep] = var
 
     if not cfg.subs_fig:
@@ -514,7 +519,7 @@ def report(cfg, process):
         variables['PDEP_FIG_TPL'] = ''
 
     # Make the report
-    env = make_env(loader = FileSystemLoader(cfg.templ_path))
+    env = make_env(loader=FileSystemLoader(cfg.templ_path))
     tpl = env.get_template(cfg.tex_file)
 
     # print VAR-replaced latex file for debugging if desired
