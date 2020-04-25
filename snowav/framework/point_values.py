@@ -636,6 +636,59 @@ def put_on_database(db, pv):
                                  }
                         }
 
+        # from sqlalchemy import create_engine, and_
+        # from sqlalchemy.orm import sessionmaker
+        #
+        # tparams = {Pixels: {(Pixels.model_row, '==', int(pt[0]))}}
+        #
+        # dbsession = sessionmaker(bind=db.engine)
+        # session = dbsession()
+        # tables = list(tparams.keys())
+        # raw = ('model_row', 'ge', 1)
+        # try:
+        #     key, op, value = raw
+        # except ValueError:
+        #     raise Exception('Invalid filter: %s' % raw)
+        #
+        # column = getattr(Pixels, key, None)
+        #
+        # if not column:
+        #     raise Exception('Invalid filter column: %s' % key)
+        # if op == 'in':
+        #     if isinstance(value, list):
+        #         filt = column.in_(value)
+        #     else:
+        #         filt = column.in_(value.split(','))
+        # else:
+        #     try:
+        #         attr = list(filter(
+        #             lambda e: hasattr(column, e % op),
+        #             ['%s', '%s_', '__%s__']
+        #         ))[0] % op
+        #     except IndexError:
+        #         raise Exception('Invalid filter operator: %s' % op)
+        #     if value == 'null':
+        #         value = None
+        #     filt = getattr(column, attr)(value)
+        #
+        # qry = session.query(Pixels, PixelsData)
+        # qry = qry.filter(filt)
+        #
+        # results = pd.read_sql(qry.statement, qry.session.connection())
+        # session.close()
+        #
+        # print(qry)
+        # print(results)
+        #
+        # print(x)
+
+        params = {'Pixels': [
+                            ('model_row', 'eq', int(pt[0])),
+                            ('name', 'eq', 'MAM')
+        ],
+                  # 'PixelsData': [('date_time', 'ge', datetime(2020, 1, 1))]
+                  }
+
         # first, see if records already exist with the same values
         results = db.query(params, logger=pv.logger)
 
@@ -689,12 +742,12 @@ def put_on_database(db, pv):
             if pv.overwrite:
                 # first, delete the existing metadata and records based on the
                 # existing Pixels.id
+                print(existing_record_id)
                 for rec in existing_record_id:
 
                     # first, delete the data
-                    db.delete('PixelsData',
-                              {'pixel_id': int(rec)},
-                              logger=pv.logger)
+                    dparams = {'pixel_id': int(rec)}
+                    db.delete('PixelsData', dparams, logger=pv.logger)
 
                     results = db.query(params, logger=pv.logger)
                     results = results[(results.model_row == pt[0]) &
