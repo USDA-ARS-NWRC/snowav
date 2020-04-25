@@ -216,6 +216,82 @@ class Database(object):
         results {DataFrame}: query results
         """
 
+        # tparams = {Pixels: {(Pixels.model_row, '==', int(pt[0]))}}
+
+        unique_tables = set(params.keys())
+        tables = list(params.keys())
+        ntables = len(unique_tables)
+
+        if ntables < 1 or ntables > 2:
+            raise ValueError("params must have <= 2 unique tables")
+
+        dbsession = sessionmaker(bind=self.engine)
+        session = dbsession()
+
+        from snowav.database.tables import Pixels, PixelsData
+
+        n = 0
+        for t in params.keys():
+            print(t)
+            if t == 'Pixels':
+                table = Pixels
+            if t == 'PixelsData':
+                table = PixelsData
+
+            for f in params[t]:
+                print(f)
+                raw = f
+
+                try:
+                    key, op, value = raw
+                except ValueError:
+                    raise Exception('Invalid filter: %s' % raw)
+
+                column = getattr(table, key, None)
+
+                if not column:
+                    raise Exception('Invalid filter column: %s' % key)
+                if op == 'in':
+                    if isinstance(value, list):
+                        filt = column.in_(value)
+                    else:
+                        filt = column.in_(value.split(','))
+                else:
+                    try:
+                        attr = list(filter(
+                            lambda e: hasattr(column, e % op),
+                            ['%s', '%s_', '__%s__']
+                        ))[0] % op
+                    except IndexError:
+                        raise Exception('Invalid filter operator: %s' % op)
+                    if value == 'null':
+                        value = None
+
+                    if n == 0:
+                        filt = getattr(column, attr)(value)
+                        print("FIRST\n", filt)
+                    else:
+                        t = getattr(column, attr)(value)
+                        filt = and_(filt, t)
+                        print('AND\n ', filt)
+
+                n += 1
+
+        if ntables == 1:
+            qry = session.query(table).filter(filt)
+        else:
+            qry = session.query(tables[0]).join(tables[1])
+
+        # qry = qry.filter(filt)
+
+        print('QRY\n', qry)
+        results = pd.read_sql(qry.statement, qry.session.connection())
+        session.close()
+
+        print(results)
+        print(x)
+
+        """
         if index is None:
             index = []
         if columns is None:
@@ -280,6 +356,7 @@ class Database(object):
                 results.sort_index(inplace=True)
 
         return results
+        """
 
     def delete(self, dbtable, kwargs, logger=None):
         """ Delete database records.
