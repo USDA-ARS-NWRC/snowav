@@ -296,22 +296,16 @@ def figures(cfg, process):
     if cfg.stn_validate_flag:
         px = (1, 1, 1, 0, 0, 0, -1, -1, -1)
         py = (1, 0, -1, 1, 0, -1, 1, 0, -1)
-        et = args['end_date'].date().strftime("%Y%-m%-d")
-        basin = cfg.plotorder[0].lower().split(" ")[0]
-        name = '{}_validation_{}.png'.format(basin, et)
         login = {'user': cfg.wxdb_user,
                  'password': cfg.wxdb_password,
                  'host': cfg.wxdb_host,
                  'port': cfg.wxdb_port}
 
-        # assign fig name to cfg for use in report.py
-        cfg.assign_vars({'stn_validate_fig_name': name})
-
         flag = stn_validate(cfg.all_dirs, cfg.val_lbls, cfg.val_client,
                             args['end_date'], args['wy'], cfg.snow_x,
                             cfg.snow_y, cfg.val_stns, px, py, login,
-                            args['figs_path'], name, cfg.dem,
-                            logger=cfg._logger, elevlbl=args['elevlbl'],
+                            args['figs_path'], cfg.stn_validate_fig_name,
+                            cfg.dem, logger=cfg._logger, elevlbl=cfg.elevlbl,
                             nash_sut_flag=cfg.nash_sut_flag)
 
         if not flag:

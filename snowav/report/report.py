@@ -1,20 +1,15 @@
+from datetime import datetime
 from jinja2 import FileSystemLoader
 from latex.jinja2 import make_env
 from latex import build_pdf
-import pandas as pd
-import numpy as np
-from datetime import datetime
-import copy
 import os
+
 import snowav
 from snowav.database.database import collect
 
 
-def report(cfg, process):
-    '''
-    Create the pdf report.
-
-    See CoreConfig.ini and README.md for more information.
+def report(cfg):
+    """ Create the pdf report.
 
     The latex formats for figures, tables, and summary paragraphs are created
     by templates in snowav/report/. Data is pulled from the snowav database.
@@ -32,15 +27,18 @@ def report(cfg, process):
       process() to run), address that with some form of exception before
       creating the pdf
 
-    '''
+    Args
+    ------
+    cfg {class}: config class
+    """
 
-    bid = cfg.basins[cfg.plotorder[0]]['basin_id']
+    # bid = cfg.basins[cfg.plotorder[0]]['basin_id']
     basins = cfg.basins
-    wy_start = datetime(cfg.wy - 1, 10, 1)
+    wy_start = datetime(cfg.wy-1, 10, 1)
     start_date = cfg.start_date
     end_date = cfg.end_date
     run_name = cfg.run_name
-    edges = cfg.edges
+    # edges = cfg.edges
     plotorder = cfg.plotorder
     dpts = int(cfg.dplcs)
     ddpts = int(cfg.rep_dplcs)
@@ -105,32 +103,32 @@ def report(cfg, process):
     numsubs = range(1, len(cfg.plotorder))
 
     for n, sub in zip(numsubs, cfg.plotorder[1:]):
-        SWIIND = 'SUB' + str(n) + '_SWI'
-        PERSWIIND = 'SUB' + str(n) + '_PERSWI'
-        SWEIND = 'SUB' + str(n) + '_SWE'
-        AVSWEIND = 'SUB' + str(n) + '_SAV'
-        SWEDEL = 'SUB' + str(n) + '_SDEL'
-        PM = 'SUB' + str(n) + '_PM'
-        PREPM = 'SUB' + str(n) + 'PRE_PM'
-        RAIN = 'SUB' + str(n) + 'RAI'
-        RATIO = 'SUB' + str(n) + '_RAT'
-        PVOL = 'SUB' + str(n) + '_PVOL'
+        swiind = 'SUB' + str(n) + '_SWI'
+        perswiind = 'SUB' + str(n) + '_PERSWI'
+        sweind = 'SUB' + str(n) + '_SWE'
+        avsweind = 'SUB' + str(n) + '_SAV'
+        swedel = 'SUB' + str(n) + '_SDEL'
+        pm = 'SUB' + str(n) + '_PM'
+        prepm = 'SUB' + str(n) + 'PRE_PM'
+        rain = 'SUB' + str(n) + 'RAI'
+        ratio = 'SUB' + str(n) + '_RAT'
+        pvol = 'SUB' + str(n) + '_PVOL'
 
         dbval = collect(cnx, sub, basins, wy_start, end_date, 'swi_vol',
                         run_name, 'total', 'sum')
-        variables[SWIIND] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[swiind] = dbval.sum().values.round(decimals=dpts)[0]
 
         dbval = collect(cnx, sub, basins, start_date, end_date, 'swi_vol',
                         run_name, 'total', 'sum')
-        variables[PERSWIIND] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[perswiind] = dbval.sum().values.round(decimals=dpts)[0]
 
         dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_vol',
                         run_name, 'total', 'end')
-        variables[SWEIND] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[sweind] = dbval.sum().values.round(decimals=dpts)[0]
 
         dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_avail',
                         run_name, 'total', 'end')
-        variables[AVSWEIND] = dbval.sum().values.round(decimals=dpts)[0]
+        variables[avsweind] = dbval.sum().values.round(decimals=dpts)[0]
 
         dbval = collect(cnx, sub, basins, start_date, start_date, 'swe_vol',
                         run_name, 'total', 'end')
@@ -138,29 +136,29 @@ def report(cfg, process):
         dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_vol',
                         run_name, 'total', 'end')
         end_swe = dbval.sum().values.round(decimals=dpts)[0]
-        variables[SWEDEL] = end_swe - start_swe
+        variables[swedel] = end_swe - start_swe
 
         dbval = collect(cnx, sub, basins, start_date, end_date, 'swe_z',
                         run_name, 'total', 'end')
-        variables[PM] = dbval.sum().values.round(decimals=ddpts)[0]
+        variables[pm] = dbval.sum().values.round(decimals=ddpts)[0]
 
         dbval = collect(cnx, sub, basins, wy_start, end_date, 'precip_z',
                         run_name, 'total', 'sum')
-        variables[PREPM] = dbval.sum().values.round(decimals=ddpts)[0]
+        variables[prepm] = dbval.sum().values.round(decimals=ddpts)[0]
 
         dbval = collect(cnx, sub, basins, wy_start, end_date, 'rain_z',
                         run_name, 'total', 'sum')
-        variables[RAIN] = dbval.sum().values.round(decimals=ddpts)[0]
+        variables[rain] = dbval.sum().values.round(decimals=ddpts)[0]
 
         if (end_swe > 0) and (variables['TOTAL_SWE'] > 0):
-            variables[PVOL] = end_swe / variables['TOTAL_SWE'] * 100
+            variables[pvol] = end_swe / variables['TOTAL_SWE'] * 100
         else:
-            variables[PVOL] = '-'
+            variables[pvol] = '-'
 
-        if variables[PREPM] != 0.0:
-            variables[RATIO] = str(int((variables[RAIN] / variables[PREPM]) * 100))
+        if variables[prepm] != 0.0:
+            variables[ratio] = str(int((variables[rain] / variables[prepm]) * 100))
         else:
-            variables[RATIO] = '0'
+            variables[ratio] = '0'
 
     # Upper case variables are used in the LaTex file,
     # lower case versions are assigned here
@@ -267,7 +265,7 @@ def report(cfg, process):
     else:
         spacecmd = r'{'
 
-    ntables = len(cfg.tables)
+    # ntables = len(cfg.tables)
     mtables = 2
     ptables = 0
 

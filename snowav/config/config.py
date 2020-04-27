@@ -62,6 +62,7 @@ class UserConfig(object):
         self.run_name = ucfg.cfg['snowav']['run_name']
         self.plotorder = ucfg.cfg['snowav']['masks']
         self.plotlabels = ucfg.cfg['snowav']['plotlabels']
+        self.report_only = ucfg.cfg['snowav']['report_only']
 
         ####################################################
         #           run                                    #
@@ -502,6 +503,15 @@ class UserConfig(object):
 
         for item, v in kwargs.items():
             setattr(self, item, v)
+
+    def figure_names(self):
+        """ Assign figure names. """
+
+        et = self.end_date.date().strftime("%Y%-m%-d")
+        basin = self.plotorder[0].lower().split(" ")[0]
+        stn_validate_name = '{}_validation_{}.png'.format(basin, et)
+
+        self.assign_vars({'stn_validate_fig_name': stn_validate_name})
 
     def parse(self, external_logger=None):
         """ Parse config options. """

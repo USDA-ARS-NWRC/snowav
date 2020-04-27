@@ -1,5 +1,6 @@
 from datetime import datetime
 import pandas as pd
+from sys import exit
 
 from snowav.framework.query import query
 from snowav.config.config import UserConfig
@@ -32,6 +33,14 @@ class Snowav(object):
         # get and parse config options
         cfg = UserConfig(config_file, awsm=awsm, end_date=end_date)
         cfg.parse()
+        cfg.figure_names()
+
+        if cfg.report_only:
+            report(cfg)
+            elapsed = str(datetime.now() - cfg.proc_time_start)
+            cfg._logger.info(' Completed snowav processing, '
+                             'elapsed time: {}'.format(elapsed))
+            exit()
 
         # query existing database without processing
         if cfg.query_flag:
@@ -82,7 +91,7 @@ class Snowav(object):
             figures(cfg)
 
         if cfg.report_flag:
-            report(cfg, process)
+            report(cfg)
 
         elapsed = str(datetime.now() - cfg.proc_time_start)
 
