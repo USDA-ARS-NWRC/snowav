@@ -115,10 +115,13 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
 
     plt.close(9)
 
-    if len(stns) <= 3:
+    if len(stns) == 2:
+        fig, axs = plt.subplots(num=9, figsize=(6, 4), dpi=dpi,
+                                nrows=1, ncols=2)
+    if len(stns) in [3, 4]:
         fig, axs = plt.subplots(num=9, figsize=(6, 6), dpi=dpi,
-                                nrows=3, ncols=1)
-    if (len(stns) > 3) and (len(stns) <= 6):
+                                nrows=2, ncols=2)
+    if (len(stns) > 4) and (len(stns) <= 6):
         fig, axs = plt.subplots(num=9, figsize=(10, 10), dpi=dpi,
                                 nrows=3, ncols=2)
     if (len(stns) > 6) and (len(stns) <= 9):
@@ -127,10 +130,13 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
     if (len(stns) > 9) and (len(stns) <= 12):
         fig, axs = plt.subplots(num=9, figsize=(10, 10), dpi=dpi,
                                 nrows=4, ncols=3)
+
     axs = axs.flatten()
 
     set_x_on = 12
-    if len(stns) in (2, 5, 8):
+    if len(stns) == 3:
+        fig.delaxes(axs[len(stns)])
+    if len(stns) in (5, 8):
         fig.delaxes(axs[len(stns)])
         if len(stns) == 5:
             set_x_on = 3
@@ -221,7 +227,29 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
                 axs[iters].text(nsx, nsy, nstr, horizontalalignment='left',
                                 transform=axs[iters].transAxes, fontsize=8)
 
-    if len(stns) <= 6:
+    if len(stns) == 2:
+        axs[1].yaxis.tick_right()
+        for n in (0, 1):
+            for tick in axs[n].get_xticklabels():
+                tick.set_rotation(30)
+
+    if len(stns) == 3:
+        axs[1].yaxis.tick_right()
+        axs[0].set_xticklabels('')
+        for n in (0, 1, 2):
+            for tick in axs[n].get_xticklabels():
+                tick.set_rotation(30)
+
+    if len(stns) == 4:
+        axs[1].yaxis.tick_right()
+        axs[3].yaxis.tick_right()
+        axs[0].set_xticklabels('')
+        axs[1].set_xticklabels('')
+        for n in (0, 1, 2, 3):
+            for tick in axs[n].get_xticklabels():
+                tick.set_rotation(30)
+
+    if 4 < len(stns) <= 6:
         for n in (1, 3, 5):
             axs[n].yaxis.tick_right()
         for n in (4, 5):
@@ -234,7 +262,7 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
                 for tick in axs[n].get_xticklabels():
                     tick.set_rotation(30)
 
-    if (len(stns) > 6) and (len(stns) <= 9):
+    if 6 < len(stns) <= 9:
         for n in (2, 5, 8):
             axs[n].yaxis.tick_right()
 
@@ -246,7 +274,7 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
         for n in (1, 4, 7):
             axs[n].set_yticklabels('')
 
-    if (len(stns) > 9) and (len(stns) <= 12):
+    if 9 < len(stns) <= 12:
         for n in (2, 5, 8, 11):
             axs[n].yaxis.tick_right()
         for n in (9, 10, 11):
@@ -272,7 +300,14 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
     axs[0].set_ylabel('SWE [in]')
 
     plt.suptitle('SWE Validation at Snow Pillow Sites')
-    plt.subplots_adjust(top=0.92)
+
+    plt.tight_layout()
+
+    if len(stns) <= 4:
+        plt.subplots_adjust(top=0.85, bottom=0.15)
+
+    if len(stns) > 4:
+        plt.subplots_adjust(top=0.92)
 
     fig_name = os.path.join(os.path.abspath(figs_path), fig_name)
 
