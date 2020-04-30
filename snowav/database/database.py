@@ -167,59 +167,67 @@ class Database(object):
         with self.engine.connect() as dbcon:
             dbcon.execute(tbl.insert(), kwargs)
 
-    def operators(self, operator):
-        """ Translate sqlalchemy query operators for readability.
+    # def operators(self, operator):
+    #     """ Translate sqlalchemy query operators for readability.
+    #
+    #         eq for ==
+    #         lt for <
+    #         ge for >=
+    #         in for in_
+    #         like for like
+    #
+    #     """
+    #
+    #     if not isinstance(operator, str):
+    #         raise TypeError("operators must be a str")
+    #
+    #     omap = {'==': 'eq',
+    #             '<': 'lt',
+    #             '>': 'gt',
+    #             '>=': 'ge',
+    #             '<=': 'le',
+    #             'in_': 'in',
+    #             'like': 'like'}
+    #
+    #     if operator not in list(omap.keys()):
+    #         raise ValueError("operator must be in "
+    #                          "'{}'".format(list(omap.keys())))
+    #
+    #     return omap[operator]
 
-            eq for ==
-            lt for <
-            ge for >=
-            in for in_
-            like for like
+    def query(self, params):
+        """ Query the database.
 
-        """
+        Query parameters are in the format:
+            {
+             Table_0:
+                [
+                 ('field', 'operator', 'value'),
+                 ('field', 'operator', 'value')
+                ],
+             Table_1:
+                ...
+            }
 
-        if not isinstance(operator, str):
-            raise TypeError("operators must be a str")
-
-        omap = {'==': 'eq',
-                '<': 'lt',
-                '>': 'gt',
-                '>=': 'ge',
-                '<=': 'le',
-                'in_': 'in',
-                'like': 'like'}
-
-        if operator not in list(omap.keys()):
-            raise ValueError("operator must be in "
-                             "'{}'".format(list(omap.keys())))
-
-        return omap[operator]
-
-    def query(self, params, columns=None, index=None, logger=None):
-        """ Query database values.
-
-        Columns and index are used to filter results after query. Columns
-        is applied before index, so if you want index='index', 'index' must
-        also appear in columns=['index'].
+        where 'operators' are:
+            map = {'==': 'eq',
+                   '<': 'lt',
+                   '>': 'gt',
+                   '>=': 'ge',
+                   '<=': 'le',
+                   'in_': 'in',
+                   'like': 'like'}
 
         Args
         ------
-        params {dict}: query parameters, in the format
-                        {table: (column, operator, value)}
-        columns {list}: list of database table columns to filter results
-        index {list}: name of database table column to set as returned
-            DataFrame index
-        logger {class}: logger
+        params {dict}: query parameters
 
         Returns
         ------
         results {DataFrame}: query results
         """
 
-        # tparams = {Pixels: {(Pixels.model_row, '==', int(pt[0]))}}
-
         unique_tables = set(params.keys())
-        tables = list(params.keys())
         ntables = len(unique_tables)
 
         if ntables < 1 or ntables > 2:
@@ -228,26 +236,17 @@ class Database(object):
         dbsession = sessionmaker(bind=self.engine)
         session = dbsession()
 
-        from snowav.database.tables import Pixels, PixelsData
-
         n = 0
-        for t in params.keys():
-            print(t)
-            if t == 'Pixels':
-                table = Pixels
-            if t == 'PixelsData':
-                table = PixelsData
-
-            for f in params[t]:
-                print(f)
-                raw = f
-
+        td = {}
+        for table in params.keys():
+            for raw in params[table]:
                 try:
                     key, op, value = raw
                 except ValueError:
                     raise Exception('Invalid filter: %s' % raw)
 
                 column = getattr(table, key, None)
+                td[n] = column
 
                 if not column:
                     raise Exception('Invalid filter column: %s' % key)
@@ -269,96 +268,19 @@ class Database(object):
 
                     if n == 0:
                         filt = getattr(column, attr)(value)
-                        print("FIRST\n", filt)
                     else:
                         t = getattr(column, attr)(value)
                         filt = and_(filt, t)
-                        print('AND\n ', filt)
 
                 n += 1
 
-        if ntables == 1:
-            qry = session.query(table).filter(filt)
-        else:
-            qry = session.query(tables[0]).join(tables[1])
-
-        # qry = qry.filter(filt)
-
-        print('QRY\n', qry)
+        qry = session.query(*td.values()).filter(filt)
         results = pd.read_sql(qry.statement, qry.session.connection())
         session.close()
-
-        print(results)
-        print(x)
-
-        """
-        if index is None:
-            index = []
-        if columns is None:
-            columns = []
-        if not isinstance(params, dict):
-            raise TypeError("params must be a dict")
-
-        unique_tables = set(params.keys())
-        ntables = len(unique_tables)
-
-        if ntables < 1 or ntables > 2:
-            raise ValueError("params can have no more than 2 unique tables")
-
-        if not isinstance(columns, list):
-            raise TypeError("columns must be a list")
-
-        if not isinstance(index, list):
-            raise TypeError("index must be a list")
-
-        dbsession = sessionmaker(bind=self.engine)
-        session = dbsession()
-        tables = list(params.keys())
-        ntables = len(tables)
-
-        if ntables == 1:
-            qry = session.query(tables[0]).filter_by(**params[tables[0]])
-        else:
-            qry = session.query(tables[0], tables[1])
-
-        results = pd.read_sql(qry.statement, qry.session.connection())
-        session.close()
-
-        # apply columns
-        applied_columns = []
-        for c in columns:
-            if c in results.columns:
-                applied_columns.append(c)
-
-            else:
-                if logger is not None:
-                    logger.warning(" columns='{}' not in {}, will not "
-                                   "apply".format(c, list(results.columns)))
-                else:
-                    print("columns='{}' not in {}, will not "
-                          "apply".format(c, list(results.columns)))
-
-        if len(applied_columns) > 0:
-            results = results[applied_columns]
-
-        # apply index
-        if len(index) > 0:
-            if index[0] not in list(results.columns):
-                if logger is not None:
-                    logger.warning(" index='{}' not in columns={}, will not "
-                                   "apply".format(index[0],
-                                                  list(results.columns)))
-                else:
-                    print("index='{}' not in columns={}, will not "
-                          "apply".format(index[0], list(results.columns)))
-            else:
-                results.set_index(index, inplace=True)
-                results.sort_index(inplace=True)
 
         return results
-        """
 
-    def delete(self, dbtable, kwargs, logger=None):
+    def delete(self, params):
         """ Delete database records.
 
         Args
@@ -366,7 +288,6 @@ class Database(object):
         dbtable {string}: string format of database table name (i.e., 'Pixels')
         kwargs {dict}: items for deletion {field: value}
         logger {class}: logger
-        """
 
         if not isinstance(kwargs, dict):
             raise TypeError("kwargs must be dict")
@@ -384,6 +305,58 @@ class Database(object):
         if logger is not None:
             logger.debug(" Deleted database records")
 
+        """
+
+        unique_tables = set(params.keys())
+        ntables = len(unique_tables)
+
+        if ntables < 1 or ntables > 2:
+            raise ValueError("params must have <= 2 unique tables")
+
+        dbsession = sessionmaker(bind=self.engine)
+        session = dbsession()
+
+        n = 0
+        td = {}
+        for table in params.keys():
+            for raw in params[table]:
+                try:
+                    key, op, value = raw
+                except ValueError:
+                    raise Exception('Invalid filter: %s' % raw)
+
+                column = getattr(table, key, None)
+                td[n] = column
+
+                if not column:
+                    raise Exception('Invalid filter column: %s' % key)
+                if op == 'in':
+                    if isinstance(value, list):
+                        filt = column.in_(value)
+                    else:
+                        filt = column.in_(value.split(','))
+                else:
+                    try:
+                        attr = list(filter(
+                            lambda e: hasattr(column, e % op),
+                            ['%s', '%s_', '__%s__']
+                        ))[0] % op
+                    except IndexError:
+                        raise Exception('Invalid filter operator: %s' % op)
+                    if value == 'null':
+                        value = None
+
+                    if n == 0:
+                        filt = getattr(column, attr)(value)
+                    else:
+                        t = getattr(column, attr)(value)
+                        filt = and_(filt, t)
+
+                n += 1
+
+        session.query(*td.values()).filter(filt).delete()
+        session.commit()
+        session.close()
 
 def make_session(connector):
     '''

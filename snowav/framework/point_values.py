@@ -606,7 +606,7 @@ def put_on_database(db, pv):
 
         df = pv.var_dict[pt]['data']
         start_date = min(df.index)
-        # end_date = max(df.index)
+        end_date = max(df.index)
 
         metadata = {
             'location': str(pv.var_dict[pt]['location']),
@@ -619,85 +619,38 @@ def put_on_database(db, pv):
             'elevation': float(pv.dem[pt[1], pt[0]])
         }
 
-        # currently query() is only grabbing keys from params and pixelsparams
-        params = {Pixels: {'model_row': int(pt[0]),
-                           'model_col': int(pt[1]),
-                           'name': str(pv.var_dict[pt]['name']),
-                           'location': str(pv.var_dict[pt]['location']),
-                           'description': str(pv.var_dict[pt]['description'])
-                           },
-                  PixelsData: {'date_time': start_date}
-                  }
-        pixelsparams = {Pixels: {'model_row': int(pt[0]),
-                                 'model_col': int(pt[1]),
-                                 'name': str(pv.var_dict[pt]['name']),
-                                 'location': str(pv.var_dict[pt]['location']),
-                                 'description': str(pv.var_dict[pt]['description'])
-                                 }
-                        }
+        pixelsparams = {
+            Pixels:
+                [
+                    ('id', 'ge', 0),
+                    ('model_row', 'eq', int(pt[0])),
+                    ('model_col', 'eq', int(pt[1])),
+                    ('name', 'eq', str(pv.var_dict[pt]['name'])),
+                    ('location', 'eq', str(pv.var_dict[pt]['location'])),
+                    ('description', 'eq', str(pv.var_dict[pt]['description']))
+                ]
+        }
 
-        # from sqlalchemy import create_engine, and_
-        # from sqlalchemy.orm import sessionmaker
-        #
-        # tparams = {Pixels: {(Pixels.model_row, '==', int(pt[0]))}}
-        #
-        # dbsession = sessionmaker(bind=db.engine)
-        # session = dbsession()
-        # tables = list(tparams.keys())
-        # raw = ('model_row', 'ge', 1)
-        # try:
-        #     key, op, value = raw
-        # except ValueError:
-        #     raise Exception('Invalid filter: %s' % raw)
-        #
-        # column = getattr(Pixels, key, None)
-        #
-        # if not column:
-        #     raise Exception('Invalid filter column: %s' % key)
-        # if op == 'in':
-        #     if isinstance(value, list):
-        #         filt = column.in_(value)
-        #     else:
-        #         filt = column.in_(value.split(','))
-        # else:
-        #     try:
-        #         attr = list(filter(
-        #             lambda e: hasattr(column, e % op),
-        #             ['%s', '%s_', '__%s__']
-        #         ))[0] % op
-        #     except IndexError:
-        #         raise Exception('Invalid filter operator: %s' % op)
-        #     if value == 'null':
-        #         value = None
-        #     filt = getattr(column, attr)(value)
-        #
-        # qry = session.query(Pixels, PixelsData)
-        # qry = qry.filter(filt)
-        #
-        # results = pd.read_sql(qry.statement, qry.session.connection())
-        # session.close()
-        #
-        # print(qry)
-        # print(results)
-        #
-        # print(x)
-
-        params = {'Pixels': [
-                            ('model_row', 'eq', int(pt[0])),
-                            ('name', 'eq', 'MAM')
-        ],
-                  # 'PixelsData': [('date_time', 'ge', datetime(2020, 1, 1))]
-                  }
+        params = {
+            Pixels:
+                [
+                    ('id', 'ge', 0),
+                    ('model_row', 'eq', int(pt[0])),
+                    ('model_col', 'eq', int(pt[1])),
+                    ('location', 'eq', str(pv.var_dict[pt]['location'])),
+                    ('description', 'eq', str(pv.var_dict[pt]['description'])),
+                    ('name', 'eq', str(pv.var_dict[pt]['name']))
+                ],
+            PixelsData:
+                [
+                    ('date_time', 'ge', start_date.to_datetime()),
+                    ('date_time', 'le', end_date.to_datetime()),
+                    ('pixel_id', 'ge', 0)
+                ]
+        }
 
         # first, see if records already exist with the same values
-        results = db.query(params, logger=pv.logger)
-
-        # filter outside of query for now
-        results = results[(results.model_row == pt[0]) &
-                          (results.model_col == pt[1]) &
-                          (results.name == str(pv.var_dict[pt]['name'])) &
-                          (results.date_time >= pv.start_date) &
-                          (results.date_time <= pv.end_date)]
+        results = db.query(params)
 
         # if no existing records, put on database
         if results.empty:
@@ -710,12 +663,6 @@ def put_on_database(db, pv):
 
             # get associated Pixels.id metadata for PixelsData
             results = db.query(pixelsparams, logger=pv.logger)
-
-            # for this case we can't filter by 'date_time', because there
-            # aren't any records yet
-            results = results[(results.model_row == pt[0]) &
-                              (results.model_col == pt[1]) &
-                              (results.name == str(pv.var_dict[pt]['name']))]
 
             max_record_id = int(max(pd.unique(results['id'])))
 
@@ -742,25 +689,39 @@ def put_on_database(db, pv):
             if pv.overwrite:
                 # first, delete the existing metadata and records based on the
                 # existing Pixels.id
-                print(existing_record_id)
-                for rec in existing_record_id:
+                print('OVERWRITE')
+                print(results)
 
-                    # first, delete the data
-                    dparams = {'pixel_id': int(rec)}
-                    db.delete('PixelsData', dparams, logger=pv.logger)
+                pixels_params_del = {
+                    Pixels:
+                        [
+                            ('id', 'in', list(results['id'].values)),
+                            ('model_row', 'eq', int(pt[0])),
+                            ('model_col', 'eq', int(pt[1])),
+                            ('location', 'eq', str(pv.var_dict[pt]['location'])),
+                            ('description', 'eq', str(pv.var_dict[pt]['description'])),
+                            ('name', 'eq', str(pv.var_dict[pt]['name']))
+                        ]
+                }
 
-                    results = db.query(params, logger=pv.logger)
-                    results = results[(results.model_row == pt[0]) &
-                                      (results.model_col == pt[1]) &
-                                      (results.name == str(pv.var_dict[pt]['name'])) &
-                                      (results.date_time >= pv.start_date) &
-                                      (results.date_time <= pv.end_date)]
+                pixelsdata_params_del = {
+                    PixelsData:
+                        [
+                            ('pixel_id', 'in', list(results['pixel_id'].values)),
+                            ('date_time', 'ge', start_date.to_datetime()),
+                            ('date_time', 'le', end_date.to_datetime())
+                        ]
+                }
 
-                    # if that removed everything, also delete the metadata
-                    if results.empty:
-                        db.delete('Pixels',
-                                  {'id': int(rec)},
-                                  logger=pv.logger)
+                db.delete(pixels_params_del)
+                db.delete(pixelsdata_params_del)
+
+                # results = db.query(params, logger=pv.logger)
+                # # if that removed everything, also delete the metadata
+                # if results.empty:
+                #     db.delete('Pixels',
+                #               {'id': int(rec)},
+                #               logger=pv.logger)
 
                 # insert metadata
                 db.insert('Pixels', metadata, logger=pv.logger)
@@ -771,11 +732,6 @@ def put_on_database(db, pv):
                 # get associated Pixels.id metadata for PixelsData with the
                 # same query params
                 results = db.query(pixelsparams, logger=pv.logger)
-
-                # filter outside of query for now
-                results = results[(results.model_row == pt[0]) &
-                                  (results.model_col == pt[1]) &
-                                  (results.name == str(pv.var_dict[pt]['name']))]
                 record_id = int(max(pd.unique(results['id'])))
 
                 # prepare data to put on database
