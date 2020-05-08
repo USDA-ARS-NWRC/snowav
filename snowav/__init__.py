@@ -1,5 +1,5 @@
 import os
-__version__ = '0.11.15'
+__version__ = '0.11.16'
 __core_config__ = os.path.abspath(os.path.dirname(__file__) + '/config/CoreConfig.ini')
 __recipes__ = os.path.abspath(os.path.dirname(__file__) + '/config/recipes.ini')
 __config_titles__ = {'snowav':'Overview',
