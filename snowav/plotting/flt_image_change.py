@@ -180,11 +180,13 @@ def flt_image_change(file, update_numbers, end_date, flight_outputs,
         cbar = plt.colorbar(h, cax=cax)
         cbar.set_label(r'$\Delta$ SWE [{}]'.format(depthlbl))
 
-        start_date = start_date + timedelta(hours=1)
+
+        end_date = start_date + timedelta(hours=1)
         d = end_date + timedelta(hours=1)
 
-        h.axes.set_title('Change in SWE Depth from Update\n{}'
-                         .format(start_date.date().strftime("%Y-%-m-%-d")))
+        h.axes.set_title('Change in SWE Depth\n{} to {}'
+                         .format(start_date.date().strftime("%Y-%-m-%-d"),
+                                 end_date.date().strftime("%Y-%-m-%-d")))
 
         if len(plotorder) == 1:
             porder = plotorder
