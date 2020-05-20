@@ -167,34 +167,6 @@ class Database(object):
         with self.engine.connect() as dbcon:
             dbcon.execute(tbl.insert(), kwargs)
 
-    # def operators(self, operator):
-    #     """ Translate sqlalchemy query operators for readability.
-    #
-    #         eq for ==
-    #         lt for <
-    #         ge for >=
-    #         in for in_
-    #         like for like
-    #
-    #     """
-    #
-    #     if not isinstance(operator, str):
-    #         raise TypeError("operators must be a str")
-    #
-    #     omap = {'==': 'eq',
-    #             '<': 'lt',
-    #             '>': 'gt',
-    #             '>=': 'ge',
-    #             '<=': 'le',
-    #             'in_': 'in',
-    #             'like': 'like'}
-    #
-    #     if operator not in list(omap.keys()):
-    #         raise ValueError("operator must be in "
-    #                          "'{}'".format(list(omap.keys())))
-    #
-    #     return omap[operator]
-
     def query(self, params):
         """ Query the database.
 
@@ -285,33 +257,12 @@ class Database(object):
 
         Args
         ------
-        dbtable {string}: string format of database table name (i.e., 'Pixels')
-        kwargs {dict}: items for deletion {field: value}
-        logger {class}: logger
-
-        if not isinstance(kwargs, dict):
-            raise TypeError("kwargs must be dict")
-
-        dbsession = sessionmaker(bind=self.engine)
-        session = dbsession()
-
-        tbl = sa.Table(dbtable, sa.MetaData(), autoload_with=self.engine)
-        results = session.query(tbl).filter_by(**kwargs)
-        results.delete(synchronize_session=False)
-
-        session.commit()
-        session.close()
-
-        if logger is not None:
-            logger.debug(" Deleted database records")
-
+        params {dict}: dictionary of database table and list of filter values
+                        format {table: [(field, 'operator', value),
+                                       (field, 'operator', value)...
+                                      ]
+                              }
         """
-
-        unique_tables = set(params.keys())
-        ntables = len(unique_tables)
-
-        if ntables < 1 or ntables > 2:
-            raise ValueError("params must have <= 2 unique tables")
 
         dbsession = sessionmaker(bind=self.engine)
         session = dbsession()
@@ -354,9 +305,10 @@ class Database(object):
 
                 n += 1
 
-        session.query(*td.values()).filter(filt).delete()
+        session.query(list(params.keys())[0]).filter(filt).delete(synchronize_session=False)
         session.commit()
         session.close()
+
 
 def make_session(connector):
     '''

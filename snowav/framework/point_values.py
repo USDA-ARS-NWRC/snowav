@@ -643,8 +643,8 @@ def put_on_database(db, pv):
                 ],
             PixelsData:
                 [
-                    ('date_time', 'ge', start_date.to_datetime()),
-                    ('date_time', 'le', end_date.to_datetime()),
+                    ('date_time', 'ge', start_date.to_pydatetime()),
+                    ('date_time', 'le', end_date.to_pydatetime()),
                     ('pixel_id', 'ge', 0)
                 ]
         }
@@ -662,7 +662,7 @@ def put_on_database(db, pv):
                                              metadata['model_col']))
 
             # get associated Pixels.id metadata for PixelsData
-            results = db.query(pixelsparams, logger=pv.logger)
+            results = db.query(pixelsparams)
 
             max_record_id = int(max(pd.unique(results['id'])))
 
@@ -689,13 +689,11 @@ def put_on_database(db, pv):
             if pv.overwrite:
                 # first, delete the existing metadata and records based on the
                 # existing Pixels.id
-                print('OVERWRITE')
-                print(results)
 
                 pixels_params_del = {
                     Pixels:
                         [
-                            ('id', 'in', list(results['id'].values)),
+                            ('id', 'in', [int(x) for x in results['id'].values]),
                             ('model_row', 'eq', int(pt[0])),
                             ('model_col', 'eq', int(pt[1])),
                             ('location', 'eq', str(pv.var_dict[pt]['location'])),
@@ -707,14 +705,14 @@ def put_on_database(db, pv):
                 pixelsdata_params_del = {
                     PixelsData:
                         [
-                            ('pixel_id', 'in', list(results['pixel_id'].values)),
-                            ('date_time', 'ge', start_date.to_datetime()),
-                            ('date_time', 'le', end_date.to_datetime())
+                            ('pixel_id', 'in', [int(x) for x in results['pixel_id'].values]),
+                            ('date_time', 'ge', start_date.to_pydatetime()),
+                            ('date_time', 'le', end_date.to_pydatetime())
                         ]
                 }
 
-                db.delete(pixels_params_del)
                 db.delete(pixelsdata_params_del)
+                db.delete(pixels_params_del)
 
                 # results = db.query(params, logger=pv.logger)
                 # # if that removed everything, also delete the metadata
@@ -731,7 +729,7 @@ def put_on_database(db, pv):
 
                 # get associated Pixels.id metadata for PixelsData with the
                 # same query params
-                results = db.query(pixelsparams, logger=pv.logger)
+                results = db.query(pixelsparams)
                 record_id = int(max(pd.unique(results['id'])))
 
                 # prepare data to put on database
