@@ -248,8 +248,7 @@ class UserConfig(object):
         ####################################################
         self.dpi = ucfg.cfg['plots']['dpi']
         self.depth_clip = ucfg.cfg['plots']['depth_clip']
-        self.percent_min = ucfg.cfg['plots']['percent_min']
-        self.percent_max = ucfg.cfg['plots']['percent_max']
+        self.clims_percent = ucfg.cfg['plots']['clims_percent']
         self.subs_fig = ucfg.cfg['plots']['subs_fig']
         self.density_flag = ucfg.cfg['plots']['density']
         self.swi_flag = ucfg.cfg['plots']['swi']
@@ -272,8 +271,7 @@ class UserConfig(object):
         self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
         self.update_file = ucfg.cfg['plots']['update_file']
         self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
-        self.figsize = (ucfg.cfg['plots']['fig_length'],
-                        ucfg.cfg['plots']['fig_height'])
+        self.figsize = ucfg.cfg['plots']['fig_size']
         self.write_properties = ucfg.cfg['plots']['write_properties']
         self.point_values_flag = ucfg.cfg['plots']['point_values']
 
