@@ -173,20 +173,19 @@ def figures(cfg, process):
 
     if cfg.basin_total_flag:
         wy_start = datetime(cfg.wy - 1, 10, 1)
-        swi_summary = collect(connector, args['plotorder'], args['basins'],
-                              wy_start, args['end_date'], 'swi_vol',
-                              args['run_name'], 'total', 'daily')
-        df_swe = collect(connector, args['plotorder'], args['basins'],
-                         wy_start, args['end_date'], 'swe_vol',
-                         args['run_name'], 'total', 'daily')
+        swi_summary = collect(connector, cfg.plotorder, cfg.basins, wy_start,
+                              cfg.end_date, 'swi_vol', cfg.run_name, 'total',
+                              'daily')
+        df_swe = collect(connector, cfg.plotorder, cfg.basins, wy_start,
+                         cfg.end_date, 'swe_vol', cfg.run_name, 'total',
+                         'daily')
         df_swi = swi_summary.cumsum()
 
-        args['swi_summary'] = df_swi
-        args['swe_summary'] = df_swe
-        args['forecast_flag'] = cfg.forecast_flag
-        args['flt_flag'] = cfg.flt_flag
-
-        fig_names['basin_total'] = basin_total(args, cfg._logger)
+        basin_total(cfg.plotorder, cfg.labels, cfg.end_date, cfg.barcolors,
+                    df_swi, df_swe, cfg.wy, cfg.vollbl, cfg.figsize,
+                    cfg.figs_path, cfg.basin_total_fig_name, dpi=cfg.dpi,
+                    flight_dates=cfg.flight_diff_dates, logger=cfg._logger,
+                    flight_flag=cfg.flt_flag)
 
     if cfg.precip_depth_flag:
         swi_image = np.zeros_like(cfg.outputs['swi_z'][0])
@@ -524,9 +523,6 @@ def figures(cfg, process):
         args['inputs_basins'] = cfg.inputs_basins
 
         inputs(args, cfg._logger)
-
-    if cfg.forecast_flag:
-        print('Forecast figures in progress...')
 
     cfg.fig_names = fig_names
 

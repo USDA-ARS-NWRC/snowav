@@ -215,7 +215,7 @@ def report(cfg):
     variables['FIG_PATH'] = cfg.figs_path
     variables['SWI_FIG'] = 'swi_{}.png'.format(cfg.directory)
     variables['CHANGES_FIG'] = 'swe_change_{}.png'.format(cfg.directory)
-    variables['TOTALS_FIG'] = 'basin_total_{}.png'.format(cfg.directory)
+    variables['TOTALS_FIG'] = cfg.basin_total_fig_name
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(cfg.directory)
     variables['DENSITY_FIG'] = 'density_{}.png'.format(cfg.directory)
     variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(cfg.directory)
@@ -227,15 +227,6 @@ def report(cfg):
     if (cfg.update_file is not None) and cfg.flt_flag and cfg.flight_figs:
         for name in cfg.flight_diff_fig_names:
             variables['DFLT_FIG'] = name
-
-    if cfg.forecast_flag:
-        variables['FORE_START_DATE'] = cfg.for_start_date.date().strftime("%B %-d")
-        variables['FORE_DATE'] = cfg.for_end_date.date().strftime("%B %-d")
-        variables['SWEFORECAST_FIG'] = 'swe_volume_{}.png'.format(cfg.directory + '_forecast')
-        variables['SWIFORECAST_FIG'] = 'swi_{}.png'.format(cfg.directory + '_forecast')
-        variables['CHANGESFORECAST_FIG'] = 'swe_change_{}.png'.format(cfg.directory + '_forecast')
-        variables['TOTALSFORECAST_FIG'] = 'basin_total_{}.png'.format(cfg.directory + '_forecast')
-        variables['PDEPFORECAST_FIG'] = 'precip_depth_{}.png'.format(cfg.directory + '_forecast')
 
     if cfg.report_diagnostics:
         variables['DIAGNOSTICS_FIG'] = 'diagnostics_{}'.format(cfg.directory)
@@ -402,17 +393,11 @@ def report(cfg):
                     'COLD_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'cold_fig_tpl.txt'),
                     'SWE_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'swe_fig_tpl.txt'),
                     'SUBBASINS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'subbasins_fig_tpl.txt'),
-                    'SWEFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastswe_fig_tpl.txt'),
-                    'SWIFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastswi_fig_tpl.txt'),
-                    'CHANGESFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastchanges_fig_tpl.txt'),
-                    'TOTALSFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecasttotals_fig_tpl.txt'),
-                    'PDEPFORECAST_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'forecastpdep_fig_tpl.txt'),
-                    'DIAGNOSTICS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'diagnostics_fig_tpl.txt')
-                    }
+                    'DIAGNOSTICS_FIG_TPL': os.path.join(cfg.figs_tpl_path, 'diagnostics_fig_tpl.txt'),
+                    'SWE_SUMMARY_TPL': os.path.join(cfg.figs_tpl_path,
+                                                    'swe_summary_{}sub.txt'.format(str(len(cfg.plotorder))))}
 
     # Define and load summary tables depending on number of subbasins
-    section_dict['SWE_SUMMARY_TPL'] = os.path.join(cfg.figs_tpl_path,
-                                                   'swe_summary_{}sub.txt'.format(str(len(cfg.plotorder))))
 
     # Remove if no flight
     if not cfg.flt_flag or not cfg.flight_figs:
@@ -421,30 +406,6 @@ def report(cfg):
     if not cfg.report_diagnostics:
         del section_dict['DIAGNOSTICS_FIG_TPL']
         variables['DIAGNOSTICS_FIG'] = ''
-
-    # Remove if no forecast
-    if not cfg.forecast_flag:
-        del section_dict['SWEFORECAST_FIG_TPL']
-        del section_dict['SWIFORECAST_FIG_TPL']
-        del section_dict['CHANGESFORECAST_FIG_TPL']
-        del section_dict['TOTALSFORECAST_FIG_TPL']
-        del section_dict['PDEPFORECAST_FIG_TPL']
-
-        variables['SWIFORECAST_FIG'] = ''
-        variables['SWIFORECAST_FIG_TPL'] = ''
-        variables['PDEPFORECAST_FIG'] = ''
-        variables['PDEPFORECAST_FIG_TPL'] = ''
-        variables['SWEFORECAST_FIG'] = ''
-        variables['SWEFORECAST_FIG_TPL'] = ''
-        variables['CHANGESFORECAST_FIG'] = ''
-        variables['CHANGESFORECAST_FIG_TPL'] = ''
-        variables['TOTALSFORECAST_FIG'] = ''
-        variables['TOTALSFORECAST_FIG_TPL'] = ''
-        variables['FORE_TITLE'] = ''
-
-    else:
-        variables['FORE_TITLE'] = 'with WRF forecast, {} to {}'.format(cfg.for_start_date.date().strftime("%b %-d"),
-                                                                       cfg.for_end_date.date().strftime("%b %-d"))
 
     for rep in section_dict.keys():
 

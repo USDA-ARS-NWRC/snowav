@@ -437,28 +437,6 @@ class UserConfig(object):
                              "report/figs"))
 
         ####################################################
-        #           forecast                               #
-        ####################################################
-        self.forecast_flag = ucfg.cfg['forecast']['report']
-
-        if self.forecast_flag:
-            self.for_start_date = ucfg.cfg['forecast']['start_date']
-            self.for_end_date = ucfg.cfg['forecast']['end_date']
-            self.for_run_name = ucfg.cfg['forecast']['run_name']
-
-            if self.for_start_date >= self.for_end_date:
-                self.tmp_log.append(' Error: config option [forecast] '
-                                    'start_date > end_date')
-                raise Exception('Config option [forecast] start_date >'
-                                'end_date')
-
-            self.for_run_dir = ([ucfg.cfg['forecast']['run_dir'] + s for s in
-                                 os.listdir(ucfg.cfg['forecast']['run_dir'])
-                                 if (os.path.isdir(ucfg.cfg['forecast']['run_dir'] + s))])
-
-            self.for_run_dir.sort()
-
-        ####################################################
         #           query                                  #
         ####################################################
         self.query_flag = ucfg.cfg['query']['query']
@@ -507,11 +485,13 @@ class UserConfig(object):
     def figure_names(self):
         """ Assign figure names. """
 
-        et = self.end_date.date().strftime("%Y%-m%-d")
+        et = self.end_date.date().strftime("%Y%m%d")
         basin = self.plotorder[0].lower().split(" ")[0]
         stn_validate_name = '{}_validation_{}.png'.format(basin, et)
+        basin_total_name = '{}_basin_totals_{}.png'.format(basin, et)
 
         self.assign_vars({'stn_validate_fig_name': stn_validate_name})
+        self.assign_vars({'basin_total_fig_name': basin_total_name})
 
     def parse(self, external_logger=None):
         """ Parse config options. """
@@ -711,17 +691,6 @@ class UserConfig(object):
                    self.end_date.date().strftime("%Y%m%d"))
         self.figs_path = os.path.join(self.save_path, '{}/'.format(ext_shr))
 
-        # get forecast outputs
-        if self.forecast_flag:
-            results = outputs(self.for_run_dirs, self.wy, self.properties,
-                              None, None, None, self.loglevel)
-
-            self.for_outputs = results['outputs']
-            self.for_run_dirs = results['run_dirs']
-            self.for_rundirs_dict = results['rdict']
-            self.for_ixs = 0
-            self.for_ixe = len(self.for_outputs['swe_z']) - 1
-
         # Get outputs for flights
         if self.flt_flag:
 
@@ -778,6 +747,8 @@ class UserConfig(object):
                                     'supplied, but no snow.nc files were found in '
                                     '[run] directory that fit the date range, no '
                                     'flight difference figure will be made')
+        else:
+            self.flight_diff_dates = None
 
         self.report_date = self.end_date + timedelta(hours=1)
         parts = self.report_name.split('.')

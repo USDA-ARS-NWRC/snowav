@@ -69,27 +69,6 @@ class Snowav(object):
 
         figures(cfg, process)
 
-        # Do additional processing and figures if forecast is supplied. Some
-        # field will be overwritten during forecast processing
-        if cfg.forecast_flag:
-            cfg._logger.info(' Starting forecast processing...')
-
-            run_metadata(cfg, cfg.for_run_name)
-
-            cfg.pargs['run_id'] = cfg.run_id
-            cfg.pargs['vid'] = cfg.vid
-            flags, out, pre, rain, density = process(cfg.pargs)
-
-            for log in out:
-                cfg._logger.info(log)
-
-            cfg.density = density
-            cfg.rain_total = rain
-            cfg.precip_total = pre
-
-            # figures for forecast run
-            figures(cfg)
-
         if cfg.report_flag:
             report(cfg)
 
