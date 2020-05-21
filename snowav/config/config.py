@@ -168,8 +168,6 @@ class UserConfig(object):
         self.val_stns = ucfg.cfg['validate']['stations']
         self.val_lbls = ucfg.cfg['validate']['labels']
         self.val_client = ucfg.cfg['validate']['client']
-        self.pre_val_stns = ucfg.cfg['validate']['pre_stations']
-        self.pre_val_lbls = ucfg.cfg['validate']['pre_labels']
         self.wxdb_user = ucfg.cfg['validate']['user']
         self.wxdb_password = ucfg.cfg['validate']['password']
         self.wxdb_host = ucfg.cfg['validate']['host']
@@ -264,7 +262,6 @@ class UserConfig(object):
         self.stn_validate_flag = ucfg.cfg['plots']['stn_validate']
         self.nash_sut_flag = ucfg.cfg['plots']['disp_nash_sut']
         self.stns_file = ucfg.cfg['plots']['stns_file']
-        self.precip_validate_flag = ucfg.cfg['plots']['precip_validate']
         self.inputs_fig_flag = ucfg.cfg['plots']['inputs']
         self.plots_inputs_variables = ucfg.cfg['plots']['inputs_variables']
         self.compare_runs_flag = ucfg.cfg['plots']['compare_runs']
@@ -318,13 +315,6 @@ class UserConfig(object):
             self.flt_flag = True
         else:
             self.flt_flag = False
-
-        if (self.precip_validate_flag and ((self.val_client is None) or
-            (self.pre_val_stns is None) or (self.pre_val_lbls is None))):
-            self.tmp_log.append(' Config option [plots] precip_validate is '
-                                'being set to False')
-
-            self.precip_validate_flag = False
 
         if (self.stn_validate_flag and (self.val_client is None) or
                 (self.val_stns is None) or (self.val_lbls is None) or
