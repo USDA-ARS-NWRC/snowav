@@ -575,22 +575,12 @@ class UserConfig(object):
             self.vollbl = self.units
             self.elevlbl = 'ft'
 
-            if max(self.edges) < 5000:
-                self.tmp_log.append(" WARNING! Config options [snowav] units: TAF "
-                                    "and elev_bins: {} may not match! Consider changing elev_bins "
-                                    "values".format(self.elev_bins))
-
         if self.units == "SI":
             self.conversion_factor = ((self.pixel ** 2) * 0.000000810713194) * 1233.48 / 1e9
-            self.depth_factor = 0.01
+            self.depth_factor = 0.1
             self.depthlbl = 'cm'
             self.vollbl = 'M$M^3$'
             self.elevlbl = 'm'
-
-            if max(self.edges) > 5000:
-                self.tmp_log.append(" WARNING! Config options [snowav] units: SI "
-                                    "and elev_bins: {} may not match! Consider changing elev_bins "
-                                    "values".format(self.elev_bins))
 
         self.ixd = np.digitize(self.dem, edges)
         self.xlims = (0, len(edges))
