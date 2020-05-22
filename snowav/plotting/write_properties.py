@@ -60,7 +60,8 @@ def write_properties(end_date, cnx, plotorder, basins, wy_start, run_name,
                    'Contact: Scott Havens <scott.havens@usda.gov>'
                    '\n']
 
-        filename = '{}_timeseries_{}_{}.csv'.format(value, datestr, unit.lower())
+        s = ''.join(e for e in unit.lower() if e.isalnum())
+        filename = '{}_daily_{}_{}.csv'.format(value, datestr, s)
         path = os.path.join(os.path.abspath(figs_path), filename)
 
         if os.path.isfile(path):
