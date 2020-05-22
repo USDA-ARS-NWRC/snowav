@@ -1,5 +1,6 @@
 from datetime import datetime
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 import os
 import seaborn as sns
 
@@ -61,7 +62,7 @@ def basin_total(plotorder, labels, end_date, barcolors, swi, swe, wy, vollbl,
     ax.set_xlim((datetime(wy - 1, 10, 1), x_end_date))
     ax1.tick_params(axis='y')
     ax1.yaxis.tick_right()
-    ax.legend(loc='upper left')
+    ax.legend(loc='upper left', fontsize=8)
     swey = ax.get_ylim()
     swiy = ax1.get_ylim()
 
@@ -74,8 +75,8 @@ def basin_total(plotorder, labels, end_date, barcolors, swi, swe, wy, vollbl,
         ax.set_ylim((-0.1, swey[1]))
 
     for tick, tick1 in zip(ax.get_xticklabels(), ax1.get_xticklabels()):
-        tick.set_rotation(30)
-        tick1.set_rotation(30)
+        tick.set_rotation(45)
+        tick1.set_rotation(45)
 
     ax1.set_ylabel('[{}]'.format(vollbl))
     ax1.set_xlabel('')
@@ -83,6 +84,11 @@ def basin_total(plotorder, labels, end_date, barcolors, swi, swe, wy, vollbl,
     ax.axes.set_title(swe_title)
     ax1.axes.set_title(swi_title)
     ax.set_ylabel('[{}]'.format(vollbl))
+
+    ax.tick_params(axis='x', labelsize=8)
+    ax1.tick_params(axis='x', labelsize=8)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b-%d'))
+    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%b-%d'))
 
     fig_name = os.path.join(os.path.abspath(figs_path), fig_name)
     snowav.framework.figures.save_fig(fig, fig_name)

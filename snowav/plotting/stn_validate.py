@@ -1,5 +1,6 @@
 from datetime import datetime
 from matplotlib import pyplot as plt
+import matplotlib.dates as mdates
 import mysql.connector
 import netCDF4 as nc
 import numpy as np
@@ -85,8 +86,7 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
     metadata = pd.read_sql(qry, cnx)
 
     if metadata.empty:
-        flag = False
-        return
+        return False
 
     metadata.index = metadata['primary_id']
     metadata = metadata[~metadata.index.duplicated(keep='first')]
@@ -174,7 +174,7 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
 
                 if ((xind == 0) or (xind >= len(snow_x) - 1) or
                         (yind == 0) or (yind >= len(snow_y) - 1)):
-                    logger.info('Station {} in [validate] stations is '
+                    logger.info(' Station {} in [validate] stations is '
                                 'outside of domain, exiting stn_validate() '
                                 'and not generating figure'.format(stn))
                     flag = False
@@ -192,9 +192,7 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
                         lbl = '__nolabel__'
                         lblm = 'modeled'
 
-                    axs[iters].plot(measure[stn] / factor,
-                                    'k',
-                                    label=lbl)
+                    axs[iters].plot(measure[stn] / factor, 'k', label=lbl)
                     axs[iters].plot(model[land_stn] / factor,
                                     'b',
                                     linewidth=0.75,
@@ -227,48 +225,38 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
                 axs[iters].text(nsx, nsy, nstr, horizontalalignment='left',
                                 transform=axs[iters].transAxes, fontsize=8)
 
+    tick_rotation = 45
+
+    for n in range(0, len(axs)):
+        axs[n].tick_params(axis='x', labelsize=8)
+        axs[n].xaxis.set_major_formatter(mdates.DateFormatter('%b-%d'))
+        for tick in axs[n].get_xticklabels():
+            tick.set_rotation(tick_rotation)
+
     if len(stns) == 2:
         axs[1].yaxis.tick_right()
-        for n in (0, 1):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
 
     if len(stns) == 3:
         axs[1].yaxis.tick_right()
         axs[0].set_xticklabels('')
-        for n in (0, 1, 2):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
 
     if len(stns) == 4:
         axs[1].yaxis.tick_right()
         axs[3].yaxis.tick_right()
         axs[0].set_xticklabels('')
         axs[1].set_xticklabels('')
-        for n in (0, 1, 2, 3):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
 
     if 4 < len(stns) <= 6:
         for n in (1, 3, 5):
             axs[n].yaxis.tick_right()
-        for n in (4, 5):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
+
         for n in (0, 1, 2, 3):
             if n != set_x_on:
                 axs[n].set_xticklabels('')
-            else:
-                for tick in axs[n].get_xticklabels():
-                    tick.set_rotation(30)
 
     if 6 < len(stns) <= 9:
         for n in (2, 5, 8):
             axs[n].yaxis.tick_right()
-
-        for n in (6, 7, 8):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
         for n in (0, 1, 2, 3, 4, 5):
             axs[n].set_xticklabels('')
         for n in (1, 4, 7):
@@ -277,13 +265,9 @@ def stn_validate(rundirs, lbls, client, end_date, wy, snow_x, snow_y, stns, px,
     if 9 < len(stns) <= 12:
         for n in (2, 5, 8, 11):
             axs[n].yaxis.tick_right()
-        for n in (9, 10, 11):
-            for tick in axs[n].get_xticklabels():
-                tick.set_rotation(30)
         for n in (0, 1, 2, 3, 4, 5, 6, 7, 8):
             axs[n].set_xticklabels('')
 
-    # Plot
     measure = measure.replace('[]', np.nan)
     maxm = np.nanmax(measure.max().values / factor)
     maxi = np.nanmax(model.max().values / factor)
