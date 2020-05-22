@@ -220,7 +220,7 @@ def report(cfg):
     variables['DENSITY_FIG'] = 'density_{}.png'.format(cfg.directory)
     variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(cfg.directory)
     variables['VALID_FIG'] = cfg.stn_validate_fig_name
-    variables['COLD_FIG'] = 'cold_content_{}.png'.format(cfg.directory)
+    variables['COLD_FIG'] = cfg.cold_content_fig_name
     variables['SWE_FIG'] = 'swe_volume_{}.png'.format(cfg.directory)
     variables['VERSION'] = snowav.__version__
 

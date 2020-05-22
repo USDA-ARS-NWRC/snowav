@@ -477,9 +477,11 @@ class UserConfig(object):
         basin = self.plotorder[0].lower().split(" ")[0]
         stn_validate_name = '{}_validation_{}.png'.format(basin, et)
         basin_total_name = '{}_basin_totals_{}.png'.format(basin, et)
+        cold_content_name = '{}_cold_content_{}.png'.format(basin, et)
 
         self.assign_vars({'stn_validate_fig_name': stn_validate_name})
         self.assign_vars({'basin_total_fig_name': basin_total_name})
+        self.assign_vars({'cold_content_fig_name': cold_content_name})
 
     def parse(self, external_logger=None):
         """ Parse config options. """

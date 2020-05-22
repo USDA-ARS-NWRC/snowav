@@ -149,19 +149,19 @@ def figures(cfg, process):
         fig_names['swe_volume'], args['ylims'] = swe_volume(args, cfg._logger)
 
     if cfg.cold_content_flag:
+        swe = cfg.outputs['swe_z'][cfg.ixe]
+        image = cfg.outputs['coldcont'][cfg.ixe] * 0.000001
+        title = 'Cold Content {}'.format(args['report_date'])
         df = collect(connector, args['plotorder'], args['basins'],
                      args['start_date'], args['end_date'], 'swe_unavail',
                      args['run_name'], args['edges'], 'end')
 
-        swe = cfg.outputs['swe_z'][cfg.ixe]
-        image = cfg.outputs['coldcont'][cfg.ixe] * 0.000001
-
-        args['df'] = df
-        args['swe'] = swe
-        args['image'] = image
-        args['title'] = 'Cold Content {}'.format(args['report_date'])
-
-        fig_names['cold_content'] = cold_content(args, cfg._logger)
+        cold_content(cfg.masks, swe, image, df, cfg.plotorder,
+                     plotlims(cfg.plotorder), cfg.edges, cfg.labels,
+                     cfg.barcolors, title, cfg.vollbl, cfg.elevlbl,
+                     cfg.figsize, cfg.dplcs, cfg.xlims, cfg.figs_path,
+                     cfg.cold_content_fig_name, ylims=args['ylims'],
+                     dpi=cfg.dpi, logger=cfg._logger)
 
     if cfg.density_flag:
         image = cfg.outputs['density'][cfg.ixe]
