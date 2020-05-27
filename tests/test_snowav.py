@@ -2,7 +2,6 @@ from datetime import datetime
 import matplotlib
 import numpy as np
 import os
-import shutil
 import subprocess
 import unittest
 
@@ -262,44 +261,6 @@ def compare_database_density():
     return result
 
 
-# def compare_database_l_v_e():
-#     ''' Compare 'gold' and 'test' L_v_E. '''
-#
-#     value = 'L_v_E'
-#     result = True
-#
-#     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
-#                  run_name_gold, edges, 'end')
-#
-#     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
-#                  run_name_test, edges, 'end')
-#
-#     test_result = gold[plotorder].values - test[plotorder_test].values
-#
-#     if np.sum(test_result) != 0:
-#         result = False
-#
-#     return result
-
-# def compare_database_air_temp():
-#     ''' Compare 'gold' and 'test'air_temp. '''
-#
-#     value = 'air_temp'
-#     result = True
-#
-#     gold = collect(gold_cnx, plotorder, basins, start_date, end_date, value,
-#                  run_name_gold, edges, 'end')
-#
-#     test = collect(test_cnx, plotorder_test, basins_test, start_date, end_date, value,
-#                  run_name_test, edges, 'end')
-#
-#     test_result = gold[plotorder].values - test[plotorder_test].values
-#
-#     if np.sum(test_result) != 0:
-#         result = False
-#
-#     return result
-
 def compare_database_precip():
     ''' Compare 'gold' and 'test' precip. '''
 
@@ -384,7 +345,7 @@ def check_swi_figure():
 def check_swe_figure():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/swe_volume_lakes_test.png'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/lakes_swe_volume_20190402.png'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 
@@ -394,7 +355,7 @@ def check_swe_figure():
 def check_cold_content_figure():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/cold_content_lakes_test.png'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/lakes_cold_content_20190402.png'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 
@@ -494,168 +455,134 @@ class TestStandardLakes(unittest.TestCase):
         ''' Check command line process \n'''
 
         a = check_cli_process()
-        assert (a)
+        assert a
 
     def test_utils_masks(self):
         ''' Check masks dictionary utility '''
 
         a = check_utils_masks()
-        assert (a)
+        assert a
 
     def test_utils_calculate(self):
         ''' Check calculate utility '''
 
         a = check_utils_calculate()
-        assert (a)
+        assert a
 
     def test_gold_results(self):
         ''' Check that gold results are on database '''
 
         a = check_gold_results()
-        assert (a)
+        assert a
 
     def test_database_swe_z(self):
         ''' Gold and current swe_z DataFrames '''
 
         a = compare_database_swe_z()
-        assert (a)
+        assert a
 
     def test_database_swe_vol(self):
         ''' Gold and current swe_vol DataFrames '''
 
         a = compare_database_swe_vol()
-        assert (a)
+        assert a
 
     def test_database_depth(self):
         ''' Gold and current depth DataFrames '''
 
         a = compare_database_depth()
-        assert (a)
+        assert a
 
     def test_database_swi_vol(self):
         """ Gold and current swi_vol DataFrames """
 
         a = compare_database_swi_vol()
-        assert (a)
+        assert a
 
     def test_database_density(self):
         """ Gold and current density DataFrames """
 
         a = compare_database_density()
-        assert (a)
-
-    # def test_database_l_v_e(self):
-    # 	""" Gold and current L_v_E DataFrames """
-    #
-    # 	a = compare_database_l_v_e()
-    # 	assert(a)
-
-    # def test_database_air_temp(self):
-    # 	""" Gold and current air_temp DataFrames """
-    #
-    # 	a = compare_database_air_temp()
-    # 	assert(a)
+        assert a
 
     def test_database_precip(self):
         """ Gold and current precip DataFrames """
 
         a = compare_database_precip()
-        assert (a)
+        assert a
 
     def test_database_unavail(self):
         """ Gold and current swe_unavail DataFrames """
 
         a = compare_database_unavail()
-        assert (a)
+        assert a
 
     def test_point_values_figures(self):
         """ Output density figure .png"""
 
         a = check_point_values_figures()
-        assert (a)
+        assert a
 
     def test_density_figure(self):
         """ Output density figure .png"""
 
         a = check_density_figure()
-        assert (a)
+        assert a
 
     def test_swe_figure(self):
         """ Output swe figure .png"""
 
         a = check_swe_figure()
-        assert (a)
+        assert a
 
     def test_inputs_figure(self):
         """ Output swe figure .png"""
 
         a = check_inputs_figure()
-        assert (a)
+        assert a
 
     def test_swe_change_figure(self):
         """ Output swe change figure .png"""
 
         a = check_swe_change_figure()
-        assert (a)
+        assert a
 
     def test_swi_figure(self):
         """ Output swi figure .png"""
 
         a = check_swi_figure()
-        assert (a)
+        assert a
 
     def test_cold_content_figure(self):
         """ Output cold content figure .png"""
 
         a = check_cold_content_figure()
-        assert (a)
+        assert a
 
     def test_diagnostics_figure(self):
         """ Output diagnostics figure .png"""
 
         a = check_diagnostics_figure()
-        assert (a)
+        assert a
 
     def test_report(self):
         """ Output report .pdf """
 
         a = check_report()
-        assert (a)
+        assert a
 
     @classmethod
     def tearDownClass(self):
         """ Remove figures and report """
 
         base = './tests/lakes/results/lakes_test_20190401_20190402/'
-        figs = ['basin_total_lakes_test.png',
-                'swe_change_lakes_test.png',
-                'swe_volume_lakes_test.png',
-                'swi_lakes_test.png',
-                'precip_depth_lakes_test.png',
-                'density_lakes_test.png',
-                'cold_content_lakes_test.png',
-                'diagnostics_lakes_test.png',
-                'validation_list_swe_z.png',
-                'validation_map_swe_z.png',
-                'validation_veg_map.png',
-                'validation_locations.png',
-                'swe_vol_timeseries_20190402_taf.csv',
-                'swi_vol_timeseries_20190402_taf.csv',
-                'lakes_pixel_swe_z_2019-04-02.csv',
-                'inputs_lakes_test.png',
-                'inputs_period_lakes_test.png',
-                'SnowpackSummary20190403.pdf',
-                'lakes_test_20190401_20190402.ini']
 
-        for fig in figs:
-            if os.path.isfile(os.path.abspath('{}{}'.format(base, fig))):
-                os.remove(os.path.abspath('{}{}'.format(base, fig)))
+        for f in os.listdir(base):
+            os.remove(os.path.join(base, f))
 
-        # Remove cli figure
-        if os.path.isfile(os.path.abspath('swe_volume_cli.png')):
-            os.remove(os.path.abspath('swe_volume_cli.png'))
+        if os.path.isfile(os.path.abspath('swe_volume.png')):
+            os.remove(os.path.abspath('swe_volume.png'))
 
-        # Remove test db
         os.remove(os.path.abspath(os.path.join(base, '..', 'test.db')))
 
 

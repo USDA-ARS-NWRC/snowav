@@ -136,17 +136,22 @@ def figures(cfg, process):
         fig_names['image_change'] = image_change(args, cfg._logger)
 
     if cfg.swe_volume_flag:
-        df = collect(connector, args['plotorder'], args['basins'],
-                     args['start_date'], args['end_date'], 'swe_vol',
-                     args['run_name'], args['edges'], 'end')
+        df = collect(connector, cfg.plotorder, cfg.basins, cfg.start_date,
+                     cfg.end_date, 'swe_vol', cfg.run_name, cfg.edges, 'end')
 
         image = cfg.outputs['swe_z'][cfg.ixe] * cfg.depth_factor
-
-        args['df'] = df
         args['image'] = image
-        args['title'] = 'SWE {}'.format(args['report_date'])
+        title = 'SWE {}'.format(args['report_date'])
 
-        fig_names['swe_volume'], args['ylims'] = swe_volume(args, cfg._logger)
+        swe_ylims = swe_volume(cfg.masks, image, df, cfg.plotorder,
+                               plotlims(cfg.plotorder), cfg.edges, cfg.labels,
+                               cfg.barcolors, cfg.clims_percent, title,
+                               cfg.depthlbl, cfg.vollbl, cfg.elevlbl,
+                               cfg.xlims, cfg.dplcs, cfg.figs_path,
+                               cfg.swe_volume_fig_name, cfg.figsize,
+                               dpi=cfg.dpi, logger=cfg._logger)
+    else:
+        swe_ylims = None
 
     if cfg.cold_content_flag:
         swe = cfg.outputs['swe_z'][cfg.ixe]
@@ -160,7 +165,7 @@ def figures(cfg, process):
                      plotlims(cfg.plotorder), cfg.edges, cfg.labels,
                      cfg.barcolors, title, cfg.vollbl, cfg.elevlbl,
                      cfg.figsize, cfg.dplcs, cfg.xlims, cfg.figs_path,
-                     cfg.cold_content_fig_name, ylims=args['ylims'],
+                     cfg.cold_content_fig_name, ylims=swe_ylims,
                      dpi=cfg.dpi, logger=cfg._logger)
 
     if cfg.density_flag:

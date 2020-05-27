@@ -177,12 +177,21 @@ def snowav_main(config_file=None, end_date=None, topo_path=None, nc_path=None,
             else:
                 title = nc_path
 
-            fargs['image'] = results['outputs']['swe_z'][0] / 25.4
-            fargs['title'] = '{}, {}'.format(value, title)
-            fargs['df'] = results['df'][os.path.abspath(nc_path[0])]
+            fig_name = os.path.join(os.path.abspath(figs_path), 'swe_volume.png')
+            image = results['outputs']['swe_z'][0] / 25.4
+            title = '{}, {}'.format(value, title)
+            df = results['df'][os.path.abspath(nc_path[0])]
 
-            swe_volume(fargs, None)
-            log.info(' Saved figure in {}'.format(figs_path))
+            swe_ylims = swe_volume(results['masks'], image, df,
+                                   results['plotorder'],
+                                   plotlims(results['plotorder']),
+                                   results['edges'], results['labels'],
+                                   barcolors, [0.5, 99.5], title, 'in', 'TAF',
+                                   'ft', (0, len(results['edges'])), 1,
+                                   os.path.abspath(figs_path), fig_name,
+                                   [10, 5], dpi=200, show=True)
+
+            log.info(' Saved: {}'.format(os.path.join(figs_path, fig_name)))
 
 
 def create_log(log_level='INFO'):

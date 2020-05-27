@@ -221,7 +221,7 @@ def report(cfg):
     variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(cfg.directory)
     variables['VALID_FIG'] = cfg.stn_validate_fig_name
     variables['COLD_FIG'] = cfg.cold_content_fig_name
-    variables['SWE_FIG'] = 'swe_volume_{}.png'.format(cfg.directory)
+    variables['SWE_FIG'] = cfg.swe_volume_fig_name
     variables['VERSION'] = snowav.__version__
 
     if (cfg.update_file is not None) and cfg.flt_flag and cfg.flight_figs:

@@ -34,6 +34,10 @@ def cold_content(masks, swe, image, df, plotorder, lims, edges, labels,
     ylims {list}: ylims
     """
 
+    xtick_fontsize = 10
+    xtick_rotation = 45
+    legend_fontsize = 8
+
     clims2 = (-5, 0)
     pmask = masks[plotorder[0]]['mask']
     ixo = pmask == 0
@@ -66,7 +70,7 @@ def cold_content(masks, swe, image, df, plotorder, lims, edges, labels,
     cbar.set_label('[MJ/$m^3$]')
     cbar.ax.tick_params()
 
-    ax1.legend(loc='upper left', markerscale=0.5)
+    ax1.legend(loc='upper left', markerscale=0.5, fontsize=legend_fontsize)
 
     for iters, name in enumerate(lims.sumorder):
         if dplcs == 0:
@@ -86,7 +90,7 @@ def cold_content(masks, swe, image, df, plotorder, lims, edges, labels,
                     color=barcolors[iters], edgecolor='k',
                     label=labels[name] + ': {} {}'.format(ukaf, vollbl))
 
-    if 'ylims' is not None:
+    if ylims is not None:
         ax1.set_ylim(ylims)
     else:
         ylims = ax1.get_ylim()
@@ -102,9 +106,9 @@ def cold_content(masks, swe, image, df, plotorder, lims, edges, labels,
         edges_lbl.append(str(int(edges[int(i)])))
 
     ax1.set_xticklabels(str(i) for i in edges_lbl)
-    ax1.tick_params(axis='x', labelsize=8)
+    ax1.tick_params(axis='x', labelsize=xtick_fontsize)
     for tick in ax1.get_xticklabels():
-        tick.set_rotation(45)
+        tick.set_rotation(xtick_rotation)
 
     ax1.set_xlabel('elevation [{}]'.format(elevlbl))
     ax1.set_ylabel('{} '.format(vollbl))
