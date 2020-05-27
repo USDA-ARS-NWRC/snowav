@@ -335,7 +335,7 @@ def check_point_values_figures():
 def check_swi_figure():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/swi_lakes_test.png'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/lakes_swi_volume_20190402.png'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 

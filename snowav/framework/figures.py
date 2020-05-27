@@ -108,13 +108,14 @@ def figures(cfg, process):
                      args['start_date'], args['end_date'], 'swi_vol',
                      args['run_name'], args['edges'], 'sum')
 
-        args['df'] = df
-        args['image'] = image
-        args['title'] = 'Accumulated SWI\n{} to {}'.format(
-            args['report_start'],
-            args['report_date'])
+        title = 'Accumulated SWI\n{} to {}'.format(args['report_start'],
+                                                   args['report_date'])
 
-        fig_names['swi'] = swi(args, cfg._logger)
+        swi(cfg.masks, image, df, cfg.plotorder, plotlims(cfg.plotorder),
+            cfg.edges, cfg.labels, cfg.barcolors, cfg.vollbl, cfg.elevlbl,
+            cfg.depthlbl, cfg.clims_percent, title, cfg.figsize, cfg.figs_path,
+            cfg.swi_volume_fig_name, cfg.dplcs, cfg.xlims, dpi=200,
+            logger=None)
 
     if cfg.image_change_flag:
         image = cfg.outputs['swe_z'][cfg.ixe] - cfg.outputs['swe_z'][cfg.ixs]
