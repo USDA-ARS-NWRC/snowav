@@ -217,7 +217,7 @@ def report(cfg):
     variables['CHANGES_FIG'] = 'swe_change_{}.png'.format(cfg.directory)
     variables['TOTALS_FIG'] = cfg.basin_total_fig_name
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(cfg.directory)
-    variables['PDEP_FIG'] = 'precip_depth_{}.png'.format(cfg.directory)
+    variables['PDEP_FIG'] = cfg.precip_fig_name
     variables['VALID_FIG'] = cfg.stn_validate_fig_name
     variables['COLD_FIG'] = cfg.cold_content_fig_name
     variables['SWE_FIG'] = cfg.swe_volume_fig_name

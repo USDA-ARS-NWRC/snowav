@@ -208,16 +208,17 @@ def figures(cfg, process):
                           args['start_date'], args['end_date'], 'rain_z',
                           args['run_name'], args['edges'], 'sum')
 
-        args['swi_image'] = swi_image
-        args['precip_image'] = process.precip_total * cfg.depth_factor
-        args['rain_image'] = process.rain_total * cfg.depth_factor
-        args['swi_df'] = swi_df
-        args['precip_df'] = precip_df
-        args['rain_df'] = rain_df
-        args['title'] = 'Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
+        precip_image = process.precip_total * cfg.depth_factor
+        rain_image = process.rain_total * cfg.depth_factor
+        title = 'Depth of SWI, Precipitation, and Rain\n{} to {}'.format(
             args['report_start'], args['report_date'])
 
-        fig_names['precip_depth'] = precip_depth(args, cfg._logger)
+        precip_depth(swi_image, precip_image, rain_image, swi_df, precip_df,
+                     rain_df, cfg.plotorder, cfg.barcolors,
+                     plotlims(cfg.plotorder), cfg.masks, cfg.edges, cfg.labels,
+                     cfg.clims_percent, cfg.depthlbl, cfg.elevlbl, title,
+                     cfg.xlims, cfg.figs_path, cfg.precip_fig_name,
+                     logger=cfg._logger)
 
     if cfg.diagnostics_flag:
         wy_start = datetime(cfg.wy - 1, 10, 1)

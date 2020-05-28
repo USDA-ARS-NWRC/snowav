@@ -410,7 +410,7 @@ def check_density_figure():
 def check_precip_depth_figure():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/precip_depth_lakes_test.png'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/lakes_precip_20190402.png'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 
