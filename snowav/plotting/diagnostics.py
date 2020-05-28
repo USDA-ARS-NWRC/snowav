@@ -20,11 +20,6 @@ def diagnostics(args, logger):
     logger : object
 
     '''
-    if args['print']:
-        print('diagnostics() figure args:\n')
-        for name in args.keys():
-            if name not in ['masks','image','swe']:
-                print(name, ': ', args[name])
 
     basins = args['dbasins']
     depthlbl = args['depthlbl']

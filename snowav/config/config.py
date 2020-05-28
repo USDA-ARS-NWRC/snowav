@@ -270,7 +270,6 @@ class UserConfig(object):
         self.precip_depth_flag = ucfg.cfg['plots']['precip_depth']
         self.basin_detail_flag = ucfg.cfg['plots']['basin_detail']
         self.update_file = ucfg.cfg['plots']['update_file']
-        self.print_args_dict = ucfg.cfg['plots']['print_args_dict']
         self.figsize = ucfg.cfg['plots']['fig_size']
         self.write_properties = ucfg.cfg['plots']['write_properties']
         self.point_values_flag = ucfg.cfg['plots']['point_values']

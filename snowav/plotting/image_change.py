@@ -30,13 +30,6 @@ def image_change(args, logger):
 
     """
 
-    # print to screen for each figure if desired
-    if args['print']:
-        print('image_change() figure args:\n', 'omitting masks and image...\n')
-        for name in args.keys():
-            if name not in ['masks', 'image']:
-                print(name, ': ', args[name])
-
     # These get used more and we'll just assign here
     masks = args['masks']
     delta_swe = args['image']

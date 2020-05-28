@@ -44,7 +44,6 @@ def figures(cfg, process):
 
     args = {'report_start': cfg.report_start.date().strftime("%Y-%-m-%-d"),
             'report_date': cfg.report_date.date().strftime("%Y-%-m-%-d"),
-            'print': cfg.print_args_dict,
             'run_name': cfg.run_name,
             'start_date': cfg.start_date,
             'end_date': cfg.end_date,
