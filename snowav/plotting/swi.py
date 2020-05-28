@@ -73,7 +73,7 @@ def swi(masks, image, df, plotorder, lims, edges, labels, barcolors, vollbl,
     h.axes.get_xaxis().set_ticks([])
     h.axes.get_yaxis().set_ticks([])
     divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="4%", pad=0.2)
+    cax = divider.append_axes("right", size="2.5%", pad=0.1)
     cbar = plt.colorbar(h, cax=cax)
     cbar.set_label('[{}]'.format(depthlbl))
     h.axes.set_title(title)

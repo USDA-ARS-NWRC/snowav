@@ -171,11 +171,12 @@ def figures(cfg, process):
 
     if cfg.density_flag:
         image = cfg.outputs['density'][cfg.ixe]
-        args['density'] = process.density
-        args['image'] = image
-        args['title'] = 'Density {}'.format(args['report_date'])
+        title = 'Density {}'.format(args['report_date'])
 
-        fig_names['density'] = density(args, cfg._logger)
+        density(cfg.masks, image, process.density, cfg.plotorder,
+                plotlims(cfg.plotorder), cfg.edges, cfg.barcolors,
+                cfg.clims_percent, title, cfg.xlims, cfg.figsize, cfg.figs_path,
+                cfg.density_fig_name, dpi=cfg.dpi, logger=cfg._logger)
 
     if cfg.basin_total_flag:
         wy_start = datetime(cfg.wy - 1, 10, 1)

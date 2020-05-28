@@ -481,12 +481,14 @@ class UserConfig(object):
         cold_content_name = '{}_cold_content_{}.png'.format(basin, et)
         swe_volume_name = '{}_swe_volume_{}.png'.format(basin, et)
         swi_volume_name = '{}_swi_volume_{}.png'.format(basin, et)
+        density_name = '{}_density_{}.png'.format(basin, et)
 
         self.assign_vars({'stn_validate_fig_name': stn_validate_name})
         self.assign_vars({'basin_total_fig_name': basin_total_name})
         self.assign_vars({'cold_content_fig_name': cold_content_name})
         self.assign_vars({'swe_volume_fig_name': swe_volume_name})
         self.assign_vars({'swi_volume_fig_name': swi_volume_name})
+        self.assign_vars({'density_fig_name': density_name})
 
     def parse(self, external_logger=None):
         """ Parse config options. """
