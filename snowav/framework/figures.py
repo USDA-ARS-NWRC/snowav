@@ -117,7 +117,8 @@ def figures(cfg, process):
             logger=None)
 
     if cfg.image_change_flag:
-        image = cfg.outputs['swe_z'][cfg.ixe] - cfg.outputs['swe_z'][cfg.ixs]
+        image = (cfg.outputs['swe_z'][cfg.ixe] -
+                 cfg.outputs['swe_z'][cfg.ixs]) * cfg.depth_factor
 
         start = collect(connector, args['plotorder'], args['basins'],
                         args['start_date'], args['start_date'], 'swe_vol',
@@ -127,13 +128,15 @@ def figures(cfg, process):
                       args['run_name'], args['edges'], 'end')
 
         df = end - start
+        title = 'Change in SWE Depth\n{} to {}'.format( args['report_start'],
+                                                  args['report_date'])
 
-        args['df'] = df
-        args['image'] = image * cfg.depth_factor
-        args['title'] = 'Change in SWE\n{} to {}'.format(
-            args['report_start'], args['report_date'])
-
-        fig_names['image_change'] = image_change(args, cfg._logger)
+        image_change(cfg.masks, image, df, cfg.plotorder,
+                     plotlims(cfg.plotorder), cfg.edges, cfg.labels,
+                     cfg.barcolors, cfg.clims_percent, cfg.vollbl, cfg.elevlbl,
+                     cfg.depthlbl, cfg.xlims, cfg.figsize, title, cfg.dplcs,
+                     cfg.figs_path, cfg.volume_change_fig_name, dpi=cfg.dpi,
+                     logger=cfg._logger)
 
     if cfg.swe_volume_flag:
         df = collect(connector, cfg.plotorder, cfg.basins, cfg.start_date,

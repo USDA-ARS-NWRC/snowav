@@ -214,7 +214,7 @@ def report(cfg):
     variables['SWI_IN'] = variables['TOTAL_SWI']
     variables['FIG_PATH'] = cfg.figs_path
     variables['SWI_FIG'] = cfg.swi_volume_fig_name
-    variables['CHANGES_FIG'] = 'swe_change_{}.png'.format(cfg.directory)
+    variables['CHANGES_FIG'] = cfg.volume_change_fig_name
     variables['TOTALS_FIG'] = cfg.basin_total_fig_name
     variables['MULTITOTSWE_FIG'] = 'compare_swe_vol_{}.png'.format(cfg.directory)
     variables['PDEP_FIG'] = cfg.precip_fig_name

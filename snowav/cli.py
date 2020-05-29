@@ -35,9 +35,6 @@ def run():
                         choices=['swe_z', 'swe_vol', 'swe_avail', 'swe_unavail'],
                         help='SWE value to calculate for single snow.nc file.')
 
-    parser.add_argument('-s', dest='show', action='store_true',
-                        help='Flag to display single snow.nc calculation.')
-
     parser.add_argument('-A', '--snow_a', dest='snow_a', type=str,
                         help='Path to "A" snow.nc file for simple difference, '
                              'must also include "-B", and must not use "-d".')
@@ -64,19 +61,18 @@ def run():
                                             'for [basin] locations_csv')
 
     args = parser.parse_args()
-    snowav_main(config_file=args.snowav_config, end_date=args.end_date,
-                topo_path=args.topo_path, nc_path=args.nc_path,
-                value=args.value, show=args.show, snow_a=args.snow_a,
+    snowav_main(config_file=args.snowav_config, topo_path=args.topo_path,
+                nc_path=args.nc_path, value=args.value, snow_a=args.snow_a,
                 snow_b=args.snow_b, figs_path=args.figs_path,
                 point_values_config=args.point_values_config,
                 point_values_master=args.point_values_master,
                 blank=args.blank)
 
 
-def snowav_main(config_file=None, end_date=None, topo_path=None, nc_path=None,
-                value=None, show=False, snow_a=None, snow_b=None,
-                figs_path=None, point_values_config=None,
-                point_values_master=None, blank=None):
+def snowav_main(config_file=None, topo_path=None, nc_path=None, value=None,
+                snow_a=None, snow_b=None, figs_path=None,
+                point_values_config=None, point_values_master=None,
+                blank=None):
     """ Command line function for snowav.
 
     Runs the standard snowav processing of AWSM files if config_file is
@@ -102,6 +98,16 @@ def snowav_main(config_file=None, end_date=None, topo_path=None, nc_path=None,
     # single snow.nc file
     single_args = [topo_path, figs_path]
     if sum([x is not None for x in single_args]) > 1:
+        barcolors = ['xkcd:cobalt',
+                     'xkcd:mustard green',
+                     'xkcd:lichen',
+                     'xkcd:pale green',
+                     'xkcd:blue green',
+                     'xkcd:bluish purple',
+                     'xkcd:lightish purple',
+                     'xkcd:deep magenta',
+                     'xkcd:burgundy',
+                     'red']
         diff = False
 
         if not os.path.isdir(figs_path):
@@ -128,30 +134,6 @@ def snowav_main(config_file=None, end_date=None, topo_path=None, nc_path=None,
         log = create_log()
         results = process(nc_path, os.path.abspath(topo_path), value, log)
 
-        barcolors = ['xkcd:cobalt', 'xkcd:mustard green', 'xkcd:lichen',
-                     'xkcd:pale green', 'xkcd:blue green', 'xkcd:bluish purple',
-                     'xkcd:lightish purple', 'xkcd:deep magenta']
-
-        fargs = {'show': show,
-                 'print': False,
-                 'masks': results['masks'],
-                 'barcolors': barcolors,
-                 'plotorder': results['plotorder'],
-                 'lims': plotlims(results['plotorder']),
-                 'vollbl': 'TAF',
-                 'elevlbl': 'ft',
-                 'depthlbl': 'in',
-                 'edges': results['edges'],
-                 'labels': results['labels'],
-                 'percent_max': 99.5,
-                 'percent_min': 0.05,
-                 'figsize': (10, 5),
-                 'dpi': 250,
-                 'dplcs': 1,
-                 'xlims': (0, len(results['edges'])),
-                 'figs_path': os.path.abspath(figs_path),
-                 'directory': 'cli'}
-
         # difference between two snow.nc files
         if diff:
             if len(nc_path[0]) > 20:
@@ -160,16 +142,19 @@ def snowav_main(config_file=None, end_date=None, topo_path=None, nc_path=None,
                 title = nc_path
 
             df = results['df'][nc_path[1]] - results['df'][nc_path[0]]
-            fargs['df'] = df
-            fargs['image'] = results['outputs']['swe_z'][1] - \
-                             results['outputs']['swe_z'][0]
-            fargs['title'] = title
+            image = (results['outputs']['swe_z'][1] - results['outputs']['swe_z'][0]) * 0.03937
+            fig_name = os.path.join(os.path.abspath(figs_path), 'volume_change.png')
 
             log.info(' Difference generated from:\n      {} '
                      'subtract\n      {}'.format(nc_path[1], nc_path[0]))
-            log.info(' Saved figure in {}'.format(os.path.abspath(figs_path)))
 
-            image_change(fargs, None)
+            image_change(results['masks'], image, df, results['plotorder'],
+                         plotlims(results['plotorder']), results['edges'],
+                         results['labels'], barcolors, [0.5, 99.5],
+                         'TAF', 'ft', 'in', (0, len(results['edges'])), [10, 5],
+                         title, 1, os.path.abspath(figs_path), fig_name)
+
+            log.info(' Saved: {}'.format(os.path.abspath(figs_path)))
 
         else:
             if len(nc_path[0]) > 35:

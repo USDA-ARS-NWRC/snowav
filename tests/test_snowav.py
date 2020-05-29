@@ -380,7 +380,7 @@ def check_inputs_figure():
 def check_swe_change_figure():
     """ Simple check if .png figures were created. """
     result = True
-    fig = './tests/lakes/results/lakes_test_20190401_20190402/swe_change_lakes_test.png'
+    fig = './tests/lakes/results/lakes_test_20190401_20190402/lakes_volume_change_20190402.png'
     if not os.path.isfile(os.path.abspath(fig)):
         result = False
 

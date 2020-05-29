@@ -482,6 +482,7 @@ class UserConfig(object):
         swi_volume_name = '{}_swi_volume_{}.png'.format(basin, et)
         density_name = '{}_density_{}.png'.format(basin, et)
         precip_name = '{}_precip_{}.png'.format(basin, et)
+        volume_change_name = '{}_volume_change_{}.png'.format(basin, et)
 
         self.assign_vars({'stn_validate_fig_name': stn_validate_name})
         self.assign_vars({'basin_total_fig_name': basin_total_name})
@@ -490,6 +491,7 @@ class UserConfig(object):
         self.assign_vars({'swi_volume_fig_name': swi_volume_name})
         self.assign_vars({'density_fig_name': density_name})
         self.assign_vars({'precip_fig_name': precip_name})
+        self.assign_vars({'volume_change_fig_name': volume_change_name})
 
     def parse(self, external_logger=None):
         """ Parse config options. """
