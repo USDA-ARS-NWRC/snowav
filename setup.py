@@ -1,7 +1,6 @@
 from codecs import open
-from os import path
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 from subprocess import check_output
 
 gitVersion = ''
@@ -48,8 +47,6 @@ with open('README.md') as readme_file:
 
 with open('requirements.txt') as f:
     required = f.read().splitlines()
-
-# requirements = []
 
 setup_requirements = []
 
