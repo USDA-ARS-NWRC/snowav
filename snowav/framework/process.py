@@ -8,10 +8,9 @@ from sys import exit
 import warnings
 
 from snowav.database.database import package
-from snowav.database.tables import Results, RunMetadata
+from snowav.database.tables import Results, RunMetadata, Inputs
 from snowav.utils.utilities import calculate, sum_precip, snow_line, \
     input_summary
-from tablizer.tablizer import get_existing_records
 
 
 class Process(object):
@@ -152,22 +151,22 @@ class Process(object):
                 sf = cfg.rundirs_dict[wy_hour].replace('runs', 'data')
                 sf = sf.replace('run', 'data') + '/smrfOutputs/'
 
-                df = get_existing_records(cfg.connector, dbs)
-                df = df.set_index('date_time')
-                df.sort_index(inplace=True)
+                params = {Inputs: [
+                    ('date_time', 'eq', out_date),
+                    ('basin_id', 'eq', cfg.basins[bid]['basin_id']),
+                    ('run_name', 'eq', cfg.run_name),
+                    ('variable', 'in', cfg.variables.snowav_inputs_variables)
+                ],
+                }
+
+                df = db.query(params)
+                idx = df.index
 
                 for i, input in enumerate(cfg.variables.snowav_inputs_variables):
-
                     input_path = os.path.join(sf, input + '.nc')
 
                     for basin in cfg.inputs_basins:
-
                         basin_id = int(cfg.basins[basin]['basin_id'])
-
-                        dfs = df[((df['variable'] == input) &
-                                  (df['run_name'] == cfg.run_name) &
-                                  (df['basin_id'] == basin_id))]
-                        idx = dfs.index
 
                         if (not idx.contains(out_date) or
                                 (idx.contains(out_date) and cfg.db_overwrite)):
