@@ -157,10 +157,13 @@ class UserConfig(object):
                 raise Exception('{} does not contain a valid base '
                                 'path'.format(self.sqlite))
             self.sqlite = 'sqlite:///' + self.sqlite
+            self.db_type = 'sqlite'
 
             if self.mysql is not None:
                 raise Exception('Config option [database] section contains '
                                 'both "mysql" and "sqlite" entries, pick one.')
+        else:
+            self.db_type = 'sql'
 
         ####################################################
         #           validate                               #

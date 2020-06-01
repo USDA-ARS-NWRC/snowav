@@ -109,7 +109,7 @@ class Database(object):
                             "{}@{}:{}".format(self.user, self.host, self.port))
 
         if self.db_type == 'sqlite':
-            connector = 'sqlite:///' + self.database
+            connector = self.database
             if logger is not None:
                 logger.info(" Using database connector: {}".format(connector))
 

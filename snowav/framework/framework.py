@@ -7,7 +7,7 @@ from snowav.config.config import UserConfig
 from snowav.framework.process import Process
 from snowav.framework.figures import figures
 from snowav.report.report import report
-from snowav.database.database import run_metadata
+from snowav.database.database import Database, run_metadata
 from snowav.inflow.inflow import excel_to_csv
 
 
@@ -25,10 +25,7 @@ class Snowav(object):
         """
 
         if end_date is not None:
-            try:
-                end_date = pd.to_datetime(end_date)
-            except Exception as e:
-                print(e)
+            end_date = pd.to_datetime(end_date)
 
         # get and parse config options
         cfg = UserConfig(config_file, awsm=awsm, end_date=end_date)
@@ -42,15 +39,22 @@ class Snowav(object):
                              'elapsed time: {}'.format(elapsed))
             exit()
 
-        # query existing database without processing
         if cfg.query_flag:
             query(cfg)
 
-        # put run metadata on database
         run_metadata(cfg)
+        if cfg.db_type == 'sql':
+            dbp = cfg.mysql
+        else:
+            dbp = cfg.sqlite
 
-        # process
-        process = Process(cfg)
+        db = Database(user=cfg.db_user, password=cfg.db_password,
+                      host=cfg.db_host, port=cfg.db_port, db_type=cfg.db_type,
+                      database=dbp)
+        db.make_connection(logger=cfg._logger)
+        db.check_tables(logger=cfg._logger)
+
+        process = Process(cfg, db)
 
         if cfg.inflow_flag and cfg.inflow_data is not None:
             args = {'path': cfg.inflow_data,

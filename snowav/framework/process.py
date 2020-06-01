@@ -2,12 +2,13 @@ from copy import deepcopy
 from datetime import datetime
 import logging
 import numpy as np
-import pandas as pd
 import os
+import pandas as pd
 from sys import exit
 import warnings
 
-from snowav.database.database import delete, query, package
+from snowav.database.database import package
+from snowav.database.tables import Results, RunMetadata
 from snowav.utils.utilities import calculate, sum_precip, snow_line, \
     input_summary
 from tablizer.tablizer import get_existing_records
@@ -18,10 +19,11 @@ class Process(object):
 
     Args
     ------
-    cfg: config object
+    cfg: config class
+    db: database class
     """
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, db):
 
         pd.options.mode.chained_assignment = None
         warnings.filterwarnings('ignore')
@@ -30,9 +32,9 @@ class Process(object):
         variables = cfg.variables.variables
 
         if os.path.splitext(cfg.connector)[1] == '.db':
-            db = 'sqlite'
+            dbs = 'sqlite'
         else:
-            db = 'sql'
+            dbs = 'sql'
 
         # images for figures
         precip_total = np.zeros((cfg.nrows, cfg.ncols))
@@ -58,8 +60,16 @@ class Process(object):
 
             # delete anything on the database with the same run_name and date
             for bid in cfg.plotorder:
-                results = query(cfg.connector, out_date, out_date,
-                                cfg.run_name, cfg.basins, bid, 'swe_vol')
+                params = {Results: [('date_time', 'eq', out_date),
+                                    ('basin_id', 'eq', cfg.basins[bid]['basin_id']),
+                                    ('run_id', 'ge', 0)
+                                    ],
+                          RunMetadata: [('run_name', 'eq', cfg.run_name)]}
+                results = db.query(params)
+
+                if len(results['run_id'].unique()) > 1:
+                    cfg._logger.warn(" Multiple database 'run_id' values "
+                                     "returned for single query")
 
                 if not results.empty:
                     if not cfg.db_overwrite:
@@ -83,13 +93,29 @@ class Process(object):
                             proc_list = []
 
                     else:
-                        out = delete(cfg.connector, cfg.basins, out_date,
-                                     out_date, bid, cfg.run_name)
-                        if len(out) > 0:
-                            if bid == cfg.plotorder[0]:
-                                logging.info(out[0])
-                            else:
-                                logging.debug(out[0])
+                        del_params = {
+                            Results: [
+                                ('date_time', 'eq', out_date),
+                                ('basin_id', 'eq', cfg.basins[bid]['basin_id']),
+                                ('run_id', 'in', [int(x) for x in results['run_id'].unique()])
+                            ]
+                        }
+
+                        db.delete(del_params)
+                        logging.debug(' Deleting database records for '
+                                      '{}, {}'.format(bid, odate_str))
+
+                        # query again, and if we have deleted everything from
+                        # that run, also delete the metadata
+                        results = db.query(params)
+                        del_params = {
+                            RunMetadata: [
+                                ('run_id', 'in', [int(x) for x in results['run_id'].unique()])
+                            ]
+                        }
+
+                        if results.empty:
+                            db.delete(del_params)
 
             density = {}
             for name in cfg.masks:
@@ -126,7 +152,7 @@ class Process(object):
                 sf = cfg.rundirs_dict[wy_hour].replace('runs', 'data')
                 sf = sf.replace('run', 'data') + '/smrfOutputs/'
 
-                df = get_existing_records(cfg.connector, db)
+                df = get_existing_records(cfg.connector, dbs)
                 df = df.set_index('date_time')
                 df.sort_index(inplace=True)
 
@@ -159,7 +185,7 @@ class Process(object):
                                           input,
                                           cfg.inputs_methods,
                                           cfg.inputs_percentiles,
-                                          db,
+                                          dbs,
                                           cfg.connector,
                                           cfg.run_name,
                                           basin_id,
