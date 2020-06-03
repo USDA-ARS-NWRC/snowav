@@ -589,6 +589,7 @@ class UserConfig(object):
             self.depthlbl = 'in'
             self.vollbl = self.units
             self.elevlbl = 'ft'
+            self.snowdepthlbl = 'in'
 
         if self.units == "SI":
             self.conversion_factor = ((self.pixel ** 2) * 0.000000810713194) * 1233.48 / 1e9
@@ -596,6 +597,15 @@ class UserConfig(object):
             self.depthlbl = 'cm'
             self.vollbl = 'M$M^3$'
             self.elevlbl = 'm'
+            self.snowdepthlbl = 'cm'
+
+        if self.units == "AWSM":
+            self.conversion_factor = ((self.pixel ** 2) * 0.000000810713194) * 1233.48
+            self.depth_factor = 1
+            self.depthlbl = 'mm'
+            self.vollbl = '$M^3$'
+            self.elevlbl = 'm'
+            self.snowdepthlbl = 'm'
 
         self.ixd = np.digitize(self.dem, edges)
         self.xlims = (0, len(edges))

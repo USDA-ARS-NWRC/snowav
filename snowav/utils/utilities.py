@@ -55,13 +55,9 @@ def calculate(array, pixel, masks=None, method='sum', convert=None,
     '''
 
     method_options = ['sum', 'mean']
-    unit_options = ['TAF', 'SI']
 
     if method not in method_options:
         raise Exception('method options are {}'.format(method_options))
-
-    if units not in unit_options:
-        raise Exception('units options are {}'.format(unit_options))
 
     if units == 'TAF':
 
@@ -97,7 +93,7 @@ def calculate(array, pixel, masks=None, method='sum', convert=None,
         else:
             factor = 1
 
-    if convert is None:
+    if units == 'AWSM' or not convert:
         factor = 1
 
     if masks is not None:

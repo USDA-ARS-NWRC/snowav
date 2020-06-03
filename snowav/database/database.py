@@ -748,10 +748,12 @@ def run_metadata(cfg):
     cfg.vid = {}
     for v in [*cfg.variables.variables.keys()]:
         u = cfg.variables.variables[v]['units']
-        if (('vol' in v) or ('avail' in v)):
-            u = cfg.units
-        if (('z' in v) or (v == 'depth')):
+        if 'vol' in v or 'avail' in v:
+            u = cfg.vollbl
+        if 'z' in v:
             u = cfg.depthlbl
+        if v == 'depth':
+            u = cfg.snowdepthlbl
         if v == 'density':
             u = 'kg m^-3'
         if v == 'coldcont':
