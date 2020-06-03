@@ -71,7 +71,7 @@ class Snowav(object):
 
             excel_to_csv(args, cfg._logger)
 
-        figures(cfg, process)
+        figures(cfg, process, db)
 
         if cfg.report_flag:
             report(cfg)

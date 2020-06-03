@@ -21,6 +21,7 @@ from snowav.inflow.inflow import inflow
 from snowav.plotting.diagnostics import diagnostics
 from snowav.plotting.point_values import point_values_csv, point_values_figures
 from snowav.database.database import collect
+from snowav.database.tables import Results
 from snowav.plotting.plotlims import plotlims as plotlims
 import matplotlib as mpl
 
@@ -28,7 +29,7 @@ if os.environ.get('DISPLAY', '') == '':
     mpl.use('Agg')
 
 
-def figures(cfg, process):
+def figures(cfg, process, db):
     """ Set up and call snowav figures. See CoreConfig.ini and README.md for
     more on config options and use.
 
@@ -37,9 +38,9 @@ def figures(cfg, process):
 
     Args
     ------
-    cfg: config object
-    process: process object
-
+    cfg: config class
+    process: process class
+    db: database class
     """
 
     args = {'report_start': cfg.report_start.date().strftime("%Y-%-m-%-d"),
@@ -75,6 +76,7 @@ def figures(cfg, process):
 
     fig_names = {}
     connector = cfg.connector
+    edges_str = [str(x) for x in list(cfg.edges)] # + ['total']
 
     ##########################################################################
     #       For each figure, collect 2D array image, by-elevation            #
@@ -103,9 +105,20 @@ def figures(cfg, process):
         for n in range(cfg.ixs, cfg.ixe):
             image = image + cfg.outputs['swi_z'][n] * cfg.depth_factor
 
-        df = collect(connector, args['plotorder'], args['basins'],
-                     args['start_date'], args['end_date'], 'swi_vol',
-                     args['run_name'], args['edges'], 'sum')
+        params = {Results: [
+            ('date_time', 'ge', cfg.start_date),
+            ('date_time', 'le', cfg.end_date),
+            ('variable', 'eq', 'swi_vol'),
+            ('run_id', 'eq', cfg.run_id),
+            ('value', 'ge', 0),
+            ('elevation', 'gt', '0')
+        ],
+        }
+
+        df = db.query(params)
+        df = df.groupby('elevation').sum()
+        df.rename(columns={'value': cfg.plotorder[0]}, inplace=True)
+        df = df[cfg.plotorder].reindex(edges_str)
 
         title = 'Accumulated SWI\n{} to {}'.format(args['report_start'],
                                                    args['report_date'])
@@ -128,8 +141,8 @@ def figures(cfg, process):
                       args['run_name'], args['edges'], 'end')
 
         df = end - start
-        title = 'Change in SWE Depth\n{} to {}'.format( args['report_start'],
-                                                  args['report_date'])
+        title = 'Change in SWE Depth\n{} to {}'.format(args['report_start'],
+                                                       args['report_date'])
 
         image_change(cfg.masks, image, df, cfg.plotorder,
                      plotlims(cfg.plotorder), cfg.edges, cfg.labels,
