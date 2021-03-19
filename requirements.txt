@@ -2,7 +2,7 @@
 coloredlogs==6.1
 cmocean==1.1
 inicheck>0.7.5,<0.8
-Jinja2==2.10.1
+Jinja2==2.11.3
 latexcodec==1.0.5
 latex==0.7.0
 matplotlib==2.0.0
