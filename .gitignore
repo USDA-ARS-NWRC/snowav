@@ -45,3 +45,6 @@ snowav/utils/gitinfo.py
 
 # pycharm
 .idea/
+
+.venv
+.vscode

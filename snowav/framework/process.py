@@ -148,8 +148,9 @@ class Process(object):
                 for name in cfg.masks:
                     mask_list.append(deepcopy(cfg.masks[name]['mask']))
 
-                sf = cfg.rundirs_dict[wy_hour].replace('runs', 'data')
-                sf = sf.replace('run', 'data') + '/smrfOutputs/'
+                # sf = cfg.rundirs_dict[wy_hour].replace('runs', 'data')
+                # sf = sf.replace('run', 'data') + '/smrfOutputs/'
+                sf = cfg.rundirs_dict[wy_hour].replace('/runs/run', '/data/data') + '/smrfOutputs/'
 
                 params = {Inputs: [
                     ('date_time', 'eq', out_date),

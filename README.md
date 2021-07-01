@@ -1,7 +1,6 @@
 # SNOw and Water model Analysis and Visualization
 
 [![GitHub version](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav.svg)](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav)
-[![Build Status](https://travis-ci.org/USDA-ARS-NWRC/snowav.svg?branch=devel)](https://travis-ci.org/USDA-ARS-NWRC/snowav)
 
 SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho, and processes AWSM model outputs into formats and figures for use by water resource managers. See CoreConfig.ini for details on config options.
 
@@ -25,6 +24,8 @@ $ snowav -f config.ini
 ```
 
 Below are notes for some of the config file fields, for additional information for all options see ```snowav/config/CoreConfig.ini```.
+
+> **NOTE:** Do not have AWSM/SMRF outputs in a root directory with `run` in the path as `snowav` does a regex to replace this string. For example, the following path will produce an error `/path/runs/basin/ops` as it will be changed to `/data/datas/basin/ops`.
 
 #### [snowav]
 ```save_path:``` Path to save results to.
