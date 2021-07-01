@@ -4,7 +4,7 @@
 name: Unittest
 
 # Run action on pull requests
-on: 
+on:
   pull_request:
     branches: [ main ]
 
