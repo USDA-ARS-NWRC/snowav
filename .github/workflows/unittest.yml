@@ -11,16 +11,15 @@ on: push
 jobs:
 
   unittest:
-    python-version: 3.6
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.6'
 
       - name: Install system dependancies
         run: |
