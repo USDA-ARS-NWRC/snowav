@@ -12,6 +12,9 @@ jobs:
 
   unittest:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: /home
 
     steps:
       - uses: actions/checkout@v2

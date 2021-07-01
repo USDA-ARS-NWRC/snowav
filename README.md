@@ -26,6 +26,8 @@ $ snowav -f config.ini
 
 Below are notes for some of the config file fields, for additional information for all options see ```snowav/config/CoreConfig.ini```.
 
+> **NOTE:** Do not have AWSM/SMRF outputs in a root directory with `run` in the path as `snowav` does a regex to replace this string. For example, the following path will produce an error `/path/runs/basin/ops` as it will be changed to `/data/datas/basin/ops`.
+
 #### [snowav]
 ```save_path:``` Path to save results to.
 
