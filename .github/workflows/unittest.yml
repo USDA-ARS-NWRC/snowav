@@ -21,9 +21,9 @@ jobs:
         with:
           python-version: '3.6'
 
-      - name: Install system dependancies
+      - name: Install system dependencies
         run: |
-          sudo apt-get install -y texlive-base texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
+          sudo apt-get install -y sqlite3 texlive-base texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
         shell: bash
 
       - name: Install python dependencies
@@ -31,8 +31,15 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
           python3 setup.py install
-          mkdir ~/.config/matplotlib
-          echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
 
-      - name: Run unittests
-        run:  python3 -m unittest -v
+
+      # mkdir ~/.config/matplotlib
+      # echo "backend: Agg" > ~/.config/matplotlib/matplotlibrc
+
+      # - name: Run unittests
+      #   run:  python3 -m unittest -v
+
+      - name: Run headless unittest
+        uses: GabrielBB/xvfb-action@v1
+        with:
+          run: python3 -m unittest -v
