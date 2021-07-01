@@ -12,14 +12,9 @@ jobs:
 
   unittest:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: /home/test
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          path: /home/test
 
       - name: Set up Python
         uses: actions/setup-python@v2
