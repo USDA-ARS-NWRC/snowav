@@ -18,6 +18,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        working-directory: /home/test
 
       - name: Set up Python
         uses: actions/setup-python@v2
