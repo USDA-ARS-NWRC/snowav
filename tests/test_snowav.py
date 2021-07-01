@@ -32,7 +32,7 @@ snow.nc files.
 
 """
 
-matplotlib.use('agg')
+matplotlib.use('Agg')
 
 topo_path = './tests/lakes/topo/topo.nc'
 gold_db_path = './tests/lakes/results/gold.db'
