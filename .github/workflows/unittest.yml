@@ -4,9 +4,9 @@
 name: Unittest
 
 # Run action on pull requests
-on: push
-  # pull_request:
-    # branches: [ main ]
+on: 
+  pull_request:
+    branches: [ main ]
 
 jobs:
 
@@ -24,7 +24,6 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get install -y sqlite3 \
-            libnetcdf-dev \
             texlive-base \
             texlive-latex-base \
             texlive-latex-extra \
@@ -42,8 +41,3 @@ jobs:
 
       - name: Run unittests
         run:  python3 -m unittest -v
-
-      # - name: Run headless unittest
-      #   uses: GabrielBB/xvfb-action@v1
-      #   with:
-      #     run: python3 -m unittest -v

@@ -1,7 +1,6 @@
 # SNOw and Water model Analysis and Visualization
 
 [![GitHub version](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav.svg)](https://badge.fury.io/gh/USDA-ARS-NWRC%2Fsnowav)
-[![Build Status](https://travis-ci.org/USDA-ARS-NWRC/snowav.svg?branch=devel)](https://travis-ci.org/USDA-ARS-NWRC/snowav)
 
 SNOWAV was developed at the USDA Agricultural Research Service in Boise, Idaho, and processes AWSM model outputs into formats and figures for use by water resource managers. See CoreConfig.ini for details on config options.
 
