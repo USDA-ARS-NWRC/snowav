@@ -23,7 +23,13 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get install -y sqlite3 texlive-base texlive-latex-base texlive-latex-extra texlive-fonts-recommended texlive-fonts-extra
+          sudo apt-get install -y sqlite3 \
+            libnetcdf-dev \
+            texlive-base \
+            texlive-latex-base \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-fonts-extra
         shell: bash
 
       - name: Install python dependencies
